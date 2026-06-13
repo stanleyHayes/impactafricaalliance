@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import 'dotenv/config';
 
 import type { Server } from 'node:http';
 
