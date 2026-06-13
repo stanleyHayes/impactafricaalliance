@@ -11,6 +11,7 @@ import type { AppConfig } from './config/env.js';
 import type { AppLogger } from './config/logger.js';
 import { globalRateLimit } from './middleware/rate-limit.js';
 import { sanitizeBody } from './middleware/sanitize.js';
+import { createAiRouter } from './modules/ai/ai.routes.js';
 import { createAuthRouter } from './modules/auth/auth.routes.js';
 import { buildContentModules } from './modules/content/content.registry.js';
 import { createHealthRouter } from './modules/health/health.routes.js';
@@ -58,6 +59,7 @@ export const createApp = (
 
   app.use('/api/admin/users', createUserRouter(container));
   app.use('/api/admin/media', createMediaRouter(container));
+  app.use('/api/admin/ai', createAiRouter(container, config));
 
   app.use('/api/payments', payments.donateRouter);
   app.use('/api/admin/donations', payments.adminRouter);

@@ -11,7 +11,6 @@ export interface ProgramContent {
   challenge: string;
   whatWeDo: string[];
   goal: string;
-  emoji: string;
 }
 
 export const PROGRAMS: readonly ProgramContent[] = [
@@ -30,7 +29,6 @@ export const PROGRAMS: readonly ProgramContent[] = [
       'Job placement support, apprenticeships, and professional networking opportunities',
     ],
     goal: 'To equip thousands of young Africans with in-demand digital skills that unlock employment, entrepreneurship, and economic independence — contributing directly to SDG 8 and SDG 4.',
-    emoji: '💻',
   },
   {
     slug: 'stem-learning',
@@ -47,7 +45,6 @@ export const PROGRAMS: readonly ProgramContent[] = [
       'Employer partnerships that connect graduates directly to job placement opportunities',
     ],
     goal: "To reduce the skills gap between African graduates and employer needs — creating a talent pipeline that supports Africa's industrialization agenda and contributes to SDG 4 and SDG 9.",
-    emoji: '🔬',
   },
   {
     slug: 'climate-action',
@@ -63,7 +60,6 @@ export const PROGRAMS: readonly ProgramContent[] = [
       'Community-driven environmental awareness campaigns and youth climate advocacy',
     ],
     goal: 'To equip communities with clean energy access, resilient food systems, and a generation of young African climate champions — advancing SDG 7, SDG 13, and SDG 15.',
-    emoji: '🌱',
   },
   {
     slug: 'women-empowerment',
@@ -79,7 +75,6 @@ export const PROGRAMS: readonly ProgramContent[] = [
       'Access to microfinance, investor networks, and professional development opportunities',
     ],
     goal: 'To elevate women’s economic and social status — building a generation of empowered African women who lead companies, communities, and countries — advancing SDG 5 and SDG 10.',
-    emoji: '👩🏾‍💼',
   },
 ];
 

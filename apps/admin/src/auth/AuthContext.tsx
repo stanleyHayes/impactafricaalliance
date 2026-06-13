@@ -12,6 +12,7 @@ interface AuthContextValue {
   status: AuthStatus;
   login: (input: LoginInput) => Promise<void>;
   logout: () => void;
+  updateUser: (user: PublicUser) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -50,7 +51,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }): JSX.Element
     setStatus('unauthenticated');
   }, []);
 
-  const value = useMemo(() => ({ user, status, login, logout }), [user, status, login, logout]);
+  const updateUser = useCallback((next: PublicUser) => setUser(next), []);
+
+  const value = useMemo(
+    () => ({ user, status, login, logout, updateUser }),
+    [user, status, login, logout, updateUser],
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

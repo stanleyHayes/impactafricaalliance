@@ -1,4 +1,7 @@
 import type {
+  AiAssistInput,
+  AiAssistResponse,
+  ChangePasswordInput,
   CreateUserInput,
   Donation,
   Paginated,
@@ -6,6 +9,7 @@ import type {
   Submission,
   SubmissionStatus,
   Subscriber,
+  UpdateProfileInput,
   UpdateUserInput,
 } from '@iaa/shared';
 import {
@@ -59,6 +63,18 @@ export const useDonations = (): UseQueryResult<Paginated<Donation>> =>
     queryKey: ['donations'],
     queryFn: () => api.get<Paginated<Donation>>('/admin/donations?pageSize=100'),
   });
+
+/** Update the signed-in user's own profile (name / email). */
+export const useUpdateProfile = (): UseMutationResult<PublicUser, Error, UpdateProfileInput> =>
+  useMutation({ mutationFn: (body) => api.patch<PublicUser>('/auth/me', body) });
+
+/** Change the signed-in user's own password. */
+export const useChangePassword = (): UseMutationResult<void, Error, ChangePasswordInput> =>
+  useMutation({ mutationFn: (body) => api.post<void>('/auth/change-password', body) });
+
+/** Run an AI writing-assistant transformation over a block of text. */
+export const useAiAssist = (): UseMutationResult<AiAssistResponse, Error, AiAssistInput> =>
+  useMutation({ mutationFn: (body) => api.post<AiAssistResponse>('/admin/ai/assist', body) });
 
 export const useUsers = (): UseQueryResult<PublicUser[]> =>
   useQuery({ queryKey: ['users'], queryFn: () => api.get<PublicUser[]>('/admin/users') });

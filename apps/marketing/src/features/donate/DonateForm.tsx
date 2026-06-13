@@ -7,16 +7,12 @@ import {
   type CreateDonationInput,
   type DonationInitResponse,
 } from '@iaa/shared';
-import CheckIcon from '@mui/icons-material/Check';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Grid from '@mui/material/Grid';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemText from '@mui/material/ListItemText';
 import Stack from '@mui/material/Stack';
+import { alpha } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
@@ -31,16 +27,58 @@ import { getStripe, isStripeEnabled } from './stripe';
 import { StripeCheckout } from './StripeCheckout';
 
 const DonationImpacts = (): JSX.Element => (
-  <List dense>
-    {DONATION_TIERS.map((tier) => (
-      <ListItem key={tier.amountUsd} disableGutters>
-        <ListItemIcon sx={{ minWidth: 32 }}>
-          <CheckIcon color="success" fontSize="small" />
-        </ListItemIcon>
-        <ListItemText primary={`$${tier.amountUsd.toLocaleString()} — ${tier.impact}`} />
-      </ListItem>
-    ))}
-  </List>
+  <Stack spacing={1.25}>
+    {DONATION_TIERS.map((tier, index) => {
+      const featured = index === DONATION_TIERS.length - 1;
+      return (
+        <Box
+          key={tier.amountUsd}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            p: 1.75,
+            borderRadius: 3,
+            bgcolor: 'common.white',
+            border: '1px solid',
+            borderColor: featured ? 'secondary.main' : 'divider',
+            boxShadow: featured ? '0 10px 28px -18px rgba(212,160,23,0.7)' : 'none',
+            transition: (t) =>
+              t.transitions.create(['transform', 'border-color', 'box-shadow'], {
+                duration: t.transitions.duration.shorter,
+              }),
+            '&:hover': {
+              transform: 'translateX(4px)',
+              borderColor: featured ? 'secondary.main' : 'primary.light',
+              boxShadow: '0 12px 26px -18px rgba(26,92,56,0.55)',
+            },
+          }}
+        >
+          <Box
+            aria-hidden
+            sx={{
+              flexShrink: 0,
+              minWidth: 84,
+              py: 1,
+              px: 1.5,
+              borderRadius: 2,
+              textAlign: 'center',
+              color: featured ? 'secondary.contrastText' : 'primary.main',
+              bgcolor: (t) =>
+                featured ? t.palette.secondary.main : alpha(t.palette.primary.main, 0.1),
+            }}
+          >
+            <Typography sx={{ fontWeight: 800, fontSize: '1.05rem', lineHeight: 1.1 }}>
+              ${tier.amountUsd.toLocaleString()}
+            </Typography>
+          </Box>
+          <Typography variant="body2" sx={{ lineHeight: 1.5, color: 'text.primary' }}>
+            {tier.impact}
+          </Typography>
+        </Box>
+      );
+    })}
+  </Stack>
 );
 
 /** Donation form: amount + provider selection, then Stripe Elements or Paystack redirect. */
@@ -89,8 +127,17 @@ export const DonateForm = (): JSX.Element => {
   return (
     <Grid container spacing={4}>
       <Grid size={{ xs: 12, md: 6 }}>
-        <Typography variant="h6" gutterBottom>
+        <Typography
+          variant="overline"
+          sx={{ color: 'secondary.main', fontWeight: 700, letterSpacing: 1.5 }}
+        >
+          Your impact
+        </Typography>
+        <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>
           The impact of your gift
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
+          Every contribution is put to work directly — here&apos;s what each gift makes possible.
         </Typography>
         <DonationImpacts />
       </Grid>

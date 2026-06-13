@@ -31,6 +31,7 @@ export const createTestContext = async (): Promise<TestContext> => {
   process.env.NODE_ENV = 'test';
   process.env.MONGODB_URI = mongo.getUri();
   process.env.JWT_SECRET = 'test-secret-test-secret-test-secret-0123456789';
+  process.env.SEED_ADMIN_PASSWORD = 'TestSeedAdminPass2026!';
 
   const config = loadConfig();
   const logger = createLogger('test');

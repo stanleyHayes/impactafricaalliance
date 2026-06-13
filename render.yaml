@@ -27,6 +27,8 @@ services:
         sync: false
       - key: SEED_ADMIN_PASSWORD
         sync: false
+      - key: SEED_EDITOR_PASSWORD
+        sync: false
       - key: RESEND_API_KEY
         sync: false
       - key: EMAIL_FROM

@@ -2,6 +2,7 @@
    (field, rhf, error) => JSX, dispatched by field type, not React components. */
 import type { MediaAsset } from '@iaa/shared';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import InputAdornment from '@mui/material/InputAdornment';
 import MenuItem from '@mui/material/MenuItem';
 import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
@@ -13,7 +14,9 @@ import {
 } from 'react-hook-form';
 
 import type { FieldConfig, FieldType } from '../../resources/types';
+import { AiAssistButton } from '../ai/AiAssistButton';
 import { MediaUploadField } from '../fields/MediaUploadField';
+import { MarkdownEditor } from '../markdown/MarkdownEditor';
 
 interface FieldRendererProps {
   field: FieldConfig;
@@ -117,7 +120,7 @@ const mediaRenderer =
   );
 
 const textRenderer =
-  (minRows?: number): Renderer =>
+  (minRows?: number, ai = false): Renderer =>
   (field, rhf, error) => (
     <TextField
       fullWidth
@@ -128,8 +131,39 @@ const textRenderer =
       minRows={minRows}
       error={Boolean(error)}
       helperText={error ?? field.helperText}
+      slotProps={
+        ai
+          ? {
+              input: {
+                endAdornment: (
+                  <InputAdornment
+                    position="end"
+                    sx={{
+                      alignSelf: minRows !== undefined ? 'flex-end' : 'center',
+                      mb: minRows !== undefined ? 0.75 : 0,
+                    }}
+                  >
+                    <AiAssistButton
+                      value={typeof rhf.value === 'string' ? rhf.value : ''}
+                      onChange={rhf.onChange}
+                    />
+                  </InputAdornment>
+                ),
+              },
+            }
+          : undefined
+      }
     />
   );
+
+const markdownRenderer: Renderer = (field, rhf, error) => (
+  <MarkdownEditor
+    label={field.label}
+    value={typeof rhf.value === 'string' ? rhf.value : ''}
+    onChange={rhf.onChange}
+    error={error ?? field.helperText}
+  />
+);
 
 const RENDERERS: Record<FieldType, Renderer> = {
   switch: switchRenderer,
@@ -139,10 +173,10 @@ const RENDERERS: Record<FieldType, Renderer> = {
   datetime: datetimeRenderer,
   image: mediaRenderer('image/*', true),
   file: mediaRenderer('application/pdf', false),
-  text: textRenderer(),
+  text: textRenderer(undefined, true),
   slug: textRenderer(),
-  textarea: textRenderer(3),
-  richtext: textRenderer(8),
+  textarea: textRenderer(3, true),
+  richtext: markdownRenderer,
 };
 
 /** Renders a single configured field bound to react-hook-form. */

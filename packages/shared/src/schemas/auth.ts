@@ -26,6 +26,16 @@ export const changePasswordSchema = z
   });
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 
+export const updateProfileSchema = z
+  .object({
+    name: z.string().min(2).max(120).trim().optional(),
+    email: z.string().email().toLowerCase().trim().optional(),
+  })
+  .refine((value) => value.name !== undefined || value.email !== undefined, {
+    message: 'Provide a name or email to update',
+  });
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
+
 export const createUserSchema = z.object({
   name: z.string().min(2).max(120).trim(),
   email: z.string().email().toLowerCase().trim(),

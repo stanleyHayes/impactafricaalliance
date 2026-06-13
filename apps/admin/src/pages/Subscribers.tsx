@@ -1,7 +1,9 @@
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import { DataGrid, type GridColDef } from '@mui/x-data-grid';
+import MarkEmailReadIcon from '@mui/icons-material/MarkEmailRead';
+import type { GridColDef } from '@mui/x-data-grid';
 
+import { DataTable } from '../components/data/DataTable';
+import { EmptyState } from '../components/EmptyState';
+import { PageHeader } from '../components/PageHeader';
 import { useSubscribers } from '../lib/admin-hooks';
 
 const columns: GridColDef[] = [
@@ -18,21 +20,27 @@ const columns: GridColDef[] = [
 
 const Subscribers = (): JSX.Element => {
   const { data, isLoading } = useSubscribers();
+
   return (
     <>
-      <Typography variant="h4" gutterBottom>
-        Newsletter Subscribers
-      </Typography>
-      <Box sx={{ height: 620, bgcolor: 'background.paper', borderRadius: 2, mt: 2 }}>
-        <DataGrid
-          rows={data?.items ?? []}
-          columns={columns}
-          loading={isLoading}
-          disableRowSelectionOnClick
-          pageSizeOptions={[25, 50, 100]}
-          initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
-        />
-      </Box>
+      <PageHeader
+        icon={<MarkEmailReadIcon />}
+        title="Newsletter Subscribers"
+        description="People who opted in to hear from Impact Africa Alliance."
+        count={data?.total}
+      />
+      <DataTable
+        rows={data?.items ?? []}
+        columns={columns}
+        loading={isLoading}
+        empty={
+          <EmptyState
+            icon={<MarkEmailReadIcon />}
+            title="No subscribers yet"
+            description="When visitors sign up through the website newsletter form, they’ll appear here."
+          />
+        }
+      />
     </>
   );
 };

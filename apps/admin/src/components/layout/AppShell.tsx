@@ -1,152 +1,153 @@
-import { UserRole } from '@iaa/shared';
-import ArticleIcon from '@mui/icons-material/Article';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import GroupsIcon from '@mui/icons-material/Groups';
-import InboxIcon from '@mui/icons-material/Inbox';
-import LogoutIcon from '@mui/icons-material/Logout';
-import MailIcon from '@mui/icons-material/MarkEmailRead';
 import MenuIcon from '@mui/icons-material/Menu';
-import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
+import MenuOpenIcon from '@mui/icons-material/MenuOpen';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 import Drawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
-import List from '@mui/material/List';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemText from '@mui/material/ListItemText';
-import ListSubheader from '@mui/material/ListSubheader';
+import Stack from '@mui/material/Stack';
 import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useState } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 
-import { useAuth } from '../../auth/AuthContext';
-import { RESOURCES } from '../../resources/registry';
+import { usePreferences } from '../../lib/preferences';
 
-const DRAWER_WIDTH = 248;
+import { NotificationsBell } from './NotificationsBell';
+import { SidebarNav } from './SidebarNav';
+import { UserMenu } from './UserMenu';
 
-interface NavItem {
-  to: string;
-  label: string;
-  icon: JSX.Element;
-}
+const DRAWER_WIDTH = 264;
+const RAIL_WIDTH = 76;
 
-const OPERATIONS: NavItem[] = [
-  { to: '/submissions', label: 'Submissions', icon: <InboxIcon /> },
-  { to: '/subscribers', label: 'Subscribers', icon: <MailIcon /> },
-  { to: '/donations', label: 'Donations', icon: <VolunteerActivismIcon /> },
-];
-
-const navItemStyle = ({ isActive }: { isActive: boolean }) => ({
-  textDecoration: 'none',
-  color: 'inherit',
-  display: 'block',
-  background: isActive ? 'rgba(26,92,56,0.12)' : 'transparent',
-});
-
-const NavLinks = (): JSX.Element => {
-  const { user } = useAuth();
-  return (
-    <Box>
-      <List>
-        <NavLink to="/" end style={navItemStyle}>
-          <ListItemButton>
-            <ListItemIcon>
-              <DashboardIcon />
-            </ListItemIcon>
-            <ListItemText primary="Dashboard" />
-          </ListItemButton>
-        </NavLink>
-      </List>
-      <Divider />
-      <List subheader={<ListSubheader>Content</ListSubheader>}>
-        {RESOURCES.map((resource) => (
-          <NavLink key={resource.key} to={`/content/${resource.key}`} style={navItemStyle}>
-            <ListItemButton>
-              <ListItemIcon>
-                <ArticleIcon />
-              </ListItemIcon>
-              <ListItemText primary={resource.label} />
-            </ListItemButton>
-          </NavLink>
-        ))}
-      </List>
-      <Divider />
-      <List subheader={<ListSubheader>Operations</ListSubheader>}>
-        {OPERATIONS.map((item) => (
-          <NavLink key={item.to} to={item.to} style={navItemStyle}>
-            <ListItemButton>
-              <ListItemIcon>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.label} />
-            </ListItemButton>
-          </NavLink>
-        ))}
-        {user?.role === UserRole.Admin && (
-          <NavLink to="/users" style={navItemStyle}>
-            <ListItemButton>
-              <ListItemIcon>
-                <GroupsIcon />
-              </ListItemIcon>
-              <ListItemText primary="Users" />
-            </ListItemButton>
-          </NavLink>
-        )}
-      </List>
-    </Box>
-  );
-};
-
-/** Authenticated admin layout: top bar + persistent sidebar + routed content. */
+/** Authenticated admin layout: top bar + collapsible grouped sidebar + routed content. */
 export const AppShell = (): JSX.Element => {
-  const { user, logout } = useAuth();
+  const { prefs, setPreference } = usePreferences();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const collapsed = prefs.sidebarCollapsed;
+  const desktopWidth = collapsed ? RAIL_WIDTH : DRAWER_WIDTH;
 
-  const drawer = (
-    <Box>
-      <Toolbar sx={{ gap: 1 }}>
-        <Box component="img" src="/brand/logo-primary.png" alt="IAA" sx={{ height: 32 }} />
-        <Typography sx={{ fontWeight: 700 }}>Admin</Typography>
+  const renderDrawer = (mini: boolean): JSX.Element => (
+    <Box
+      sx={{
+        display: 'flex',
+        height: '100%',
+        flexDirection: 'column',
+        background: 'linear-gradient(180deg, rgba(26,92,56,0.055) 0, rgba(255,255,255,0) 190px)',
+      }}
+    >
+      <Toolbar
+        sx={{
+          gap: 1.25,
+          minHeight: 72,
+          px: mini ? 1 : 2.25,
+          justifyContent: mini ? 'center' : 'flex-start',
+          overflow: 'hidden',
+        }}
+      >
+        <Box
+          sx={{
+            display: 'grid',
+            width: 42,
+            height: 42,
+            flexShrink: 0,
+            placeItems: 'center',
+            border: 1,
+            borderColor: 'divider',
+            borderRadius: 2,
+            bgcolor: 'common.white',
+          }}
+        >
+          <Box component="img" src="/brand/icon-512.png" alt="IAA" sx={{ width: 34 }} />
+        </Box>
+        {!mini && (
+          <Box sx={{ minWidth: 0 }}>
+            <Typography sx={{ fontWeight: 750, lineHeight: 1.2, whiteSpace: 'nowrap' }}>
+              IAA Admin
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{ color: 'text.secondary', fontSize: '0.68rem', whiteSpace: 'nowrap' }}
+            >
+              Content workspace
+            </Typography>
+          </Box>
+        )}
       </Toolbar>
       <Divider />
-      <NavLinks />
+      <Box sx={{ flexGrow: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+        <SidebarNav collapsed={mini} onNavigate={() => setMobileOpen(false)} />
+      </Box>
     </Box>
   );
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
       <AppBar
         position="fixed"
         color="inherit"
-        elevation={1}
-        sx={{ zIndex: (t) => t.zIndex.drawer + 1 }}
+        elevation={0}
+        sx={{
+          zIndex: (t) => t.zIndex.drawer + 1,
+          borderBottom: 1,
+          borderColor: 'divider',
+          bgcolor: 'rgba(255,255,255,0.88)',
+          backdropFilter: 'blur(14px)',
+        }}
       >
-        <Toolbar>
+        <Toolbar sx={{ minHeight: 72 }}>
           <IconButton
             edge="start"
             onClick={() => setMobileOpen((open) => !open)}
-            sx={{ mr: 2, display: { md: 'none' } }}
+            sx={{ mr: 1, display: { md: 'none' } }}
             aria-label="Toggle navigation"
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            IAA Admin Console
-          </Typography>
-          <Typography variant="body2" sx={{ mr: 2, display: { xs: 'none', sm: 'block' } }}>
-            {user?.name} · {user?.role}
-          </Typography>
-          <Tooltip title="Log out">
-            <IconButton onClick={logout} aria-label="Log out">
-              <LogoutIcon />
+          <Tooltip title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
+            <IconButton
+              edge="start"
+              onClick={() => setPreference('sidebarCollapsed', !collapsed)}
+              sx={{ mr: 1.5, display: { xs: 'none', md: 'inline-flex' } }}
+              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            >
+              {collapsed ? <MenuIcon /> : <MenuOpenIcon />}
             </IconButton>
           </Tooltip>
+          <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+            <Typography sx={{ fontWeight: 750, lineHeight: 1.25 }} noWrap>
+              IAA Admin Console
+            </Typography>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: { xs: 'none', sm: 'block' } }}
+            >
+              Manage content, community, and programme operations
+            </Typography>
+          </Box>
+          <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }} alignItems="center">
+            <NotificationsBell />
+            <Divider
+              orientation="vertical"
+              flexItem
+              sx={{ my: 1, mx: { xs: 0.25, sm: 0.5 }, borderColor: 'divider' }}
+            />
+            <UserMenu />
+          </Stack>
         </Toolbar>
       </AppBar>
 
-      <Box component="nav" sx={{ width: { md: DRAWER_WIDTH }, flexShrink: { md: 0 } }}>
+      <Box
+        component="nav"
+        sx={{
+          width: { md: desktopWidth },
+          flexShrink: { md: 0 },
+          transition: (t) =>
+            t.transitions.create('width', { duration: t.transitions.duration.shorter }),
+        }}
+      >
         <Drawer
           variant="temporary"
           open={mobileOpen}
@@ -154,29 +155,52 @@ export const AppShell = (): JSX.Element => {
           ModalProps={{ keepMounted: true }}
           sx={{
             display: { xs: 'block', md: 'none' },
-            '& .MuiDrawer-paper': { width: DRAWER_WIDTH },
+            '& .MuiDrawer-paper': { width: DRAWER_WIDTH, boxSizing: 'border-box' },
           }}
         >
-          {drawer}
+          {renderDrawer(false)}
         </Drawer>
         <Drawer
           variant="permanent"
           open
           sx={{
             display: { xs: 'none', md: 'block' },
-            '& .MuiDrawer-paper': { width: DRAWER_WIDTH, boxSizing: 'border-box' },
+            '& .MuiDrawer-paper': {
+              width: desktopWidth,
+              boxSizing: 'border-box',
+              borderRight: 1,
+              borderColor: 'divider',
+              bgcolor: 'rgba(255,255,255,0.96)',
+              overflowX: 'hidden',
+              transition: (t) =>
+                t.transitions.create('width', { duration: t.transitions.duration.shorter }),
+            },
           }}
         >
-          {drawer}
+          {renderDrawer(collapsed)}
         </Drawer>
       </Box>
 
       <Box
         component="main"
-        sx={{ flexGrow: 1, p: { xs: 2, md: 4 }, width: { md: `calc(100% - ${DRAWER_WIDTH}px)` } }}
+        sx={{
+          flexGrow: 1,
+          // Flex items default to min-width:auto, which lets wide children (e.g. the
+          // dashboard stat cards, data grids) push the page past the viewport on mobile.
+          // Allowing main to shrink keeps every admin page within the viewport width.
+          minWidth: 0,
+          minHeight: '100vh',
+          p: { xs: 2, sm: 3, lg: 4 },
+          width: { md: `calc(100% - ${desktopWidth}px)` },
+          bgcolor: 'background.default',
+          transition: (t) =>
+            t.transitions.create(['width', 'margin'], { duration: t.transitions.duration.shorter }),
+        }}
       >
-        <Toolbar />
-        <Outlet />
+        <Toolbar sx={{ minHeight: 72 }} />
+        <Box sx={{ maxWidth: 1680, mx: 'auto' }}>
+          <Outlet />
+        </Box>
       </Box>
     </Box>
   );

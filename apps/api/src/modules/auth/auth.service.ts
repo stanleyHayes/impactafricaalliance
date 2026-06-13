@@ -1,7 +1,18 @@
-import type { ChangePasswordInput, LoginInput, LoginResponse, PublicUser } from '@iaa/shared';
+import type {
+  ChangePasswordInput,
+  LoginInput,
+  LoginResponse,
+  PublicUser,
+  UpdateProfileInput,
+} from '@iaa/shared';
 import { inject, injectable } from 'tsyringe';
 
-import { NotFoundError, UnauthorizedError, ValidationError } from '../../common/errors.js';
+import {
+  ConflictError,
+  NotFoundError,
+  UnauthorizedError,
+  ValidationError,
+} from '../../common/errors.js';
 import { toPublicUser } from '../users/user.model.js';
 import { UserRepository } from '../users/user.repository.js';
 
@@ -50,6 +61,23 @@ export class AuthService {
       throw new NotFoundError('User');
     }
     return toPublicUser(user);
+  }
+
+  async updateProfile(userId: string, input: UpdateProfileInput): Promise<PublicUser> {
+    if (input.email) {
+      const existing = await this.users.findByEmail(input.email);
+      if (existing && existing.id !== userId) {
+        throw new ConflictError('A user with this email already exists');
+      }
+    }
+    const updated = await this.users.updateProfile(userId, {
+      name: input.name,
+      email: input.email,
+    });
+    if (!updated) {
+      throw new NotFoundError('User');
+    }
+    return toPublicUser(updated);
   }
 
   async changePassword(userId: string, input: ChangePasswordInput): Promise<void> {

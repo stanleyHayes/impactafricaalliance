@@ -1,4 +1,9 @@
-import { changePasswordSchema, loginSchema, refreshSchema } from '@iaa/shared';
+import {
+  changePasswordSchema,
+  loginSchema,
+  refreshSchema,
+  updateProfileSchema,
+} from '@iaa/shared';
 import type { Request, Response } from 'express';
 import { inject, injectable } from 'tsyringe';
 
@@ -26,6 +31,12 @@ export class AuthController {
 
   me = async (req: Request, res: Response): Promise<void> => {
     const user = await this.auth.me(this.requireUserId(req));
+    res.status(200).json(user);
+  };
+
+  updateProfile = async (req: Request, res: Response): Promise<void> => {
+    const input = parseWith(updateProfileSchema, req.body);
+    const user = await this.auth.updateProfile(this.requireUserId(req), input);
     res.status(200).json(user);
   };
 

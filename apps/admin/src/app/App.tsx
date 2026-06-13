@@ -1,7 +1,13 @@
-import { Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 
 import { RequireAuth } from '../auth/RequireAuth';
 import { AppShell } from '../components/layout/AppShell';
+import AccountLayout from '../pages/account/AccountLayout';
+import EditProfile from '../pages/account/EditProfile';
+import Notifications from '../pages/account/Notifications';
+import Profile from '../pages/account/Profile';
+import Settings from '../pages/account/Settings';
+import UpdatePassword from '../pages/account/UpdatePassword';
 import Dashboard from '../pages/Dashboard';
 import Donations from '../pages/Donations';
 import Login from '../pages/Login';
@@ -27,6 +33,14 @@ export const App = (): JSX.Element => (
       <Route path="subscribers" element={<Subscribers />} />
       <Route path="donations" element={<Donations />} />
       <Route path="users" element={<Users />} />
+      <Route path="account" element={<AccountLayout />}>
+        <Route index element={<Navigate to="profile" replace />} />
+        <Route path="profile" element={<Profile />} />
+        <Route path="edit" element={<EditProfile />} />
+        <Route path="password" element={<UpdatePassword />} />
+        <Route path="notifications" element={<Notifications />} />
+        <Route path="settings" element={<Settings />} />
+      </Route>
     </Route>
   </Routes>
 );

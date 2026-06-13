@@ -17,7 +17,7 @@ export const Layout = (): JSX.Element => {
   }, [pathname, hash]);
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh', flexDirection: 'column', overflowX: 'clip' }}>
       <Header />
       <Box component="main" sx={{ flex: 1 }}>
         <Outlet />

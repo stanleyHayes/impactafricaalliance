@@ -1,28 +1,463 @@
 import { ORG } from '@iaa/shared';
-import EmailIcon from '@mui/icons-material/Email';
-import LanguageIcon from '@mui/icons-material/Language';
-import PlaceIcon from '@mui/icons-material/Place';
+import type { SvgIconComponent } from '@mui/icons-material';
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
+import Diversity3RoundedIcon from '@mui/icons-material/Diversity3Rounded';
+import EmailRoundedIcon from '@mui/icons-material/EmailRounded';
+import HandshakeRoundedIcon from '@mui/icons-material/HandshakeRounded';
+import LanguageRoundedIcon from '@mui/icons-material/LanguageRounded';
+import MarkEmailReadRoundedIcon from '@mui/icons-material/MarkEmailReadRounded';
+import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
+import PublicRoundedIcon from '@mui/icons-material/PublicRounded';
+import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded';
+import Box from '@mui/material/Box';
+import Chip from '@mui/material/Chip';
+import Container from '@mui/material/Container';
+import Divider from '@mui/material/Divider';
 import Grid from '@mui/material/Grid';
 import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
+import type { ReactNode } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 
-import { PageHero } from '../components/PageHero';
-import { Section } from '../components/Section';
 import { Seo } from '../components/Seo';
+import { SocialLinks } from '../components/SocialLinks';
+import { IMAGES } from '../content/images';
 import { ContactForm } from '../features/forms/ContactForm';
 
-const InfoRow = ({
-  icon,
-  children,
-}: {
-  icon: JSX.Element;
-  children: React.ReactNode;
-}): JSX.Element => (
-  <Stack direction="row" spacing={1.5} alignItems="center">
-    {icon}
-    <Typography>{children}</Typography>
+const REGIONS = ['Ghana', 'Sierra Leone', 'Nigeria'] as const;
+
+interface ContactDetailProps {
+  icon: SvgIconComponent;
+  label: string;
+  children: ReactNode;
+}
+
+const ContactDetail = ({ icon: Icon, label, children }: ContactDetailProps): JSX.Element => (
+  <Stack direction="row" spacing={2} alignItems="flex-start">
+    <Box
+      sx={{
+        display: 'grid',
+        width: 46,
+        height: 46,
+        flexShrink: 0,
+        placeItems: 'center',
+        border: 1,
+        borderColor: 'rgba(255,255,255,0.16)',
+        borderRadius: 2,
+        bgcolor: 'rgba(255,255,255,0.08)',
+      }}
+    >
+      <Icon sx={{ color: 'secondary.light', fontSize: 22 }} />
+    </Box>
+    <Box sx={{ minWidth: 0 }}>
+      <Typography
+        variant="overline"
+        sx={{ color: 'rgba(255,255,255,0.58)', fontWeight: 700, letterSpacing: 1.3 }}
+      >
+        {label}
+      </Typography>
+      <Box sx={{ mt: -0.35, color: 'common.white', fontSize: '0.95rem', lineHeight: 1.6 }}>
+        {children}
+      </Box>
+    </Box>
   </Stack>
+);
+
+const ContactHero = (): JSX.Element => (
+  <Box
+    component="header"
+    sx={{
+      position: 'relative',
+      minHeight: { xs: 540, md: 620 },
+      overflow: 'hidden',
+      bgcolor: 'primary.dark',
+      color: 'common.white',
+    }}
+  >
+    <Box
+      sx={{
+        position: 'absolute',
+        inset: 0,
+        backgroundImage: `url(${IMAGES.programs['stem-learning']})`,
+        backgroundPosition: 'center',
+        backgroundSize: 'cover',
+      }}
+    />
+    <Box
+      sx={{
+        position: 'absolute',
+        inset: 0,
+        background:
+          'linear-gradient(90deg, rgba(8,31,19,0.96) 0%, rgba(8,31,19,0.88) 52%, rgba(8,31,19,0.42) 100%), linear-gradient(0deg, rgba(8,31,19,0.64), transparent 55%)',
+      }}
+    />
+    <Box
+      aria-hidden
+      sx={{
+        position: 'absolute',
+        right: { xs: -180, md: -80 },
+        bottom: -260,
+        width: { xs: 430, md: 620 },
+        height: { xs: 430, md: 620 },
+        border: '1px solid rgba(212,160,23,0.18)',
+        borderRadius: '50%',
+        boxShadow: '0 0 0 52px rgba(212,160,23,0.025), 0 0 0 104px rgba(212,160,23,0.018)',
+      }}
+    />
+
+    <Container
+      sx={{
+        position: 'relative',
+        display: 'flex',
+        minHeight: { xs: 540, md: 620 },
+        alignItems: 'center',
+        py: { xs: 8, md: 11 },
+      }}
+    >
+      <Grid container spacing={5} alignItems="center" sx={{ width: '100%' }}>
+        <Grid size={{ xs: 12, md: 8 }}>
+          <Stack direction="row" alignItems="center" spacing={1.3}>
+            <Box sx={{ width: 38, height: 2, bgcolor: 'secondary.main' }} />
+            <Typography
+              variant="overline"
+              sx={{ color: 'secondary.light', fontWeight: 700, letterSpacing: 2 }}
+            >
+              Start a conversation
+            </Typography>
+          </Stack>
+          <Typography
+            component="h1"
+            variant="h1"
+            sx={{
+              maxWidth: 760,
+              mt: 2,
+              color: 'common.white',
+              fontSize: { xs: '2.65rem', sm: '3.3rem', md: '4.5rem' },
+              lineHeight: 1.04,
+              letterSpacing: '-0.025em',
+            }}
+          >
+            Let&apos;s build something meaningful together.
+          </Typography>
+          <Typography
+            sx={{
+              maxWidth: 650,
+              mt: 3,
+              color: 'rgba(255,255,255,0.76)',
+              fontSize: { xs: '1rem', md: '1.18rem' },
+              lineHeight: 1.75,
+            }}
+          >
+            Whether you have a question, an idea, or an opportunity to collaborate, our team is
+            ready to listen.
+          </Typography>
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 4 }}>
+          <Box
+            sx={{
+              maxWidth: 330,
+              ml: { md: 'auto' },
+              p: 3,
+              border: 1,
+              borderColor: 'rgba(255,255,255,0.18)',
+              borderRadius: 3,
+              bgcolor: 'rgba(255,255,255,0.08)',
+              backdropFilter: 'blur(12px)',
+            }}
+          >
+            <Stack direction="row" spacing={1.5} alignItems="center">
+              <Box
+                sx={{
+                  display: 'grid',
+                  width: 46,
+                  height: 46,
+                  placeItems: 'center',
+                  borderRadius: '50%',
+                  bgcolor: 'rgba(212,160,23,0.16)',
+                  color: 'secondary.light',
+                }}
+              >
+                <ScheduleRoundedIcon />
+              </Box>
+              <Box>
+                <Typography sx={{ fontWeight: 700 }}>A human response</Typography>
+                <Typography sx={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.82rem' }}>
+                  Usually within 2 business days
+                </Typography>
+              </Box>
+            </Stack>
+            <Divider sx={{ my: 2.5, borderColor: 'rgba(255,255,255,0.14)' }} />
+            <Stack direction="row" spacing={1} alignItems="center">
+              <PublicRoundedIcon sx={{ color: 'secondary.light', fontSize: 19 }} />
+              <Typography sx={{ color: 'rgba(255,255,255,0.72)', fontSize: '0.84rem' }}>
+                Supporting enquiries across West Africa and beyond
+              </Typography>
+            </Stack>
+          </Box>
+        </Grid>
+      </Grid>
+    </Container>
+  </Box>
+);
+
+const ContactInformation = (): JSX.Element => (
+  <Box
+    sx={{
+      position: 'relative',
+      height: '100%',
+      overflow: 'hidden',
+      p: { xs: 3.5, md: 5 },
+      borderRadius: 4,
+      bgcolor: 'primary.dark',
+      color: 'common.white',
+      '&::after': {
+        position: 'absolute',
+        right: -100,
+        bottom: -120,
+        width: 270,
+        height: 270,
+        border: '1px solid rgba(212,160,23,0.16)',
+        borderRadius: '50%',
+        content: '""',
+      },
+    }}
+  >
+    <Typography
+      variant="overline"
+      sx={{ color: 'secondary.light', fontWeight: 700, letterSpacing: 1.6 }}
+    >
+      Contact details
+    </Typography>
+    <Typography
+      variant="h3"
+      sx={{ mt: 1, color: 'common.white', fontSize: { xs: '1.8rem', md: '2.3rem' } }}
+    >
+      We&apos;re closer than you think.
+    </Typography>
+    <Typography sx={{ maxWidth: 410, mt: 1.5, color: 'rgba(255,255,255,0.68)' }}>
+      Reach our team directly or use the form and we&apos;ll route your message to the right person.
+    </Typography>
+
+    <Stack spacing={3.25} sx={{ position: 'relative', zIndex: 1, mt: 4.5 }}>
+      <ContactDetail icon={EmailRoundedIcon} label="Email">
+        <Link
+          href={`mailto:${ORG.email}`}
+          sx={{
+            color: 'common.white',
+            fontWeight: 650,
+            textDecorationColor: 'rgba(255,255,255,0.35)',
+            overflowWrap: 'anywhere',
+          }}
+        >
+          {ORG.email}
+        </Link>
+      </ContactDetail>
+      <ContactDetail icon={LanguageRoundedIcon} label="Website">
+        <Link
+          href={ORG.website}
+          target="_blank"
+          rel="noopener noreferrer"
+          sx={{ color: 'common.white', textDecorationColor: 'rgba(255,255,255,0.35)' }}
+        >
+          impactafricaalliance.org
+        </Link>
+      </ContactDetail>
+      <ContactDetail icon={ScheduleRoundedIcon} label="Response time">
+        Within 2 business days
+      </ContactDetail>
+    </Stack>
+
+    <Divider sx={{ my: 4, borderColor: 'rgba(255,255,255,0.14)' }} />
+
+    <Stack direction="row" spacing={1.2} alignItems="center">
+      <PlaceRoundedIcon sx={{ color: 'secondary.light', fontSize: 20 }} />
+      <Typography sx={{ fontWeight: 700 }}>Regional presence</Typography>
+    </Stack>
+    <Stack direction="row" useFlexGap flexWrap="wrap" gap={1} sx={{ mt: 2 }}>
+      {REGIONS.map((region) => (
+        <Chip
+          key={region}
+          label={region}
+          size="small"
+          sx={{
+            border: '1px solid rgba(255,255,255,0.16)',
+            bgcolor: 'rgba(255,255,255,0.08)',
+            color: 'common.white',
+          }}
+        />
+      ))}
+    </Stack>
+
+    <Box sx={{ position: 'relative', zIndex: 1, mt: 4 }}>
+      <Typography sx={{ mb: 1.2, color: 'rgba(255,255,255,0.64)', fontSize: '0.82rem' }}>
+        Follow the journey
+      </Typography>
+      <SocialLinks color="inherit" />
+    </Box>
+  </Box>
+);
+
+interface EnquiryPathProps {
+  icon: SvgIconComponent;
+  eyebrow: string;
+  title: string;
+  description: string;
+  to: string;
+  action: string;
+}
+
+const EnquiryPath = ({
+  icon: Icon,
+  eyebrow,
+  title,
+  description,
+  to,
+  action,
+}: EnquiryPathProps): JSX.Element => (
+  <Box
+    component={RouterLink}
+    to={to}
+    sx={{
+      display: 'flex',
+      height: '100%',
+      flexDirection: 'column',
+      p: 3.5,
+      border: 1,
+      borderColor: 'rgba(26,92,56,0.12)',
+      borderRadius: 3,
+      bgcolor: 'background.paper',
+      color: 'text.primary',
+      textDecoration: 'none',
+      transition: 'transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease',
+      '&:hover': {
+        borderColor: 'rgba(26,92,56,0.32)',
+        boxShadow: '0 22px 50px -38px rgba(18,66,42,0.75)',
+        transform: 'translateY(-4px)',
+      },
+      '&:hover .path-arrow': {
+        bgcolor: 'primary.main',
+        color: 'common.white',
+        transform: 'translateX(3px)',
+      },
+    }}
+  >
+    <Box
+      sx={{
+        display: 'grid',
+        width: 48,
+        height: 48,
+        placeItems: 'center',
+        borderRadius: 2,
+        bgcolor: 'rgba(26,92,56,0.08)',
+        color: 'primary.main',
+      }}
+    >
+      <Icon />
+    </Box>
+    <Typography
+      variant="overline"
+      sx={{ mt: 3, color: 'success.main', fontWeight: 700, letterSpacing: 1.3 }}
+    >
+      {eyebrow}
+    </Typography>
+    <Typography variant="h5" sx={{ mt: 0.5 }}>
+      {title}
+    </Typography>
+    <Typography color="text.secondary" sx={{ mt: 1.25, flexGrow: 1, lineHeight: 1.7 }}>
+      {description}
+    </Typography>
+    <Stack
+      direction="row"
+      alignItems="center"
+      justifyContent="space-between"
+      sx={{ mt: 3, pt: 2.5, borderTop: 1, borderColor: 'divider' }}
+    >
+      <Typography sx={{ color: 'primary.main', fontSize: '0.86rem', fontWeight: 750 }}>
+        {action}
+      </Typography>
+      <Box
+        className="path-arrow"
+        sx={{
+          display: 'grid',
+          width: 36,
+          height: 36,
+          placeItems: 'center',
+          border: 1,
+          borderColor: 'rgba(26,92,56,0.18)',
+          borderRadius: '50%',
+          color: 'primary.main',
+          transition: 'background-color 200ms ease, color 200ms ease, transform 200ms ease',
+        }}
+      >
+        <ArrowForwardRoundedIcon fontSize="small" />
+      </Box>
+    </Stack>
+  </Box>
+);
+
+const EnquiryPaths = (): JSX.Element => (
+  <Box
+    component="section"
+    aria-labelledby="contact-paths-title"
+    sx={{ bgcolor: '#F1F5EF', py: { xs: 7, md: 10 } }}
+  >
+    <Container>
+      <Box sx={{ maxWidth: 720, mb: 5 }}>
+        <Typography
+          variant="overline"
+          sx={{ color: 'success.main', fontWeight: 700, letterSpacing: 1.6 }}
+        >
+          Find the right path
+        </Typography>
+        <Typography
+          id="contact-paths-title"
+          variant="h2"
+          sx={{ mt: 1, fontSize: { xs: '2rem', md: '2.7rem' } }}
+        >
+          Looking for something specific?
+        </Typography>
+        <Typography color="text.secondary" sx={{ mt: 1.5 }}>
+          Choose the route that best matches your enquiry and connect with the right part of our
+          team.
+        </Typography>
+      </Box>
+
+      <Grid container spacing={3}>
+        <Grid size={{ xs: 12, md: 4 }} sx={{ display: 'flex' }}>
+          <EnquiryPath
+            icon={MarkEmailReadRoundedIcon}
+            eyebrow="General enquiries"
+            title="Ask a question"
+            description="For media, programme information, feedback, and everything that does not fit another category."
+            to="/contact#contact-form"
+            action="Use the contact form"
+          />
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }} sx={{ display: 'flex' }}>
+          <EnquiryPath
+            icon={HandshakeRoundedIcon}
+            eyebrow="Organizations"
+            title="Explore a partnership"
+            description="Collaborate through funding, technology, research, advocacy, or in-kind support."
+            to="/get-involved#partner"
+            action="Partnership enquiries"
+          />
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }} sx={{ display: 'flex' }}>
+          <EnquiryPath
+            icon={Diversity3RoundedIcon}
+            eyebrow="Individuals"
+            title="Volunteer or mentor"
+            description="Share your knowledge and experience with Africa's next generation of changemakers."
+            to="/get-involved#volunteer"
+            action="Join the network"
+          />
+        </Grid>
+      </Grid>
+    </Container>
+  </Box>
 );
 
 const Contact = (): JSX.Element => (
@@ -31,38 +466,55 @@ const Contact = (): JSX.Element => (
       title="Contact Us"
       description="Reach out to Impact Africa Alliance — let's build something impactful together."
     />
-    <PageHero
-      title="Contact Us"
-      subtitle="We would love to hear from you. Reach out and let's build something impactful together."
-    />
-    <Section>
-      <Grid container spacing={6}>
-        <Grid size={{ xs: 12, md: 5 }}>
-          <Typography variant="h5" gutterBottom>
-            Get in touch
-          </Typography>
-          <Stack spacing={2} sx={{ mt: 2 }}>
-            <InfoRow icon={<EmailIcon color="primary" />}>
-              <Link href={`mailto:${ORG.email}`}>{ORG.email}</Link>
-            </InfoRow>
-            <InfoRow icon={<PlaceIcon color="primary" />}>
-              Regional Offices: Ghana · Sierra Leone · Nigeria
-            </InfoRow>
-            <InfoRow icon={<LanguageIcon color="primary" />}>
-              <Link href={ORG.website} target="_blank" rel="noopener noreferrer">
-                www.impactafricaalliance.org
-              </Link>
-            </InfoRow>
-          </Stack>
+    <ContactHero />
+
+    <Box
+      component="section"
+      aria-labelledby="contact-form-title"
+      sx={{ position: 'relative', bgcolor: 'background.default', py: { xs: 7, md: 11 } }}
+    >
+      <Container>
+        <Grid container spacing={4} alignItems="stretch">
+          <Grid size={{ xs: 12, md: 5 }}>
+            <ContactInformation />
+          </Grid>
+          <Grid size={{ xs: 12, md: 7 }}>
+            <Box
+              id="contact-form"
+              sx={{
+                height: '100%',
+                p: { xs: 3.5, sm: 4.5, md: 5 },
+                border: 1,
+                borderColor: 'rgba(26,92,56,0.1)',
+                borderRadius: 4,
+                bgcolor: 'background.paper',
+              }}
+            >
+              <Typography
+                variant="overline"
+                sx={{ color: 'success.main', fontWeight: 700, letterSpacing: 1.5 }}
+              >
+                Send a message
+              </Typography>
+              <Typography
+                id="contact-form-title"
+                variant="h3"
+                sx={{ mt: 1, fontSize: { xs: '1.85rem', md: '2.35rem' } }}
+              >
+                Tell us what&apos;s on your mind.
+              </Typography>
+              <Typography color="text.secondary" sx={{ mt: 1.5, mb: 4, maxWidth: 610 }}>
+                Share a few details below. We&apos;ll make sure your message reaches the right
+                person.
+              </Typography>
+              <ContactForm />
+            </Box>
+          </Grid>
         </Grid>
-        <Grid size={{ xs: 12, md: 7 }}>
-          <Typography variant="h5" gutterBottom>
-            Send Us a Message
-          </Typography>
-          <ContactForm />
-        </Grid>
-      </Grid>
-    </Section>
+      </Container>
+    </Box>
+
+    <EnquiryPaths />
   </>
 );
 

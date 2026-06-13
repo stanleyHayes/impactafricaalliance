@@ -1,5 +1,6 @@
 export * from './common.js';
 export * from './auth.js';
+export * from './ai.js';
 export * from './article.js';
 export * from './story.js';
 export * from './team.js';

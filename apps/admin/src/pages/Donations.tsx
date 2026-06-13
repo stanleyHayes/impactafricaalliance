@@ -1,8 +1,14 @@
+import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
+import Stack from '@mui/material/Stack';
+import { alpha, useTheme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
-import { DataGrid, type GridColDef } from '@mui/x-data-grid';
+import type { GridColDef } from '@mui/x-data-grid';
 
+import { DataTable } from '../components/data/DataTable';
+import { EmptyState } from '../components/EmptyState';
+import { PageHeader } from '../components/PageHeader';
 import { useDonations } from '../lib/admin-hooks';
 
 const statusColor = (status: unknown): 'success' | 'warning' | 'error' | 'default' => {
@@ -41,23 +47,65 @@ const columns: GridColDef[] = [
   },
 ];
 
+const SummaryCard = ({ label, value }: { label: string; value: string }): JSX.Element => {
+  const theme = useTheme();
+  return (
+    <Box
+      sx={{
+        flex: 1,
+        minWidth: 150,
+        p: 2,
+        borderRadius: 2.5,
+        bgcolor: 'background.paper',
+        border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+      }}
+    >
+      <Typography variant="body2" color="text.secondary">
+        {label}
+      </Typography>
+      <Typography variant="h5" sx={{ fontWeight: 700, mt: 0.5 }}>
+        {value}
+      </Typography>
+    </Box>
+  );
+};
+
 const Donations = (): JSX.Element => {
   const { data, isLoading } = useDonations();
+  const items = data?.items ?? [];
+
+  const succeeded = items.filter((donation) => donation.status === 'succeeded');
+  const raised = succeeded.reduce((sum, donation) => sum + Number(donation.amountUsd ?? 0), 0);
+
   return (
     <>
-      <Typography variant="h4" gutterBottom>
-        Donations
-      </Typography>
-      <Box sx={{ height: 620, bgcolor: 'background.paper', borderRadius: 2, mt: 2 }}>
-        <DataGrid
-          rows={data?.items ?? []}
-          columns={columns}
-          loading={isLoading}
-          disableRowSelectionOnClick
-          pageSizeOptions={[25, 50, 100]}
-          initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
-        />
-      </Box>
+      <PageHeader
+        icon={<VolunteerActivismIcon />}
+        title="Donations"
+        description="Gifts received through the website, across all payment providers."
+        count={data?.total}
+      />
+
+      {!isLoading && items.length > 0 && (
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 3 }}>
+          <SummaryCard label="Total raised (succeeded)" value={`$${raised.toLocaleString()}`} />
+          <SummaryCard label="Successful gifts" value={String(succeeded.length)} />
+          <SummaryCard label="All records" value={String(data?.total ?? items.length)} />
+        </Stack>
+      )}
+
+      <DataTable
+        rows={items}
+        columns={columns}
+        loading={isLoading}
+        empty={
+          <EmptyState
+            icon={<VolunteerActivismIcon />}
+            title="No donations yet"
+            description="Completed and pending gifts from the website will be recorded here as they come in."
+          />
+        }
+      />
     </>
   );
 };

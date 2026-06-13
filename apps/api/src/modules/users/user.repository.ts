@@ -30,6 +30,13 @@ export class UserRepository {
     return UserModel.findByIdAndUpdate(id, changes, { new: true }).exec();
   }
 
+  async updateProfile(
+    id: string,
+    changes: { name?: string; email?: string },
+  ): Promise<UserHydrated | null> {
+    return UserModel.findByIdAndUpdate(id, changes, { new: true }).exec();
+  }
+
   async setPasswordHash(id: string, passwordHash: string): Promise<void> {
     await UserModel.updateOne({ _id: id }, { passwordHash }).exec();
   }

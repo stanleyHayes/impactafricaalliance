@@ -7,6 +7,7 @@ import { BrowserRouter } from 'react-router-dom';
 
 import { App } from './app/App';
 import { AuthProvider } from './auth/AuthContext';
+import { PreferencesProvider } from './lib/preferences';
 import { queryClient } from './lib/query-client';
 import { theme } from './theme/theme';
 
@@ -22,7 +23,9 @@ createRoot(container).render(
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <AuthProvider>
-            <App />
+            <PreferencesProvider>
+              <App />
+            </PreferencesProvider>
           </AuthProvider>
         </BrowserRouter>
       </QueryClientProvider>

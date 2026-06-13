@@ -1,4 +1,5 @@
 import type { GridColDef } from '@mui/x-data-grid';
+import type { ReactNode } from 'react';
 import type { ZodTypeAny } from 'zod';
 
 export type FieldType =
@@ -38,6 +39,15 @@ export interface ResourceConfig {
   fields: FieldConfig[];
   columns: GridColDef[];
   defaultValues: Record<string, unknown>;
+  /** Optional one-line subtitle shown beneath the page title. */
+  description?: string;
+  /** Optional icon used in the page header + empty state (ResourcePage falls back to a default). */
+  icon?: JSX.Element;
+  /** Optional empty-state copy overrides (ResourcePage derives sensible defaults otherwise). */
+  emptyTitle?: string;
+  emptyDescription?: string;
+  /** Optional live preview rendered from the current form values (e.g. articles). */
+  renderPreview?: (values: Record<string, unknown>) => ReactNode;
 }
 
 export type ResourceRow = Record<string, unknown> & { id: string };

@@ -2,8 +2,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { USER_ROLES, createUserSchema, type CreateUserInput, type PublicUser } from '@iaa/shared';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
+import GroupsIcon from '@mui/icons-material/Groups';
 import Alert from '@mui/material/Alert';
-import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import Dialog from '@mui/material/Dialog';
@@ -14,11 +14,14 @@ import IconButton from '@mui/material/IconButton';
 import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
-import Typography from '@mui/material/Typography';
-import { DataGrid, type GridColDef } from '@mui/x-data-grid';
+import Tooltip from '@mui/material/Tooltip';
+import type { GridColDef } from '@mui/x-data-grid';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { DataTable } from '../components/data/DataTable';
+import { EmptyState } from '../components/EmptyState';
+import { PageHeader } from '../components/PageHeader';
 import { useDeleteUser, useSaveUser, useUsers } from '../lib/admin-hooks';
 
 const NewUserDialog = ({ open, onClose }: { open: boolean; onClose: () => void }): JSX.Element => {
@@ -150,44 +153,68 @@ const Users = (): JSX.Element => {
       headerName: '',
       width: 80,
       sortable: false,
+      align: 'right',
+      headerAlign: 'right',
       renderCell: (params) => (
-        <IconButton
-          size="small"
-          color="error"
-          aria-label="Delete user"
-          onClick={() => {
-            if (window.confirm('Delete this user?')) {
-              remove.mutate(String(params.row.id));
-            }
-          }}
-        >
-          <DeleteIcon fontSize="small" />
-        </IconButton>
+        <Tooltip title="Delete user">
+          <IconButton
+            size="small"
+            aria-label="Delete user"
+            onClick={() => {
+              if (window.confirm('Delete this user?')) {
+                remove.mutate(String(params.row.id));
+              }
+            }}
+            sx={{
+              color: 'error.main',
+              bgcolor: 'rgba(211,47,47,0.06)',
+              '&:hover': { bgcolor: 'rgba(211,47,47,0.12)' },
+            }}
+          >
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
       ),
     },
   ];
 
   return (
     <>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
-        <Typography variant="h4">Users</Typography>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={() => setDialogOpen(true)}>
-          New user
-        </Button>
-      </Stack>
+      <PageHeader
+        icon={<GroupsIcon />}
+        title="Users"
+        description="Administrators and editors with access to this console."
+        count={users?.length}
+        action={
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setDialogOpen(true)}
+            sx={{ borderRadius: 2.5, px: 2.5 }}
+          >
+            New user
+          </Button>
+        }
+      />
       {remove.isError && (
         <Alert severity="error" sx={{ mb: 2 }}>
           Could not delete user. At least one administrator must remain.
         </Alert>
       )}
-      <Box sx={{ height: 560, bgcolor: 'background.paper', borderRadius: 2 }}>
-        <DataGrid
-          rows={users ?? []}
-          columns={columns}
-          loading={isLoading}
-          disableRowSelectionOnClick
-        />
-      </Box>
+      <DataTable
+        rows={users ?? []}
+        columns={columns}
+        loading={isLoading}
+        height={560}
+        empty={
+          <EmptyState
+            icon={<GroupsIcon />}
+            title="No users yet"
+            description="Invite teammates to help manage content and review activity."
+            primaryAction={{ label: 'Add user', onClick: () => setDialogOpen(true), icon: <AddIcon /> }}
+          />
+        }
+      />
       <NewUserDialog open={dialogOpen} onClose={() => setDialogOpen(false)} />
     </>
   );

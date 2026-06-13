@@ -1,10 +1,12 @@
+import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
 import Container from '@mui/material/Container';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 import { Suspense, lazy } from 'react';
 import { Route, Routes } from 'react-router-dom';
 
 import { Layout } from '../components/layout/Layout';
-import { CardGridSkeleton } from '../components/skeletons';
-
 const Home = lazy(() => import('../pages/Home'));
 const About = lazy(() => import('../pages/About'));
 const OurWork = lazy(() => import('../pages/OurWork'));
@@ -17,8 +19,27 @@ const NewsArticle = lazy(() => import('../pages/NewsArticle'));
 const NotFound = lazy(() => import('../pages/NotFound'));
 
 const PageFallback = (): JSX.Element => (
-  <Container sx={{ py: 10 }}>
-    <CardGridSkeleton count={6} />
+  <Container sx={{ py: { xs: 10, md: 14 } }}>
+    <Stack alignItems="center" spacing={2.5}>
+      <Box
+        sx={{
+          display: 'grid',
+          width: 72,
+          height: 72,
+          placeItems: 'center',
+          borderRadius: '50%',
+          bgcolor: 'rgba(26,92,56,0.07)',
+        }}
+      >
+        <CircularProgress size={34} thickness={3.5} />
+      </Box>
+      <Box sx={{ textAlign: 'center' }}>
+        <Typography sx={{ fontWeight: 750 }}>Loading the next page</Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+          Bringing the latest Alliance content into view.
+        </Typography>
+      </Box>
+    </Stack>
   </Container>
 );
 

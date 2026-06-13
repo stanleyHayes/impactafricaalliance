@@ -36,15 +36,31 @@ export const CardGridSkeleton = ({
   </Grid>
 );
 
-/** Skeleton for the animated impact counters row. */
+/** Skeleton for the animated impact-stat cards. */
 export const StatsSkeleton = (): JSX.Element => (
   <Grid container spacing={3}>
-    {Array.from({ length: 4 }, (_, index) => (
-      <Grid key={index} size={{ xs: 6, md: 3 }}>
-        <Stack alignItems="center" spacing={1}>
-          <Skeleton variant="text" width={90} height={64} />
-          <Skeleton variant="text" width={120} />
-        </Stack>
+    {Array.from({ length: 5 }, (_, index) => (
+      <Grid key={index} size={{ xs: 6, md: 4 }}>
+        <Card variant="outlined" sx={{ height: '100%' }}>
+          <CardContent sx={{ p: { xs: 2.5, md: 3 } }}>
+            <Stack alignItems="center" spacing={1.5}>
+              <Skeleton variant="rounded" width={48} height={48} sx={{ borderRadius: 2.5 }} />
+              <Skeleton variant="text" width={90} height={54} />
+              <Skeleton variant="text" width={130} height={20} />
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+    ))}
+  </Grid>
+);
+
+/** Skeleton for the partner logo grid. */
+export const PartnerLogosSkeleton = ({ count = 5 }: { count?: number }): JSX.Element => (
+  <Grid container spacing={3} justifyContent="center">
+    {Array.from({ length: count }, (_, index) => (
+      <Grid key={index} size={{ xs: 6, sm: 4, md: 3, lg: 2 }}>
+        <Skeleton variant="rounded" height={64} sx={{ borderRadius: 2 }} />
       </Grid>
     ))}
   </Grid>

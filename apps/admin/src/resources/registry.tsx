@@ -2,6 +2,7 @@ import {
   CONTENT_STATUSES,
   JOB_TYPES,
   TEAM_TIERS,
+  type MediaAsset,
   articleInputSchema,
   impactStatInputSchema,
   jobInputSchema,
@@ -10,8 +11,19 @@ import {
   storyInputSchema,
   teamMemberInputSchema,
 } from '@iaa/shared';
+import AssessmentIcon from '@mui/icons-material/Assessment';
+import AutoStoriesIcon from '@mui/icons-material/AutoStories';
+import Diversity3Icon from '@mui/icons-material/Diversity3';
+import HandshakeIcon from '@mui/icons-material/Handshake';
+import InsightsIcon from '@mui/icons-material/Insights';
+import NewspaperIcon from '@mui/icons-material/Newspaper';
+import WorkOutlineIcon from '@mui/icons-material/WorkOutline';
+import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
+import Stack from '@mui/material/Stack';
 import type { GridColDef } from '@mui/x-data-grid';
+
+import { ArticlePreview } from '../components/markdown/ArticlePreview';
 
 import type { ResourceConfig, SelectOption } from './types';
 
@@ -44,12 +56,79 @@ const booleanColumn = (field: string, headerName: string): GridColDef => ({
   ),
 });
 
+/** A compact image thumbnail cell rendered from a MediaAsset value. */
+const mediaColumn = (
+  field: string,
+  opts?: { circle?: boolean; fit?: 'cover' | 'contain' },
+): GridColDef => ({
+  field,
+  headerName: '',
+  width: 64,
+  sortable: false,
+  filterable: false,
+  renderCell: (params) => {
+    const url = (params.value as MediaAsset | undefined)?.url;
+    const radius = opts?.circle ? '50%' : 1.5;
+    if (!url) {
+      return <Box sx={{ width: 40, height: 40, borderRadius: radius, bgcolor: 'action.hover' }} />;
+    }
+    return (
+      <Box
+        component="img"
+        src={url}
+        alt=""
+        loading="lazy"
+        sx={{
+          width: 40,
+          height: 40,
+          borderRadius: radius,
+          objectFit: opts?.fit ?? 'cover',
+          bgcolor: 'background.default',
+          border: '1px solid',
+          borderColor: 'divider',
+        }}
+      />
+    );
+  },
+});
+
+const dateColumn = (field: string, headerName: string): GridColDef => ({
+  field,
+  headerName,
+  width: 130,
+  renderCell: (params) =>
+    params.value ? new Date(String(params.value)).toLocaleDateString() : '—',
+});
+
+const tagsColumn: GridColDef = {
+  field: 'tags',
+  headerName: 'Tags',
+  width: 220,
+  sortable: false,
+  renderCell: (params) =>
+    Array.isArray(params.value) && params.value.length > 0 ? (
+      <Stack direction="row" spacing={0.5} sx={{ flexWrap: 'wrap', gap: 0.5 }}>
+        {(params.value as string[]).slice(0, 3).map((tag) => (
+          <Chip key={tag} size="small" label={tag} sx={{ height: 20 }} />
+        ))}
+      </Stack>
+    ) : (
+      '—'
+    ),
+};
+
 export const RESOURCES: readonly ResourceConfig[] = [
   {
     key: 'articles',
     label: 'News & Blog',
     singular: 'Article',
+    description: 'Publish and manage newsroom stories and blog posts.',
+    icon: <NewspaperIcon />,
+    emptyTitle: 'No articles yet',
+    emptyDescription:
+      'Your published stories and drafts will live here. Write your first article to start building the Impact Africa Alliance newsroom.',
     createSchema: articleInputSchema,
+    renderPreview: (values) => <ArticlePreview values={values} />,
     defaultValues: { status: 'draft', tags: [], title: '', slug: '', excerpt: '', body: '' },
     fields: [
       { name: 'title', label: 'Title', type: 'text', wide: true },
@@ -61,15 +140,19 @@ export const RESOURCES: readonly ResourceConfig[] = [
       { name: 'coverImage', label: 'Cover image', type: 'image', wide: true },
     ],
     columns: [
-      { field: 'title', headerName: 'Title', flex: 1, minWidth: 220 },
-      { field: 'slug', headerName: 'Slug', flex: 1, minWidth: 160 },
+      mediaColumn('coverImage'),
+      { field: 'title', headerName: 'Title', flex: 1, minWidth: 240 },
       statusColumn,
+      tagsColumn,
+      dateColumn('publishedAt', 'Published'),
+      dateColumn('updatedAt', 'Updated'),
     ],
   },
   {
     key: 'stories',
     label: 'Impact Stories',
     singular: 'Story',
+    icon: <AutoStoriesIcon />,
     createSchema: storyInputSchema,
     defaultValues: { status: 'draft', featured: false, order: 0 },
     fields: [
@@ -85,6 +168,7 @@ export const RESOURCES: readonly ResourceConfig[] = [
       { name: 'order', label: 'Order', type: 'number' },
     ],
     columns: [
+      mediaColumn('photo'),
       { field: 'name', headerName: 'Name', flex: 1, minWidth: 160 },
       { field: 'country', headerName: 'Country', width: 140 },
       { field: 'program', headerName: 'Program', flex: 1, minWidth: 160 },
@@ -95,6 +179,7 @@ export const RESOURCES: readonly ResourceConfig[] = [
     key: 'team',
     label: 'Team',
     singular: 'Team member',
+    icon: <Diversity3Icon />,
     createSchema: teamMemberInputSchema,
     defaultValues: { tier: 'leadership', isActive: true, order: 0 },
     fields: [
@@ -108,6 +193,7 @@ export const RESOURCES: readonly ResourceConfig[] = [
       { name: 'isActive', label: 'Active', type: 'switch' },
     ],
     columns: [
+      mediaColumn('photo', { circle: true }),
       { field: 'name', headerName: 'Name', flex: 1, minWidth: 160 },
       { field: 'role', headerName: 'Role', flex: 1, minWidth: 160 },
       { field: 'tier', headerName: 'Tier', width: 140 },
@@ -118,6 +204,7 @@ export const RESOURCES: readonly ResourceConfig[] = [
     key: 'partners',
     label: 'Partners',
     singular: 'Partner',
+    icon: <HandshakeIcon />,
     createSchema: partnerInputSchema,
     defaultValues: { isActive: true, order: 0 },
     fields: [
@@ -128,6 +215,7 @@ export const RESOURCES: readonly ResourceConfig[] = [
       { name: 'isActive', label: 'Active', type: 'switch' },
     ],
     columns: [
+      mediaColumn('logo', { fit: 'contain' }),
       { field: 'name', headerName: 'Name', flex: 1, minWidth: 200 },
       { field: 'order', headerName: 'Order', width: 100 },
       booleanColumn('isActive', 'Active'),
@@ -137,6 +225,7 @@ export const RESOURCES: readonly ResourceConfig[] = [
     key: 'reports',
     label: 'Reports',
     singular: 'Report',
+    icon: <AssessmentIcon />,
     createSchema: reportInputSchema,
     defaultValues: { status: 'draft', order: 0, year: new Date().getFullYear() },
     fields: [
@@ -157,6 +246,7 @@ export const RESOURCES: readonly ResourceConfig[] = [
     key: 'jobs',
     label: 'Careers',
     singular: 'Job',
+    icon: <WorkOutlineIcon />,
     createSchema: jobInputSchema,
     defaultValues: { status: 'draft', type: 'full-time' },
     fields: [
@@ -180,6 +270,7 @@ export const RESOURCES: readonly ResourceConfig[] = [
     key: 'stats',
     label: 'Impact Stats',
     singular: 'Impact stat',
+    icon: <InsightsIcon />,
     createSchema: impactStatInputSchema,
     defaultValues: { suffix: '', order: 0, isActive: true },
     fields: [

@@ -16,6 +16,7 @@ export const createAuthRouter = (container: DependencyContainer): Router => {
   router.post('/login', sensitiveRateLimit, asyncHandler(controller.login));
   router.post('/refresh', sensitiveRateLimit, asyncHandler(controller.refresh));
   router.get('/me', requireAuth(tokens), asyncHandler(controller.me));
+  router.patch('/me', requireAuth(tokens), asyncHandler(controller.updateProfile));
   router.post(
     '/change-password',
     requireAuth(tokens),
