@@ -1,0 +1,49 @@
+# Render Blueprint — deploys the IAA API as a free web service.
+# Docs: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: iaa-api
+    runtime: node
+    plan: free
+    region: oregon
+    branch: main
+    autoDeploy: true
+    buildCommand: npm ci && npm run build:shared && npm run build -w @iaa/api
+    startCommand: node apps/api/dist/server.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      # Secrets & environment-specific values — set in the Render dashboard.
+      - key: MONGODB_URI
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false # e.g. https://iaa-marketing.vercel.app,https://iaa-admin.vercel.app
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SEED_ADMIN_EMAIL
+        sync: false
+      - key: SEED_ADMIN_PASSWORD
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: EMAIL_NOTIFY_TO
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: PAYSTACK_SECRET_KEY
+        sync: false
+      - key: PAYSTACK_WEBHOOK_SECRET
+        sync: false

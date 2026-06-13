@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+
+# Test / coverage
+coverage/
+.vitest/
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.log
+npm-debug.log*
+
+# Vercel / Render
+.vercel
+.render
+
+# Raw brand-identity source (large binaries). Processed web assets in
+# apps/*/public/brand ARE committed; regenerate via tools/process-brand-assets.mjs
+*.zip
+.brand-extract/
+
+# Local docx originals are tracked; extracted media is not regenerated in CI

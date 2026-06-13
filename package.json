@@ -1,0 +1,43 @@
+{
+  "name": "impact-africa-alliance",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Impact Africa Alliance — marketing website, admin console, and API (monorepo)",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20.19"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "overrides": {},
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "build:shared": "npm run build -w @iaa/shared",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "eslint . --max-warnings=0",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"**/*.{ts,tsx,js,cjs,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,cjs,json,md}\"",
+    "test": "npm run test --workspaces --if-present",
+    "dev:api": "npm run dev -w @iaa/api",
+    "dev:marketing": "npm run dev -w @iaa/marketing",
+    "dev:admin": "npm run dev -w @iaa/admin",
+    "seed": "npm run seed -w @iaa/api"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.0",
+    "@types/node": "^25.9.3",
+    "eslint": "^9.39.4",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.6.0",
+    "prettier": "^3.8.4",
+    "sharp": "^0.35.1",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.61.0"
+  }
+}
