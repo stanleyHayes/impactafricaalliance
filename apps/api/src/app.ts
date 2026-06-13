@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import { pinoHttp } from 'pino-http';
 import type { DependencyContainer } from 'tsyringe';
 
+import { buildCorsOptions } from './common/cors.js';
 import { errorMiddleware, notFoundHandler } from './common/error-middleware.js';
 import type { AppConfig } from './config/env.js';
 import type { AppLogger } from './config/logger.js';
@@ -29,7 +30,7 @@ export const createApp = (
   app.set('trust proxy', 1);
 
   app.use(helmet());
-  app.use(cors({ origin: config.corsOrigins, credentials: false }));
+  app.use(cors(buildCorsOptions(config)));
   app.use(compression());
   app.use(pinoHttp({ logger }));
 
