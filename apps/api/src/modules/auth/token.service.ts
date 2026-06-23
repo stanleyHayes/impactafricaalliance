@@ -18,9 +18,11 @@ export class TokenService {
 
   issueTokens(claims: AccessTokenClaims): AuthTokens {
     const accessToken = jwt.sign(claims, this.config.jwt.secret, {
+      algorithm: 'HS256',
       expiresIn: this.config.jwt.accessTtlSeconds,
     });
     const refreshToken = jwt.sign({ sub: claims.sub, type: 'refresh' }, this.config.jwt.secret, {
+      algorithm: 'HS256',
       expiresIn: this.config.jwt.refreshTtlSeconds,
     });
     return { accessToken, refreshToken };
@@ -28,7 +30,7 @@ export class TokenService {
 
   verifyAccessToken(token: string): AccessTokenClaims {
     try {
-      const payload = jwt.verify(token, this.config.jwt.secret);
+      const payload = jwt.verify(token, this.config.jwt.secret, { algorithms: ['HS256'] });
       if (typeof payload === 'string' || !this.isAccessClaims(payload)) {
         throw new UnauthorizedError('Invalid access token');
       }
@@ -40,7 +42,7 @@ export class TokenService {
 
   verifyRefreshToken(token: string): { sub: string } {
     try {
-      const payload = jwt.verify(token, this.config.jwt.secret);
+      const payload = jwt.verify(token, this.config.jwt.secret, { algorithms: ['HS256'] });
       if (typeof payload === 'string' || (payload as RefreshTokenClaims).type !== 'refresh') {
         throw new UnauthorizedError('Invalid refresh token');
       }

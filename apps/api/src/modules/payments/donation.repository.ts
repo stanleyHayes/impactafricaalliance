@@ -1,4 +1,4 @@
-import type { CreateDonationInput, DonationStatus } from '@iaa/shared';
+import { DonationStatus, type CreateDonationInput } from '@iaa/shared';
 import { injectable } from 'tsyringe';
 
 import { DonationModel, type DonationDocument } from './donation.model.js';
@@ -25,8 +25,18 @@ export class DonationRepository {
     return DonationModel.findByIdAndUpdate(id, { reference }, { new: true }).exec();
   }
 
+  /**
+   * Transition a donation to a terminal status, but ONLY from `Pending`. This makes webhook
+   * handling idempotent and prevents a replayed or out-of-order event (e.g. a late
+   * `charge.failed`) from downgrading an already-confirmed `Succeeded` donation. Returns the
+   * updated document, or `null` if the donation was already in a terminal state (no-op).
+   */
   setStatus(reference: string, status: DonationStatus) {
-    return DonationModel.findOneAndUpdate({ reference }, { status }, { new: true }).exec();
+    return DonationModel.findOneAndUpdate(
+      { reference, status: DonationStatus.Pending },
+      { status },
+      { new: true },
+    ).exec();
   }
 
   async list(

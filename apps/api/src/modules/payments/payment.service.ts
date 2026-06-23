@@ -7,6 +7,7 @@ import {
   type DonationInitResponse,
   type Paginated,
 } from '@iaa/shared';
+import type Stripe from 'stripe';
 import { inject, injectable } from 'tsyringe';
 
 import { ServiceUnavailableError, ValidationError } from '../../common/errors.js';
@@ -56,12 +57,19 @@ export class PaymentService {
       throw new ValidationError('Missing Stripe signature header');
     }
     const event = await this.stripe.constructEvent(rawBody, signature);
-    const reference = (event.data.object as { id?: string }).id;
+    const intent = event.data.object as Stripe.PaymentIntent;
+    const reference = intent.id;
     if (!reference) {
       return;
     }
     if (event.type === 'payment_intent.succeeded') {
-      await this.markStatus(reference, DonationStatus.Succeeded);
+      // The amount is fixed server-side at PaymentIntent creation; still reconcile the
+      // gateway-confirmed amount/currency/status before recording a successful donation.
+      await this.confirmSuccess(reference, {
+        gatewaySucceeded: intent.status === 'succeeded',
+        chargedMinorUnits: intent.amount_received || intent.amount,
+        currency: intent.currency,
+      });
     } else if (event.type === 'payment_intent.payment_failed') {
       await this.markStatus(reference, DonationStatus.Failed);
     }
@@ -72,11 +80,57 @@ export class PaymentService {
       throw new ValidationError('Invalid Paystack signature');
     }
     const event = JSON.parse(rawBody.toString('utf8')) as PaystackWebhookEvent;
-    if (event.event === 'charge.success') {
-      await this.markStatus(event.data.reference, DonationStatus.Succeeded);
-    } else if (event.event === 'charge.failed') {
-      await this.markStatus(event.data.reference, DonationStatus.Failed);
+    const reference = event.data.reference;
+    if (!reference) {
+      return;
     }
+    if (event.event === 'charge.success') {
+      // Never trust the webhook payload's amount: re-verify server-to-server with Paystack
+      // and reconcile the authoritative charged amount/currency before marking succeeded.
+      const verified = await this.paystack.verify(reference);
+      await this.confirmSuccess(reference, {
+        gatewaySucceeded: verified.status === 'success',
+        chargedMinorUnits: verified.amountUsdCents,
+        currency: verified.currency,
+      });
+    } else if (event.event === 'charge.failed') {
+      await this.markStatus(reference, DonationStatus.Failed);
+    }
+  }
+
+  /**
+   * Mark a donation `Succeeded` only after confirming, against the gateway's own record, that
+   * the transaction actually succeeded for the exact amount and currency we recorded. This
+   * closes the gap where a signed "success" event was trusted to imply the stored amount was
+   * paid, letting an attacker fund a far smaller charge against the same reference.
+   */
+  private async confirmSuccess(
+    reference: string,
+    gateway: { gatewaySucceeded: boolean; chargedMinorUnits: number; currency: string },
+  ): Promise<void> {
+    const donation = await this.donations.findByReference(reference);
+    if (!donation) {
+      this.logger.warn({ reference }, 'Donation webhook for unknown reference; ignoring');
+      return;
+    }
+    if (!gateway.gatewaySucceeded) {
+      this.logger.warn({ reference }, 'Gateway did not confirm success; not marking succeeded');
+      return;
+    }
+    const expectedMinorUnits = toMinorUnits(donation.amountUsd);
+    if (gateway.currency.toLowerCase() !== 'usd' || gateway.chargedMinorUnits !== expectedMinorUnits) {
+      this.logger.warn(
+        {
+          reference,
+          expectedMinorUnits,
+          chargedMinorUnits: gateway.chargedMinorUnits,
+          currency: gateway.currency,
+        },
+        'Donation amount/currency mismatch; refusing to mark succeeded',
+      );
+      return;
+    }
+    await this.markStatus(reference, DonationStatus.Succeeded);
   }
 
   async list(page: number, pageSize: number): Promise<Paginated<DonationDocument>> {

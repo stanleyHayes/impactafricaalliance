@@ -19,7 +19,7 @@ interface PaystackInitResponse {
 }
 
 interface PaystackVerifyResponse {
-  data: { status: string; reference: string; amount: number };
+  data: { status: string; reference: string; amount: number; currency: string };
 }
 
 /** Wrapper over the Paystack REST API for donation transactions. */
@@ -47,11 +47,17 @@ export class PaystackGateway {
     return { reference: data.data.reference, authorizationUrl: data.data.authorization_url };
   }
 
-  async verify(reference: string): Promise<{ status: string; amountUsdCents: number }> {
+  async verify(
+    reference: string,
+  ): Promise<{ status: string; amountUsdCents: number; currency: string }> {
     const { data } = await this.client().get<PaystackVerifyResponse>(
       `/transaction/verify/${encodeURIComponent(reference)}`,
     );
-    return { status: data.data.status, amountUsdCents: data.data.amount };
+    return {
+      status: data.data.status,
+      amountUsdCents: data.data.amount,
+      currency: data.data.currency,
+    };
   }
 
   /** Verify the `x-paystack-signature` header (HMAC-SHA512 of the raw body). */
