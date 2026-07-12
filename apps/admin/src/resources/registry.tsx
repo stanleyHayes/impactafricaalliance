@@ -1,11 +1,13 @@
 import {
   CONTENT_STATUSES,
   JOB_TYPES,
+  PAGE_KEYS,
   TEAM_TIERS,
   type MediaAsset,
   articleInputSchema,
   impactStatInputSchema,
   jobInputSchema,
+  pageSettingInputSchema,
   partnerInputSchema,
   reportInputSchema,
   storyInputSchema,
@@ -15,15 +17,17 @@ import AssessmentIcon from '@mui/icons-material/Assessment';
 import AutoStoriesIcon from '@mui/icons-material/AutoStories';
 import Diversity3Icon from '@mui/icons-material/Diversity3';
 import HandshakeIcon from '@mui/icons-material/Handshake';
+import ImageIcon from '@mui/icons-material/Image';
 import InsightsIcon from '@mui/icons-material/Insights';
 import NewspaperIcon from '@mui/icons-material/Newspaper';
-import WorkOutlineIcon from '@mui/icons-material/WorkOutline';
+import WorkOutlineIcon from '@mui/icons-material/WorkOutlineOutlined';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import type { GridColDef } from '@mui/x-data-grid';
 
 import { ArticlePreview } from '../components/markdown/ArticlePreview';
+import { formatUtcDate } from '../lib/date';
 
 import type { ResourceConfig, SelectOption } from './types';
 
@@ -97,7 +101,7 @@ const dateColumn = (field: string, headerName: string): GridColDef => ({
   headerName,
   width: 130,
   renderCell: (params) =>
-    params.value ? new Date(String(params.value)).toLocaleDateString() : '—',
+    params.value ? formatUtcDate(String(params.value)) : '—',
 });
 
 const tagsColumn: GridColDef = {
@@ -129,7 +133,7 @@ export const RESOURCES: readonly ResourceConfig[] = [
       'Your published stories and drafts will live here. Write your first article to start building the Impact Africa Alliance newsroom.',
     createSchema: articleInputSchema,
     renderPreview: (values) => <ArticlePreview values={values} />,
-    defaultValues: { status: 'draft', tags: [], title: '', slug: '', excerpt: '', body: '' },
+    defaultValues: { status: 'draft', tags: [], title: '', slug: '', excerpt: '', body: '', autoPostToSocial: false },
     fields: [
       { name: 'title', label: 'Title', type: 'text', wide: true },
       { name: 'slug', label: 'Slug', type: 'slug' },
@@ -138,6 +142,7 @@ export const RESOURCES: readonly ResourceConfig[] = [
       { name: 'body', label: 'Body', type: 'richtext', wide: true },
       { name: 'tags', label: 'Tags (comma separated)', type: 'tags', wide: true },
       { name: 'coverImage', label: 'Cover image', type: 'image', wide: true },
+      { name: 'autoPostToSocial', label: 'Auto-post to social media on publish', type: 'switch', wide: true },
     ],
     columns: [
       mediaColumn('coverImage'),
@@ -286,6 +291,34 @@ export const RESOURCES: readonly ResourceConfig[] = [
       { field: 'value', headerName: 'Value', width: 120 },
       { field: 'order', headerName: 'Order', width: 100 },
       booleanColumn('isActive', 'Active'),
+    ],
+  },
+  {
+    key: 'page-settings',
+    label: 'Page Settings',
+    singular: 'Page setting',
+    icon: <ImageIcon />,
+    description: 'Manage hero banner images for each marketing page.',
+    emptyTitle: 'No page settings yet',
+    emptyDescription: 'Add a hero image for each page so the marketing site can swap banners from the dashboard.',
+    createSchema: pageSettingInputSchema,
+    defaultValues: { pageKey: PAGE_KEYS[0], status: 'draft' },
+    fields: [
+      {
+        name: 'pageKey',
+        label: 'Page',
+        type: 'select',
+        options: PAGE_KEYS.map((key) => ({ value: key, label: key.replace(/-/g, ' ') })),
+        wide: true,
+      },
+      { name: 'heroImage', label: 'Hero image', type: 'image', wide: true },
+      { name: 'status', label: 'Status', type: 'select', options: toOptions(CONTENT_STATUSES) },
+    ],
+    columns: [
+      { field: 'pageKey', headerName: 'Page', flex: 1, minWidth: 180 },
+      statusColumn,
+      mediaColumn('heroImage'),
+      dateColumn('updatedAt', 'Updated'),
     ],
   },
 ];

@@ -10,6 +10,7 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useForm } from 'react-hook-form';
 
+import { ConsentCheckbox } from '../../components/ConsentCheckbox';
 import { useSubmitForm } from '../../lib/mutations';
 
 import { SubmitFeedback } from './SubmitFeedback';
@@ -24,11 +25,11 @@ export const ContactForm = (): JSX.Element => {
     formState: { errors },
   } = useForm<ContactSubmissionInput>({
     resolver: zodResolver(contactSubmissionSchema),
-    defaultValues: { type: SubmissionType.Contact },
+    defaultValues: { type: SubmissionType.Contact, consent: false },
   });
 
   const onSubmit = handleSubmit((values) =>
-    submit.mutate(values, { onSuccess: () => reset({ type: SubmissionType.Contact }) }),
+    submit.mutate(values, { onSuccess: () => reset({ type: SubmissionType.Contact, consent: false }) }),
   );
 
   return (
@@ -78,6 +79,9 @@ export const ContactForm = (): JSX.Element => {
             helperText={errors.message?.message}
             {...register('message')}
           />
+        </Grid>
+        <Grid size={12}>
+          <ConsentCheckbox register={register('consent')} error={errors.consent?.message} />
         </Grid>
       </Grid>
 

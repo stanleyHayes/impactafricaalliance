@@ -22,12 +22,14 @@ export const createSubmissionRouters = (container: DependencyContainer): Submiss
   const publicRouter = Router();
   publicRouter.post('/', sensitiveRateLimit, asyncHandler(controller.submit));
   publicRouter.post('/subscribe', sensitiveRateLimit, asyncHandler(controller.subscribe));
+  publicRouter.post('/unsubscribe', sensitiveRateLimit, asyncHandler(controller.unsubscribe));
 
   const adminRouter = Router();
   adminRouter.use(requireAuth(tokens), requireRole(UserRole.Admin, UserRole.Editor));
   adminRouter.get('/', asyncHandler(controller.list));
   adminRouter.patch('/:id', asyncHandler(controller.setStatus));
   adminRouter.get('/subscribers/list', asyncHandler(controller.listSubscribers));
+  adminRouter.delete('/subscribers/:id', asyncHandler(controller.deleteSubscriber));
 
   return { publicRouter, adminRouter };
 };

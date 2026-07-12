@@ -138,7 +138,7 @@ export const MarkdownEditor = ({
                   size="small"
                   onClick={tool.run}
                   aria-label={tool.title}
-                  sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
+                  sx={{ color: 'text.secondary', '&:hover': { color: 'text.primary' } }}
                 >
                   {tool.icon}
                 </IconButton>
@@ -160,7 +160,7 @@ export const MarkdownEditor = ({
                   textTransform: 'none',
                   fontWeight: 600,
                   color: 'text.secondary',
-                  '&.Mui-selected': { color: 'primary.main', bgcolor: alpha(theme.palette.primary.main, 0.1) },
+                  '&.Mui-selected': { color: 'text.primary', bgcolor: alpha(theme.palette.primary.main, 0.1) },
                 },
               }}
             >

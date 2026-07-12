@@ -6,16 +6,21 @@ import Divider from '@mui/material/Divider';
 import Drawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
+import { alpha } from '@mui/material/styles';
 import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 
 import { usePreferences } from '../../lib/preferences';
+import { Tour } from '../tour';
+import { useTour } from '../tour/TourContext';
 
 import { NotificationsBell } from './NotificationsBell';
 import { SidebarNav } from './SidebarNav';
+import { ThemeSelector } from './ThemeSelector';
+import { ThemeToggle } from './ThemeToggle';
 import { UserMenu } from './UserMenu';
 
 const DRAWER_WIDTH = 264;
@@ -24,9 +29,18 @@ const RAIL_WIDTH = 76;
 /** Authenticated admin layout: top bar + collapsible grouped sidebar + routed content. */
 export const AppShell = (): JSX.Element => {
   const { prefs, setPreference } = usePreferences();
+  const { start: startTour } = useTour();
   const [mobileOpen, setMobileOpen] = useState(false);
   const collapsed = prefs.sidebarCollapsed;
   const desktopWidth = collapsed ? RAIL_WIDTH : DRAWER_WIDTH;
+  const startedRef = useRef(false);
+
+  useEffect(() => {
+    if (startedRef.current || prefs.tourCompleted) return;
+    startedRef.current = true;
+    const timer = window.setTimeout(() => startTour(), 800);
+    return () => window.clearTimeout(timer);
+  }, [prefs.tourCompleted, startTour]);
 
   const renderDrawer = (mini: boolean): JSX.Element => (
     <Box
@@ -34,7 +48,11 @@ export const AppShell = (): JSX.Element => {
         display: 'flex',
         height: '100%',
         flexDirection: 'column',
-        background: 'linear-gradient(180deg, rgba(26,92,56,0.055) 0, rgba(255,255,255,0) 190px)',
+        background: (t) =>
+          `linear-gradient(180deg, ${alpha(t.palette.primary.main, 0.055)} 0, ${alpha(
+            t.palette.background.paper,
+            0,
+          )} 190px)`,
       }}
     >
       <Toolbar
@@ -56,7 +74,7 @@ export const AppShell = (): JSX.Element => {
             border: 1,
             borderColor: 'divider',
             borderRadius: 2,
-            bgcolor: 'common.white',
+            bgcolor: 'background.paper',
           }}
         >
           <Box component="img" src="/brand/icon-512.png" alt="IAA" sx={{ width: 34 }} />
@@ -76,7 +94,7 @@ export const AppShell = (): JSX.Element => {
         )}
       </Toolbar>
       <Divider />
-      <Box sx={{ flexGrow: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+      <Box id="admin-sidebar-nav" sx={{ flexGrow: 1, overflowY: 'auto', overflowX: 'hidden' }}>
         <SidebarNav collapsed={mini} onNavigate={() => setMobileOpen(false)} />
       </Box>
     </Box>
@@ -92,7 +110,7 @@ export const AppShell = (): JSX.Element => {
           zIndex: (t) => t.zIndex.drawer + 1,
           borderBottom: 1,
           borderColor: 'divider',
-          bgcolor: 'rgba(255,255,255,0.88)',
+          bgcolor: (t) => alpha(t.palette.background.paper, 0.88),
           backdropFilter: 'blur(14px)',
         }}
       >
@@ -127,7 +145,9 @@ export const AppShell = (): JSX.Element => {
               Manage content, community, and programme operations
             </Typography>
           </Box>
-          <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }} alignItems="center">
+          <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }} alignItems="center" id="admin-topbar-actions">
+            <ThemeSelector />
+            <ThemeToggle />
             <NotificationsBell />
             <Divider
               orientation="vertical"
@@ -170,7 +190,7 @@ export const AppShell = (): JSX.Element => {
               boxSizing: 'border-box',
               borderRight: 1,
               borderColor: 'divider',
-              bgcolor: 'rgba(255,255,255,0.96)',
+              bgcolor: (t) => alpha(t.palette.background.paper, 0.96),
               overflowX: 'hidden',
               transition: (t) =>
                 t.transitions.create('width', { duration: t.transitions.duration.shorter }),
@@ -202,6 +222,8 @@ export const AppShell = (): JSX.Element => {
           <Outlet />
         </Box>
       </Box>
+
+      <Tour />
     </Box>
   );
 };

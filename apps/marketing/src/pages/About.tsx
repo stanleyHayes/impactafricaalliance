@@ -1,4 +1,4 @@
-import { SDG_GOALS, brandColors, type TeamMember } from '@iaa/shared';
+import { SDG_GOALS, brandColors, brandFonts, type TeamMember } from '@iaa/shared';
 import type { SvgIconComponent } from '@mui/icons-material';
 import AccountBalanceRoundedIcon from '@mui/icons-material/AccountBalanceRounded';
 import AccountTreeRoundedIcon from '@mui/icons-material/AccountTreeRounded';
@@ -36,7 +36,7 @@ import { SectionReveal } from '../components/SectionReveal';
 import { Seo } from '../components/Seo';
 import { CardGridSkeleton, PartnerLogosSkeleton } from '../components/skeletons';
 import { IMAGES } from '../content/images';
-import { usePartners, useTeam } from '../lib/content-hooks';
+import { useHeroImage, usePartners, useTeam } from '../lib/content-hooks';
 
 const PROOF_POINTS = [
   { value: '5+', label: 'Countries in reach', text: 'A growing West African footprint.' },
@@ -144,8 +144,8 @@ const STRUCTURE_LEVELS = [
 ] as const;
 
 const AboutIntro = (): JSX.Element => (
-  <Section bgcolor={brandColors.offWhite}>
-    <Grid container spacing={{ xs: 4, md: 6 }} alignItems="stretch">
+  <Section bgcolor="background.default">
+    <Grid container spacing={{ xs: 4, md: 6 }} sx={{ alignItems: 'stretch' }}>
       <Grid size={{ xs: 12, md: 7 }}>
         <SectionReveal fillHeight>
           <Box
@@ -160,7 +160,7 @@ const AboutIntro = (): JSX.Element => (
               <Box sx={{ width: 36, height: 2, bgcolor: 'secondary.main' }} />
               <Typography
                 variant="overline"
-                sx={{ color: 'success.main', fontWeight: 750, letterSpacing: 1.8 }}
+                sx={{ color: 'text.primary', fontWeight: 750, letterSpacing: 1.8 }}
               >
                 Who We Are
               </Typography>
@@ -245,14 +245,14 @@ const AboutIntro = (): JSX.Element => (
               sx={{
                 height: '100%',
                 p: { xs: 2.5, md: 3 },
-                border: '1px solid rgba(26,92,56,0.1)',
+                border: '1px solid rgba(0,30,20,0.1)',
                 borderRadius: 3,
                 bgcolor: 'background.paper',
               }}
             >
               <Typography
                 sx={{
-                  color: 'primary.main',
+                  color: 'text.primary',
                   fontFamily: "'Montserrat', sans-serif",
                   fontSize: { xs: '2.2rem', md: '2.7rem' },
                   fontWeight: 850,
@@ -288,7 +288,7 @@ const DirectionCard = ({
       border: 0,
       borderRadius: 4,
       bgcolor: dark ? 'primary.main' : 'secondary.main',
-      color: dark ? 'common.white' : brandColors.charcoalBlack,
+      color: dark ? 'primary.contrastText' : brandColors.charcoalBlack,
       boxShadow: dark ? '0 28px 64px -48px rgba(18,66,42,0.9)' : 'none',
       '&::after': {
         position: 'absolute',
@@ -296,7 +296,7 @@ const DirectionCard = ({
         bottom: -110,
         width: 260,
         height: 260,
-        border: `1px solid ${dark ? 'rgba(255,255,255,0.12)' : 'rgba(26,92,56,0.16)'}`,
+        border: `1px solid ${dark ? alpha(brandColors.deepForest, 0.12) : 'rgba(0,30,20,0.16)'}`,
         borderRadius: '50%',
         content: '""',
       },
@@ -310,8 +310,8 @@ const DirectionCard = ({
           height: 58,
           placeItems: 'center',
           borderRadius: 2.5,
-          bgcolor: dark ? 'rgba(212,160,23,0.16)' : 'rgba(255,255,255,0.45)',
-          color: dark ? 'secondary.light' : 'primary.dark',
+          bgcolor: dark ? alpha(brandColors.gold, 0.16) : 'rgba(255,255,255,0.45)',
+          color: dark ? 'primary.contrastText' : 'primary.dark',
         }}
       >
         <Icon sx={{ fontSize: 30 }} />
@@ -321,7 +321,7 @@ const DirectionCard = ({
         sx={{
           display: 'block',
           mt: 3,
-          color: dark ? 'secondary.light' : 'primary.dark',
+          color: dark ? 'primary.contrastText' : 'primary.dark',
           fontWeight: 800,
           letterSpacing: 1.6,
         }}
@@ -339,7 +339,7 @@ const DirectionCard = ({
 );
 
 const VisionMission = (): JSX.Element => (
-  <Section>
+  <Section watermark="africa" watermarkPosition="bottom-right">
     <Grid container spacing={3}>
       {DIRECTION_CARDS.map((card, index) => (
         <Grid key={card.eyebrow} size={{ xs: 12, md: 6 }}>
@@ -367,20 +367,21 @@ const PurposeSection = (): JSX.Element => (
         right: -140,
         width: 420,
         height: 420,
-        border: '1px solid rgba(212,160,23,0.14)',
+        border: `1px solid ${alpha(brandColors.gold, 0.14)}`,
         borderRadius: '50%',
-        boxShadow: '0 0 0 60px rgba(212,160,23,0.025)',
+        boxShadow: `0 0 0 60px ${alpha(brandColors.gold, 0.025)}`,
         content: '""',
       },
     }}
   >
     <Box sx={{ position: 'relative' }}>
       <Section
+        color="light"
         eyebrow="Why We Exist"
         title="Our purpose is grounded in Africa's own blueprint for prosperity."
         subtitle="IAA equips youth and women with knowledge, skills, and resources to lead change, drive innovation, and contribute to Africa's socio-economic growth."
       >
-        <Grid container spacing={{ xs: 4, md: 5 }} alignItems="stretch">
+        <Grid container spacing={{ xs: 4, md: 5 }} sx={{ alignItems: 'stretch' }}>
           <Grid size={{ xs: 12, md: 5 }}>
             <SectionReveal fillHeight>
               <Box
@@ -411,7 +412,7 @@ const PurposeSection = (): JSX.Element => (
                       key={item}
                       label={item}
                       sx={{
-                        bgcolor: 'rgba(212,160,23,0.16)',
+                        bgcolor: alpha(brandColors.gold, 0.16),
                         color: 'secondary.light',
                         fontWeight: 700,
                       }}
@@ -496,9 +497,11 @@ const ValuesSection = (): JSX.Element => (
     title="Core values with practical weight."
     subtitle="These are not slogans. They shape how we choose partners, design programs, steward resources, and measure progress."
     textAlign="center"
-    bgcolor={brandColors.offWhite}
+    bgcolor="background.default"
+    watermark="radar"
+    watermarkPosition="top-left"
   >
-    <Grid container spacing={2.5} justifyContent="center">
+    <Grid container spacing={2.5} sx={{ justifyContent: 'center' }}>
       {VALUES.map((value, index) => {
         const Icon = value.icon;
         return (
@@ -509,14 +512,14 @@ const ValuesSection = (): JSX.Element => (
                   position: 'relative',
                   height: '100%',
                   overflow: 'hidden',
-                  border: '1px solid rgba(26,92,56,0.1)',
+                  border: '1px solid rgba(0,30,20,0.1)',
                   borderRadius: 4,
                   bgcolor: 'background.paper',
                   boxShadow: 'none',
                   transition:
                     'transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease',
                   '&:hover': {
-                    borderColor: 'rgba(26,92,56,0.26)',
+                    borderColor: 'rgba(0,30,20,0.26)',
                     boxShadow: '0 24px 54px -46px rgba(18,66,42,0.8)',
                     transform: 'translateY(-4px)',
                   },
@@ -531,15 +534,15 @@ const ValuesSection = (): JSX.Element => (
                         height: 54,
                         placeItems: 'center',
                         borderRadius: 2.5,
-                        bgcolor: 'rgba(26,92,56,0.08)',
-                        color: 'primary.main',
+                        bgcolor: 'rgba(0,30,20,0.08)',
+                        color: 'text.primary',
                       }}
                     >
                       <Icon sx={{ fontSize: 29 }} />
                     </Box>
                     <Typography
                       aria-hidden
-                      sx={{ color: 'rgba(26,92,56,0.18)', fontWeight: 850, letterSpacing: 1.5 }}
+                      sx={{ color: 'rgba(0,30,20,0.18)', fontWeight: 850, letterSpacing: 1.5 }}
                     >
                       {String(index + 1).padStart(2, '0')}
                     </Typography>
@@ -577,7 +580,7 @@ const Timeline = (): JSX.Element => (
                 gridTemplateColumns: { xs: '1fr', sm: '110px 1fr' },
                 gap: { xs: 1.5, sm: 2.5 },
                 p: { xs: 2.5, md: 3 },
-                border: '1px solid rgba(26,92,56,0.1)',
+                border: '1px solid rgba(0,30,20,0.1)',
                 borderRadius: 3,
                 bgcolor: 'background.paper',
               }}
@@ -585,8 +588,8 @@ const Timeline = (): JSX.Element => (
               <Box>
                 <Typography
                   sx={{
-                    color: isFuture ? 'secondary.dark' : 'primary.main',
-                    fontFamily: "'Playfair Display', Georgia, serif",
+                    color: isFuture ? 'secondary.dark' : 'text.primary',
+                    fontFamily: brandFonts.heading,
                     fontSize: { xs: '1.75rem', md: '2.15rem' },
                     fontStyle: 'italic',
                     fontWeight: 850,
@@ -620,7 +623,7 @@ const Timeline = (): JSX.Element => (
 
 const StorySection = (): JSX.Element => (
   <Section eyebrow="Our Story" title="A young alliance, built with a long horizon.">
-    <Grid container spacing={{ xs: 4, md: 6 }} alignItems="stretch">
+    <Grid container spacing={{ xs: 4, md: 6 }} sx={{ alignItems: 'stretch' }}>
       <Grid size={{ xs: 12, md: 4 }}>
         <SectionReveal fillHeight>
           <Box
@@ -633,21 +636,21 @@ const StorySection = (): JSX.Element => (
               p: { xs: 3, md: 4 },
               borderRadius: 4,
               bgcolor: 'primary.main',
-              color: 'common.white',
+              color: 'primary.contrastText',
             }}
           >
             <Box>
               <Typography
                 variant="overline"
-                sx={{ color: 'secondary.light', fontWeight: 800, letterSpacing: 1.7 }}
+                sx={{ color: 'primary.contrastText', fontWeight: 800, letterSpacing: 1.7 }}
               >
                 From conviction to institution
               </Typography>
-              <Typography variant="h4" sx={{ mt: 1.5, color: 'common.white' }}>
+              <Typography variant="h4" sx={{ mt: 1.5 }}>
                 We are building the kind of institution Africa&apos;s future deserves.
               </Typography>
             </Box>
-            <Typography sx={{ mt: 4, color: 'rgba(255,255,255,0.72)', lineHeight: 1.75 }}>
+            <Typography sx={{ mt: 4, color: alpha(brandColors.deepForest, 0.72), lineHeight: 1.75 }}>
               The work begins with practical programs today, and scales toward a Pan-African network
               of leadership, skills, and opportunity.
             </Typography>
@@ -672,7 +675,7 @@ const TeamEmptyState = (): JSX.Element => (
           position: 'relative',
           overflow: 'hidden',
           bgcolor: 'primary.main',
-          color: 'common.white',
+          color: 'primary.contrastText',
           p: { xs: 4, md: 5 },
         }}
       >
@@ -681,7 +684,7 @@ const TeamEmptyState = (): JSX.Element => (
             position: 'absolute',
             right: -26,
             bottom: -30,
-            color: 'rgba(255,255,255,0.07)',
+            color: alpha(brandColors.deepForest, 0.08),
             fontSize: 210,
           }}
         />
@@ -699,10 +702,10 @@ const TeamEmptyState = (): JSX.Element => (
           >
             <GroupsRoundedIcon sx={{ fontSize: 34 }} />
           </Box>
-          <Typography variant="h4" sx={{ mt: 3, color: 'common.white' }}>
+          <Typography variant="h4" sx={{ mt: 3 }}>
             A team as bold as the mission.
           </Typography>
-          <Typography sx={{ mt: 2, color: 'rgba(255,255,255,0.76)', lineHeight: 1.75 }}>
+          <Typography sx={{ mt: 2, color: alpha(brandColors.deepForest, 0.76), lineHeight: 1.75 }}>
             IAA is led by young African professionals united by one conviction: sustainable change
             must be homegrown.
           </Typography>
@@ -711,7 +714,7 @@ const TeamEmptyState = (): JSX.Element => (
       <Grid size={{ xs: 12, md: 7 }} sx={{ p: { xs: 4, md: 5 } }}>
         <Typography
           variant="overline"
-          sx={{ color: 'primary.main', fontWeight: 800, letterSpacing: 1.6 }}
+          sx={{ color: 'text.primary', fontWeight: 800, letterSpacing: 1.6 }}
         >
           Profiles coming soon
         </Typography>
@@ -730,10 +733,10 @@ const TeamEmptyState = (): JSX.Element => (
               label={label}
               variant="outlined"
               sx={{
-                borderColor: 'rgba(26,92,56,0.24)',
-                color: 'primary.main',
+                borderColor: 'rgba(0,30,20,0.24)',
+                color: 'text.primary',
                 fontWeight: 700,
-                '& .MuiChip-icon': { color: 'secondary.main' },
+                '& .MuiChip-icon': { color: 'text.secondary' },
               }}
             />
           ))}
@@ -758,12 +761,12 @@ const TeamMemberCard = ({ member }: { member: TeamMember }): JSX.Element => (
       width: '100%',
       height: '100%',
       overflow: 'hidden',
-      border: '1px solid rgba(26,92,56,0.1)',
+      border: '1px solid rgba(0,30,20,0.1)',
       borderRadius: 4,
       boxShadow: 'none',
       transition: 'transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease',
       '&:hover': {
-        borderColor: 'rgba(26,92,56,0.28)',
+        borderColor: 'rgba(0,30,20,0.28)',
         boxShadow: '0 24px 54px -46px rgba(18,66,42,0.78)',
         transform: 'translateY(-4px)',
       },
@@ -779,7 +782,7 @@ const TeamMemberCard = ({ member }: { member: TeamMember }): JSX.Element => (
             height: 88,
             flexShrink: 0,
             bgcolor: 'primary.main',
-            color: 'common.white',
+            color: 'primary.contrastText',
             fontSize: '1.8rem',
             fontWeight: 850,
             boxShadow: `0 0 0 4px ${brandColors.offWhite}, 0 0 0 6px ${brandColors.goldAmber}`,
@@ -791,7 +794,7 @@ const TeamMemberCard = ({ member }: { member: TeamMember }): JSX.Element => (
           <Typography variant="h6" sx={{ lineHeight: 1.2 }}>
             {member.name}
           </Typography>
-          <Typography sx={{ mt: 0.5, color: 'success.main', fontSize: '0.9rem', fontWeight: 750 }}>
+          <Typography sx={{ mt: 0.5, color: 'text.secondary', fontSize: '0.9rem', fontWeight: 750 }}>
             {member.role}
           </Typography>
           {member.linkedInUrl && (
@@ -806,8 +809,8 @@ const TeamMemberCard = ({ member }: { member: TeamMember }): JSX.Element => (
                 mt: 1,
                 ml: -0.5,
                 color: 'text.secondary',
-                bgcolor: 'rgba(26,92,56,0.06)',
-                '&:hover': { bgcolor: 'rgba(26,92,56,0.12)', color: 'primary.main' },
+                bgcolor: 'rgba(0,30,20,0.06)',
+                '&:hover': { bgcolor: 'rgba(0,30,20,0.12)', color: 'primary.main' },
               }}
             >
               <LinkedInIcon fontSize="small" />
@@ -834,7 +837,7 @@ const TeamSection = (): JSX.Element => {
       eyebrow="The People Behind IAA"
       title="Built by practitioners, organizers, and builders."
       subtitle="IAA brings together young African professionals with the cross-functional skills needed to move from ideas to durable institutions."
-      bgcolor={brandColors.offWhite}
+      bgcolor="background.default"
     >
       {isLoading && <CardGridSkeleton count={4} columns={4} />}
       {isEmpty && <TeamEmptyState />}
@@ -859,7 +862,7 @@ const OrgStructureSection = (): JSX.Element => (
     title="A distributed structure for Pan-African delivery."
     subtitle="IAA is designed to stay close to communities while keeping strategy, accountability, and learning connected across countries."
   >
-    <Grid container spacing={{ xs: 4, md: 5 }} alignItems="center">
+    <Grid container spacing={{ xs: 4, md: 5 }} sx={{ alignItems: 'center' }}>
       <Grid size={{ xs: 12, md: 4 }}>
         <SectionReveal fillHeight>
           <Box
@@ -868,14 +871,14 @@ const OrgStructureSection = (): JSX.Element => (
               p: { xs: 3, md: 4 },
               borderRadius: 4,
               bgcolor: 'primary.main',
-              color: 'common.white',
+              color: 'primary.contrastText',
             }}
           >
-            <AccountTreeRoundedIcon sx={{ color: 'secondary.light', fontSize: 44 }} />
-            <Typography variant="h4" sx={{ mt: 2, color: 'common.white' }}>
+            <AccountTreeRoundedIcon sx={{ color: 'primary.contrastText', fontSize: 44 }} />
+            <Typography variant="h4" sx={{ mt: 2 }}>
               Central clarity, local ownership.
             </Typography>
-            <Typography sx={{ mt: 2, color: 'rgba(255,255,255,0.75)', lineHeight: 1.75 }}>
+            <Typography sx={{ mt: 2, color: alpha(brandColors.deepForest, 0.75), lineHeight: 1.75 }}>
               The structure supports governance, program quality, and local adaptation without
               losing the human texture of community-led work.
             </Typography>
@@ -893,9 +896,9 @@ const OrgStructureSection = (): JSX.Element => (
                   gap: 2,
                   alignItems: 'center',
                   p: { xs: 2, md: 2.5 },
-                  border: '1px solid rgba(26,92,56,0.1)',
+                  border: '1px solid rgba(0,30,20,0.1)',
                   borderRadius: 3,
-                  bgcolor: index === 0 ? 'rgba(212,160,23,0.12)' : 'background.paper',
+                  bgcolor: index === 0 ? alpha(brandColors.gold, 0.12) : 'background.paper',
                 }}
               >
                 <Box
@@ -905,8 +908,8 @@ const OrgStructureSection = (): JSX.Element => (
                     height: { xs: 44, md: 54 },
                     placeItems: 'center',
                     borderRadius: '50%',
-                    bgcolor: index === 0 ? 'secondary.main' : 'rgba(26,92,56,0.08)',
-                    color: index === 0 ? brandColors.charcoalBlack : 'primary.main',
+                    bgcolor: index === 0 ? 'secondary.main' : 'rgba(0,30,20,0.08)',
+                    color: index === 0 ? brandColors.charcoalBlack : 'text.primary',
                     fontWeight: 850,
                   }}
                 >
@@ -941,12 +944,12 @@ const PartnersSection = (): JSX.Element => {
       title="Collaborating for impact."
       subtitle="Partnerships help IAA scale responsibly, learn faster, and connect community work to larger systems of change."
       textAlign="center"
-      bgcolor={brandColors.offWhite}
+      bgcolor="background.default"
     >
       {isLoading ? (
         <PartnerLogosSkeleton />
       ) : (
-        <Grid container spacing={2.5} alignItems="center" justifyContent="center">
+        <Grid container spacing={2.5} sx={{ alignItems: 'center', justifyContent: 'center' }}>
           {partners.map((partner, index) => (
             <Grid
               key={partner.id}
@@ -968,7 +971,7 @@ const PartnersSection = (): JSX.Element => {
                     justifyContent: 'center',
                     px: 2,
                     py: 1.5,
-                    border: '1px solid rgba(26,92,56,0.1)',
+                    border: '1px solid rgba(0,30,20,0.1)',
                     borderRadius: 3,
                     bgcolor: 'background.paper',
                     boxShadow: `inset 0 1px 0 ${alpha('#FFFFFF', 0.8)}`,
@@ -976,7 +979,7 @@ const PartnersSection = (): JSX.Element => {
                       'transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease',
                     '&:hover': partner.websiteUrl
                       ? {
-                          borderColor: 'rgba(26,92,56,0.26)',
+                          borderColor: 'rgba(0,30,20,0.26)',
                           boxShadow: '0 20px 42px -36px rgba(18,66,42,0.8)',
                           transform: 'translateY(-3px)',
                         }
@@ -1005,27 +1008,30 @@ const PartnersSection = (): JSX.Element => {
   );
 };
 
-const About = (): JSX.Element => (
-  <>
-    <Seo
-      title="About Us — Our Mission, Vision & Team"
-      description="Impact Africa Alliance is a purpose-driven, Pan-African organization committed to sustainable development and transformative change across Africa."
-    />
-    <PageHero
-      eyebrow="About Impact Africa Alliance"
-      title="Purpose-driven. Pan-African. Built to last."
-      subtitle="We equip youth, women, and communities with the skills, partnerships, and opportunities to shape Africa's future from the inside out."
-      image={IMAGES.community}
-    />
-    <AboutIntro />
-    <VisionMission />
-    <PurposeSection />
-    <ValuesSection />
-    <StorySection />
-    <TeamSection />
-    <OrgStructureSection />
-    <PartnersSection />
-  </>
-);
+const About = (): JSX.Element => {
+  const heroImage = useHeroImage('about', IMAGES.community);
+  return (
+    <>
+      <Seo
+        title="About Us — Our Mission, Vision & Team"
+        description="Impact Africa Alliance is a purpose-driven, Pan-African organization committed to sustainable development and transformative change across Africa."
+      />
+      <PageHero
+        eyebrow="About Impact Africa Alliance"
+        title="Purpose-driven. Pan-African. Built to last."
+        subtitle="We equip youth, women, and communities with the skills, partnerships, and opportunities to shape Africa's future from the inside out."
+        image={heroImage}
+      />
+      <AboutIntro />
+      <VisionMission />
+      <PurposeSection />
+      <ValuesSection />
+      <StorySection />
+      <TeamSection />
+      <OrgStructureSection />
+      <PartnersSection />
+    </>
+  );
+};
 
 export default About;

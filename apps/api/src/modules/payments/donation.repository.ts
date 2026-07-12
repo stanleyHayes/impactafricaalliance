@@ -39,6 +39,11 @@ export class DonationRepository {
     ).exec();
   }
 
+  async delete(id: string): Promise<boolean> {
+    const result = await DonationModel.deleteOne({ _id: id }).exec();
+    return result.deletedCount === 1;
+  }
+
   async list(
     page: number,
     pageSize: number,

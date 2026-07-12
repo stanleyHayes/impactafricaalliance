@@ -6,6 +6,7 @@ import HandshakeOutlinedIcon from '@mui/icons-material/HandshakeOutlined';
 import MarkEmailReadOutlinedIcon from '@mui/icons-material/MarkEmailReadOutlined';
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
+import WorkOutlineOutlinedIcon from '@mui/icons-material/WorkOutlineOutlined';
 import Badge from '@mui/material/Badge';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -20,6 +21,7 @@ import type { ComponentType, MouseEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useSubmissions, useUpdateSubmissionStatus } from '../../lib/admin-hooks';
+import { formatUtcShort } from '../../lib/date';
 import { usePreferences } from '../../lib/preferences';
 
 type Tint = 'primary' | 'secondary' | 'info';
@@ -34,6 +36,7 @@ const TYPE_META: Record<SubmissionTypeT, TypeMeta> = {
   [SubmissionType.Contact]: { Icon: EmailOutlinedIcon, label: 'Contact', tint: 'primary' },
   [SubmissionType.Partner]: { Icon: HandshakeOutlinedIcon, label: 'Partner', tint: 'secondary' },
   [SubmissionType.Volunteer]: { Icon: VolunteerActivismIcon, label: 'Volunteer', tint: 'info' },
+  [SubmissionType.Job]: { Icon: WorkOutlineOutlinedIcon, label: 'Job', tint: 'info' },
 };
 
 const str = (value: unknown): string | undefined =>
@@ -72,7 +75,7 @@ const relativeTime = (iso: string): string => {
   if (days < 7) {
     return `${days}d ago`;
   }
-  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  return formatUtcShort(iso);
 };
 
 /**
@@ -111,15 +114,16 @@ export const NotificationsBell = (): JSX.Element => {
     <>
       <Tooltip title="Notifications">
         <IconButton
+          id="admin-notifications-button"
           onClick={(event) => setAnchorEl(event.currentTarget)}
           aria-label={`Notifications${count ? `, ${count} new` : ''}`}
           aria-haspopup="dialog"
           aria-expanded={open}
           sx={{
-            color: open ? 'primary.main' : 'text.secondary',
+            color: open ? 'text.primary' : 'text.secondary',
             bgcolor: open ? (t) => alpha(t.palette.primary.main, 0.08) : 'transparent',
             '&:hover': {
-              color: 'primary.main',
+              color: 'text.primary',
               bgcolor: (t) => alpha(t.palette.primary.main, 0.08),
             },
           }}
@@ -195,7 +199,7 @@ export const NotificationsBell = (): JSX.Element => {
                 borderRadius: '50%',
                 display: 'grid',
                 placeItems: 'center',
-                color: 'primary.main',
+                color: 'text.primary',
                 bgcolor: (t) => alpha(t.palette.primary.main, 0.1),
               }}
             >
@@ -248,7 +252,7 @@ export const NotificationsBell = (): JSX.Element => {
                       borderRadius: 2,
                       display: 'grid',
                       placeItems: 'center',
-                      color: `${meta.tint}.main`,
+                      color: 'text.secondary',
                       bgcolor: (t) => alpha(t.palette[meta.tint].main, 0.12),
                     }}
                   >
@@ -277,7 +281,7 @@ export const NotificationsBell = (): JSX.Element => {
                         fontWeight: 700,
                         letterSpacing: '0.04em',
                         textTransform: 'uppercase',
-                        color: `${meta.tint}.main`,
+                        color: 'text.secondary',
                       }}
                     >
                       {meta.label}
@@ -312,7 +316,7 @@ export const NotificationsBell = (): JSX.Element => {
                         color: 'text.secondary',
                         opacity: { xs: 1, sm: 0 },
                         transition: (t) => t.transitions.create('opacity'),
-                        '&:hover': { color: 'primary.main' },
+                        '&:hover': { color: 'text.primary' },
                       }}
                     >
                       <MarkEmailReadOutlinedIcon fontSize="small" />
@@ -331,7 +335,7 @@ export const NotificationsBell = (): JSX.Element => {
             onClick={viewAll}
             sx={{
               fontWeight: 700,
-              color: 'primary.main',
+              color: 'text.primary',
               borderRadius: 1.5,
               '&:hover': { bgcolor: (t) => alpha(t.palette.primary.main, 0.06) },
             }}

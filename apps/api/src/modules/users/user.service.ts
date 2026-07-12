@@ -1,4 +1,13 @@
-import { UserRole, type CreateUserInput, type PublicUser, type UpdateUserInput } from '@iaa/shared';
+import {
+  ROLE_TEMPLATES,
+  UserRole,
+  type CreateUserInput,
+  type Permission,
+  type PublicUser,
+  type UpdateUserInput,
+  type UpdateUserPermissionsInput,
+  type UserRole as UserRoleType,
+} from '@iaa/shared';
 import { inject, injectable } from 'tsyringe';
 
 import { ConflictError, NotFoundError, ValidationError } from '../../common/errors.js';
@@ -20,6 +29,10 @@ export class UserService {
     return docs.map(toPublicUser);
   }
 
+  derivePermissions(role: UserRoleType, overrides?: Permission[]): Permission[] {
+    return overrides?.length ? overrides : ROLE_TEMPLATES[role];
+  }
+
   async create(input: CreateUserInput): Promise<PublicUser> {
     const existing = await this.users.findByEmail(input.email);
     if (existing) {
@@ -30,9 +43,21 @@ export class UserService {
       name: input.name,
       email: input.email,
       role: input.role,
+      permissions: this.derivePermissions(input.role),
       passwordHash,
     });
     return toPublicUser(created);
+  }
+
+  async updatePermissions(id: string, input: UpdateUserPermissionsInput): Promise<PublicUser> {
+    if (input.role !== UserRole.Admin) {
+      await this.guardLastAdmin(id);
+    }
+    const updated = await this.users.updatePermissions(id, input.role, input.permissions);
+    if (!updated) {
+      throw new NotFoundError('User');
+    }
+    return toPublicUser(updated);
   }
 
   async update(id: string, input: UpdateUserInput): Promise<PublicUser> {
@@ -60,7 +85,7 @@ export class UserService {
     }
   }
 
-  /** Prevent demoting/removing/deactivating the final active admin. */
+  /** Prevent demoting/removing/deactivating the final active admin or stripping their permissions. */
   private async guardLastAdmin(targetId: string): Promise<void> {
     const target = await this.users.findById(targetId);
     if (!target) {

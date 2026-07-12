@@ -73,7 +73,7 @@ export const AiAssistButton = ({ value, onChange, size = 'small' }: AiAssistButt
             onClick={() => setMenuOpen(true)}
             aria-label="AI writing assistant"
             sx={{
-              color: 'secondary.main',
+              color: 'text.secondary',
               '&:hover': { bgcolor: (t) => alpha(t.palette.secondary.main, 0.12) },
             }}
           >
@@ -98,7 +98,7 @@ export const AiAssistButton = ({ value, onChange, size = 'small' }: AiAssistButt
         </Typography>
         {AI_ASSIST_ACTIONS.map((action) => (
           <MenuItem key={action} onClick={() => run(action)} sx={{ py: 0.75 }}>
-            <ListItemText slotProps={{ primary: { fontSize: '0.875rem' } }}>
+            <ListItemText slotProps={{ primary: { sx: { fontSize: '0.875rem' } } }}>
               {ACTION_LABELS[action]}
             </ListItemText>
           </MenuItem>
@@ -115,7 +115,7 @@ export const AiAssistButton = ({ value, onChange, size = 'small' }: AiAssistButt
       >
         <Box sx={{ p: 2 }}>
           <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
-            <AutoAwesomeIcon fontSize="small" sx={{ color: 'secondary.main' }} />
+            <AutoAwesomeIcon fontSize="small" sx={{ color: 'text.secondary' }} />
             <Typography sx={{ fontWeight: 700 }}>AI suggestion</Typography>
           </Stack>
 

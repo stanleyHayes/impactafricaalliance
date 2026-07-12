@@ -13,6 +13,7 @@ import Typography from '@mui/material/Typography';
 import { useForm } from 'react-hook-form';
 
 import { useSubscribe } from '../../lib/mutations';
+import { ConsentCheckbox } from '../ConsentCheckbox';
 import { SocialLinks } from '../SocialLinks';
 
 /** Faint "alliance" constellation — connected nodes echoing the network-of-people brand idea. */
@@ -97,10 +98,16 @@ export const NewsletterBanner = (): JSX.Element => {
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<SubscribeInput>({ resolver: zodResolver(subscribeSchema) });
+  } = useForm<SubscribeInput>({
+    resolver: zodResolver(subscribeSchema),
+    defaultValues: { name: '', email: '', consent: false },
+  });
 
   const onSubmit = handleSubmit((values) => {
-    subscribe.mutate({ ...values, source: 'newsletter-banner' }, { onSuccess: () => reset() });
+    subscribe.mutate(
+      { ...values, source: 'newsletter-banner' },
+      { onSuccess: () => reset({ name: '', email: '', consent: false }) },
+    );
   });
 
   return (
@@ -108,7 +115,7 @@ export const NewsletterBanner = (): JSX.Element => {
       sx={{
         position: 'relative',
         overflow: 'hidden',
-        bgcolor: 'primary.main',
+        bgcolor: 'common.black',
         color: 'common.white',
         borderTop: `3px solid ${brandColors.goldAmber}`,
         py: { xs: 7, md: 10 },
@@ -116,14 +123,14 @@ export const NewsletterBanner = (): JSX.Element => {
     >
       <NetworkMotif />
       <Container sx={{ position: 'relative' }}>
-        <Grid container spacing={{ xs: 5, md: 8 }} alignItems="center">
+        <Grid container spacing={{ xs: 5, md: 8 }} sx={{ alignItems: 'center' }}>
           {/* Pitch */}
           <Grid size={{ xs: 12, md: 6 }}>
             <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
-              <MarkEmailReadRoundedIcon sx={{ color: 'secondary.main', fontSize: 20 }} />
+              <MarkEmailReadRoundedIcon sx={{ color: 'primary.main', fontSize: 20 }} />
               <Typography
                 variant="overline"
-                sx={{ color: 'secondary.main', fontWeight: 700, letterSpacing: 2 }}
+                sx={{ color: 'primary.main', fontWeight: 700, letterSpacing: 2 }}
               >
                 The IAA Newsletter
               </Typography>
@@ -163,7 +170,7 @@ export const NewsletterBanner = (): JSX.Element => {
             >
               {subscribe.isSuccess ? (
                 <Stack spacing={1.5} alignItems="flex-start">
-                  <CheckCircleRoundedIcon sx={{ color: 'secondary.main', fontSize: 44 }} />
+                  <CheckCircleRoundedIcon sx={{ color: 'primary.main', fontSize: 44 }} />
                   <Typography variant="h6" sx={{ fontWeight: 700 }}>
                     You&apos;re in — welcome to the movement!
                   </Typography>
@@ -182,16 +189,35 @@ export const NewsletterBanner = (): JSX.Element => {
                   <Stack spacing={1.5}>
                     <TextField
                       fullWidth
+                      placeholder="Your name (optional)"
+                      autoComplete="name"
+                      error={Boolean(errors.name)}
+                      helperText={errors.name?.message}
+                      sx={{
+                        bgcolor: 'background.default',
+                        borderRadius: 1,
+                        '& .MuiFormHelperText-root': { bgcolor: 'transparent', mx: 0 },
+                      }}
+                      {...register('name')}
+                    />
+                    <TextField
+                      fullWidth
                       placeholder="Enter your email address"
                       type="email"
+                      autoComplete="email"
                       error={Boolean(errors.email)}
                       helperText={errors.email?.message}
                       sx={{
-                        bgcolor: 'common.white',
+                        bgcolor: 'background.default',
                         borderRadius: 1,
                         '& .MuiFormHelperText-root': { bgcolor: 'transparent', mx: 0 },
                       }}
                       {...register('email')}
+                    />
+                    <ConsentCheckbox
+                      register={register('consent')}
+                      error={errors.consent?.message}
+                      label="I agree to receive updates and to the processing of my data under the"
                     />
                     <Button
                       type="submit"

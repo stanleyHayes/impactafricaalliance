@@ -12,6 +12,8 @@ describe('submissionSchema', () => {
       email: 'AMA@Example.COM',
       subject: 'Hello',
       message: 'I would love to learn more about your programs.',
+      consent: true,
+      consentVersion: '2026-07',
     });
 
     expect(result.success).toBe(true);
@@ -42,6 +44,8 @@ describe('submissionSchema', () => {
 describe('subscribeSchema', () => {
   it('requires a valid email', () => {
     expect(subscribeSchema.safeParse({ email: 'not-an-email' }).success).toBe(false);
-    expect(subscribeSchema.safeParse({ email: 'reader@iaa.org' }).success).toBe(true);
+    expect(
+      subscribeSchema.safeParse({ email: 'reader@iaa.org', consent: true, consentVersion: '2026-07' }).success,
+    ).toBe(true);
   });
 });

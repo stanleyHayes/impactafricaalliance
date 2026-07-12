@@ -7,11 +7,14 @@ export interface Preferences {
   sidebarCollapsed: boolean;
   /** Show the unread count badge on the navbar notifications bell. */
   showNotificationBadge: boolean;
+  /** Whether the user has completed or dismissed the initial admin tour. */
+  tourCompleted: boolean;
 }
 
 const DEFAULT_PREFERENCES: Preferences = {
   sidebarCollapsed: false,
   showNotificationBadge: true,
+  tourCompleted: false,
 };
 
 const STORAGE_KEY = 'iaa-admin-preferences';

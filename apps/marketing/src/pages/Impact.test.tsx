@@ -126,12 +126,15 @@ describe('ImpactNumbersSection', () => {
     expect(screen.getByText('Community projects')).toBeInTheDocument();
   });
 
-  it('renders nothing when no published impact metrics exist', () => {
+  it('renders fallback impact stats when no CMS metrics exist', () => {
     mockImpactStats([]);
 
-    const { container } = renderWithProviders(<ImpactNumbersSection />);
+    renderWithProviders(<ImpactNumbersSection />);
 
-    expect(container).toBeEmptyDOMElement();
+    expect(screen.getByRole('heading', { name: 'By the Numbers' })).toBeInTheDocument();
+    expect(screen.getAllByRole('article')).toHaveLength(5);
+    expect(screen.getByText('Young people trained')).toBeInTheDocument();
+    expect(screen.getByText('African countries reached')).toBeInTheDocument();
   });
 });
 

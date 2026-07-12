@@ -23,3 +23,14 @@ export const globalRateLimit: RateLimitRequestHandler = rateLimit({
     error: { code: 'RATE_LIMITED', message: 'Too many requests, please try again later' },
   },
 });
+
+/** Tight limit for payment webhooks: they should be low-volume and signed. */
+export const webhookRateLimit: RateLimitRequestHandler = rateLimit({
+  windowMs: ONE_MINUTE_MS,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: { code: 'RATE_LIMITED', message: 'Too many webhook requests' },
+  },
+});

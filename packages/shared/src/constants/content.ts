@@ -15,7 +15,15 @@ export const PRIMARY_NAV: readonly NavLink[] = [
   { label: 'Our Work', path: '/our-work' },
   { label: 'Impact', path: '/impact' },
   { label: 'Get Involved', path: '/get-involved' },
+  { label: 'Resources', path: '/resources' },
   { label: 'Contact', path: '/contact' },
+];
+
+export const FOOTER_LEGAL_LINKS: readonly NavLink[] = [
+  { label: 'Privacy Policy', path: '/privacy-policy' },
+  { label: 'Cookie Policy', path: '/cookie-policy' },
+  { label: 'Terms of Use', path: '/terms-of-use' },
+  { label: 'Privacy Request', path: '/privacy-request' },
 ];
 
 export interface PillarDefinition {
@@ -111,7 +119,7 @@ export const SOCIAL_LINKS = {
   twitter: 'https://twitter.com/impactafricaall',
   facebook: 'https://www.facebook.com/impactafricaalliance',
   youtube: 'https://www.youtube.com/@impactafricaalliance',
-  whatsapp: 'https://wa.me/0000000000',
+  whatsapp: 'https://wa.me/233000000000',
 } as const;
 
 export const ORG = {
@@ -121,4 +129,8 @@ export const ORG = {
   email: 'info@impactafricaalliance.org',
   careersEmail: 'careers@impactafricaalliance.org',
   website: 'https://www.impactafricaalliance.org',
+  phone: '+233 [Insert Number]',
+  headquarters: '[Insert Physical Address, Accra, Ghana]',
+  description:
+    'Impact Africa Alliance equips youth, women, and communities across Africa with the skills, tools, and opportunities to build a prosperous and equitable future.',
 } as const;

@@ -14,6 +14,7 @@ import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
+import { formatUtcDate } from '../../lib/date';
 import type { FieldConfig, ResourceConfig, ResourceRow } from '../../resources/types';
 import { Markdown } from '../markdown/Markdown';
 
@@ -93,9 +94,17 @@ const renderSelect: ValueRenderer = (_field, value) =>
   );
 
 const renderDateTime: ValueRenderer = (_field, value) => {
-  const date = typeof value === 'string' ? new Date(value) : null;
-  return date && !Number.isNaN(date.getTime()) ? (
-    <Typography variant="body2">{date.toLocaleString()}</Typography>
+  const iso = typeof value === 'string' ? value : null;
+  return iso ? (
+    <Typography variant="body2">
+      {formatUtcDate(iso, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })}
+    </Typography>
   ) : (
     <Empty />
   );
@@ -177,7 +186,7 @@ export const ResourceDetailDialog = ({
               variant="overline"
               sx={{
                 display: 'block',
-                color: 'primary.main',
+                color: 'text.primary',
                 fontWeight: 750,
                 letterSpacing: '0.1em',
               }}

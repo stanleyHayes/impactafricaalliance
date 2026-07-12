@@ -6,6 +6,9 @@ import type { AppConfig } from './config/env.js';
 import type { AppLogger } from './config/logger.js';
 import { ResendEmailProvider } from './providers/email.provider.js';
 import { CloudinaryMediaProvider } from './providers/media.provider.js';
+import { LinkedInGateway } from './providers/social/linkedin.gateway.js';
+import { MetaGateway } from './providers/social/meta.gateway.js';
+import { SocialPublisher } from './providers/social/social-publisher.js';
 import { TOKENS } from './tokens.js';
 
 /**
@@ -20,6 +23,9 @@ export const buildContainer = (config: AppConfig, logger: AppLogger): Dependency
   container.registerInstance(TOKENS.Logger, logger);
   container.register(TOKENS.EmailProvider, { useClass: ResendEmailProvider });
   container.register(TOKENS.MediaProvider, { useClass: CloudinaryMediaProvider });
+  container.register(LinkedInGateway, { useClass: LinkedInGateway });
+  container.register(MetaGateway, { useClass: MetaGateway });
+  container.register(SocialPublisher, { useClass: SocialPublisher });
 
   return container;
 };

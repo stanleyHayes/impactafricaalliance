@@ -1,4 +1,4 @@
-import { DonationStatus, SubmissionType, type Submission } from '@iaa/shared';
+import { DonationStatus, SubmissionType, brandColors, type Submission } from '@iaa/shared';
 import type { SvgIconComponent } from '@mui/icons-material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import ArrowOutwardIcon from '@mui/icons-material/ArrowOutward';
@@ -6,10 +6,11 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import GroupsIcon from '@mui/icons-material/Groups';
 import HandshakeIcon from '@mui/icons-material/Handshake';
-import MailOutlineIcon from '@mui/icons-material/MailOutline';
+import MailOutlineIcon from '@mui/icons-material/MailOutlineOutlined';
 import InboxIcon from '@mui/icons-material/MoveToInbox';
-import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+import PersonOutlineIcon from '@mui/icons-material/PersonOutlineOutlined';
 import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
+import WorkOutlineOutlinedIcon from '@mui/icons-material/WorkOutlineOutlined';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -34,6 +35,8 @@ import {
   useSubscribers,
   useUsers,
 } from '../lib/admin-hooks';
+import { formatUtcShort } from '../lib/date';
+import { pageGuides } from '../lib/page-guides';
 import { RESOURCES } from '../resources/registry';
 
 /** USD formatter — Donation.amountUsd is whole dollars (see payment.ts), not minor units. */
@@ -64,7 +67,7 @@ const relativeTime = (iso: string): string => {
   if (days < 7) {
     return `${days}d ago`;
   }
-  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  return formatUtcShort(iso);
 };
 
 /** Per-submission-type presentation. */
@@ -72,9 +75,10 @@ const SUBMISSION_META: Record<
   Submission['type'],
   { label: string; icon: SvgIconComponent; color: string }
 > = {
-  [SubmissionType.Contact]: { label: 'Contact', icon: MailOutlineIcon, color: '#1A5C38' },
-  [SubmissionType.Partner]: { label: 'Partner', icon: HandshakeIcon, color: '#D4A017' },
-  [SubmissionType.Volunteer]: { label: 'Volunteer', icon: VolunteerActivismIcon, color: '#2E7D4F' },
+  [SubmissionType.Contact]: { label: 'Contact', icon: MailOutlineIcon, color: brandColors.forestGreen },
+  [SubmissionType.Partner]: { label: 'Partner', icon: HandshakeIcon, color: brandColors.gold },
+  [SubmissionType.Volunteer]: { label: 'Volunteer', icon: VolunteerActivismIcon, color: brandColors.mint },
+  [SubmissionType.Job]: { label: 'Job', icon: WorkOutlineOutlinedIcon, color: brandColors.deepForest },
 };
 
 /** Pull a human label + supporting line from an untyped submission payload, defensively. */
@@ -120,7 +124,7 @@ const SubmissionRow = ({ submission }: { submission: Submission }): JSX.Element 
           variant="rounded"
           sx={{
             bgcolor: alpha(meta.color, 0.12),
-            color: meta.color,
+            color: 'text.secondary',
             width: 42,
             height: 42,
             borderRadius: 2.5,
@@ -129,7 +133,7 @@ const SubmissionRow = ({ submission }: { submission: Submission }): JSX.Element 
         >
           <Icon fontSize="small" />
         </Avatar>
-        <Box sx={{ minWidth: 0, flexGrow: 1 }}>
+        <Box sx={{ minWidth: 0, flex: '1 1 0%', overflow: 'hidden' }}>
           <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.25 }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 700 }} noWrap>
               {title}
@@ -144,7 +148,7 @@ const SubmissionRow = ({ submission }: { submission: Submission }): JSX.Element 
                 fontWeight: 700,
                 textTransform: 'uppercase',
                 bgcolor: alpha(meta.color, 0.12),
-                color: meta.color,
+                color: 'text.secondary',
                 '& .MuiChip-label': { px: 0.9 },
               }}
             />
@@ -226,7 +230,7 @@ const RecentSubmissions = ({
           No submissions yet
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 320 }}>
-          Inbound contact, partner and volunteer requests will appear here.
+          Inbound contact, partner, volunteer, and job requests will appear here.
         </Typography>
       </Stack>
     );
@@ -320,7 +324,7 @@ const StatCard = ({
             variant="rounded"
             sx={{
               bgcolor: alpha(accent, 0.12),
-              color: accent,
+              color: 'text.primary',
               width: 46,
               height: 46,
               borderRadius: 2.5,
@@ -342,7 +346,7 @@ const StatCard = ({
               transition: (t) =>
                 t.transitions.create(['color', 'background-color', 'transform']),
               '.MuiCardActionArea-root:hover &': {
-                color: accent,
+                color: 'text.primary',
                 bgcolor: alpha(accent, 0.12),
                 transform: 'translate(2px, -2px)',
               },
@@ -441,7 +445,7 @@ const buildRoleStat = (isAdmin: boolean, users: ReturnType<typeof useUsers>): St
       caption: 'Console accounts',
       icon: GroupsIcon,
       to: '/users',
-      accent: '#2E7D4F',
+      accent: brandColors.mint,
       loading: users.isLoading,
     };
   }
@@ -451,7 +455,7 @@ const buildRoleStat = (isAdmin: boolean, users: ReturnType<typeof useUsers>): St
     caption: 'Collections to manage',
     icon: PersonOutlineIcon,
     to: `/content/${RESOURCES[0]?.key ?? ''}`,
-    accent: '#2E7D4F',
+    accent: brandColors.mint,
     loading: false,
   };
 };
@@ -493,7 +497,7 @@ const buildStats = (isAdmin: boolean, q: Queries): StatCardProps[] => {
       caption: newCount > 0 ? 'Awaiting review' : 'All caught up',
       icon: InboxIcon,
       to: '/submissions',
-      accent: '#1A5C38',
+      accent: brandColors.forestGreen,
       loading: q.newSubmissions.isLoading,
     },
     {
@@ -502,7 +506,7 @@ const buildStats = (isAdmin: boolean, q: Queries): StatCardProps[] => {
       caption: 'Newsletter audience',
       icon: MailOutlineIcon,
       to: '/subscribers',
-      accent: '#2E7D4F',
+      accent: brandColors.mint,
       loading: q.subscribers.isLoading,
     },
     {
@@ -511,7 +515,7 @@ const buildStats = (isAdmin: boolean, q: Queries): StatCardProps[] => {
       caption: donationSummary.caption,
       icon: VolunteerActivismIcon,
       to: '/donations',
-      accent: '#D4A017',
+      accent: brandColors.gold,
       loading: q.donations.isLoading,
     },
     buildRoleStat(isAdmin, q.users),
@@ -542,9 +546,9 @@ const ContentTile = ({
       transition: (t) =>
         t.transitions.create(['border-color', 'background-color', 'box-shadow']),
       '&:hover': {
-        borderColor: alpha('#1A5C38', 0.4),
-        bgcolor: alpha('#1A5C38', 0.04),
-        boxShadow: `0 8px 18px -14px ${alpha('#1A5C38', 0.6)}`,
+        borderColor: alpha(brandColors.forestGreen, 0.4),
+        bgcolor: alpha(brandColors.forestGreen, 0.04),
+        boxShadow: `0 8px 18px -14px ${alpha(brandColors.forestGreen, 0.6)}`,
       },
     }}
   >
@@ -557,18 +561,18 @@ const ContentTile = ({
         '& .MuiCardActionArea-focusHighlight': { opacity: 0 },
       }}
     >
-      <Stack direction="row" alignItems="center" spacing={1.25}>
+      <Stack direction="row" alignItems="center" spacing={1.25} sx={{ overflow: 'hidden' }}>
         <Avatar
           variant="rounded"
           sx={{
             width: 36,
             height: 36,
             borderRadius: 2,
-            bgcolor: alpha('#1A5C38', 0.1),
-            color: 'primary.main',
+            bgcolor: alpha(brandColors.forestGreen, 0.1),
+            color: 'text.primary',
             fontSize: 15,
             fontWeight: 800,
-            boxShadow: `inset 0 0 0 1px ${alpha('#1A5C38', 0.16)}`,
+            boxShadow: `inset 0 0 0 1px ${alpha(brandColors.forestGreen, 0.16)}`,
           }}
         >
           {label.charAt(0).toUpperCase()}
@@ -578,7 +582,7 @@ const ContentTile = ({
             {label}
           </Typography>
           <Typography variant="caption" color="text.secondary" noWrap>
-            Edit {singular.toLowerCase()} entries
+            Edit {singular.toLowerCase()}
           </Typography>
         </Box>
         <ChevronRightIcon
@@ -589,7 +593,7 @@ const ContentTile = ({
             flexShrink: 0,
             transition: (t) => t.transitions.create(['color', 'transform']),
             '.MuiCardActionArea-root:hover &': {
-              color: 'primary.main',
+              color: 'text.primary',
               transform: 'translateX(2px)',
             },
           }}
@@ -624,6 +628,7 @@ const Dashboard = (): JSX.Element => {
         icon={<DashboardIcon />}
         title="Dashboard"
         description={`Welcome back, ${firstName}. ${subtitle}`}
+        help={pageGuides.Dashboard}
         action={
           <Stack
             direction={{ xs: 'column', sm: 'row' }}
@@ -653,7 +658,7 @@ const Dashboard = (): JSX.Element => {
       />
       <Stack spacing={3.5}>
         {/* KPI stat cards — equal height */}
-        <Grid container spacing={2.5}>
+        <Grid id="admin-dashboard-stats" container spacing={2.5}>
           {stats.map((stat) => (
             <Grid key={stat.label} size={{ xs: 12, sm: 6, md: 3 }}>
               <StatCard {...stat} />
@@ -662,7 +667,7 @@ const Dashboard = (): JSX.Element => {
         </Grid>
 
         {/* Two-column working area */}
-        <Grid container spacing={2.5} alignItems="stretch">
+        <Grid container spacing={2.5} sx={{ alignItems: 'stretch' }}>
           <Grid size={{ xs: 12, md: 7 }}>
             <Panel
               title="Recent submissions"

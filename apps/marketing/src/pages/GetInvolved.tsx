@@ -1,4 +1,4 @@
-import { ORG, type Job } from '@iaa/shared';
+import { ORG, brandColors, brandFonts, type Job } from '@iaa/shared';
 import type { SvgIconComponent } from '@mui/icons-material';
 import BusinessCenterRoundedIcon from '@mui/icons-material/BusinessCenterRounded';
 import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
@@ -6,17 +6,19 @@ import HandshakeRoundedIcon from '@mui/icons-material/HandshakeRounded';
 import VolunteerActivismRoundedIcon from '@mui/icons-material/VolunteerActivismRounded';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import ButtonBase from '@mui/material/ButtonBase';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Chip from '@mui/material/Chip';
+import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
-import Tab from '@mui/material/Tab';
-import Tabs from '@mui/material/Tabs';
+import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
-import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Link as RouterLink, useLocation } from 'react-router-dom';
 
+import { MintSurface } from '../components/MintSurface';
 import { PageHero } from '../components/PageHero';
 import { Section } from '../components/Section';
 import { Seo } from '../components/Seo';
@@ -25,7 +27,7 @@ import { IMAGES } from '../content/images';
 import { DonateForm } from '../features/donate/DonateForm';
 import { PartnerForm } from '../features/forms/PartnerForm';
 import { VolunteerForm } from '../features/forms/VolunteerForm';
-import { useJobs } from '../lib/content-hooks';
+import { useHeroImage, useJobs } from '../lib/content-hooks';
 
 const TABS = ['partner', 'volunteer', 'donate', 'careers'] as const;
 type TabKey = (typeof TABS)[number];
@@ -70,14 +72,119 @@ const TAB_DETAILS: Record<
 
 const isTabKey = (value: string): value is TabKey => (TABS as readonly string[]).includes(value);
 
+interface PillTabsProps {
+  value: TabKey;
+  onChange: (value: TabKey) => void;
+  options: { value: TabKey; label: string; icon: SvgIconComponent }[];
+}
+
+const PillTabs = ({ value, onChange, options }: PillTabsProps): JSX.Element => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const [pillStyle, setPillStyle] = useState<React.CSSProperties>({ opacity: 0 });
+
+  useLayoutEffect(() => {
+    const measure = (): void => {
+      const container = containerRef.current;
+      const selectedIndex = options.findIndex((option) => option.value === value);
+      const selected = tabRefs.current[selectedIndex];
+      if (!container || !selected) {
+        setPillStyle((prev) => ({ ...prev, opacity: 0 }));
+        return;
+      }
+      const containerRect = container.getBoundingClientRect();
+      const selectedRect = selected.getBoundingClientRect();
+      setPillStyle({
+        opacity: 1,
+        width: selectedRect.width,
+        height: selectedRect.height,
+        top: selectedRect.top - containerRect.top,
+        transform: `translateX(${selectedRect.left - containerRect.left + container.scrollLeft}px)`,
+      });
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [value, options]);
+
+  return (
+    <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+      <Box
+        ref={containerRef}
+        role="tablist"
+        sx={{
+          position: 'relative',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 0.75,
+          overflowX: 'auto',
+          p: 1.25,
+        }}
+      >
+        <Box
+          aria-hidden
+          sx={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            borderRadius: 999,
+            bgcolor: 'primary.main',
+            boxShadow: '0 2px 8px rgba(0,214,139,0.35)',
+            pointerEvents: 'none',
+            transition:
+              'transform 360ms cubic-bezier(0.22, 1, 0.36, 1), width 360ms cubic-bezier(0.22, 1, 0.36, 1), height 200ms ease, opacity 200ms ease',
+            ...pillStyle,
+          }}
+        />
+        {options.map((option, index) => {
+          const Icon = option.icon;
+          const selected = option.value === value;
+          return (
+            <ButtonBase
+              key={option.value}
+              ref={(el) => {
+                tabRefs.current[index] = el;
+              }}
+              role="tab"
+              aria-selected={selected}
+              tabIndex={selected ? 0 : -1}
+              onClick={() => onChange(option.value)}
+              sx={{
+                position: 'relative',
+                zIndex: 1,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 1,
+                minHeight: 48,
+                px: { xs: 2, md: 2.5 },
+                py: 1,
+                borderRadius: 999,
+                color: selected ? 'primary.contrastText' : 'text.secondary',
+                fontFamily: brandFonts.body,
+                fontSize: '0.9rem',
+                fontWeight: selected ? 700 : 600,
+                whiteSpace: 'nowrap',
+                transition: 'color 150ms ease',
+              }}
+            >
+              <Icon sx={{ fontSize: 20 }} />
+              {option.label}
+            </ButtonBase>
+          );
+        })}
+      </Box>
+    </Box>
+  );
+};
+
 const JobRow = ({ job }: { job: Job }): JSX.Element => (
   <Card
     variant="outlined"
     sx={{
-      borderColor: 'rgba(26,92,56,0.14)',
+      borderColor: 'rgba(0,30,20,0.14)',
       transition: 'transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease',
       '&:hover': {
-        borderColor: 'rgba(26,92,56,0.34)',
+        borderColor: 'rgba(0,30,20,0.34)',
         boxShadow: '0 18px 38px -30px rgba(18,66,42,0.7)',
         transform: 'translateY(-2px)',
       },
@@ -93,11 +200,14 @@ const JobRow = ({ job }: { job: Job }): JSX.Element => (
           </Stack>
         </Box>
         <Button
+          component={RouterLink}
+          to={`/get-involved/careers/${job.slug}/apply`}
           variant="contained"
-          href={job.applyUrl ?? `mailto:${ORG.careersEmail}`}
-          target={job.applyUrl ? '_blank' : undefined}
-          rel={job.applyUrl ? 'noopener noreferrer' : undefined}
-          sx={{ alignSelf: 'center' }}
+          sx={{
+            width: { xs: '100%', sm: 'auto' },
+            alignSelf: { xs: 'stretch', sm: 'center' },
+            py: { xs: 1.25, sm: 1 },
+          }}
         >
           Apply
         </Button>
@@ -117,8 +227,15 @@ const CareersTab = (): JSX.Element => {
       <Typography color="text.secondary">
         No open positions at this time. We are always keen to connect with talented individuals —
         send your CV and a brief motivation letter to{' '}
-        <a href={`mailto:${ORG.careersEmail}`}>{ORG.careersEmail}</a> and we will be in touch when a
-        suitable opportunity arises.
+        <Link
+          href={`mailto:${ORG.careersEmail}`}
+          color="secondary.main"
+          underline="hover"
+          sx={{ fontWeight: 600 }}
+        >
+          {ORG.careersEmail}
+        </Link>{' '}
+        and we will be in touch when a suitable opportunity arises.
       </Typography>
     );
   }
@@ -142,6 +259,8 @@ const GetInvolved = (): JSX.Element => {
     }
   }, [hash]);
 
+  const heroImage = useHeroImage('get-involved', IMAGES.programs['climate-action']);
+
   return (
     <>
       <Seo
@@ -152,76 +271,47 @@ const GetInvolved = (): JSX.Element => {
         eyebrow="Take Action"
         title="Get Involved"
         subtitle="There are many ways to be part of Africa's transformation. Find yours."
-        image={IMAGES.programs['climate-action']}
+        image={heroImage}
+        watermark="africa"
       />
 
-      <Section bgcolor="#F1F5EF">
+      <Section bgcolor="background.default" watermark="africa" watermarkPosition="bottom-right">
         <Paper
           sx={{
             overflow: 'hidden',
             border: 1,
-            borderColor: 'rgba(26,92,56,0.12)',
+            borderColor: 'rgba(0,30,20,0.12)',
             borderRadius: 4,
             bgcolor: 'background.paper',
             boxShadow: '0 28px 70px -58px rgba(18,66,42,0.85)',
           }}
         >
-          <Box sx={{ overflowX: 'auto', borderBottom: 1, borderColor: 'divider', p: 1.25 }}>
-            <Tabs
-              value={tab}
-              onChange={(_event, value: TabKey) => {
-                setTab(value);
-                window.history.replaceState(null, '', `#${value}`);
-              }}
-              variant="scrollable"
-              scrollButtons="auto"
-              TabIndicatorProps={{ style: { display: 'none' } }}
-              sx={{
-                minHeight: 52,
-                '& .MuiTabs-flexContainer': { gap: 0.75 },
-                '& .MuiTab-root': {
-                  minHeight: 52,
-                  px: { xs: 2, md: 2.5 },
-                  color: 'text.secondary',
-                  '&.Mui-selected': {
-                    bgcolor: 'primary.main',
-                    color: 'common.white',
-                    boxShadow: '0 10px 24px -16px rgba(18,66,42,0.8)',
-                  },
-                },
-              }}
-            >
-              {TABS.map((key) => {
-                const details = TAB_DETAILS[key];
-                const Icon = details.icon;
-                return (
-                  <Tab
-                    key={key}
-                    value={key}
-                    label={details.label}
-                    icon={<Icon sx={{ fontSize: 20 }} />}
-                    iconPosition="start"
-                  />
-                );
-              })}
-            </Tabs>
-          </Box>
+          <PillTabs
+            value={tab}
+            onChange={(value) => {
+              setTab(value);
+              window.history.replaceState(null, '', `#${value}`);
+            }}
+            options={TABS.map((key) => ({
+              value: key,
+              label: TAB_DETAILS[key].label,
+              icon: TAB_DETAILS[key].icon,
+            }))}
+          />
 
-          <Box
+          <MintSurface
             sx={{
               position: 'relative',
               overflow: 'hidden',
               px: { xs: 3, sm: 4, md: 5 },
               py: { xs: 4, md: 5 },
-              bgcolor: 'primary.dark',
-              color: 'common.white',
               '&::after': {
                 position: 'absolute',
                 right: -90,
                 bottom: -170,
                 width: 300,
                 height: 300,
-                border: '1px solid rgba(212,160,23,0.18)',
+                border: `1px solid ${alpha(brandColors.gold, 0.18)}`,
                 borderRadius: '50%',
                 content: '""',
               },
@@ -254,7 +344,7 @@ const GetInvolved = (): JSX.Element => {
                   <Box>
                     <Typography
                       variant="overline"
-                      sx={{ color: 'secondary.light', fontWeight: 750, letterSpacing: 1.6 }}
+                      sx={{ color: 'rgba(14,42,34,0.58)', fontWeight: 750, letterSpacing: 1.6 }}
                     >
                       {details.eyebrow}
                     </Typography>
@@ -262,7 +352,6 @@ const GetInvolved = (): JSX.Element => {
                       variant="h3"
                       sx={{
                         mt: 0.5,
-                        color: 'common.white',
                         fontSize: { xs: '1.75rem', md: '2.3rem' },
                       }}
                     >
@@ -272,7 +361,7 @@ const GetInvolved = (): JSX.Element => {
                       sx={{
                         maxWidth: 800,
                         mt: 1.25,
-                        color: 'rgba(255,255,255,0.72)',
+                        color: 'rgba(14,42,34,0.72)',
                         lineHeight: 1.7,
                       }}
                     >
@@ -282,7 +371,7 @@ const GetInvolved = (): JSX.Element => {
                 </Stack>
               );
             })()}
-          </Box>
+          </MintSurface>
 
           <Box sx={{ p: { xs: 3, sm: 4, md: 5 } }}>
             <Box hidden={tab !== 'partner'}>{tab === 'partner' && <PartnerForm />}</Box>

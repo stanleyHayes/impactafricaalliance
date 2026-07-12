@@ -18,6 +18,7 @@ export const createUserRouter = (container: DependencyContainer): Router => {
   router.get('/', asyncHandler(controller.list));
   router.post('/', asyncHandler(controller.create));
   router.patch('/:id', asyncHandler(controller.update));
+  router.patch('/:id/permissions', asyncHandler(controller.updatePermissions));
   router.delete('/:id', asyncHandler(controller.remove));
 
   return router;

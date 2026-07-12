@@ -3,7 +3,7 @@
 Monorepo for the Impact Africa Alliance (IAA) digital presence: a public marketing website, a
 content-management admin console, and the API that powers both.
 
-See [`agent_plan.md`](agent_plan.md) for the full architecture and [`docs/`](docs/) for the
+See [`docs/agent_plan.md`](docs/agent_plan.md) for the full architecture and [`docs/`](docs/) for the
 converted brand/content specifications.
 
 ## Workspaces

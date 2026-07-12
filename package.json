@@ -27,17 +27,18 @@
     "seed": "npm run seed -w @iaa/api"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.0",
-    "@types/node": "^25.9.3",
-    "eslint": "^9.39.4",
+    "@eslint/js": "^9.39.5",
+    "@types/node": "^26.1.1",
+    "eslint": "^9.39.5",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
-    "globals": "^17.6.0",
-    "prettier": "^3.8.4",
-    "sharp": "^0.35.1",
+    "globals": "^17.7.0",
+    "prettier": "^3.9.5",
+    "sharp": "^0.35.3",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.61.0"
-  }
+    "typescript-eslint": "^8.63.0"
+  },
+  "packageManager": "pnpm@11.11.0+sha512.4463f65fd80ed80d69bc1d4bf163ee94f605c7380fc318bb5b2ebe15f8cd12d49c51a4d59e951b401e764d3b6ca751cbf51bc50ed7001a6bcb4935e684c34882"
 }

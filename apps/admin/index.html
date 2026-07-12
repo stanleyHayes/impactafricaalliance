@@ -5,11 +5,25 @@
     <link rel="icon" type="image/png" href="/brand/favicon-32.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#0B3D2E" />
     <title>IAA Admin Console</title>
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; connect-src 'self' http://localhost:4000 https:; font-src 'self' https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' https://* data:; script-src 'self' 'unsafe-inline'; base-uri 'self'; form-action 'self';"
+    />
+    <script>
+      (function () {
+        const key = 'iaa.admin.theme';
+        const stored = localStorage.getItem(key);
+        const mode = stored === 'dark' || stored === 'light' ? stored : 'light';
+        document.documentElement.dataset.theme = mode;
+        if (mode === 'dark') document.documentElement.classList.add('dark');
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700;800&family=Playfair+Display:ital@1&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
   </head>

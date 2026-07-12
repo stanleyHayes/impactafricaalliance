@@ -62,7 +62,8 @@ export const DataTable = (props: DataTableProps): JSX.Element => {
   const containerSx = {
     bgcolor: 'background.paper',
     borderRadius: 3,
-    border: `1px solid ${alpha(green, 0.12)}`,
+    border: '1px solid',
+    borderColor: 'divider',
     overflow: 'hidden',
   } as const;
 
@@ -94,8 +95,9 @@ export const DataTable = (props: DataTableProps): JSX.Element => {
           spacing={1.25}
           sx={{
             p: 1.5,
-            borderBottom: `1px solid ${alpha(green, 0.12)}`,
-            bgcolor: alpha(green, 0.018),
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+            bgcolor: 'background.default',
             flexShrink: 0,
           }}
         >
@@ -172,7 +174,7 @@ export const DataTable = (props: DataTableProps): JSX.Element => {
 
             // Header: strong, on-brand, with a gold accent underline.
             '& .MuiDataGrid-columnHeaders': {
-              bgcolor: alpha(green, 0.06),
+              bgcolor: 'common.black',
               borderBottom: `2px solid ${gold}`,
             },
             '& .MuiDataGrid-columnHeader': {
@@ -183,18 +185,18 @@ export const DataTable = (props: DataTableProps): JSX.Element => {
               fontWeight: 800,
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
-              color: green,
+              color: 'common.white',
             },
             '& .MuiDataGrid-columnHeaderTitleContainer': {
               justifyContent: columns.length > 0 && columns[0]?.flex ? 'flex-start' : undefined,
             },
             '& .MuiDataGrid-columnSeparator': { display: 'none' },
-            '& .MuiDataGrid-sortIcon': { color: green },
-            '& .MuiDataGrid-iconButtonContainer': { color: green },
+            '& .MuiDataGrid-sortIcon': { color: 'common.white' },
+            '& .MuiDataGrid-iconButtonContainer': { color: 'common.white' },
 
             // Cells + rows: airy, zebra-striped, with a calm hover.
             '& .MuiDataGrid-cell': {
-              borderColor: alpha(green, 0.08),
+              borderColor: 'divider',
               display: 'flex',
               alignItems: 'center',
               px: 2,
@@ -224,8 +226,9 @@ export const DataTable = (props: DataTableProps): JSX.Element => {
 
             // Footer: detached by a hairline, clean pagination.
             '& .MuiDataGrid-footerContainer': {
-              borderTop: `1px solid ${alpha(green, 0.12)}`,
-              bgcolor: alpha(green, 0.02),
+              borderTop: '1px solid',
+              borderColor: 'divider',
+              bgcolor: 'background.default',
               px: 1.5,
             },
             '& .MuiTablePagination-root': {

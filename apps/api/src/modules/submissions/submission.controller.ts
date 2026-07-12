@@ -2,6 +2,7 @@ import {
   paginationQuerySchema,
   submissionSchema,
   subscribeSchema,
+  unsubscribeSchema,
   updateSubmissionStatusSchema,
   SUBMISSION_TYPES,
   SUBMISSION_STATUSES,
@@ -32,6 +33,16 @@ export class SubmissionController {
   subscribe = async (req: Request, res: Response): Promise<void> => {
     const input = parseWith(subscribeSchema, req.body);
     res.status(201).json(await this.submissions.subscribe(input));
+  };
+
+  unsubscribe = async (req: Request, res: Response): Promise<void> => {
+    const input = parseWith(unsubscribeSchema, req.body);
+    res.status(200).json(await this.submissions.unsubscribe(input.email));
+  };
+
+  deleteSubscriber = async (req: Request, res: Response): Promise<void> => {
+    await this.submissions.deleteSubscriber(pathParam(req, 'id'));
+    res.status(204).send();
   };
 
   list = async (req: Request, res: Response): Promise<void> => {

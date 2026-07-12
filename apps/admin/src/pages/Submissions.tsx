@@ -11,11 +11,13 @@ import HandshakeOutlinedIcon from '@mui/icons-material/HandshakeOutlined';
 import InboxOutlinedIcon from '@mui/icons-material/InboxOutlined';
 import SearchIcon from '@mui/icons-material/Search';
 import VolunteerActivismOutlinedIcon from '@mui/icons-material/VolunteerActivismOutlined';
+import WorkOutlineOutlinedIcon from '@mui/icons-material/WorkOutlineOutlined';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Chip from '@mui/material/Chip';
 import InputAdornment from '@mui/material/InputAdornment';
+import Link from '@mui/material/Link';
 import MenuItem from '@mui/material/MenuItem';
 import Pagination from '@mui/material/Pagination';
 import Select from '@mui/material/Select';
@@ -30,6 +32,8 @@ import { CardListSkeleton } from '../components/CardListSkeleton';
 import { EmptyState } from '../components/EmptyState';
 import { PageHeader } from '../components/PageHeader';
 import { useSubmissions, useUpdateSubmissionStatus } from '../lib/admin-hooks';
+import { formatUtcDate, formatUtcShort } from '../lib/date';
+import { pageGuides } from '../lib/page-guides';
 
 /** Per-type presentation: an avatar icon, a human label, and a brand accent resolver. */
 const TYPE_META: Record<
@@ -51,6 +55,11 @@ const TYPE_META: Record<
     label: 'Volunteer',
     accent: (t) => t.palette.primary.light,
   },
+  [SubmissionType.Job]: {
+    icon: <WorkOutlineOutlinedIcon fontSize="small" />,
+    label: 'Job',
+    accent: (t) => t.palette.info.main,
+  },
 };
 
 /** Chip colour for each submission status. */
@@ -61,9 +70,9 @@ const STATUS_TONE: Record<SubmissionStatus, 'default' | 'primary' | 'secondary' 
 };
 
 /** Payload keys promoted to the card title, in priority order. */
-const TITLE_KEYS = ['name', 'fullName', 'organizationName', 'organization', 'email'];
+const TITLE_KEYS = ['name', 'jobTitle', 'fullName', 'organizationName', 'organization', 'email'];
 /** Payload keys promoted to the supporting line, in priority order. */
-const SUBTITLE_KEYS = ['subject', 'message', 'expertise', 'role', 'interest', 'email'];
+const SUBTITLE_KEYS = ['subject', 'message', 'coverLetter', 'expertise', 'role', 'interest', 'email'];
 
 /** Returns the first present, non-empty string value among the given keys. */
 const pick = (payload: Record<string, unknown>, keys: string[]): string | undefined => {
@@ -105,7 +114,7 @@ const relativeTime = (iso: string): string => {
     const d = Math.round(diff / day);
     return `${d}d ago`;
   }
-  return new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+  return formatUtcShort(iso);
 };
 
 const SubmissionCard = ({ submission }: { submission: Submission }): JSX.Element => {
@@ -162,7 +171,7 @@ const SubmissionCard = ({ submission }: { submission: Submission }): JSX.Element
               sx={{
                 width: 44,
                 height: 44,
-                color: accentColor,
+                color: 'text.secondary',
                 bgcolor: alpha(accentColor, 0.12),
                 border: `1px solid ${alpha(accentColor, 0.22)}`,
                 borderRadius: 2,
@@ -206,7 +215,7 @@ const SubmissionCard = ({ submission }: { submission: Submission }): JSX.Element
                   sx={{
                     height: 22,
                     fontWeight: 600,
-                    color: accentColor,
+                    color: 'text.secondary',
                     bgcolor: alpha(accentColor, 0.1),
                     '& .MuiChip-label': { px: 1 },
                   }}
@@ -226,7 +235,13 @@ const SubmissionCard = ({ submission }: { submission: Submission }): JSX.Element
             <Typography
               variant="caption"
               color="text.secondary"
-              title={new Date(submission.createdAt).toLocaleString()}
+              title={formatUtcDate(submission.createdAt, {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
               sx={{ whiteSpace: 'nowrap', fontWeight: 500 }}
             >
               {relativeTime(submission.createdAt)}
@@ -307,7 +322,13 @@ const SubmissionCard = ({ submission }: { submission: Submission }): JSX.Element
                   variant="body2"
                   sx={{ m: 0, mt: 0.25, color: 'text.primary', wordBreak: 'break-word' }}
                 >
-                  {String(value)}
+                  {typeof value === 'string' && /^https?:\/\//.test(value) ? (
+                    <Link href={value} target="_blank" rel="noopener noreferrer">
+                      {value}
+                    </Link>
+                  ) : (
+                    String(value)
+                  )}
                 </Typography>
               </Box>
             ))}
@@ -381,7 +402,7 @@ const Submissions = (): JSX.Element => {
             description={
               hasFilters
                 ? 'No submissions match the current filters. Try clearing them to see everything.'
-                : 'Contact, partnership, and volunteer enquiries from the website will land here.'
+                : 'Contact, partnership, volunteer, and job enquiries from the website will land here.'
             }
             primaryAction={
               hasFilters
@@ -417,8 +438,9 @@ const Submissions = (): JSX.Element => {
       <PageHeader
         icon={<InboxOutlinedIcon />}
         title="Submissions"
-        description="Contact, partnership, and volunteer enquiries from the website."
+        description="Contact, partnership, volunteer, and job enquiries from the website."
         count={data?.total}
+        help={pageGuides.Submissions}
       />
       <Stack
         direction="row"

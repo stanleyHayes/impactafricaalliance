@@ -1,6 +1,7 @@
 import { UserRole, type PublicUser } from '@iaa/shared';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import AutoStoriesIcon from '@mui/icons-material/AutoStories';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import Diversity3Icon from '@mui/icons-material/Diversity3';
 import GroupsIcon from '@mui/icons-material/Groups';
@@ -13,9 +14,11 @@ import MailIcon from '@mui/icons-material/MarkEmailRead';
 import NewspaperIcon from '@mui/icons-material/Newspaper';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import PersonIcon from '@mui/icons-material/Person';
+import PrivacyTipIcon from '@mui/icons-material/PrivacyTip';
+import PublicIcon from '@mui/icons-material/Public';
 import SettingsIcon from '@mui/icons-material/Settings';
 import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
-import WorkOutlineIcon from '@mui/icons-material/WorkOutline';
+import WorkOutlineIcon from '@mui/icons-material/WorkOutlineOutlined';
 
 import { RESOURCES } from '../../resources/registry';
 
@@ -48,7 +51,9 @@ export const buildNavGroups = (user: PublicUser | null): NavGroup[] => {
   const operations: NavItem[] = [
     { to: '/submissions', label: 'Submissions', icon: <InboxIcon /> },
     { to: '/subscribers', label: 'Subscribers', icon: <MailIcon /> },
+    { to: '/events', label: 'Events', icon: <CalendarMonthIcon /> },
     { to: '/donations', label: 'Donations', icon: <VolunteerActivismIcon /> },
+    { to: '/privacy-requests', label: 'Privacy Requests', icon: <PrivacyTipIcon /> },
   ];
   if (user?.role === UserRole.Admin) {
     operations.push({ to: '/users', label: 'Users', icon: <GroupsIcon /> });
@@ -70,6 +75,10 @@ export const buildNavGroups = (user: PublicUser | null): NavGroup[] => {
     {
       title: 'Operations',
       items: operations,
+    },
+    {
+      title: 'Site',
+      items: [{ to: '/site-settings', label: 'Site settings', icon: <PublicIcon /> }],
     },
     {
       title: 'Account',

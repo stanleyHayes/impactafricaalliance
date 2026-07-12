@@ -1,7 +1,7 @@
 import type { MediaAsset } from '@iaa/shared';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import Alert from '@mui/material/Alert';
@@ -123,7 +123,7 @@ export const MediaUploadField = ({
                 flexShrink: 0,
                 display: 'grid',
                 placeItems: 'center',
-                color: 'primary.main',
+                color: 'text.primary',
                 bgcolor: alpha(green, 0.1),
               }}
             >
@@ -207,7 +207,7 @@ export const MediaUploadField = ({
               borderRadius: '50%',
               display: 'grid',
               placeItems: 'center',
-              color: 'primary.main',
+              color: 'text.primary',
               bgcolor: alpha(green, 0.1),
             }}
           >

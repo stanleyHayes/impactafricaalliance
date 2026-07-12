@@ -77,7 +77,7 @@ export const ResourceFormDialog = ({
           <Box>
             <Typography
               variant="overline"
-              sx={{ color: 'primary.main', fontWeight: 750, letterSpacing: '0.1em' }}
+              sx={{ color: 'text.primary', fontWeight: 750, letterSpacing: '0.1em' }}
             >
               {resource.singular} workspace
             </Typography>

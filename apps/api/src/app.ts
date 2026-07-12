@@ -9,7 +9,7 @@ import { buildCorsOptions } from './common/cors.js';
 import { errorMiddleware, notFoundHandler } from './common/error-middleware.js';
 import type { AppConfig } from './config/env.js';
 import type { AppLogger } from './config/logger.js';
-import { globalRateLimit } from './middleware/rate-limit.js';
+import { globalRateLimit, webhookRateLimit } from './middleware/rate-limit.js';
 import { sanitizeBody } from './middleware/sanitize.js';
 import { createAiRouter } from './modules/ai/ai.routes.js';
 import { createAuthRouter } from './modules/auth/auth.routes.js';
@@ -17,7 +17,10 @@ import { buildContentModules } from './modules/content/content.registry.js';
 import { createHealthRouter } from './modules/health/health.routes.js';
 import { createMediaRouter } from './modules/media/media.routes.js';
 import { createPaymentRouters } from './modules/payments/payment.routes.js';
+import { createPrivacyRequestRouters } from './modules/privacy/privacy-request.routes.js';
+import { createSiteSettingRouters } from './modules/site-settings/site-setting.routes.js';
 import { createSubmissionRouters } from './modules/submissions/submission.routes.js';
+import { createInvitationRouter } from './modules/users/invitation.routes.js';
 import { createUserRouter } from './modules/users/user.routes.js';
 
 /** Assemble the Express application from the DI container. Pure — no I/O on import. */
@@ -28,7 +31,7 @@ export const createApp = (
 ): Application => {
   const app = express();
   app.disable('x-powered-by');
-  app.set('trust proxy', 1);
+  app.set('trust proxy', config.trustProxy);
 
   app.use(helmet());
   app.use(cors(buildCorsOptions(config)));
@@ -38,7 +41,7 @@ export const createApp = (
   // Payment webhooks need the raw body for signature verification — mount the
   // raw-body router BEFORE the JSON parser so the bytes are preserved.
   const payments = createPaymentRouters(container);
-  app.use('/api/payments/webhooks', payments.webhookRouter);
+  app.use('/api/payments/webhooks', webhookRateLimit, payments.webhookRouter);
 
   app.use(express.json({ limit: '1mb' }));
   app.use(sanitizeBody);
@@ -58,11 +61,20 @@ export const createApp = (
   app.use('/api/admin/submissions', submissions.adminRouter);
 
   app.use('/api/admin/users', createUserRouter(container));
+  app.use('/api/admin/invitations', createInvitationRouter(container));
   app.use('/api/admin/media', createMediaRouter(container));
   app.use('/api/admin/ai', createAiRouter(container, config));
 
   app.use('/api/payments', payments.donateRouter);
   app.use('/api/admin/donations', payments.adminRouter);
+
+  const privacy = createPrivacyRequestRouters(container);
+  app.use('/api/privacy/requests', privacy.publicRouter);
+  app.use('/api/admin/privacy-requests', privacy.adminRouter);
+
+  const siteSettings = createSiteSettingRouters(container);
+  app.use('/api/site-settings', siteSettings.publicRouter);
+  app.use('/api/admin/site-settings', siteSettings.adminRouter);
 
   app.use(notFoundHandler);
   app.use(errorMiddleware(logger));

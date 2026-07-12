@@ -1,7 +1,9 @@
+import { brandColors } from '@iaa/shared';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Container from '@mui/material/Container';
 import Stack from '@mui/material/Stack';
+import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import { Suspense, lazy } from 'react';
 import { Route, Routes } from 'react-router-dom';
@@ -16,6 +18,13 @@ const GetInvolved = lazy(() => import('../pages/GetInvolved'));
 const Contact = lazy(() => import('../pages/Contact'));
 const News = lazy(() => import('../pages/News'));
 const NewsArticle = lazy(() => import('../pages/NewsArticle'));
+const Resources = lazy(() => import('../pages/Resources'));
+const JobApplication = lazy(() => import('../pages/JobApplication'));
+const Events = lazy(() => import('../pages/Events'));
+const PrivacyPolicy = lazy(() => import('../pages/PrivacyPolicy'));
+const PrivacyRequest = lazy(() => import('../pages/PrivacyRequest'));
+const CookiePolicy = lazy(() => import('../pages/CookiePolicy'));
+const TermsOfUse = lazy(() => import('../pages/TermsOfUse'));
 const NotFound = lazy(() => import('../pages/NotFound'));
 
 const PageFallback = (): JSX.Element => (
@@ -28,7 +37,7 @@ const PageFallback = (): JSX.Element => (
           height: 72,
           placeItems: 'center',
           borderRadius: '50%',
-          bgcolor: 'rgba(26,92,56,0.07)',
+          bgcolor: alpha(brandColors.mint, 0.1),
         }}
       >
         <CircularProgress size={34} thickness={3.5} />
@@ -116,6 +125,62 @@ export const App = (): JSX.Element => (
         element={
           <Suspense fallback={<PageFallback />}>
             <NewsArticle />
+          </Suspense>
+        }
+      />
+      <Route
+        path="resources"
+        element={
+          <Suspense fallback={<PageFallback />}>
+            <Resources />
+          </Suspense>
+        }
+      />
+      <Route
+        path="get-involved/careers/:slug/apply"
+        element={
+          <Suspense fallback={<PageFallback />}>
+            <JobApplication />
+          </Suspense>
+        }
+      />
+      <Route
+        path="events"
+        element={
+          <Suspense fallback={<PageFallback />}>
+            <Events />
+          </Suspense>
+        }
+      />
+      <Route
+        path="privacy-policy"
+        element={
+          <Suspense fallback={<PageFallback />}>
+            <PrivacyPolicy />
+          </Suspense>
+        }
+      />
+      <Route
+        path="terms-of-use"
+        element={
+          <Suspense fallback={<PageFallback />}>
+            <TermsOfUse />
+          </Suspense>
+        }
+      />
+      <Route
+        path="cookie-policy"
+        element={
+          <Suspense fallback={<PageFallback />}>
+            <CookiePolicy />
+          </Suspense>
+        }
+      />
+      <Route
+        path="privacy-request"
+        element={
+          <Suspense fallback={<PageFallback />}>
+            <PrivacyRequest />
           </Suspense>
         }
       />

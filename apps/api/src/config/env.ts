@@ -11,16 +11,54 @@ const csv = (value: string): string[] =>
     .map((part) => part.trim())
     .filter((part) => part.length > 0);
 
+const deriveJwtSecrets = (raw: RawEnv): AppConfig['jwt'] => {
+  const accessSecret = raw.JWT_ACCESS_SECRET ?? raw.JWT_SECRET;
+  const refreshSecret = raw.JWT_REFRESH_SECRET ?? raw.JWT_SECRET;
+  if (!accessSecret || accessSecret.length < 32) {
+    throw new Error('JWT_ACCESS_SECRET (or JWT_SECRET fallback) must be at least 32 characters');
+  }
+  if (!refreshSecret || refreshSecret.length < 32) {
+    throw new Error('JWT_REFRESH_SECRET (or JWT_SECRET fallback) must be at least 32 characters');
+  }
+  if (raw.NODE_ENV === 'production' && accessSecret === refreshSecret) {
+    throw new Error('Production requires distinct JWT_ACCESS_SECRET and JWT_REFRESH_SECRET values');
+  }
+  return {
+    accessSecret,
+    refreshSecret,
+    accessTtlSeconds: raw.JWT_ACCESS_TTL,
+    refreshTtlSeconds: raw.JWT_REFRESH_TTL,
+  };
+};
+
+const parseTrustProxy = (value: string): boolean | number | string => {
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  const asNumber = Number(value);
+  if (!Number.isNaN(asNumber)) return asNumber;
+  return value;
+};
+
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(4000),
 
   MONGODB_URI: z.string().min(1, 'MONGODB_URI is required'),
   CORS_ORIGINS: z.string().default('http://localhost:5173,http://localhost:5174'),
+  PUBLIC_SITE_URL: z.string().url().default('http://localhost:5173'),
+  ADMIN_URL: z.string().url().default('http://localhost:5174'),
 
-  JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
+  // Separate signing secrets for access and refresh tokens. For local/test
+  // convenience, JWT_SECRET is accepted as a fallback for both, but production
+  // must use distinct secrets to limit blast radius of a leak.
+  JWT_ACCESS_SECRET: z.string().min(32).optional(),
+  JWT_REFRESH_SECRET: z.string().min(32).optional(),
+  // Deprecated fallback — kept only for local/test backwards compatibility.
+  JWT_SECRET: z.string().min(32).optional(),
   JWT_ACCESS_TTL: z.coerce.number().int().positive().default(900),
   JWT_REFRESH_TTL: z.coerce.number().int().positive().default(2_592_000),
+
+  TRUST_PROXY: z.string().default('1'),
 
   SEED_ADMIN_EMAIL: z.string().email().default('admin@impactafricaalliance.org'),
   SEED_ADMIN_PASSWORD: z.string().min(10, 'SEED_ADMIN_PASSWORD must be at least 10 characters'),
@@ -42,6 +80,23 @@ const envSchema = z.object({
   PAYSTACK_WEBHOOK_SECRET: z.string().optional(),
 
   ANTHROPIC_API_KEY: z.string().optional(),
+
+  // MFA: 32-byte key for AES-256-GCM encryption of TOTP secrets.
+  // In dev/test a deterministic fallback is used if absent; production must set this.
+  MFA_ENCRYPTION_KEY: z.string().optional(),
+  // Comma-separated list of roles that must enable MFA (e.g. admin,superadmin).
+  MFA_REQUIRED_FOR_ROLES: z.string().default(''),
+
+  // Data protection retention windows (days). Set to 0 to disable automatic purge.
+  SUBMISSION_RETENTION_DAYS: z.coerce.number().int().min(0).default(1095),
+  UNSUBSCRIBED_RETENTION_DAYS: z.coerce.number().int().min(0).default(90),
+  FAILED_DONATION_RETENTION_DAYS: z.coerce.number().int().min(0).default(30),
+
+  LINKEDIN_ACCESS_TOKEN: z.string().optional(),
+  LINKEDIN_ORGANIZATION_URN: z.string().optional(),
+  META_PAGE_ACCESS_TOKEN: z.string().optional(),
+  META_PAGE_ID: z.string().optional(),
+  META_INSTAGRAM_BUSINESS_ACCOUNT_ID: z.string().optional(),
 });
 
 export type RawEnv = z.infer<typeof envSchema>;
@@ -53,11 +108,15 @@ export interface AppConfig {
   readonly port: number;
   readonly mongoUri: string;
   readonly corsOrigins: string[];
+  readonly siteUrl: string;
+  readonly adminUrl: string;
   readonly jwt: {
-    readonly secret: string;
+    readonly accessSecret: string;
+    readonly refreshSecret: string;
     readonly accessTtlSeconds: number;
     readonly refreshTtlSeconds: number;
   };
+  readonly trustProxy: boolean | number | string;
   readonly seedAdmin: { email: string; password: string; name: string };
   readonly seedEditorPassword?: string;
   readonly email: { apiKey?: string; from: string; notifyTo: string };
@@ -70,7 +129,39 @@ export interface AppConfig {
   readonly stripe: { secretKey?: string; webhookSecret?: string };
   readonly paystack: { secretKey?: string; webhookSecret?: string };
   readonly anthropic: { apiKey?: string };
+  readonly mfa: {
+    encryptionKey: Buffer;
+    requiredForRoles: string[];
+  };
+  readonly retention: {
+    submissionDays: number;
+    unsubscribedDays: number;
+    failedDonationDays: number;
+  };
+  readonly social: {
+    linkedinAccessToken?: string;
+    linkedinOrganizationUrn?: string;
+    metaPageAccessToken?: string;
+    metaPageId?: string;
+    metaInstagramBusinessAccountId?: string;
+  };
 }
+
+const deriveMfaConfig = (raw: RawEnv): AppConfig['mfa'] => {
+  const requiredForRoles = csv(raw.MFA_REQUIRED_FOR_ROLES);
+  if (raw.MFA_ENCRYPTION_KEY) {
+    const key = Buffer.from(raw.MFA_ENCRYPTION_KEY, 'base64');
+    if (key.length !== 32) {
+      throw new Error('MFA_ENCRYPTION_KEY must be a base64-encoded 32-byte key');
+    }
+    return { encryptionKey: key, requiredForRoles };
+  }
+  if (raw.NODE_ENV === 'production') {
+    throw new Error('MFA_ENCRYPTION_KEY is required in production');
+  }
+  // Deterministic fallback for local/test only. Not secure for multi-tenant or production use.
+  return { encryptionKey: Buffer.alloc(32, 0xab), requiredForRoles };
+};
 
 const buildConfig = (raw: RawEnv): AppConfig => ({
   env: raw.NODE_ENV,
@@ -79,11 +170,10 @@ const buildConfig = (raw: RawEnv): AppConfig => ({
   port: raw.PORT,
   mongoUri: raw.MONGODB_URI,
   corsOrigins: csv(raw.CORS_ORIGINS),
-  jwt: {
-    secret: raw.JWT_SECRET,
-    accessTtlSeconds: raw.JWT_ACCESS_TTL,
-    refreshTtlSeconds: raw.JWT_REFRESH_TTL,
-  },
+  siteUrl: raw.PUBLIC_SITE_URL,
+  adminUrl: raw.ADMIN_URL,
+  jwt: deriveJwtSecrets(raw),
+  trustProxy: parseTrustProxy(raw.TRUST_PROXY),
   seedAdmin: {
     email: raw.SEED_ADMIN_EMAIL,
     password: raw.SEED_ADMIN_PASSWORD,
@@ -100,6 +190,19 @@ const buildConfig = (raw: RawEnv): AppConfig => ({
   stripe: { secretKey: raw.STRIPE_SECRET_KEY, webhookSecret: raw.STRIPE_WEBHOOK_SECRET },
   paystack: { secretKey: raw.PAYSTACK_SECRET_KEY, webhookSecret: raw.PAYSTACK_WEBHOOK_SECRET },
   anthropic: { apiKey: raw.ANTHROPIC_API_KEY },
+  mfa: deriveMfaConfig(raw),
+  retention: {
+    submissionDays: raw.SUBMISSION_RETENTION_DAYS,
+    unsubscribedDays: raw.UNSUBSCRIBED_RETENTION_DAYS,
+    failedDonationDays: raw.FAILED_DONATION_RETENTION_DAYS,
+  },
+  social: {
+    linkedinAccessToken: raw.LINKEDIN_ACCESS_TOKEN,
+    linkedinOrganizationUrn: raw.LINKEDIN_ORGANIZATION_URN,
+    metaPageAccessToken: raw.META_PAGE_ACCESS_TOKEN,
+    metaPageId: raw.META_PAGE_ID,
+    metaInstagramBusinessAccountId: raw.META_INSTAGRAM_BUSINESS_ACCOUNT_ID,
+  },
 });
 
 /** Parse `process.env` into a typed config, throwing a readable error on failure. */
@@ -111,5 +214,9 @@ export const loadConfig = (source: NodeJS.ProcessEnv = process.env): AppConfig =
       .join('\n');
     throw new Error(`Invalid environment configuration:\n${issues}`);
   }
-  return buildConfig(parsed.data);
+  const config = buildConfig(parsed.data);
+  if (config.isProduction && config.corsOrigins.length === 0) {
+    throw new Error('Invalid environment configuration:\n  - CORS_ORIGINS is required in production');
+  }
+  return config;
 };

@@ -1,15 +1,20 @@
+import { brandColors } from '@iaa/shared';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import Stack from '@mui/material/Stack';
+import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 
 import { IMAGES } from '../content/images';
+
+import { Watermark, type WatermarkVariant } from './Watermark';
 
 interface PageHeroProps {
   title: string;
   subtitle?: string;
   eyebrow?: string;
   image?: string;
+  watermark?: WatermarkVariant | false;
 }
 
 /** Inner-page banner with layered photography and restrained brand geometry. */
@@ -18,6 +23,7 @@ export const PageHero = ({
   subtitle,
   eyebrow,
   image = IMAGES.community,
+  watermark,
 }: PageHeroProps): JSX.Element => (
   <Box
     component="header"
@@ -25,7 +31,7 @@ export const PageHero = ({
       position: 'relative',
       minHeight: { xs: 390, md: 500 },
       overflow: 'hidden',
-      bgcolor: 'primary.dark',
+      bgcolor: 'common.black',
       color: 'common.white',
     }}
   >
@@ -39,12 +45,20 @@ export const PageHero = ({
         transform: 'scale(1.035)',
       }}
     />
+    {watermark && (
+      <Watermark
+        variant={watermark}
+        position="bottom-right"
+        size={{ xs: 260, md: 420 }}
+        opacity={0.05}
+        sx={{ color: 'primary.main' }}
+      />
+    )}
     <Box
       sx={{
         position: 'absolute',
         inset: 0,
-        background:
-          'linear-gradient(90deg, rgba(8,31,19,0.94) 0%, rgba(8,31,19,0.78) 58%, rgba(8,31,19,0.48) 100%), linear-gradient(0deg, rgba(8,31,19,0.72), transparent 58%)',
+        background: `linear-gradient(90deg, ${alpha(brandColors.deepForest, 0.94)} 0%, ${alpha(brandColors.deepForest, 0.78)} 58%, ${alpha(brandColors.deepForest, 0.48)} 100%), linear-gradient(0deg, ${alpha(brandColors.deepForest, 0.72)}, transparent 58%)`,
       }}
     />
     <Box
@@ -55,9 +69,9 @@ export const PageHero = ({
         bottom: -270,
         width: { xs: 440, md: 620 },
         height: { xs: 440, md: 620 },
-        border: '1px solid rgba(212,160,23,0.2)',
+        border: '1px solid rgba(245,184,0,0.2)',
         borderRadius: '50%',
-        boxShadow: '0 0 0 54px rgba(212,160,23,0.025), 0 0 0 108px rgba(212,160,23,0.018)',
+        boxShadow: '0 0 0 54px rgba(245,184,0,0.025), 0 0 0 108px rgba(245,184,0,0.018)',
       }}
     />
     <Container
@@ -97,7 +111,7 @@ export const PageHero = ({
             sx={{
               mt: 2.5,
               maxWidth: 680,
-              color: 'rgba(255,255,255,0.8)',
+              color: 'rgba(255,255,255,0.82)',
               fontSize: { xs: '1rem', md: '1.15rem' },
               lineHeight: 1.75,
             }}
@@ -116,7 +130,7 @@ export const PageHero = ({
         left: 0,
         height: 3,
         background:
-          'linear-gradient(90deg, transparent, rgba(212,160,23,0.92) 35%, rgba(26,92,56,0.9) 70%, transparent)',
+          'linear-gradient(90deg, transparent, rgba(245,184,0,0.92) 35%, rgba(0,214,139,0.9) 70%, transparent)',
       }}
     />
   </Box>

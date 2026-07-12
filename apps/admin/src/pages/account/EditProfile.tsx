@@ -31,7 +31,7 @@ const ProfilePreview = ({ name, email }: { name: string; email: string }): JSX.E
   <AccountPanel sx={{ height: '100%', p: 3 }}>
     <Typography
       variant="overline"
-      sx={{ color: 'primary.main', fontWeight: 750, letterSpacing: 1.2 }}
+      sx={{ color: 'text.primary', fontWeight: 750, letterSpacing: 1.2 }}
     >
       Live identity preview
     </Typography>
@@ -54,9 +54,9 @@ const ProfilePreview = ({ name, email }: { name: string; email: string }): JSX.E
         mt: 3,
         p: 2,
         border: 1,
-        borderColor: 'rgba(26,92,56,0.12)',
+        borderColor: 'alpha(brandColors.forest, 0.12)',
         borderRadius: 2,
-        bgcolor: 'rgba(26,92,56,0.04)',
+        bgcolor: 'alpha(brandColors.forest, 0.04)',
       }}
     >
       <Stack spacing={1.25}>
@@ -66,7 +66,7 @@ const ProfilePreview = ({ name, email }: { name: string; email: string }): JSX.E
           'Email used for secure sign-in',
         ].map((item) => (
           <Stack key={item} direction="row" spacing={1} alignItems="center">
-            <CheckCircleRoundedIcon sx={{ color: 'primary.main', fontSize: 17 }} />
+            <CheckCircleRoundedIcon sx={{ color: 'text.secondary', fontSize: 17 }} />
             <Typography variant="body2">{item}</Typography>
           </Stack>
         ))}

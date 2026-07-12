@@ -1,6 +1,15 @@
 import { z } from 'zod';
 
-import { USER_ROLES, type UserRole } from '../enums.js';
+import {
+  ADMIN_RESOURCES,
+  ALL_PERMISSIONS,
+  PERMISSION_ACTIONS,
+  USER_ROLES,
+  type AdminResource,
+  type Permission,
+  type PermissionAction,
+  type UserRole,
+} from '../enums.js';
 
 import type { Timestamped } from './common.js';
 
@@ -56,6 +65,8 @@ export interface PublicUser extends Timestamped {
   email: string;
   role: UserRole;
   isActive: boolean;
+  mfaEnabled?: boolean;
+  permissions: Permission[];
 }
 
 export interface AuthTokens {
@@ -68,14 +79,102 @@ export interface LoginResponse {
   tokens: AuthTokens;
 }
 
+export const mfaRequiredResponseSchema = z.object({
+  mfaRequired: z.literal(true),
+  email: z.string().email(),
+});
+export type MfaRequiredResponse = z.infer<typeof mfaRequiredResponseSchema>;
+
+export const totpCodeSchema = z.string().regex(/^\d{6}$/, 'Enter a 6-digit code');
+
+export const mfaLoginSchema = loginSchema.extend({
+  totpCode: totpCodeSchema.optional(),
+});
+export type MfaLoginInput = z.infer<typeof mfaLoginSchema>;
+
+export const setupMfaSchema = z.object({
+  password: z.string().min(1, 'Password is required'),
+});
+export type SetupMfaInput = z.infer<typeof setupMfaSchema>;
+
+export const verifyMfaSetupSchema = z.object({
+  password: z.string().min(1, 'Password is required'),
+  totpCode: totpCodeSchema,
+});
+export type VerifyMfaSetupInput = z.infer<typeof verifyMfaSetupSchema>;
+
+export const disableMfaSchema = z.object({
+  password: z.string().min(1, 'Password is required'),
+  totpCode: totpCodeSchema,
+});
+export type DisableMfaInput = z.infer<typeof disableMfaSchema>;
+
+export interface MfaSetupResponse {
+  secret: string;
+  qrCodeUrl: string;
+  manualEntry: string;
+}
+
+export interface MfaStatusResponse {
+  mfaEnabled: boolean;
+}
+
+export interface MfaVerifySetupResponse extends MfaStatusResponse {
+  recoveryCodes: string[];
+}
+
 export const refreshSchema = z.object({
   refreshToken: z.string().min(1),
 });
 export type RefreshInput = z.infer<typeof refreshSchema>;
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().email().toLowerCase().trim(),
+});
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1, 'Reset token is required'),
+  password: passwordSchema,
+});
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+
+export const inviteUserSchema = z.object({
+  email: z.string().email().toLowerCase().trim(),
+  role: z.enum(USER_ROLES as [UserRole, ...UserRole[]]),
+  permissions: z.array(z.enum(ALL_PERMISSIONS as [Permission, ...Permission[]])).optional(),
+});
+export type InviteUserInput = z.infer<typeof inviteUserSchema>;
+
+export const acceptInvitationSchema = z
+  .object({
+    token: z.string().min(1, 'Invitation token is required'),
+    name: z.string().min(2).max(120).trim(),
+    password: passwordSchema,
+    confirmPassword: z.string().min(1, 'Confirm your password'),
+  })
+  .refine((value) => value.password === value.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  });
+export type AcceptInvitationInput = z.infer<typeof acceptInvitationSchema>;
+
+export const updateUserPermissionsSchema = z.object({
+  role: z.enum(USER_ROLES as [UserRole, ...UserRole[]]),
+  permissions: z.array(z.enum(ALL_PERMISSIONS as [Permission, ...Permission[]])),
+});
+export type UpdateUserPermissionsInput = z.infer<typeof updateUserPermissionsSchema>;
+
+export const permissionQuerySchema = z.object({
+  resource: z.enum(ADMIN_RESOURCES as [AdminResource, ...AdminResource[]]).optional(),
+  action: z.enum(PERMISSION_ACTIONS as [PermissionAction, ...PermissionAction[]]).optional(),
+});
+export type PermissionQuery = z.infer<typeof permissionQuerySchema>;
 
 /** Decoded JWT access-token payload. */
 export interface AccessTokenClaims {
   sub: string;
   email: string;
   role: UserRole;
+  permissions: Permission[];
 }

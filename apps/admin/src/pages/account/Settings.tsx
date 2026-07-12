@@ -48,8 +48,8 @@ const PreferenceRow = ({
           flexShrink: 0,
           placeItems: 'center',
           borderRadius: 2,
-          bgcolor: 'rgba(26,92,56,0.08)',
-          color: 'primary.main',
+          bgcolor: 'alpha(brandColors.forest, 0.08)',
+          color: 'text.primary',
           '& svg': { fontSize: 22 },
         }}
       >
@@ -115,7 +115,7 @@ const Settings = (): JSX.Element => {
                   <Switch
                     checked={prefs.sidebarCollapsed}
                     onChange={(event) => setPreference('sidebarCollapsed', event.target.checked)}
-                    inputProps={{ 'aria-label': 'Collapse sidebar by default' }}
+                    slotProps={{ input: { 'aria-label': 'Collapse sidebar by default' } }}
                   />
                 }
               />
@@ -129,7 +129,7 @@ const Settings = (): JSX.Element => {
                     onChange={(event) =>
                       setPreference('showNotificationBadge', event.target.checked)
                     }
-                    inputProps={{ 'aria-label': 'Show notification badge' }}
+                    slotProps={{ input: { 'aria-label': 'Show notification badge' } }}
                   />
                 }
               />

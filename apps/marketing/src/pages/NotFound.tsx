@@ -1,16 +1,19 @@
+import { brandColors } from '@iaa/shared';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ExploreRoundedIcon from '@mui/icons-material/ExploreRounded';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import Stack from '@mui/material/Stack';
+import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import { Link as RouterLink } from 'react-router-dom';
 
+import { MintSurface } from '../components/MintSurface';
 import { Seo } from '../components/Seo';
 
 const NotFound = (): JSX.Element => (
-  <Box
+  <MintSurface
     component="section"
     sx={{
       position: 'relative',
@@ -18,41 +21,38 @@ const NotFound = (): JSX.Element => (
       minHeight: { xs: 600, md: 680 },
       placeItems: 'center',
       overflow: 'hidden',
-      bgcolor: 'primary.dark',
-      color: 'common.white',
       '&::before': {
         position: 'absolute',
         top: -240,
         right: -180,
         width: 560,
         height: 560,
-        border: '1px solid rgba(212,160,23,0.18)',
+        border: `1px solid ${alpha(brandColors.gold, 0.18)}`,
         borderRadius: '50%',
-        boxShadow: '0 0 0 70px rgba(212,160,23,0.025), 0 0 0 140px rgba(212,160,23,0.015)',
+        boxShadow: `0 0 0 70px ${alpha(brandColors.gold, 0.025)}, 0 0 0 140px ${alpha(brandColors.gold, 0.015)}`,
         content: '""',
       },
     }}
   >
     <Seo title="Page Not Found" />
     <Container sx={{ position: 'relative', py: 10 }}>
-      <Stack spacing={2.5} alignItems="center" textAlign="center">
+      <Stack spacing={2.5} alignItems="center" sx={{ textAlign: 'center' }}>
         <Box
+          className="mint-glass"
           sx={{
             display: 'grid',
             width: 72,
             height: 72,
             placeItems: 'center',
-            border: '1px solid rgba(255,255,255,0.16)',
             borderRadius: '50%',
-            bgcolor: 'rgba(255,255,255,0.07)',
           }}
         >
-          <ExploreRoundedIcon sx={{ color: 'secondary.main', fontSize: 34 }} />
+          <ExploreRoundedIcon sx={{ fontSize: 34 }} />
         </Box>
         <Typography
           aria-hidden
           sx={{
-            color: 'secondary.main',
+            color: 'common.black',
             fontSize: { xs: '4.5rem', md: '7rem' },
             fontWeight: 800,
             letterSpacing: '-0.05em',
@@ -63,11 +63,11 @@ const NotFound = (): JSX.Element => (
         </Typography>
         <Typography
           variant="h2"
-          sx={{ color: 'common.white', fontSize: { xs: '2rem', md: '2.8rem' } }}
+          sx={{ fontSize: { xs: '2rem', md: '2.8rem' } }}
         >
           This path doesn&apos;t lead anywhere yet.
         </Typography>
-        <Typography sx={{ maxWidth: 560, color: 'rgba(255,255,255,0.72)', lineHeight: 1.75 }}>
+        <Typography sx={{ maxWidth: 560, color: 'rgba(14,42,34,0.72)', lineHeight: 1.75 }}>
           The page may have moved or the link may be out of date. Head home and keep exploring the
           work happening across the Alliance.
         </Typography>
@@ -84,7 +84,7 @@ const NotFound = (): JSX.Element => (
         </Button>
       </Stack>
     </Container>
-  </Box>
+  </MintSurface>
 );
 
 export default NotFound;

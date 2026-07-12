@@ -53,8 +53,8 @@ const SecurityGuidance = (): JSX.Element => (
         height: 56,
         placeItems: 'center',
         borderRadius: 2.5,
-        bgcolor: 'rgba(26,92,56,0.08)',
-        color: 'primary.main',
+        bgcolor: 'alpha(brandColors.forest, 0.08)',
+        color: 'text.primary',
       }}
     >
       <SecurityRoundedIcon sx={{ fontSize: 30 }} />
@@ -68,7 +68,7 @@ const SecurityGuidance = (): JSX.Element => (
     <Stack spacing={1.5}>
       {SECURITY_NOTES.map((note) => (
         <Stack key={note} direction="row" spacing={1.25} alignItems="center">
-          <CheckCircleRoundedIcon sx={{ color: 'primary.main', fontSize: 18 }} />
+          <CheckCircleRoundedIcon sx={{ color: 'text.secondary', fontSize: 18 }} />
           <Typography variant="body2" sx={{ fontWeight: 600 }}>
             {note}
           </Typography>

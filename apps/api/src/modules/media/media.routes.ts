@@ -4,6 +4,7 @@ import type { DependencyContainer } from 'tsyringe';
 
 import { asyncHandler } from '../../common/async-handler.js';
 import { requireAuth, requireRole } from '../../middleware/auth.middleware.js';
+import { sensitiveRateLimit } from '../../middleware/rate-limit.js';
 import type { MediaProvider } from '../../providers/media.provider.js';
 import { TOKENS } from '../../tokens.js';
 import { TokenService } from '../auth/token.service.js';
@@ -20,6 +21,14 @@ export const createMediaRouter = (container: DependencyContainer): Router => {
     requireRole(UserRole.Admin, UserRole.Editor),
     asyncHandler(async (_req, res) => {
       res.json(media.createSignedUpload());
+    }),
+  );
+
+  router.post(
+    '/sign-cv',
+    sensitiveRateLimit,
+    asyncHandler(async (_req, res) => {
+      res.json(media.createSignedCvUpload());
     }),
   );
 

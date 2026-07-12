@@ -30,6 +30,8 @@ export const createTestContext = async (): Promise<TestContext> => {
   const mongo = await MongoMemoryServer.create();
   process.env.NODE_ENV = 'test';
   process.env.MONGODB_URI = mongo.getUri();
+  process.env.JWT_ACCESS_SECRET = 'test-access-secret-test-secret-test-secret-0123456';
+  process.env.JWT_REFRESH_SECRET = 'test-refresh-secret-test-secret-test-secret-012345';
   process.env.JWT_SECRET = 'test-secret-test-secret-test-secret-0123456789';
   process.env.SEED_ADMIN_PASSWORD = 'TestSeedAdminPass2026!';
 

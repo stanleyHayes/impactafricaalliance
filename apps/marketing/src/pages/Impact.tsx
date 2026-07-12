@@ -1,4 +1,4 @@
-import { SDG_GOALS, brandColors, type ImpactStat, type Report, type SdgGoal } from '@iaa/shared';
+import { SDG_GOALS, brandColors, brandFonts, type ImpactStat, type Report, type SdgGoal } from '@iaa/shared';
 import type { SvgIconComponent } from '@mui/icons-material';
 import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
@@ -28,12 +28,14 @@ import Typography from '@mui/material/Typography';
 import { Link as RouterLink } from 'react-router-dom';
 
 import { AnimatedCounter } from '../components/AnimatedCounter';
+import { MintSurface } from '../components/MintSurface';
 import { PageHero } from '../components/PageHero';
 import { Section } from '../components/Section';
 import { SectionReveal } from '../components/SectionReveal';
 import { Seo } from '../components/Seo';
+import { Watermark } from '../components/Watermark';
 import { IMAGES } from '../content/images';
-import { useImpactStats, useReports } from '../lib/content-hooks';
+import { useHeroImage, useImpactStats, useReports } from '../lib/content-hooks';
 import { getStatIcon } from '../lib/stat-icons';
 
 /** Official UN SDG brand colours, used to make the goal grid recognisable. */
@@ -59,6 +61,65 @@ const SDG_ICONS: Record<number, SvgIconComponent> = {
   17: HandshakeRoundedIcon,
 };
 
+/** Default impact stats so the "By the Numbers" section always renders, even before CMS content is added. */
+const FALLBACK_STATS: ImpactStat[] = [
+  {
+    id: 'youth-trained',
+    key: 'youth-trained',
+    label: 'Young people trained',
+    value: 1200,
+    suffix: '+',
+    order: 0,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'countries',
+    key: 'countries',
+    label: 'African countries reached',
+    value: 5,
+    suffix: '+',
+    order: 1,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'programs',
+    key: 'programs',
+    label: 'Flagship programmes',
+    value: 4,
+    suffix: '',
+    order: 2,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'partners',
+    key: 'partners',
+    label: 'Partners & allies',
+    value: 30,
+    suffix: '+',
+    order: 3,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'women',
+    key: 'women',
+    label: 'Women participants',
+    value: 60,
+    suffix: '%',
+    order: 4,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+];
+
 const ASPIRATIONS = [
   { n: '01', text: 'A prosperous Africa, based on inclusive growth and sustainable development.' },
   { n: '02', text: 'An integrated continent, politically united on the ideals of Pan-Africanism.' },
@@ -78,30 +139,30 @@ const METRIC_STYLES = {
   featured: {
     minHeight: { xs: 310, md: 430 },
     padding: { xs: 3.5, md: 5 },
-    borderColor: 'rgba(212,160,23,0.42)',
+    borderColor: alpha(brandColors.gold, 0.42),
     borderRadius: 5,
     background:
-      'linear-gradient(145deg, rgba(212,160,23,0.2) 0%, rgba(255,255,255,0.08) 52%, rgba(255,255,255,0.04) 100%)',
+      `linear-gradient(145deg, ${alpha(brandColors.gold, 0.2)} 0%, rgba(14,42,34,0.08) 52%, rgba(14,42,34,0.04) 100%)`,
     decoration: {
       position: 'absolute',
       right: -110,
       bottom: -150,
       width: 330,
       height: 330,
-      border: '1px solid rgba(212,160,23,0.2)',
+      border: `1px solid ${alpha(brandColors.gold, 0.2)}`,
       borderRadius: '50%',
-      boxShadow: '0 0 0 38px rgba(212,160,23,0.035), 0 0 0 76px rgba(212,160,23,0.025)',
+      boxShadow: `0 0 0 38px ${alpha(brandColors.gold, 0.035)}, 0 0 0 76px ${alpha(brandColors.gold, 0.025)}`,
       content: '""',
     },
-    hoverBorderColor: 'rgba(212,160,23,0.7)',
+    hoverBorderColor: alpha(brandColors.gold, 0.7),
     hoverBackground: undefined,
     iconBoxSize: 58,
-    iconBorderColor: 'rgba(212,160,23,0.42)',
+    iconBorderColor: alpha(brandColors.gold, 0.42),
     iconBorderRadius: 2.5,
-    iconBackground: 'rgba(212,160,23,0.12)',
+    iconBackground: alpha(brandColors.gold, 0.12),
     iconColor: 'secondary.light',
     iconSize: 29,
-    indexColor: 'rgba(212,160,23,0.52)',
+    indexColor: alpha(brandColors.gold, 0.52),
     indexSize: '1rem',
     contentMarginTop: 7,
     counterColor: 'secondary.light',
@@ -115,26 +176,26 @@ const METRIC_STYLES = {
   supporting: {
     minHeight: 204,
     padding: { xs: 3, md: 3.5 },
-    borderColor: 'rgba(255,255,255,0.14)',
+    borderColor: 'rgba(14,42,34,0.14)',
     borderRadius: 3,
-    background: 'rgba(255,255,255,0.055)',
+    background: 'rgba(14,42,34,0.055)',
     decoration: undefined,
-    hoverBorderColor: 'rgba(255,255,255,0.3)',
-    hoverBackground: 'rgba(255,255,255,0.085)',
+    hoverBorderColor: 'rgba(14,42,34,0.3)',
+    hoverBackground: 'rgba(14,42,34,0.085)',
     iconBoxSize: 46,
-    iconBorderColor: 'rgba(255,255,255,0.15)',
+    iconBorderColor: 'rgba(14,42,34,0.15)',
     iconBorderRadius: 2,
-    iconBackground: 'rgba(255,255,255,0.08)',
-    iconColor: 'rgba(255,255,255,0.82)',
+    iconBackground: 'rgba(14,42,34,0.08)',
+    iconColor: 'common.black',
     iconSize: 23,
-    indexColor: 'rgba(255,255,255,0.22)',
+    indexColor: 'rgba(14,42,34,0.22)',
     indexSize: '0.75rem',
     contentMarginTop: 4,
-    counterColor: 'common.white',
+    counterColor: 'common.black',
     counterSize: 'standard',
     labelMaxWidth: 220,
     labelMarginTop: 1,
-    labelColor: 'rgba(255,255,255,0.76)',
+    labelColor: 'rgba(14,42,34,0.76)',
     labelSize: '0.88rem',
     labelWeight: 550,
   },
@@ -236,7 +297,7 @@ const ImpactNumbersSkeleton = (): JSX.Element => (
       <Skeleton
         variant="rounded"
         height={430}
-        sx={{ borderRadius: 5, bgcolor: 'rgba(255,255,255,0.09)' }}
+        sx={{ borderRadius: 5, bgcolor: 'rgba(14,42,34,0.09)' }}
       />
     </Grid>
     <Grid size={{ xs: 12, md: 7 }}>
@@ -246,7 +307,7 @@ const ImpactNumbersSkeleton = (): JSX.Element => (
             <Skeleton
               variant="rounded"
               height={204}
-              sx={{ borderRadius: 3, bgcolor: 'rgba(255,255,255,0.09)' }}
+              sx={{ borderRadius: 3, bgcolor: 'rgba(14,42,34,0.09)' }}
             />
           </Grid>
         ))}
@@ -257,28 +318,22 @@ const ImpactNumbersSkeleton = (): JSX.Element => (
 
 export const ImpactNumbersSection = (): JSX.Element => {
   const { data, isLoading } = useImpactStats();
-  if (!isLoading && (!data || data.items.length === 0)) {
-    return <></>;
-  }
-
-  const stats = data?.items ?? [];
+  const stats = data?.items?.length ? data.items : FALLBACK_STATS;
   const [featuredStat, ...supportingStats] = stats;
 
   return (
-    <Box
+    <MintSurface
       component="section"
       aria-labelledby="impact-numbers-title"
       sx={{
         position: 'relative',
         overflow: 'hidden',
-        bgcolor: 'primary.dark',
-        color: 'common.white',
         py: { xs: 8, md: 12 },
         '&::before': {
           position: 'absolute',
           inset: 0,
           background:
-            'radial-gradient(circle at 82% 16%, rgba(212,160,23,0.16), transparent 24%), radial-gradient(circle at 8% 88%, rgba(46,125,79,0.55), transparent 32%)',
+            `radial-gradient(circle at 82% 16%, ${alpha(brandColors.gold, 0.16)}, transparent 24%), radial-gradient(circle at 8% 88%, rgba(46,125,79,0.55), transparent 32%)`,
           content: '""',
         },
         '&::after': {
@@ -296,7 +351,7 @@ export const ImpactNumbersSection = (): JSX.Element => {
       }}
     >
       <Container sx={{ position: 'relative', zIndex: 1 }}>
-        <Grid container spacing={4} alignItems="flex-end" sx={{ mb: { xs: 5, md: 7 } }}>
+        <Grid container spacing={4} sx={{ alignItems: 'flex-end', mb: { xs: 5, md: 7 } }}>
           <Grid size={{ xs: 12, md: 8 }}>
             <Stack direction="row" alignItems="center" spacing={1.5}>
               <Box sx={{ width: 36, height: 2, bgcolor: 'secondary.main' }} />
@@ -341,9 +396,9 @@ export const ImpactNumbersSection = (): JSX.Element => {
                 ml: { md: 'auto' },
                 p: 2,
                 border: 1,
-                borderColor: 'rgba(255,255,255,0.12)',
+                borderColor: 'rgba(14,42,34,0.12)',
                 borderRadius: 2.5,
-                bgcolor: 'rgba(255,255,255,0.045)',
+                bgcolor: 'rgba(14,42,34,0.045)',
               }}
             >
               <Box
@@ -354,7 +409,7 @@ export const ImpactNumbersSection = (): JSX.Element => {
                   flexShrink: 0,
                   placeItems: 'center',
                   borderRadius: '50%',
-                  bgcolor: 'rgba(212,160,23,0.14)',
+                  bgcolor: alpha(brandColors.gold, 0.14),
                   color: 'secondary.light',
                 }}
               >
@@ -375,7 +430,7 @@ export const ImpactNumbersSection = (): JSX.Element => {
         {isLoading ? (
           <ImpactNumbersSkeleton />
         ) : (
-          <Grid container spacing={3} alignItems="stretch">
+          <Grid container spacing={3} sx={{ alignItems: 'stretch' }}>
             {featuredStat && (
               <Grid size={{ xs: 12, md: supportingStats.length > 0 ? 5 : 12 }}>
                 <SectionReveal fillHeight>
@@ -403,7 +458,7 @@ export const ImpactNumbersSection = (): JSX.Element => {
           direction={{ xs: 'column', sm: 'row' }}
           alignItems={{ xs: 'flex-start', sm: 'center' }}
           spacing={1.25}
-          sx={{ mt: 4.5, color: 'rgba(255,255,255,0.56)' }}
+          sx={{ mt: 4.5, color: 'rgba(14,42,34,0.56)' }}
         >
           <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: 'secondary.main' }} />
           <Typography variant="caption" sx={{ letterSpacing: 0.2 }}>
@@ -411,7 +466,7 @@ export const ImpactNumbersSection = (): JSX.Element => {
           </Typography>
         </Stack>
       </Container>
-    </Box>
+    </MintSurface>
   );
 };
 
@@ -569,26 +624,34 @@ export const SdgSection = (): JSX.Element => (
       position: 'relative',
       overflow: 'hidden',
       bgcolor: '#EDF3EC',
+      color: 'common.black',
       py: { xs: 8, md: 12 },
       '&::before': {
         position: 'absolute',
         inset: 0,
         backgroundImage:
-          'linear-gradient(rgba(26,92,56,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(26,92,56,0.035) 1px, transparent 1px)',
+          'linear-gradient(rgba(0,30,20,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(0,30,20,0.035) 1px, transparent 1px)',
         backgroundSize: '48px 48px',
         content: '""',
         maskImage: 'linear-gradient(to bottom, black, transparent 65%)',
       },
     }}
   >
-    <Container sx={{ position: 'relative' }}>
-      <Grid container spacing={{ xs: 4, md: 6 }} alignItems="stretch">
+    <Watermark
+      variant="radar"
+      position="bottom-right"
+      size={{ xs: 240, md: 380 }}
+      opacity={0.05}
+      sx={{ color: 'primary.main' }}
+    />
+    <Container sx={{ position: 'relative', zIndex: 1 }}>
+      <Grid container spacing={{ xs: 4, md: 6 }} sx={{ alignItems: 'stretch' }}>
         <Grid size={{ xs: 12, md: 7 }}>
           <Stack direction="row" alignItems="center" spacing={1.25}>
             <Box sx={{ width: 38, height: 2, borderRadius: 99, bgcolor: 'secondary.main' }} />
             <Typography
               variant="overline"
-              sx={{ color: 'success.main', fontWeight: 750, letterSpacing: 1.8 }}
+              sx={{ color: 'text.primary', fontWeight: 750, letterSpacing: 1.8 }}
             >
               Our Contribution to Global Goals
             </Typography>
@@ -596,7 +659,7 @@ export const SdgSection = (): JSX.Element => (
           <Typography
             id="sdg-section-title"
             variant="h2"
-            sx={{ maxWidth: 720, mt: 1.5, fontSize: { xs: '2.1rem', md: '3.2rem' } }}
+            sx={{ maxWidth: 720, mt: 1.5, fontSize: { xs: '2.1rem', md: '3.2rem' }, color: 'common.black' }}
           >
             UN Sustainable Development Goals
           </Typography>
@@ -604,7 +667,8 @@ export const SdgSection = (): JSX.Element => (
             sx={{
               maxWidth: 690,
               mt: 2.25,
-              color: 'text.secondary',
+              color: 'common.black',
+              opacity: 0.78,
               fontSize: { xs: '1rem', md: '1.08rem' },
               lineHeight: 1.8,
             }}
@@ -615,7 +679,7 @@ export const SdgSection = (): JSX.Element => (
         </Grid>
 
         <Grid size={{ xs: 12, md: 5 }}>
-          <Box
+          <MintSurface
             sx={{
               position: 'relative',
               display: 'flex',
@@ -626,17 +690,15 @@ export const SdgSection = (): JSX.Element => (
               overflow: 'hidden',
               p: { xs: 3, md: 3.5 },
               borderRadius: 4,
-              bgcolor: 'primary.dark',
-              color: 'common.white',
               '&::after': {
                 position: 'absolute',
                 right: -70,
                 bottom: -100,
                 width: 240,
                 height: 240,
-                border: '1px solid rgba(212,160,23,0.2)',
+                border: `1px solid ${alpha(brandColors.gold, 0.2)}`,
                 borderRadius: '50%',
-                boxShadow: '0 0 0 34px rgba(212,160,23,0.03)',
+                boxShadow: `0 0 0 34px ${alpha(brandColors.gold, 0.03)}`,
                 content: '""',
               },
             }}
@@ -648,21 +710,20 @@ export const SdgSection = (): JSX.Element => (
               sx={{ position: 'relative', zIndex: 1 }}
             >
               <Box
+                className="mint-glass"
                 sx={{
                   display: 'grid',
                   width: 48,
                   height: 48,
                   placeItems: 'center',
                   borderRadius: 2,
-                  bgcolor: 'rgba(255,255,255,0.08)',
-                  color: 'secondary.light',
                 }}
               >
                 <PublicRoundedIcon />
               </Box>
               <Typography
                 sx={{
-                  color: 'rgba(255,255,255,0.35)',
+                  color: 'rgba(14,42,34,0.35)',
                   fontSize: '0.7rem',
                   fontWeight: 750,
                   letterSpacing: 1.5,
@@ -674,7 +735,6 @@ export const SdgSection = (): JSX.Element => (
             <Box sx={{ position: 'relative', zIndex: 1, mt: 4 }}>
               <Typography
                 sx={{
-                  color: 'secondary.light',
                   fontFamily: "'Montserrat', sans-serif",
                   fontSize: '3.5rem',
                   fontWeight: 800,
@@ -683,18 +743,18 @@ export const SdgSection = (): JSX.Element => (
               >
                 {SDG_GOALS.length}
               </Typography>
-              <Typography variant="h6" sx={{ mt: 0.75, color: 'common.white' }}>
+              <Typography variant="h6" sx={{ mt: 0.75 }}>
                 priority goals advanced
               </Typography>
               <Typography
                 variant="body2"
-                sx={{ maxWidth: 350, mt: 1, color: 'rgba(255,255,255,0.64)', lineHeight: 1.65 }}
+                sx={{ maxWidth: 350, mt: 1, color: 'rgba(14,42,34,0.64)', lineHeight: 1.65 }}
               >
                 Each goal is connected to practical programme delivery and measurable community
                 outcomes.
               </Typography>
             </Box>
-          </Box>
+          </MintSurface>
         </Grid>
       </Grid>
 
@@ -715,7 +775,7 @@ const AgendaSection = (): JSX.Element => (
   <Section
     eyebrow="Building the Africa We Want"
     title="Agenda 2063 Alignment"
-    bgcolor={brandColors.offWhite}
+    bgcolor="background.default"
   >
     <Grid container spacing={3}>
       {ASPIRATIONS.map((aspiration) => (
@@ -730,7 +790,7 @@ const AgendaSection = (): JSX.Element => (
                 position: 'relative',
                 overflow: 'hidden',
                 bgcolor: 'primary.main',
-                color: 'common.white',
+                color: 'primary.contrastText',
               }}
             >
               <PublicRoundedIcon
@@ -739,22 +799,22 @@ const AgendaSection = (): JSX.Element => (
                   right: -14,
                   bottom: -14,
                   fontSize: 110,
-                  color: 'rgba(255,255,255,0.06)',
+                  color: alpha(brandColors.deepForest, 0.06),
                 }}
               />
               <Typography
                 sx={{
-                  fontFamily: "'Playfair Display', serif",
+                  fontFamily: brandFonts.heading,
                   fontStyle: 'italic',
                   fontSize: '2.6rem',
                   fontWeight: 700,
-                  color: 'secondary.main',
+                  color: 'primary.contrastText',
                   lineHeight: 1,
                 }}
               >
                 {aspiration.n}
               </Typography>
-              <Typography variant="overline" sx={{ opacity: 0.7, letterSpacing: 1.5 }}>
+              <Typography variant="overline" sx={{ color: 'primary.contrastText', opacity: 0.7, letterSpacing: 1.5 }}>
                 Aspiration
               </Typography>
               <Typography
@@ -845,7 +905,7 @@ const ReportCard = ({ report, index }: { report: Report; index: number }): JSX.E
       overflow: 'hidden',
       p: 3,
       border: 1,
-      borderColor: 'rgba(26,92,56,0.14)',
+      borderColor: 'rgba(0,30,20,0.14)',
       borderRadius: 4,
       bgcolor: 'background.paper',
       boxShadow: '0 24px 52px -46px rgba(18,66,42,0.85)',
@@ -861,7 +921,7 @@ const ReportCard = ({ report, index }: { report: Report; index: number }): JSX.E
         content: '""',
       },
       '&:hover': {
-        borderColor: 'rgba(26,92,56,0.34)',
+        borderColor: 'rgba(0,30,20,0.34)',
         boxShadow: '0 28px 58px -42px rgba(18,66,42,0.72)',
         transform: 'translateY(-5px)',
       },
@@ -884,7 +944,7 @@ const ReportCard = ({ report, index }: { report: Report; index: number }): JSX.E
       <Typography
         aria-hidden
         sx={{
-          color: 'rgba(26,92,56,0.18)',
+          color: 'rgba(0,30,20,0.18)',
           fontSize: '0.72rem',
           fontWeight: 800,
           letterSpacing: 1.5,
@@ -894,7 +954,7 @@ const ReportCard = ({ report, index }: { report: Report; index: number }): JSX.E
       </Typography>
     </Stack>
 
-    <Stack direction="row" alignItems="center" spacing={0.75} sx={{ mt: 3, color: 'primary.main' }}>
+    <Stack direction="row" alignItems="center" spacing={0.75} sx={{ mt: 3, color: 'text.secondary' }}>
       <CalendarMonthRoundedIcon sx={{ fontSize: 17 }} />
       <Typography variant="caption" sx={{ fontWeight: 750, letterSpacing: 0.5 }}>
         {report.year} REPORT
@@ -928,9 +988,9 @@ const ReportsEmptyState = (): JSX.Element => (
     sx={{
       overflow: 'hidden',
       border: 1,
-      borderColor: 'rgba(26,92,56,0.12)',
+      borderColor: 'rgba(14,42,34,0.12)',
       borderRadius: 4,
-      bgcolor: 'background.paper',
+      bgcolor: brandColors.white,
       boxShadow: '0 30px 70px -58px rgba(18,66,42,0.85)',
     }}
   >
@@ -945,17 +1005,17 @@ const ReportsEmptyState = (): JSX.Element => (
           justifyContent: 'space-between',
           overflow: 'hidden',
           p: { xs: 3.5, md: 5 },
-          bgcolor: 'primary.dark',
-          color: 'common.white',
+          bgcolor: brandColors.forestGreen,
+          color: brandColors.white,
           '&::after': {
             position: 'absolute',
             right: -105,
             bottom: -145,
             width: 330,
             height: 330,
-            border: '1px solid rgba(212,160,23,0.2)',
+            border: `1px solid ${alpha(brandColors.gold, 0.18)}`,
             borderRadius: '50%',
-            boxShadow: '0 0 0 46px rgba(212,160,23,0.025)',
+            boxShadow: `0 0 0 46px ${alpha(brandColors.gold, 0.06)}`,
             content: '""',
           },
         }}
@@ -972,17 +1032,17 @@ const ReportsEmptyState = (): JSX.Element => (
               width: 58,
               height: 58,
               placeItems: 'center',
-              border: '1px solid rgba(255,255,255,0.14)',
               borderRadius: 2.5,
-              bgcolor: 'rgba(255,255,255,0.07)',
-              color: 'secondary.light',
+              border: `1px solid ${alpha(brandColors.white, 0.18)}`,
+              bgcolor: alpha(brandColors.white, 0.1),
+              color: brandColors.white,
             }}
           >
             <FactCheckRoundedIcon sx={{ fontSize: 30 }} />
           </Box>
           <Typography
             sx={{
-              color: 'rgba(255,255,255,0.3)',
+              color: 'rgba(255,255,255,0.55)',
               fontSize: '0.7rem',
               fontWeight: 750,
               letterSpacing: 1.5,
@@ -994,13 +1054,13 @@ const ReportsEmptyState = (): JSX.Element => (
         <Box sx={{ position: 'relative', zIndex: 1, mt: 5 }}>
           <Typography
             variant="overline"
-            sx={{ color: 'secondary.light', fontWeight: 750, letterSpacing: 1.5 }}
+            sx={{ color: 'rgba(255,255,255,0.72)', fontWeight: 750, letterSpacing: 1.5 }}
           >
             First edition in development
           </Typography>
           <Typography
             variant="h3"
-            sx={{ mt: 1, color: 'common.white', fontSize: { xs: '2rem', md: '2.5rem' } }}
+            sx={{ mt: 1, fontSize: { xs: '2rem', md: '2.5rem' }, color: brandColors.white }}
           >
             Our reports will show the work, not just describe it.
           </Typography>
@@ -1014,17 +1074,20 @@ const ReportsEmptyState = (): JSX.Element => (
           flexDirection: 'column',
           justifyContent: 'center',
           p: { xs: 3.5, md: 5.5 },
+          color: brandColors.charcoalBlack,
         }}
       >
-        <Typography variant="h5">Reports coming soon</Typography>
-        <Typography sx={{ maxWidth: 610, mt: 1.5, color: 'text.secondary', lineHeight: 1.8 }}>
+        <Typography variant="h5" sx={{ color: 'inherit' }}>
+          Reports coming soon
+        </Typography>
+        <Typography sx={{ maxWidth: 610, mt: 1.5, color: brandColors.slate, lineHeight: 1.8 }}>
           We are building an evidence base that documents what we promised, what we delivered, what
           changed, and what we learned along the way.
         </Typography>
 
         <Typography
           variant="overline"
-          sx={{ mt: 4, color: 'primary.main', fontWeight: 750, letterSpacing: 1.4 }}
+          sx={{ mt: 4, color: brandColors.charcoalBlack, fontWeight: 750, letterSpacing: 1.4 }}
         >
           What each report will cover
         </Typography>
@@ -1039,13 +1102,13 @@ const ReportsEmptyState = (): JSX.Element => (
                   flexShrink: 0,
                   placeItems: 'center',
                   borderRadius: '50%',
-                  bgcolor: 'rgba(26,92,56,0.08)',
-                  color: 'primary.main',
+                  bgcolor: alpha(brandColors.forestGreen, 0.08),
+                  color: brandColors.forestGreen,
                 }}
               >
                 <CheckCircleRoundedIcon sx={{ fontSize: 17 }} />
               </Box>
-              <Typography variant="body2" sx={{ fontWeight: 650 }}>
+              <Typography variant="body2" sx={{ fontWeight: 650, color: brandColors.charcoalBlack }}>
                 {promise}
               </Typography>
             </Stack>
@@ -1084,21 +1147,30 @@ export const ReportsSection = (): JSX.Element => {
     <Box
       component="section"
       aria-labelledby="reports-section-title"
-      sx={{ position: 'relative', overflow: 'hidden', bgcolor: '#F7F7F2', py: { xs: 8, md: 12 } }}
+      sx={{ position: 'relative', overflow: 'hidden', bgcolor: '#F7F7F2', color: 'common.black', py: { xs: 8, md: 12 } }}
     >
-      <Container>
+      <Watermark
+        variant="contours"
+        position="top-left"
+        size={{ xs: 260, md: 420 }}
+        opacity={0.05}
+        sx={{ color: 'primary.main' }}
+      />
+      <Container sx={{ position: 'relative', zIndex: 1 }}>
         <Grid
           container
           spacing={{ xs: 3, md: 6 }}
-          alignItems="flex-end"
-          sx={{ mb: { xs: 5, md: 7 } }}
+          sx={{
+            alignItems: 'flex-end',
+            mb: { xs: 5, md: 7 },
+          }}
         >
           <Grid size={{ xs: 12, md: 8 }}>
             <Stack direction="row" spacing={1.25} alignItems="center">
               <Box sx={{ width: 38, height: 2, borderRadius: 99, bgcolor: 'secondary.main' }} />
               <Typography
                 variant="overline"
-                sx={{ color: 'success.main', fontWeight: 750, letterSpacing: 1.8 }}
+                sx={{ color: 'text.primary', fontWeight: 750, letterSpacing: 1.8 }}
               >
                 Accountability &amp; Transparency
               </Typography>
@@ -1106,14 +1178,14 @@ export const ReportsSection = (): JSX.Element => {
             <Typography
               id="reports-section-title"
               variant="h2"
-              sx={{ mt: 1.5, fontSize: { xs: '2.1rem', md: '3.2rem' } }}
+              sx={{ mt: 1.5, fontSize: { xs: '2.1rem', md: '3.2rem' }, color: 'common.black' }}
             >
               Reports &amp; Resources
             </Typography>
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
             <Typography
-              sx={{ maxWidth: 440, ml: { md: 'auto' }, color: 'text.secondary', lineHeight: 1.75 }}
+              sx={{ maxWidth: 440, ml: { md: 'auto' }, color: 'common.black', opacity: 0.78, lineHeight: 1.75 }}
             >
               Clear evidence, honest learning, and accessible records of how the Alliance turns
               commitments into results.
@@ -1126,24 +1198,27 @@ export const ReportsSection = (): JSX.Element => {
   );
 };
 
-const Impact = (): JSX.Element => (
-  <>
-    <Seo
-      title="Our Impact — Transforming Lives Across West Africa"
-      description="How Impact Africa Alliance contributes to the UN Sustainable Development Goals and the African Union's Agenda 2063."
-    />
-    <PageHero
-      eyebrow="Our Reach"
-      title="Our Impact"
-      subtitle="Numbers tell part of the story. People tell the rest."
-      image={IMAGES.programs['women-empowerment']}
-    />
+const Impact = (): JSX.Element => {
+  const heroImage = useHeroImage('impact', IMAGES.programs['women-empowerment']);
+  return (
+    <>
+      <Seo
+        title="Our Impact — Transforming Lives Across West Africa"
+        description="How Impact Africa Alliance contributes to the UN Sustainable Development Goals and the African Union's Agenda 2063."
+      />
+      <PageHero
+        eyebrow="Our Reach"
+        title="Our Impact"
+        subtitle="Numbers tell part of the story. People tell the rest."
+        image={heroImage}
+      />
     <ImpactNumbersSection />
     <SdgSection />
     <AgendaSection />
     <VoicesBand />
     <ReportsSection />
   </>
-);
+  );
+};
 
 export default Impact;

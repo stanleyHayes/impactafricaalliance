@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
+  brandColors,
   DONATION_PRESET_AMOUNTS_USD,
   DONATION_TIERS,
   PaymentProvider,
@@ -10,6 +11,8 @@ import {
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import Checkbox from '@mui/material/Checkbox';
+import FormControlLabel from '@mui/material/FormControlLabel';
 import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
 import { alpha } from '@mui/material/styles';
@@ -42,7 +45,8 @@ const DonationImpacts = (): JSX.Element => (
             bgcolor: 'common.white',
             border: '1px solid',
             borderColor: featured ? 'secondary.main' : 'divider',
-            boxShadow: featured ? '0 10px 28px -18px rgba(212,160,23,0.7)' : 'none',
+            color: 'common.black',
+            boxShadow: featured ? `0 10px 28px -18px ${alpha(brandColors.gold, 0.7)}` : 'none',
             transition: (t) =>
               t.transitions.create(['transform', 'border-color', 'box-shadow'], {
                 duration: t.transitions.duration.shorter,
@@ -50,7 +54,7 @@ const DonationImpacts = (): JSX.Element => (
             '&:hover': {
               transform: 'translateX(4px)',
               borderColor: featured ? 'secondary.main' : 'primary.light',
-              boxShadow: '0 12px 26px -18px rgba(26,92,56,0.55)',
+              boxShadow: '0 12px 26px -18px rgba(0,30,20,0.55)',
             },
           }}
         >
@@ -63,7 +67,7 @@ const DonationImpacts = (): JSX.Element => (
               px: 1.5,
               borderRadius: 2,
               textAlign: 'center',
-              color: featured ? 'secondary.contrastText' : 'primary.main',
+              color: featured ? 'secondary.contrastText' : 'common.black',
               bgcolor: (t) =>
                 featured ? t.palette.secondary.main : alpha(t.palette.primary.main, 0.1),
             }}
@@ -72,7 +76,7 @@ const DonationImpacts = (): JSX.Element => (
               ${tier.amountUsd.toLocaleString()}
             </Typography>
           </Box>
-          <Typography variant="body2" sx={{ lineHeight: 1.5, color: 'text.primary' }}>
+          <Typography variant="body2" sx={{ lineHeight: 1.5, color: 'common.black' }}>
             {tier.impact}
           </Typography>
         </Box>
@@ -98,6 +102,7 @@ export const DonateForm = (): JSX.Element => {
       provider: isStripeEnabled() ? PaymentProvider.Stripe : PaymentProvider.Paystack,
       amountUsd: 100,
       frequency: 'one-time',
+      marketingConsent: false,
     },
   });
 
@@ -129,7 +134,7 @@ export const DonateForm = (): JSX.Element => {
       <Grid size={{ xs: 12, md: 6 }}>
         <Typography
           variant="overline"
-          sx={{ color: 'secondary.main', fontWeight: 700, letterSpacing: 1.5 }}
+          sx={{ color: 'text.secondary', fontWeight: 700, letterSpacing: 1.5 }}
         >
           Your impact
         </Typography>
@@ -213,6 +218,11 @@ export const DonateForm = (): JSX.Element => {
                 </ToggleButton>
               </ToggleButtonGroup>
             )}
+          />
+
+          <FormControlLabel
+            control={<Checkbox {...register('marketingConsent')} color="primary" />}
+            label="Keep me updated on the impact of my donation and other IAA news (optional)."
           />
 
           {createDonation.isError && (

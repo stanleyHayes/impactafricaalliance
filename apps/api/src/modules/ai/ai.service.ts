@@ -45,7 +45,7 @@ export class AiAssistService {
     const extra = input.instructions ? `\n\nAdditional instructions: ${input.instructions}` : '';
 
     const message = await this.client.messages.create({
-      model: 'claude-opus-4-8',
+      model: 'claude-3-5-sonnet-20241022',
       max_tokens: 2048,
       system: SYSTEM_PROMPT,
       messages: [

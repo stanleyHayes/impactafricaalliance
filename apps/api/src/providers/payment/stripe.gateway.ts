@@ -1,7 +1,7 @@
 import type Stripe from 'stripe';
 import { inject, injectable } from 'tsyringe';
 
-import { ServiceUnavailableError, ValidationError } from '../../common/errors.js';
+import { ServiceUnavailableError, WebhookSignatureError } from '../../common/errors.js';
 import type { AppConfig } from '../../config/env.js';
 import { TOKENS } from '../../tokens.js';
 
@@ -49,7 +49,7 @@ export class StripeGateway {
     try {
       return client.webhooks.constructEvent(rawBody, signature, secret);
     } catch {
-      throw new ValidationError('Invalid Stripe webhook signature');
+      throw new WebhookSignatureError('Invalid Stripe webhook signature');
     }
   }
 

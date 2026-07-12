@@ -1,4 +1,4 @@
-import { type Article, type PillarDefinition } from '@iaa/shared';
+import { brandFonts, type Article, type PillarDefinition } from '@iaa/shared';
 import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
 import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
 import EastIcon from '@mui/icons-material/East';
@@ -66,17 +66,17 @@ export const PillarCard = ({ pillar }: { pillar: PillarDefinition }): JSX.Elemen
             position: 'absolute',
             top: 144,
             left: 20,
-            width: 48,
-            height: 48,
+            width: 50,
+            height: 50,
             borderRadius: 2,
             bgcolor: 'secondary.main',
             display: 'grid',
             placeItems: 'center',
-            boxShadow: 3,
+            boxShadow: '0 12px 24px -8px rgba(245,184,0,0.45)',
             zIndex: 1,
           }}
         >
-          <Icon sx={{ color: 'common.white', fontSize: 26 }} />
+          <Icon sx={{ color: 'common.black', fontSize: 26 }} />
         </Box>
         <CardContent
           sx={{
@@ -89,14 +89,14 @@ export const PillarCard = ({ pillar }: { pillar: PillarDefinition }): JSX.Elemen
             flexDirection: 'column',
           }}
         >
-          <Typography variant="h6">{pillar.title}</Typography>
+          <Typography variant="h6" sx={{ fontFamily: brandFonts.heading }}>{pillar.title}</Typography>
           <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary', flexGrow: 1 }}>
             {pillar.description}
           </Typography>
           <Box
             sx={{
               mt: 2,
-              color: 'primary.main',
+              color: 'text.primary',
               fontWeight: 700,
               display: 'flex',
               alignItems: 'center',
@@ -128,23 +128,32 @@ export const StoryCard = ({
 }: StoryCardProps): JSX.Element => (
   <Card
     sx={{
+      position: 'relative',
       height: '100%',
       borderRadius: 3,
-      borderTop: 4,
-      borderColor: 'secondary.main',
       display: 'flex',
       flexDirection: 'column',
-      transition: 'transform .25s, box-shadow .25s',
-      '&:hover': { transform: 'translateY(-4px)', boxShadow: 6 },
+      overflow: 'hidden',
+      transition: 'transform 240ms ease, border-color 240ms ease, box-shadow 240ms ease',
+      '&:hover': { transform: 'translateY(-4px)', boxShadow: '0 22px 48px -34px rgba(0,0,0,0.18)' },
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 3,
+        background: (theme) => `linear-gradient(90deg, ${theme.palette.secondary.main}, ${theme.palette.primary.main})`,
+      },
     }}
   >
     <CardContent sx={{ p: 3.5, display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
       <FormatQuoteRoundedIcon
-        sx={{ fontSize: 44, color: 'rgba(212,160,23,0.3)', transform: 'scaleX(-1)', mb: -1 }}
+        sx={{ fontSize: 44, color: 'secondary.light', opacity: 0.35, transform: 'scaleX(-1)', mb: -1 }}
       />
       <Typography
         sx={{
-          fontFamily: "'Playfair Display', Georgia, serif",
+          fontFamily: brandFonts.heading,
           fontStyle: 'italic',
           fontSize: '1.12rem',
           lineHeight: 1.7,
@@ -158,7 +167,7 @@ export const StoryCard = ({
       <Stack direction="row" spacing={2} alignItems="center">
         <Avatar
           src={photoUrl}
-          sx={{ width: 52, height: 52, bgcolor: 'primary.main', fontWeight: 700 }}
+          sx={{ width: 52, height: 52, bgcolor: 'primary.main', color: 'primary.contrastText', fontWeight: 700 }}
         >
           {name.charAt(0)}
         </Avatar>
@@ -267,7 +276,7 @@ const ArticleArtwork = ({
           display: 'grid',
           placeItems: 'center',
           background:
-            'radial-gradient(circle at 25% 25%, rgba(212,160,23,0.25), transparent 24%), linear-gradient(145deg, #1A5C38, #12422A)',
+            'radial-gradient(circle at 25% 25%, rgba(245,184,0,0.25), transparent 24%), linear-gradient(145deg, #001E14, #0B3D2E)',
         }}
       >
         <NewspaperRoundedIcon
@@ -291,7 +300,7 @@ const ArticleArtwork = ({
         left: styles.chipInset,
         border: '1px solid rgba(255,255,255,0.38)',
         bgcolor: 'rgba(255,255,255,0.92)',
-        color: 'primary.dark',
+        color: 'text.primary',
         fontSize: '0.74rem',
         fontWeight: 700,
         letterSpacing: 0.35,
@@ -332,13 +341,13 @@ const ArticleMetadata = ({
     sx={{ mb: marginBottom, color: 'text.secondary' }}
   >
     <Stack direction="row" spacing={0.7} alignItems="center">
-      <CalendarMonthRoundedIcon sx={{ color: 'primary.main', fontSize: 17 }} />
+      <CalendarMonthRoundedIcon sx={{ color: 'text.secondary', fontSize: 17 }} />
       <Typography variant="caption" sx={{ fontWeight: 600 }}>
         {formatArticleDate(date)}
       </Typography>
     </Stack>
     <Stack direction="row" spacing={0.7} alignItems="center">
-      <AccessTimeRoundedIcon sx={{ color: 'primary.main', fontSize: 17 }} />
+      <AccessTimeRoundedIcon sx={{ color: 'text.secondary', fontSize: 17 }} />
       <Typography variant="caption" sx={{ fontWeight: 600 }}>
         {readingTime} min read
       </Typography>
@@ -403,7 +412,7 @@ const ArticleCardContent = ({
       justifyContent="space-between"
       sx={{ mt: styles.actionMarginTop, pt: 2.5, borderTop: 1, borderColor: 'divider' }}
     >
-      <Typography sx={{ color: 'primary.main', fontSize: '0.85rem', fontWeight: 750 }}>
+      <Typography sx={{ color: 'text.primary', fontSize: '0.85rem', fontWeight: 750 }}>
         Read story
       </Typography>
       <Box
@@ -414,9 +423,9 @@ const ArticleCardContent = ({
           height: 38,
           placeItems: 'center',
           border: 1,
-          borderColor: 'rgba(26,92,56,0.18)',
+          borderColor: 'divider',
           borderRadius: '50%',
-          color: 'primary.main',
+          color: 'text.primary',
           transition: 'background-color 200ms ease, color 200ms ease, transform 200ms ease',
         }}
       >
@@ -440,18 +449,18 @@ export const ArticleCard = ({ article, featured = false }: ArticleCardProps): JS
         overflow: 'hidden',
         display: 'flex',
         border: 1,
-        borderColor: 'rgba(26,92,56,0.12)',
+        borderColor: 'divider',
         bgcolor: 'background.paper',
         transition: 'transform 240ms ease, border-color 240ms ease, box-shadow 240ms ease',
         '&:hover': {
-          borderColor: 'rgba(26,92,56,0.3)',
-          boxShadow: '0 22px 48px -34px rgba(18,66,42,0.7)',
+          borderColor: (theme) => (theme.palette.mode === 'light' ? 'rgba(0,0,0,0.22)' : 'rgba(255,255,255,0.22)'),
+          boxShadow: '0 22px 48px -34px rgba(0,0,0,0.18)',
           transform: 'translateY(-5px)',
         },
         '&:hover .article-img': { transform: 'scale(1.045)' },
         '&:hover .article-arrow': {
           bgcolor: 'primary.main',
-          color: 'common.white',
+          color: 'primary.contrastText',
           transform: 'translateX(3px)',
         },
       }}

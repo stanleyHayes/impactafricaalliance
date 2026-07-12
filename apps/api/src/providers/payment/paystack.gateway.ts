@@ -3,7 +3,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import axios, { type AxiosInstance } from 'axios';
 import { inject, injectable } from 'tsyringe';
 
-import { ServiceUnavailableError } from '../../common/errors.js';
+import { ServiceUnavailableError, WebhookSignatureError } from '../../common/errors.js';
 import type { AppConfig } from '../../config/env.js';
 import { TOKENS } from '../../tokens.js';
 
@@ -61,15 +61,20 @@ export class PaystackGateway {
   }
 
   /** Verify the `x-paystack-signature` header (HMAC-SHA512 of the raw body). */
-  verifyWebhookSignature(rawBody: Buffer, signature: string | undefined): boolean {
-    const secret = this.config.paystack.webhookSecret ?? this.config.paystack.secretKey;
-    if (!secret || !signature) {
-      return false;
+  verifyWebhookSignature(rawBody: Buffer, signature: string | undefined): void {
+    const secret = this.config.paystack.webhookSecret;
+    if (!secret) {
+      throw new ServiceUnavailableError('Paystack webhook secret is not configured');
+    }
+    if (!signature) {
+      throw new WebhookSignatureError('Missing Paystack signature header');
     }
     const expected = createHmac('sha512', secret).update(rawBody).digest('hex');
     const a = Buffer.from(expected);
     const b = Buffer.from(signature);
-    return a.length === b.length && timingSafeEqual(a, b);
+    if (a.length !== b.length || !timingSafeEqual(a, b)) {
+      throw new WebhookSignatureError('Invalid Paystack signature');
+    }
   }
 
   private client(): AxiosInstance {

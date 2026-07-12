@@ -15,6 +15,7 @@ export const articleInputSchema = z.object({
   tags: z.array(z.string().min(1).max(40)).max(12).default([]),
   status: statusEnum.default('draft'),
   publishedAt: z.string().datetime().optional(),
+  autoPostToSocial: z.boolean().default(false),
 });
 export type ArticleInput = z.infer<typeof articleInputSchema>;
 
@@ -30,4 +31,5 @@ export interface Article extends Timestamped {
   tags: string[];
   status: ContentStatus;
   publishedAt?: string;
+  autoPostToSocial: boolean;
 }

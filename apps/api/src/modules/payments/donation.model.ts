@@ -18,6 +18,7 @@ export interface DonationDocument {
   status: DonationStatus;
   donorName?: string;
   donorEmail: string;
+  marketingConsent?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -31,6 +32,7 @@ const donationSchema = new Schema<DonationDocument>(
     status: { type: String, enum: DONATION_STATUSES, default: DonationStatus.Pending, index: true },
     donorName: { type: String },
     donorEmail: { type: String, required: true, lowercase: true, trim: true },
+    marketingConsent: { type: Boolean },
   },
   baseSchemaOptions,
 );

@@ -36,17 +36,19 @@ describe('ContactForm', () => {
       screen.getByLabelText('Message'),
       'I would like to learn more about the digital skills programme.',
     );
+    await user.click(screen.getByRole('checkbox', { name: /i agree to the processing/i }));
     await user.click(screen.getByRole('button', { name: 'Send message' }));
 
     await waitFor(() =>
       expect(mutate).toHaveBeenCalledWith(
-        {
+        expect.objectContaining({
           type: SubmissionType.Contact,
           name: 'Ama Mensah',
           email: 'ama@example.com',
           subject: 'Programme enquiry',
           message: 'I would like to learn more about the digital skills programme.',
-        },
+          consent: true,
+        }),
         expect.objectContaining({ onSuccess: expect.any(Function) }),
       ),
     );

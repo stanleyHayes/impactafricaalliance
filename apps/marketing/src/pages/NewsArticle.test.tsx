@@ -11,6 +11,7 @@ import NewsArticle from './NewsArticle';
 
 vi.mock('../lib/content-hooks', () => ({
   useArticle: vi.fn(),
+  useHeroImage: vi.fn((_pageKey: string, fallback: string) => fallback),
 }));
 
 const article: Article = {
@@ -21,6 +22,7 @@ const article: Article = {
   body: '<p>Amara began with a question.</p><p>Mentorship helped her build <strong>confidence</strong>.</p>',
   tags: ['stories', 'mentorship'],
   status: 'published',
+  autoPostToSocial: false,
   publishedAt: '2026-06-08T12:00:00.000Z',
   createdAt: '2026-06-07T12:00:00.000Z',
   updatedAt: '2026-06-08T12:00:00.000Z',

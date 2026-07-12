@@ -39,8 +39,8 @@ export const AccountSectionHeader = ({
           border: 1,
           borderColor: 'divider',
           borderRadius: 2.5,
-          bgcolor: 'rgba(26,92,56,0.07)',
-          color: 'primary.main',
+          bgcolor: 'alpha(brandColors.forest, 0.07)',
+          color: 'text.primary',
           '& svg': { fontSize: 25 },
         }}
       >
@@ -49,7 +49,7 @@ export const AccountSectionHeader = ({
       <Box>
         <Typography
           variant="overline"
-          sx={{ color: 'primary.main', fontWeight: 750, letterSpacing: 1.2, lineHeight: 1 }}
+          sx={{ color: 'text.primary', fontWeight: 750, letterSpacing: 1.2, lineHeight: 1 }}
         >
           {eyebrow}
         </Typography>

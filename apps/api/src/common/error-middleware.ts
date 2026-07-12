@@ -9,10 +9,16 @@ import { AppError, ConflictError, NotFoundError, ValidationError } from './error
 
 const DUPLICATE_KEY_CODE = 11000;
 
+const isMalformedBodyError = (error: unknown): error is SyntaxError =>
+  error instanceof SyntaxError && 'body' in error && typeof (error as { body?: unknown }).body === 'string';
+
 /** Map known third-party/database errors onto our typed AppError hierarchy. */
 const normalise = (error: unknown): AppError | null => {
   if (error instanceof AppError) {
     return error;
+  }
+  if (isMalformedBodyError(error)) {
+    return new ValidationError('Invalid JSON body');
   }
   if (error instanceof MongooseError.ValidationError) {
     return new ValidationError('Validation failed', Object.keys(error.errors));

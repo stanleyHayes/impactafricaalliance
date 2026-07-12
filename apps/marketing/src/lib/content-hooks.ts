@@ -1,7 +1,9 @@
 import type {
   Article,
+  Event,
   ImpactStat,
   Job,
+  PageSetting,
   Paginated,
   Partner,
   Report,
@@ -36,5 +38,23 @@ export const useReports = (): UseQueryResult<Paginated<Report>> =>
 export const useJobs = (): UseQueryResult<Paginated<Job>> =>
   useQuery({ queryKey: ['jobs'], queryFn: () => page<Job>('jobs', '?pageSize=50') });
 
+export const useJob = (slug: string): UseQueryResult<Job> =>
+  useQuery({ queryKey: ['jobs', slug], queryFn: () => apiGet<Job>(`/jobs/${slug}`) });
+
+export const useEvents = (): UseQueryResult<Paginated<Event>> =>
+  useQuery({ queryKey: ['events'], queryFn: () => page<Event>('events', '?pageSize=100') });
+
 export const useImpactStats = (): UseQueryResult<Paginated<ImpactStat>> =>
   useQuery({ queryKey: ['stats'], queryFn: () => page<ImpactStat>('stats', '?pageSize=20') });
+
+export const usePageSetting = (pageKey: string): UseQueryResult<PageSetting> =>
+  useQuery({
+    queryKey: ['page-settings', pageKey],
+    queryFn: () => apiGet<PageSetting>(`/page-settings/${pageKey}`),
+    staleTime: 5 * 60 * 1000,
+  });
+
+export const useHeroImage = (pageKey: string, fallback: string): string => {
+  const { data } = usePageSetting(pageKey);
+  return data?.heroImage?.url ?? fallback;
+};

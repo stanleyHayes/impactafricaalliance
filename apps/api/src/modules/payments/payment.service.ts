@@ -10,7 +10,7 @@ import {
 import type Stripe from 'stripe';
 import { inject, injectable } from 'tsyringe';
 
-import { ServiceUnavailableError, ValidationError } from '../../common/errors.js';
+import { ServiceUnavailableError, WebhookSignatureError } from '../../common/errors.js';
 import { paginate } from '../../common/pagination.js';
 import type { AppLogger } from '../../config/logger.js';
 import { PaystackGateway } from '../../providers/payment/paystack.gateway.js';
@@ -44,17 +44,27 @@ export class PaymentService {
       frequency: input.frequency,
       donorEmail: input.donorEmail,
       ...(input.donorName ? { donorName: input.donorName } : {}),
+      ...(input.marketingConsent !== undefined ? { marketingConsent: input.marketingConsent } : {}),
     });
 
-    if (input.provider === PaymentProvider.Stripe) {
-      return this.startStripe(donation.id, input);
+    try {
+      if (input.provider === PaymentProvider.Stripe) {
+        return await this.startStripe(donation.id, input);
+      }
+      return await this.startPaystack(donation.id, donation.reference, input);
+    } catch (error) {
+      // Don't leave orphaned pending records if the gateway fails to initialise.
+      await this.donations.delete(donation.id);
+      throw error;
     }
-    return this.startPaystack(donation.id, donation.reference, input);
   }
 
   async handleStripeWebhook(rawBody: Buffer, signature: string | undefined): Promise<void> {
+    if (!this.stripe.isConfigured()) {
+      throw new ServiceUnavailableError('Stripe is not configured');
+    }
     if (!signature) {
-      throw new ValidationError('Missing Stripe signature header');
+      throw new WebhookSignatureError('Missing Stripe signature header');
     }
     const event = await this.stripe.constructEvent(rawBody, signature);
     const intent = event.data.object as Stripe.PaymentIntent;
@@ -76,9 +86,10 @@ export class PaymentService {
   }
 
   async handlePaystackWebhook(rawBody: Buffer, signature: string | undefined): Promise<void> {
-    if (!this.paystack.verifyWebhookSignature(rawBody, signature)) {
-      throw new ValidationError('Invalid Paystack signature');
+    if (!this.paystack.isConfigured()) {
+      throw new ServiceUnavailableError('Paystack is not configured');
     }
+    this.paystack.verifyWebhookSignature(rawBody, signature);
     const event = JSON.parse(rawBody.toString('utf8')) as PaystackWebhookEvent;
     const reference = event.data.reference;
     if (!reference) {

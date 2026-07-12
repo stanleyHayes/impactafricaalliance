@@ -28,6 +28,7 @@ export const createDonationSchema = z.object({
   frequency: frequencyEnum.default('one-time'),
   donorName: z.string().min(2).max(120).trim().optional(),
   donorEmail: z.string().email().toLowerCase().trim(),
+  marketingConsent: z.boolean().default(false),
 });
 export type CreateDonationInput = z.infer<typeof createDonationSchema>;
 
@@ -53,6 +54,7 @@ export interface Donation extends Timestamped {
   status: DonationStatus;
   donorName?: string;
   donorEmail: string;
+  marketingConsent?: boolean;
 }
 
 export { DONATION_STATUSES };

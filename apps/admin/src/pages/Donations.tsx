@@ -10,6 +10,8 @@ import { DataTable } from '../components/data/DataTable';
 import { EmptyState } from '../components/EmptyState';
 import { PageHeader } from '../components/PageHeader';
 import { useDonations } from '../lib/admin-hooks';
+import { formatUtcDate } from '../lib/date';
+import { pageGuides } from '../lib/page-guides';
 
 const statusColor = (status: unknown): 'success' | 'warning' | 'error' | 'default' => {
   if (status === 'succeeded') {
@@ -26,7 +28,14 @@ const columns: GridColDef[] = [
     field: 'createdAt',
     headerName: 'Date',
     width: 170,
-    renderCell: (params) => new Date(String(params.row.createdAt)).toLocaleString(),
+    renderCell: (params) =>
+      formatUtcDate(String(params.row.createdAt), {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
   },
   {
     field: 'amountUsd',
@@ -84,6 +93,7 @@ const Donations = (): JSX.Element => {
         title="Donations"
         description="Gifts received through the website, across all payment providers."
         count={data?.total}
+        help={pageGuides.Donations}
       />
 
       {!isLoading && items.length > 0 && (

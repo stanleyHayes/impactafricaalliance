@@ -15,6 +15,8 @@ beforeAll(() => {
   // No DB connection is opened here: this proves the DI container resolves the
   // entire controller/service/repository graph and Express assembles correctly.
   process.env.MONGODB_URI = 'mongodb://127.0.0.1:27017/iaa-test';
+  process.env.JWT_ACCESS_SECRET = 'test-access-secret-test-secret-test-secret-0123456';
+  process.env.JWT_REFRESH_SECRET = 'test-refresh-secret-test-secret-test-secret-012345';
   process.env.JWT_SECRET = 'test-secret-test-secret-test-secret-0123456789';
   process.env.SEED_ADMIN_PASSWORD = 'TestSeedAdminPass2026!';
   const config = loadConfig();

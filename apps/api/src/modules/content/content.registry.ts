@@ -1,10 +1,14 @@
 import {
   articleInputSchema,
   articleUpdateSchema,
+  eventInputSchema,
+  eventUpdateSchema,
   impactStatInputSchema,
   impactStatUpdateSchema,
   jobInputSchema,
   jobUpdateSchema,
+  pageSettingInputSchema,
+  pageSettingUpdateSchema,
   partnerInputSchema,
   partnerUpdateSchema,
   reportInputSchema,
@@ -17,9 +21,13 @@ import {
 import type { DependencyContainer } from 'tsyringe';
 
 import { mountContentModule, type MountedContentModule } from '../../common/crud/content-module.js';
+import { SocialPublisher } from '../../providers/social/social-publisher.js';
 
+import { ArticlePublishingService } from './article-publishing.service.js';
 import { ArticleModel } from './models/article.model.js';
+import { EventModel } from './models/event.model.js';
 import { JobModel } from './models/job.model.js';
+import { PageSettingModel } from './models/page-setting.model.js';
 import { PartnerModel } from './models/partner.model.js';
 import { ReportModel } from './models/report.model.js';
 import { ImpactStatModel } from './models/stat.model.js';
@@ -38,6 +46,8 @@ export const buildContentModules = (container: DependencyContainer): MountedCont
       schemas: { create: articleInputSchema, update: articleUpdateSchema },
       slugField: 'slug',
       defaultSort: { publishedAt: -1, createdAt: -1 },
+      serviceFactory: (repo, options) =>
+        new ArticlePublishingService(repo, options, container.resolve(SocialPublisher)),
     },
     container,
   ),
@@ -97,6 +107,16 @@ export const buildContentModules = (container: DependencyContainer): MountedCont
   ),
   mountContentModule(
     {
+      path: 'events',
+      resource: 'Event',
+      model: EventModel,
+      schemas: { create: eventInputSchema, update: eventUpdateSchema },
+      defaultSort: { startAt: -1 },
+    },
+    container,
+  ),
+  mountContentModule(
+    {
       path: 'stats',
       resource: 'Impact stat',
       model: ImpactStatModel,
@@ -104,6 +124,17 @@ export const buildContentModules = (container: DependencyContainer): MountedCont
       slugField: 'key',
       publicFilter: ACTIVE_ONLY,
       defaultSort: { order: 1 },
+    },
+    container,
+  ),
+  mountContentModule(
+    {
+      path: 'page-settings',
+      resource: 'Page setting',
+      model: PageSettingModel,
+      schemas: { create: pageSettingInputSchema, update: pageSettingUpdateSchema },
+      slugField: 'pageKey',
+      defaultSort: { pageKey: 1 },
     },
     container,
   ),

@@ -1,4 +1,4 @@
-import { SubmissionStatus, SubmissionType, type Submission } from '@iaa/shared';
+import { SubmissionStatus, SubmissionType, brandColors, type Submission } from '@iaa/shared';
 import DoneAllRoundedIcon from '@mui/icons-material/DoneAllRounded';
 import DoneRoundedIcon from '@mui/icons-material/DoneRounded';
 import HandshakeRoundedIcon from '@mui/icons-material/HandshakeRounded';
@@ -6,6 +6,7 @@ import MailOutlineRoundedIcon from '@mui/icons-material/MailOutlineRounded';
 import MarkEmailReadRoundedIcon from '@mui/icons-material/MarkEmailReadRounded';
 import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
 import VolunteerActivismRoundedIcon from '@mui/icons-material/VolunteerActivismRounded';
+import WorkOutlineRoundedIcon from '@mui/icons-material/WorkOutlineRounded';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -19,6 +20,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import { AccountPanel, AccountSectionHeader } from '../../components/account/AccountSurface';
 import { CardListSkeleton } from '../../components/CardListSkeleton';
 import { useSubmissions, useUpdateSubmissionStatus } from '../../lib/admin-hooks';
+import { formatUtcShort } from '../../lib/date';
 
 interface TypeMeta {
   icon: JSX.Element;
@@ -30,13 +32,18 @@ const TYPE_META: Record<Submission['type'], TypeMeta> = {
   [SubmissionType.Contact]: {
     icon: <MailOutlineRoundedIcon />,
     label: 'Contact',
-    color: '#1A5C38',
+    color: brandColors.forestGreen,
   },
-  [SubmissionType.Partner]: { icon: <HandshakeRoundedIcon />, label: 'Partner', color: '#D4A017' },
+  [SubmissionType.Partner]: { icon: <HandshakeRoundedIcon />, label: 'Partner', color: brandColors.gold },
   [SubmissionType.Volunteer]: {
     icon: <VolunteerActivismRoundedIcon />,
     label: 'Volunteer',
-    color: '#2E7D4F',
+    color: brandColors.mint,
+  },
+  [SubmissionType.Job]: {
+    icon: <WorkOutlineRoundedIcon />,
+    label: 'Job',
+    color: brandColors.deepForest,
   },
 };
 
@@ -70,7 +77,7 @@ const relativeTime = (iso: string): string => {
   if (days < 7) {
     return `${days}d ago`;
   }
-  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  return formatUtcShort(iso);
 };
 
 const NotificationCard = ({ submission }: { submission: Submission }): JSX.Element => {
@@ -105,7 +112,7 @@ const NotificationCard = ({ submission }: { submission: Submission }): JSX.Eleme
             height: 48,
             borderRadius: 2,
             flexShrink: 0,
-            color: meta.color,
+            color: 'text.secondary',
             bgcolor: alpha(meta.color, 0.12),
             boxShadow: `inset 0 0 0 1px ${alpha(meta.color, 0.2)}`,
           }}
@@ -157,8 +164,8 @@ const NotificationsEmptyState = (): JSX.Element => (
         mx: 'auto',
         placeItems: 'center',
         borderRadius: '50%',
-        bgcolor: 'rgba(26,92,56,0.08)',
-        color: 'primary.main',
+        bgcolor: 'alpha(brandColors.forest, 0.08)',
+        color: 'text.primary',
       }}
     >
       <DoneAllRoundedIcon sx={{ fontSize: 34 }} />
@@ -167,7 +174,7 @@ const NotificationsEmptyState = (): JSX.Element => (
       You&apos;re all caught up
     </Typography>
     <Typography sx={{ maxWidth: 460, mx: 'auto', mt: 1, color: 'text.secondary', lineHeight: 1.7 }}>
-      New contact, partner, and volunteer submissions will appear here as they come in.
+      New contact, partner, volunteer, and job submissions will appear here as they come in.
     </Typography>
   </AccountPanel>
 );
@@ -230,8 +237,8 @@ const Notifications = (): JSX.Element => {
                 height: 54,
                 placeItems: 'center',
                 borderRadius: 2.5,
-                bgcolor: 'rgba(26,92,56,0.08)',
-                color: 'primary.main',
+                bgcolor: 'alpha(brandColors.forest, 0.08)',
+                color: 'text.primary',
               }}
             >
               <MarkEmailReadRoundedIcon sx={{ fontSize: 28 }} />

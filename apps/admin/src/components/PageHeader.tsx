@@ -5,6 +5,9 @@ import { alpha, useTheme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
+import type { PageGuide } from './PageHelp';
+import { PageHelp } from './PageHelp';
+
 interface PageHeaderProps {
   title: string;
   description?: string;
@@ -14,6 +17,8 @@ interface PageHeaderProps {
   count?: number;
   /** Optional right-aligned action (typically a Button). */
   action?: ReactNode;
+  /** Optional contextual help popover for this page. */
+  help?: PageGuide;
 }
 
 /** Consistent page header: branded context, title, count, description, and optional action. */
@@ -23,6 +28,7 @@ export const PageHeader = ({
   icon,
   count,
   action,
+  help,
 }: PageHeaderProps): JSX.Element => {
   const theme = useTheme();
   const green = theme.palette.primary.main;
@@ -62,7 +68,7 @@ export const PageHeader = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'primary.main',
+              color: 'text.primary',
               bgcolor: alpha(green, 0.1),
               border: `1px solid ${alpha(green, 0.16)}`,
               '& > svg': { fontSize: 26 },
@@ -83,7 +89,7 @@ export const PageHeader = ({
               <Chip
                 size="small"
                 label={count}
-                sx={{ fontWeight: 700, color: 'primary.main', bgcolor: alpha(green, 0.1) }}
+                sx={{ fontWeight: 700, color: 'text.primary', bgcolor: alpha(green, 0.1) }}
               />
             )}
           </Stack>
@@ -93,6 +99,7 @@ export const PageHeader = ({
             </Typography>
           )}
         </Box>
+        {help && <PageHelp guide={help} />}
       </Stack>
 
       {action && <Box sx={{ flexShrink: 0, width: { xs: '100%', sm: 'auto' } }}>{action}</Box>}

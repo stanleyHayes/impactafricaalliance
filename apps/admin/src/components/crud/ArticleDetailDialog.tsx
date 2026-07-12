@@ -20,6 +20,7 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
+import { formatUtcDate } from '../../lib/date';
 import type { ResourceRow } from '../../resources/types';
 import { Markdown } from '../markdown/Markdown';
 
@@ -60,17 +61,13 @@ const formatDate = (value: unknown): string => {
   if (typeof value !== 'string') {
     return 'Not set';
   }
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return 'Not set';
-  }
-  return new Intl.DateTimeFormat('en-GB', {
+  return formatUtcDate(value, {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-  }).format(date);
+  });
 };
 
 const estimateReadingTime = (body: string): number => {
@@ -173,7 +170,7 @@ const ArticleHero = ({
           display: 'grid',
           placeItems: 'center',
           background:
-            'radial-gradient(circle at 75% 20%, rgba(212,160,23,0.3), transparent 24%), linear-gradient(145deg, #1A5C38, #123D28)',
+            'radial-gradient(circle at 75% 20%, alpha(brandColors.gold, 0.3), transparent 24%), linear-gradient(145deg, brandColors.forest, brandColors.forest)',
         }}
       >
         <NewspaperRoundedIcon sx={{ color: 'rgba(255,255,255,0.16)', fontSize: 112 }} />
@@ -272,7 +269,7 @@ const ArticleBodyPreview = ({ body }: { body: string }): JSX.Element => (
       <Box sx={{ width: 32, height: 2, bgcolor: 'secondary.main' }} />
       <Typography
         variant="overline"
-        sx={{ color: 'primary.main', fontWeight: 700, letterSpacing: '0.1em' }}
+        sx={{ color: 'text.primary', fontWeight: 700, letterSpacing: '0.1em' }}
       >
         Article preview
       </Typography>
@@ -321,7 +318,7 @@ const ArticleMetadata = ({ article }: { article: ArticleDetail }): JSX.Element =
       </DetailItem>
       <DetailItem label="Published">
         <Stack direction="row" spacing={1} alignItems="center">
-          <CalendarMonthRoundedIcon sx={{ color: 'primary.main', fontSize: 18 }} />
+          <CalendarMonthRoundedIcon sx={{ color: 'text.secondary', fontSize: 18 }} />
           <Typography variant="body2" sx={{ fontWeight: 600 }}>
             {formatDate(article.publishedAt)}
           </Typography>
@@ -364,7 +361,7 @@ const ArticleMetadata = ({ article }: { article: ArticleDetail }): JSX.Element =
     <Divider sx={{ my: 4 }} />
 
     <Stack direction="row" spacing={1} alignItems="center">
-      <TagRoundedIcon sx={{ color: 'primary.main', fontSize: 19 }} />
+      <TagRoundedIcon sx={{ color: 'text.secondary', fontSize: 19 }} />
       <Typography sx={{ fontSize: '0.84rem', fontWeight: 700 }}>Topics</Typography>
     </Stack>
     {article.tags.length > 0 ? (
@@ -388,7 +385,7 @@ const ArticleMetadata = ({ article }: { article: ArticleDetail }): JSX.Element =
     <Divider sx={{ my: 4 }} />
 
     <Stack direction="row" spacing={1} alignItems="center">
-      <ImageOutlinedIcon sx={{ color: 'primary.main', fontSize: 19 }} />
+      <ImageOutlinedIcon sx={{ color: 'text.secondary', fontSize: 19 }} />
       <Typography sx={{ fontSize: '0.84rem', fontWeight: 700 }}>Cover asset</Typography>
     </Stack>
     <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>

@@ -1,8 +1,10 @@
+import ExploreOutlinedIcon from '@mui/icons-material/ExploreOutlined';
+import HelpOutlineOutlinedIcon from '@mui/icons-material/HelpOutlineOutlined';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import LockResetIcon from '@mui/icons-material/LockReset';
 import LogoutIcon from '@mui/icons-material/Logout';
 import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
-import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+import PersonOutlineIcon from '@mui/icons-material/PersonOutlineOutlined';
 import SettingsIcon from '@mui/icons-material/Settings';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
@@ -19,6 +21,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../../auth/AuthContext';
+import { useTour } from '../tour';
 
 const initials = (name: string): string =>
   name
@@ -41,9 +44,15 @@ const NAV_ITEMS: readonly NavItem[] = [
   { label: 'Settings', to: '/account/settings', icon: <SettingsIcon fontSize="small" /> },
 ];
 
+const HELPER_ITEMS: readonly NavItem[] = [
+  { label: 'Show me around', to: '#tour', icon: <ExploreOutlinedIcon fontSize="small" /> },
+  { label: 'User guide', to: '/account/user-guide', icon: <HelpOutlineOutlinedIcon fontSize="small" /> },
+];
+
 /** Account pill (avatar + name + role + chevron) with a refined account dropdown. */
 export const UserMenu = (): JSX.Element => {
   const { user, logout } = useAuth();
+  const { start: startTour } = useTour();
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const open = Boolean(anchorEl);
@@ -59,6 +68,7 @@ export const UserMenu = (): JSX.Element => {
   return (
     <>
       <ButtonBase
+        id="admin-user-menu"
         onClick={(event) => setAnchorEl(event.currentTarget)}
         aria-label="Account menu"
         aria-haspopup="menu"
@@ -218,7 +228,31 @@ export const UserMenu = (): JSX.Element => {
           {NAV_ITEMS.map((item) => (
             <MenuItem key={item.to} onClick={() => go(item.to)} sx={{ py: 0.9, mx: 0.75, borderRadius: 1.5 }}>
               <ListItemIcon sx={{ color: 'text.secondary', minWidth: 34 }}>{item.icon}</ListItemIcon>
-              <ListItemText slotProps={{ primary: { fontSize: '0.875rem', fontWeight: 500 } }}>
+              <ListItemText slotProps={{ primary: { sx: { fontSize: '0.875rem', fontWeight: 500 } } }}>
+                {item.label}
+              </ListItemText>
+            </MenuItem>
+          ))}
+        </Box>
+
+        <Divider />
+
+        <Box sx={{ py: 0.5 }}>
+          {HELPER_ITEMS.map((item) => (
+            <MenuItem
+              key={item.to}
+              onClick={() => {
+                setAnchorEl(null);
+                if (item.to === '#tour') {
+                  startTour();
+                } else {
+                  navigate(item.to);
+                }
+              }}
+              sx={{ py: 0.9, mx: 0.75, borderRadius: 1.5 }}
+            >
+              <ListItemIcon sx={{ color: 'text.secondary', minWidth: 34 }}>{item.icon}</ListItemIcon>
+              <ListItemText slotProps={{ primary: { sx: { fontSize: '0.875rem', fontWeight: 500 } } }}>
                 {item.label}
               </ListItemText>
             </MenuItem>
@@ -244,7 +278,7 @@ export const UserMenu = (): JSX.Element => {
             <ListItemIcon sx={{ color: 'error.main', minWidth: 34 }}>
               <LogoutIcon fontSize="small" />
             </ListItemIcon>
-            <ListItemText slotProps={{ primary: { fontSize: '0.875rem', fontWeight: 700 } }}>
+            <ListItemText slotProps={{ primary: { sx: { fontSize: '0.875rem', fontWeight: 700 } } }}>
               Log out
             </ListItemText>
           </MenuItem>

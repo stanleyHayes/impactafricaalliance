@@ -1,4 +1,4 @@
-import type { LoginInput, LoginResponse, PublicUser } from '@iaa/shared';
+import type { LoginInput, LoginResponse, MfaLoginInput, MfaRequiredResponse, PublicUser } from '@iaa/shared';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
@@ -10,7 +10,7 @@ type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated';
 interface AuthContextValue {
   user: PublicUser | null;
   status: AuthStatus;
-  login: (input: LoginInput) => Promise<void>;
+  login: (input: LoginInput | MfaLoginInput) => Promise<LoginResponse | MfaRequiredResponse>;
   logout: () => void;
   updateUser: (user: PublicUser) => void;
 }
@@ -38,11 +38,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }): JSX.Element
       });
   }, []);
 
-  const login = useCallback(async (input: LoginInput) => {
-    const result = await api.post<LoginResponse>('/auth/login', input);
+  const login = useCallback(async (input: LoginInput | MfaLoginInput) => {
+    const result = await api.post<LoginResponse | MfaRequiredResponse>('/auth/login', input);
+    if ('mfaRequired' in result) {
+      return result;
+    }
     tokenStore.set(result.tokens);
     setUser(result.user);
     setStatus('authenticated');
+    return result;
   }, []);
 
   const logout = useCallback(() => {

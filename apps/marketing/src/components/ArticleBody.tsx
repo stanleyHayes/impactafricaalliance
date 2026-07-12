@@ -1,3 +1,4 @@
+import { brandFonts } from '@iaa/shared';
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 import Link from '@mui/material/Link';
@@ -96,7 +97,7 @@ const List = ({ ordered, children }: { ordered?: boolean; children: ReactNode })
       pl: 3.5,
       color: 'text.primary',
       '& li': { mb: 1 },
-      '& li::marker': { color: 'primary.main', fontWeight: 700 },
+      '& li::marker': { color: 'text.secondary', fontWeight: 700 },
     }}
   >
     {children}
@@ -150,7 +151,7 @@ const components: Components = {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      sx={{ color: 'primary.main', fontWeight: 650, textUnderlineOffset: 3 }}
+      sx={{ color: 'text.primary', fontWeight: 650, textUnderlineOffset: 3 }}
     >
       {children}
     </Link>
@@ -177,7 +178,7 @@ const components: Components = {
         color: 'primary.dark',
         '& p': {
           m: 0,
-          fontFamily: "'Playfair Display', Georgia, serif",
+          fontFamily: brandFonts.heading,
           fontSize: { xs: '1.2rem', md: '1.38rem' },
           fontStyle: 'italic',
           lineHeight: 1.65,
@@ -213,6 +214,7 @@ const components: Components = {
         borderColor: 'divider',
         borderRadius: 2,
         bgcolor: '#F2F4F1',
+        color: 'common.black',
         fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
         fontSize: '0.88rem',
         lineHeight: 1.7,
@@ -246,7 +248,7 @@ const components: Components = {
             py: 1.25,
             textAlign: 'left',
           },
-          '& th': { bgcolor: 'rgba(26,92,56,0.06)', fontWeight: 700 },
+          '& th': { bgcolor: 'rgba(0,30,20,0.06)', fontWeight: 700 },
         }}
       >
         {children}
@@ -262,8 +264,8 @@ export const ArticleBody = ({ body }: { body: string }): JSX.Element => (
         float: 'left',
         mr: 1,
         mt: 0.65,
-        color: 'primary.main',
-        fontFamily: "'Playfair Display', Georgia, serif",
+        color: 'text.secondary',
+        fontFamily: "'Poppins', sans-serif",
         fontSize: '3.8rem',
         fontWeight: 700,
         lineHeight: 0.75,

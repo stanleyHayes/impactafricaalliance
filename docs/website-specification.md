@@ -30,12 +30,14 @@ The IAA logo exists in multiple color variants — all must be respected across 
 
 | **Color** | **Hex Code** | **Usage** |
 |----|----|----|
-| Forest Green (Primary) | \#1A5C38 | Headers, primary CTAs, nav bar, section backgrounds |
-| Emerald Green (Secondary) | \#2E7D4F | Hover states, sub-sections, icon fills |
-| Gold / Amber | \#D4A017 | Accents, highlights, call-to-action borders |
-| Off-White | \#F7F7F2 | Page backgrounds, card backgrounds |
-| Charcoal Black | \#1A1A1A | Body text, footer |
+| Deep Forest (Primary) | \#001E14 | Primary dark backgrounds, footer, hero overlays |
+| Mint / Electric Aqua (Primary Accent) | \#00FCAA | Primary CTAs, headings on dark, focus states, accent borders |
+| Gold / Amber (Secondary Accent) | \#FFC300 | Highlights, secondary CTAs, emphasis |
+| Off-White | \#F4F6F5 | Page backgrounds, card backgrounds |
+| Charcoal Black | \#0A0F0D | Body text on light surfaces |
 | White | \#FFFFFF | Overlays, reversed text on dark sections |
+| Green Gradient | \#001E14 → \#00FCAA | Hero / section fills |
+| Gold-Green Gradient | \#FFC300 → \#00FCAA | Accent gradients |
 
 *⚠ IMPORTANT: The logo appears on black, white, and gold/green gradient backgrounds (as shown in the brand identity files). Developers must test all logo variants against their respective backgrounds before deployment.*
 
@@ -43,9 +45,9 @@ The IAA logo exists in multiple color variants — all must be respected across 
 
 | **Element** | Recommendation |
 |----|----|
-| Primary Heading Font | Montserrat Bold or Poppins Bold — modern, bold, African-confident feel |
-| Secondary / Body Font | Inter or Open Sans — clean, readable, accessible |
-| Accent / Pull Quote Font | Playfair Display or Lora (italic) — for impact statements |
+| Primary Heading Font | Poppins Bold (700) — modern, bold, African-confident feel |
+| Secondary / Body Font | Poppins Regular (400) — clean, readable, accessible |
+| Accent / Pull Quote Font | Poppins Bold or Regular — keep quotes in the same family for consistency |
 | Minimum Body Size | 16px on desktop, 15px on mobile |
 | Line Height (Body) | 1.7 — generous spacing for readability |
 

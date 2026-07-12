@@ -1,8 +1,12 @@
 import {
+  acceptInvitationSchema,
   changePasswordSchema,
-  loginSchema,
+  disableMfaSchema,
+  mfaLoginSchema,
   refreshSchema,
+  setupMfaSchema,
   updateProfileSchema,
+  verifyMfaSetupSchema,
 } from '@iaa/shared';
 import type { Request, Response } from 'express';
 import { inject, injectable } from 'tsyringe';
@@ -18,7 +22,7 @@ export class AuthController {
   constructor(@inject(AuthService) private readonly auth: AuthService) {}
 
   login = async (req: Request, res: Response): Promise<void> => {
-    const input = parseWith(loginSchema, req.body);
+    const input = parseWith(mfaLoginSchema, req.body);
     const result = await this.auth.login(input);
     res.status(200).json(result);
   };
@@ -44,6 +48,35 @@ export class AuthController {
     const input = parseWith(changePasswordSchema, req.body);
     await this.auth.changePassword(this.requireUserId(req), input);
     res.status(204).send();
+  };
+
+  getMfaStatus = async (req: Request, res: Response): Promise<void> => {
+    const result = await this.auth.getMfaStatus(this.requireUserId(req));
+    res.status(200).json(result);
+  };
+
+  setupMfa = async (req: Request, res: Response): Promise<void> => {
+    const input = parseWith(setupMfaSchema, req.body);
+    const result = await this.auth.setupMfa(this.requireUserId(req), input);
+    res.status(200).json(result);
+  };
+
+  verifyMfaSetup = async (req: Request, res: Response): Promise<void> => {
+    const input = parseWith(verifyMfaSetupSchema, req.body);
+    const result = await this.auth.verifyMfaSetup(this.requireUserId(req), input);
+    res.status(200).json(result);
+  };
+
+  disableMfa = async (req: Request, res: Response): Promise<void> => {
+    const input = parseWith(disableMfaSchema, req.body);
+    const result = await this.auth.disableMfa(this.requireUserId(req), input);
+    res.status(200).json(result);
+  };
+
+  acceptInvitation = async (req: Request, res: Response): Promise<void> => {
+    const input = parseWith(acceptInvitationSchema, req.body);
+    const result = await this.auth.acceptInvitation(input);
+    res.status(201).json(result);
   };
 
   private requireUserId(req: Request): string {

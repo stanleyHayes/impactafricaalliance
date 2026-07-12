@@ -10,6 +10,7 @@ import {
   JobType,
   type MediaAsset,
   PaymentProvider,
+  ROLE_TEMPLATES,
   SubmissionStatus,
   SubmissionType,
   TeamTier,
@@ -28,6 +29,7 @@ import { ImpactStatModel } from './modules/content/models/stat.model.js';
 import { StoryModel } from './modules/content/models/story.model.js';
 import { TeamMemberModel } from './modules/content/models/team.model.js';
 import { DonationModel } from './modules/payments/donation.model.js';
+import { SiteSettingModel } from './modules/site-settings/site-setting.model.js';
 import { SubmissionModel, SubscriberModel } from './modules/submissions/submission.model.js';
 import { UserModel } from './modules/users/user.model.js';
 
@@ -277,31 +279,31 @@ const STATS = [
 ];
 
 const SUBSCRIBERS = [
-  { email: 'thabo.nkosi@example.com', name: 'Thabo Nkosi', source: 'footer' },
-  { email: 'lucy.achieng@example.com', name: 'Lucy Achieng', source: 'blog' },
-  { email: 'ibrahim.toure@example.com', name: 'Ibrahim Touré', source: 'footer' },
-  { email: 'chiamaka.eze@example.com', name: 'Chiamaka Eze', source: 'event' },
-  { email: 'sipho.dlamini@example.com', name: 'Sipho Dlamini', source: 'footer' },
-  { email: 'aminata.bah@example.com', name: 'Aminata Bah', source: 'blog' },
-  { email: 'joseph.mwangi@example.com', name: 'Joseph Mwangi', source: 'footer' },
-  { email: 'nadia.benali@example.com', name: 'Nadia Benali', source: 'donate' },
-  { email: 'kofi.asante@example.com', name: 'Kofi Asante', source: 'footer' },
-  { email: 'zainab.suleiman@example.com', name: 'Zainab Suleiman', source: 'event' },
-  { email: 'tendai.moyo@example.com', name: 'Tendai Moyo', source: 'footer' },
-  { email: 'awa.ndiaye@example.com', name: 'Awa Ndiaye', source: 'blog' },
+  { email: 'thabo.nkosi@example.com', name: 'Thabo Nkosi', source: 'footer', consent: true, consentVersion: '2026-07', consentedAt: new Date() },
+  { email: 'lucy.achieng@example.com', name: 'Lucy Achieng', source: 'blog', consent: true, consentVersion: '2026-07', consentedAt: new Date() },
+  { email: 'ibrahim.toure@example.com', name: 'Ibrahim Touré', source: 'footer', consent: true, consentVersion: '2026-07', consentedAt: new Date() },
+  { email: 'chiamaka.eze@example.com', name: 'Chiamaka Eze', source: 'event', consent: true, consentVersion: '2026-07', consentedAt: new Date() },
+  { email: 'sipho.dlamini@example.com', name: 'Sipho Dlamini', source: 'footer', consent: true, consentVersion: '2026-07', consentedAt: new Date() },
+  { email: 'aminata.bah@example.com', name: 'Aminata Bah', source: 'blog', consent: true, consentVersion: '2026-07', consentedAt: new Date() },
+  { email: 'joseph.mwangi@example.com', name: 'Joseph Mwangi', source: 'footer', consent: true, consentVersion: '2026-07', consentedAt: new Date() },
+  { email: 'nadia.benali@example.com', name: 'Nadia Benali', source: 'donate', consent: true, consentVersion: '2026-07', consentedAt: new Date() },
+  { email: 'kofi.asante@example.com', name: 'Kofi Asante', source: 'footer', consent: true, consentVersion: '2026-07', consentedAt: new Date() },
+  { email: 'zainab.suleiman@example.com', name: 'Zainab Suleiman', source: 'event', consent: true, consentVersion: '2026-07', consentedAt: new Date() },
+  { email: 'tendai.moyo@example.com', name: 'Tendai Moyo', source: 'footer', consent: true, consentVersion: '2026-07', consentedAt: new Date() },
+  { email: 'awa.ndiaye@example.com', name: 'Awa Ndiaye', source: 'blog', consent: true, consentVersion: '2026-07', consentedAt: new Date() },
 ];
 
 const SUBMISSIONS = [
-  { type: SubmissionType.Contact, status: SubmissionStatus.New, payload: { __seed: true, name: 'Olivia Mensah', email: 'olivia.mensah@example.com', subject: 'Speaking opportunity', message: 'I’d love to invite your director to speak at our conference.' } },
-  { type: SubmissionType.Volunteer, status: SubmissionStatus.New, payload: { __seed: true, name: 'Daniel Okafor', email: 'daniel.okafor@example.com', expertise: 'Software mentorship', availability: 'Weekends' } },
-  { type: SubmissionType.Partner, status: SubmissionStatus.New, payload: { __seed: true, organizationName: 'BrightFuture Foundation', email: 'partners@brightfuture.org', partnershipInterest: 'Co-funding a cohort' } },
-  { type: SubmissionType.Contact, status: SubmissionStatus.New, payload: { __seed: true, name: 'Maria Santos', email: 'maria.santos@example.com', subject: 'Media enquiry', message: 'Writing a feature on African edtech — can we talk?' } },
-  { type: SubmissionType.Volunteer, status: SubmissionStatus.New, payload: { __seed: true, name: 'Peter Banda', email: 'peter.banda@example.com', expertise: 'Curriculum design' } },
-  { type: SubmissionType.Contact, status: SubmissionStatus.Read, payload: { __seed: true, name: 'Grace Owusu', email: 'grace.owusu@example.com', subject: 'Thank you', message: 'Your programme changed my niece’s life.' } },
-  { type: SubmissionType.Partner, status: SubmissionStatus.Read, payload: { __seed: true, organizationName: 'TechBridge Africa', email: 'hello@techbridge.africa', partnershipInterest: 'Providing laptops' } },
-  { type: SubmissionType.Volunteer, status: SubmissionStatus.Read, payload: { __seed: true, name: 'Sarah Kimani', email: 'sarah.kimani@example.com', expertise: 'UX design mentorship' } },
-  { type: SubmissionType.Contact, status: SubmissionStatus.Archived, payload: { __seed: true, name: 'John Doe', email: 'john.doe@example.com', subject: 'General', message: 'Keep up the great work!' } },
-  { type: SubmissionType.Partner, status: SubmissionStatus.Archived, payload: { __seed: true, organizationName: 'Old Sponsor Ltd', email: 'contact@oldsponsor.com', partnershipInterest: 'Past sponsor reconnecting' } },
+  { type: SubmissionType.Contact, status: SubmissionStatus.New, consent: true, consentVersion: '2026-07', consentedAt: new Date(), payload: { __seed: true, name: 'Olivia Mensah', email: 'olivia.mensah@example.com', subject: 'Speaking opportunity', message: 'I’d love to invite your director to speak at our conference.' } },
+  { type: SubmissionType.Volunteer, status: SubmissionStatus.New, consent: true, consentVersion: '2026-07', consentedAt: new Date(), payload: { __seed: true, name: 'Daniel Okafor', email: 'daniel.okafor@example.com', expertise: 'Software mentorship', availability: 'Weekends' } },
+  { type: SubmissionType.Partner, status: SubmissionStatus.New, consent: true, consentVersion: '2026-07', consentedAt: new Date(), payload: { __seed: true, organizationName: 'BrightFuture Foundation', email: 'partners@brightfuture.org', partnershipInterest: 'Co-funding a cohort' } },
+  { type: SubmissionType.Contact, status: SubmissionStatus.New, consent: true, consentVersion: '2026-07', consentedAt: new Date(), payload: { __seed: true, name: 'Maria Santos', email: 'maria.santos@example.com', subject: 'Media enquiry', message: 'Writing a feature on African edtech — can we talk?' } },
+  { type: SubmissionType.Volunteer, status: SubmissionStatus.New, consent: true, consentVersion: '2026-07', consentedAt: new Date(), payload: { __seed: true, name: 'Peter Banda', email: 'peter.banda@example.com', expertise: 'Curriculum design' } },
+  { type: SubmissionType.Contact, status: SubmissionStatus.Read, consent: true, consentVersion: '2026-07', consentedAt: new Date(), payload: { __seed: true, name: 'Grace Owusu', email: 'grace.owusu@example.com', subject: 'Thank you', message: 'Your programme changed my niece’s life.' } },
+  { type: SubmissionType.Partner, status: SubmissionStatus.Read, consent: true, consentVersion: '2026-07', consentedAt: new Date(), payload: { __seed: true, organizationName: 'TechBridge Africa', email: 'hello@techbridge.africa', partnershipInterest: 'Providing laptops' } },
+  { type: SubmissionType.Volunteer, status: SubmissionStatus.Read, consent: true, consentVersion: '2026-07', consentedAt: new Date(), payload: { __seed: true, name: 'Sarah Kimani', email: 'sarah.kimani@example.com', expertise: 'UX design mentorship' } },
+  { type: SubmissionType.Contact, status: SubmissionStatus.Archived, consent: true, consentVersion: '2026-07', consentedAt: new Date(), payload: { __seed: true, name: 'John Doe', email: 'john.doe@example.com', subject: 'General', message: 'Keep up the great work!' } },
+  { type: SubmissionType.Partner, status: SubmissionStatus.Archived, consent: true, consentVersion: '2026-07', consentedAt: new Date(), payload: { __seed: true, organizationName: 'Old Sponsor Ltd', email: 'contact@oldsponsor.com', partnershipInterest: 'Past sponsor reconnecting' } },
 ];
 
 const DONATIONS = [
@@ -359,6 +361,7 @@ const seed = async (): Promise<void> => {
         email: config.seedAdmin.email,
         passwordHash: await passwords.hash(config.seedAdmin.password),
         role: UserRole.Admin,
+        permissions: ROLE_TEMPLATES[UserRole.Admin],
       });
       logger.info(`Seeded admin user ${config.seedAdmin.email}`);
     }
@@ -375,11 +378,16 @@ const seed = async (): Promise<void> => {
         email: editor.email,
         passwordHash: await passwords.hash(editorPassword),
         role: UserRole.Editor,
+        permissions: ROLE_TEMPLATES[UserRole.Editor],
       });
       logger.info(`Seeded editor ${editor.email}`);
     }
     if (!config.seedEditorPassword) {
-      logger.info(`Generated editor password (set SEED_EDITOR_PASSWORD to override): ${editorPassword}`);
+      logger.info(
+        'Generated editor password. Set SEED_EDITOR_PASSWORD to avoid rotation. The password is only printed to stdout below.',
+      );
+      // eslint-disable-next-line no-console
+      console.log(`SEED_EDITOR_PASSWORD=${editorPassword}`);
     }
 
     await upsertBySlug('Articles', ARTICLES, (doc) =>
@@ -397,6 +405,25 @@ const seed = async (): Promise<void> => {
     await ensure('Impact stats', await ImpactStatModel.countDocuments().exec(), () => ImpactStatModel.create(STATS));
     await ensure('Subscribers', await SubscriberModel.countDocuments().exec(), () => SubscriberModel.create(SUBSCRIBERS));
     await ensure('Submissions', await SubmissionModel.countDocuments().exec(), () => SubmissionModel.create(SUBMISSIONS));
+
+    const existingSiteSettings = await SiteSettingModel.countDocuments().exec();
+    if (existingSiteSettings > 0) {
+      logger.info('Site settings: existing — skipped');
+    } else {
+      await SiteSettingModel.create({
+        key: 'site',
+        siteName: 'Impact Africa Alliance',
+        tagline: 'Empowering African youth through education, skills, and opportunity.',
+        contactEmail: 'hello@impactafricaalliance.org',
+        contactPhone: '+233 20 000 0000',
+        addressLine1: '123 Independence Avenue',
+        city: 'Accra',
+        region: 'Greater Accra',
+        country: 'Ghana',
+      });
+      logger.info('Site settings: seeded');
+    }
+
     await ensure('Donations', await DonationModel.countDocuments().exec(), () => DonationModel.create(DONATIONS));
 
     logger.info('Seed complete');

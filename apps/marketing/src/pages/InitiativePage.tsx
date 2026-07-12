@@ -9,6 +9,7 @@ import CardContent from '@mui/material/CardContent';
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
+import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import { Navigate, Link as RouterLink, useParams } from 'react-router-dom';
 
@@ -21,8 +22,8 @@ import { programImage } from '../content/images';
 import { PROGRAMS, findProgram } from '../content/programs';
 
 const OtherInitiatives = ({ currentSlug }: { currentSlug: string }): JSX.Element => (
-  <Section eyebrow="Keep Exploring" title="Other Initiatives" bgcolor={brandColors.offWhite}>
-    <Grid container spacing={3} alignItems="stretch">
+  <Section eyebrow="Keep Exploring" title="Other Initiatives" bgcolor="background.default">
+    <Grid container spacing={3} sx={{ alignItems: 'stretch' }}>
       {PROGRAMS.filter((program) => program.slug !== currentSlug).map((program) => {
         const Icon = programIcon(program.slug);
         return (
@@ -60,7 +61,7 @@ const OtherInitiatives = ({ currentSlug }: { currentSlug: string }): JSX.Element
                   <Typography sx={{ fontWeight: 700, lineHeight: 1.35, flexGrow: 1 }}>
                     {program.title}
                   </Typography>
-                  <Box sx={{ mt: 2, color: 'primary.main', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <Box sx={{ mt: 2, color: 'text.primary', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 0.5 }}>
                     Explore <EastIcon fontSize="small" />
                   </Box>
                 </CardContent>
@@ -97,7 +98,7 @@ const InitiativePage = (): JSX.Element => {
         </Typography>
       </Section>
 
-      <Section eyebrow="Our Approach" title="What We Do" bgcolor={brandColors.offWhite}>
+      <Section eyebrow="Our Approach" title="What We Do" bgcolor="background.default">
         <Grid container spacing={3}>
           {program.whatWeDo.map((item) => (
             <Grid key={item} size={{ xs: 12, md: 6 }}>
@@ -116,9 +117,9 @@ const InitiativePage = (): JSX.Element => {
         </Grid>
       </Section>
 
-      <Box sx={{ bgcolor: 'primary.main', color: 'common.white', py: { xs: 7, md: 10 } }}>
+      <Box sx={{ bgcolor: 'primary.main', color: 'primary.contrastText', py: { xs: 7, md: 10 } }}>
         <Container>
-          <Typography variant="overline" sx={{ color: 'secondary.light', fontWeight: 700, letterSpacing: 2 }}>
+          <Typography variant="overline" sx={{ color: 'primary.contrastText', fontWeight: 700, letterSpacing: 2 }}>
             Our Goal
           </Typography>
           <Typography variant="h5" sx={{ mt: 1, maxWidth: 880, fontWeight: 600, lineHeight: 1.5 }}>
@@ -134,7 +135,7 @@ const InitiativePage = (): JSX.Element => {
               variant="outlined"
               size="large"
               endIcon={<EastIcon />}
-              sx={{ color: 'common.white', borderColor: 'rgba(255,255,255,0.6)' }}
+              sx={{ color: 'primary.contrastText', borderColor: alpha(brandColors.deepForest, 0.6) }}
             >
               Get Involved
             </Button>

@@ -1,3 +1,4 @@
+import { brandColors } from '@iaa/shared';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import Box from '@mui/material/Box';
@@ -7,6 +8,7 @@ import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
+import { alpha } from '@mui/material/styles';
 import Tooltip from '@mui/material/Tooltip';
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
@@ -65,10 +67,10 @@ const RailNavLink = ({
         '&:hover': { bgcolor: 'action.hover', color: 'text.primary' },
         '&.active': {
           bgcolor: 'primary.main',
-          color: 'common.white',
-          boxShadow: '0 6px 16px -8px rgba(26,92,56,0.7)',
-          '& .MuiListItemIcon-root': { color: 'common.white' },
-          '&:hover': { bgcolor: 'primary.dark' },
+          color: 'common.black',
+          boxShadow: `0 6px 16px -8px ${alpha(brandColors.forest, 0.7)}`,
+          '& .MuiListItemIcon-root': { color: 'common.black' },
+          '&:hover': { bgcolor: 'primary.dark', color: 'common.black' },
         },
       }}
     >
@@ -145,10 +147,10 @@ const ThreadedNavLink = ({
         '&:hover': { bgcolor: 'action.hover', color: 'text.primary' },
         '&.active': {
           bgcolor: 'primary.main',
-          color: 'common.white',
-          boxShadow: '0 6px 16px -8px rgba(26,92,56,0.7)',
-          '& .MuiListItemIcon-root': { color: 'common.white' },
-          '&:hover': { bgcolor: 'primary.dark' },
+          color: 'common.black',
+          boxShadow: `0 6px 16px -8px ${alpha(brandColors.forest, 0.7)}`,
+          '& .MuiListItemIcon-root': { color: 'common.black' },
+          '&:hover': { bgcolor: 'primary.dark', color: 'common.black' },
         },
       }}
     >

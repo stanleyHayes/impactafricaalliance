@@ -18,6 +18,7 @@ import { ResourceFormDialog } from '../components/crud/ResourceFormDialog';
 import { DataTable } from '../components/data/DataTable';
 import { EmptyState } from '../components/EmptyState';
 import { PageHeader } from '../components/PageHeader';
+import { resourceGuide } from '../lib/page-guides';
 import { useDeleteResource, useResourceList } from '../resources/hooks';
 import { findResource } from '../resources/registry';
 import type { ResourceConfig, ResourceRow } from '../resources/types';
@@ -53,9 +54,9 @@ interface RowActionsProps {
 }
 
 const tintButtonSx = (tone: 'primary' | 'error') => ({
-  color: `${tone}.main`,
-  bgcolor: tone === 'error' ? 'rgba(211,47,47,0.06)' : 'rgba(26,92,56,0.06)',
-  '&:hover': { bgcolor: tone === 'error' ? 'rgba(211,47,47,0.12)' : 'rgba(26,92,56,0.12)' },
+  color: tone === 'error' ? 'error.main' : 'text.secondary',
+  bgcolor: tone === 'error' ? 'rgba(211,47,47,0.06)' : 'alpha(brandColors.forest, 0.06)',
+  '&:hover': { bgcolor: tone === 'error' ? 'rgba(211,47,47,0.12)' : 'alpha(brandColors.forest, 0.12)' },
 });
 
 /** Per-row view / edit / delete controls. Edit + delete are gated by permission. */
@@ -153,6 +154,7 @@ const ResourcePage = (): JSX.Element => {
         title={resource.label}
         description={description}
         count={list.data?.total}
+        help={resourceGuide(resource.label, resource.singular)}
         action={
           canEdit ? (
             <Button

@@ -103,11 +103,14 @@ describe('HomeImpactSection', () => {
     );
   });
 
-  it('renders nothing when no impact metrics are published', () => {
+  it('renders placeholder impact metrics when no CMS data is published', () => {
     mockImpactStats([]);
 
-    const { container } = renderWithProviders(<HomeImpactSection />);
+    renderWithProviders(<HomeImpactSection />);
 
-    expect(container).toBeEmptyDOMElement();
+    expect(screen.getByText('West African Countries Active')).toBeInTheDocument();
+    expect(screen.getByText('Youth Reached')).toBeInTheDocument();
+    expect(screen.getByText('Flagship Programs')).toBeInTheDocument();
+    expect(screen.getByText('Women Empowered')).toBeInTheDocument();
   });
 });

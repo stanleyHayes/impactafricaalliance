@@ -10,7 +10,8 @@ import { ArticleCard } from '../components/cards';
 import { PageHero } from '../components/PageHero';
 import { Section } from '../components/Section';
 import { Seo } from '../components/Seo';
-import { useArticles } from '../lib/content-hooks';
+import { IMAGES } from '../content/images';
+import { useArticles, useHeroImage } from '../lib/content-hooks';
 
 const NewsSkeleton = (): JSX.Element => (
   <Stack spacing={6}>
@@ -56,8 +57,8 @@ const NewsMessage = ({ children }: { children: string }): JSX.Element => (
         mb: 2,
         placeItems: 'center',
         borderRadius: '50%',
-        bgcolor: 'rgba(26,92,56,0.08)',
-        color: 'primary.main',
+        bgcolor: 'rgba(0,30,20,0.08)',
+        color: 'text.primary',
       }}
     >
       <AutoStoriesRoundedIcon />
@@ -67,6 +68,7 @@ const NewsMessage = ({ children }: { children: string }): JSX.Element => (
 );
 
 const News = (): JSX.Element => {
+  const heroImage = useHeroImage('news', IMAGES.community);
   const { data, isLoading, isError } = useArticles();
   const articles = data?.items ?? [];
 
@@ -110,7 +112,7 @@ const News = (): JSX.Element => {
               <Box>
                 <Typography
                   variant="overline"
-                  sx={{ color: 'success.main', fontWeight: 700, letterSpacing: 1.5 }}
+                  sx={{ color: 'text.primary', fontWeight: 700, letterSpacing: 1.5 }}
                 >
                   Latest coverage
                 </Typography>
@@ -146,8 +148,9 @@ const News = (): JSX.Element => {
         eyebrow="News & Insights"
         title="From the Frontlines"
         subtitle="Updates, stories, and insights from our work across the continent."
+        image={heroImage}
       />
-      <Section>{renderArticles()}</Section>
+      <Section watermark="radar" watermarkPosition="bottom-right">{renderArticles()}</Section>
     </>
   );
 };

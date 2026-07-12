@@ -36,3 +36,4 @@ npm-debug.log*
 .brand-extract/
 
 # Local docx originals are tracked; extracted media is not regenerated in CI
+tools/.mongo-uri

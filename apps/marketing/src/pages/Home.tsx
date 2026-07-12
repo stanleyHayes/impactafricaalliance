@@ -1,6 +1,5 @@
-import { ORG, PILLARS, brandColors, type ImpactStat, type Story } from '@iaa/shared';
+import { ORG, PILLARS, brandColors, brandFonts, type ImpactStat, type Story } from '@iaa/shared';
 import AutoStoriesRoundedIcon from '@mui/icons-material/AutoStoriesRounded';
-import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import EastIcon from '@mui/icons-material/East';
 import FormatQuoteRoundedIcon from '@mui/icons-material/FormatQuoteRounded';
 import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
@@ -14,6 +13,7 @@ import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid';
 import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
+import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import { m } from 'framer-motion';
 import { Link as RouterLink } from 'react-router-dom';
@@ -24,8 +24,9 @@ import { Section } from '../components/Section';
 import { SectionReveal } from '../components/SectionReveal';
 import { Seo } from '../components/Seo';
 import { CardGridSkeleton } from '../components/skeletons';
+import { Watermark } from '../components/Watermark';
 import { IMAGES } from '../content/images';
-import { useArticles, useImpactStats, useStories } from '../lib/content-hooks';
+import { useArticles, useHeroImage, useImpactStats, useStories } from '../lib/content-hooks';
 import { getStatIcon } from '../lib/stat-icons';
 
 const HERO_MODEL = [
@@ -46,28 +47,24 @@ const HERO_MODEL = [
   },
 ] as const;
 
-const MISSION_POINTS = [
-  'African-led programme design',
-  'Measurable skills and opportunity',
-  'Partnerships built for long-term change',
-] as const;
-
-const Hero = (): JSX.Element => (
-  <Box
-    component="header"
-    sx={{
-      position: 'relative',
-      minHeight: { xs: 620, md: 720 },
-      overflow: 'hidden',
-      bgcolor: 'primary.dark',
-      color: 'common.white',
-    }}
-  >
+const Hero = (): JSX.Element => {
+  const heroImage = useHeroImage('home', IMAGES.hero);
+  return (
     <Box
+      component="header"
       sx={{
-        position: 'absolute',
-        inset: 0,
-        backgroundImage: `url(${IMAGES.hero})`,
+        position: 'relative',
+        minHeight: { xs: 620, md: 720 },
+        overflow: 'hidden',
+        bgcolor: 'primary.dark',
+        color: 'common.white',
+      }}
+    >
+      <Box
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: `url(${heroImage})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         transform: 'scale(1.025)',
@@ -78,7 +75,7 @@ const Hero = (): JSX.Element => (
         position: 'absolute',
         inset: 0,
         background:
-          'linear-gradient(90deg, rgba(8,31,19,0.94) 0%, rgba(8,31,19,0.78) 50%, rgba(8,31,19,0.46) 100%), linear-gradient(0deg, rgba(8,31,19,0.66), transparent 58%)',
+          'linear-gradient(90deg, rgba(0,30,20,0.94) 0%, rgba(0,30,20,0.78) 50%, rgba(0,30,20,0.46) 100%), linear-gradient(0deg, rgba(0,30,20,0.66), transparent 58%)',
       }}
     />
     <Box
@@ -89,9 +86,9 @@ const Hero = (): JSX.Element => (
         bottom: -270,
         width: { xs: 430, md: 640 },
         height: { xs: 430, md: 640 },
-        border: '1px solid rgba(212,160,23,0.16)',
+        border: `1px solid ${alpha(brandColors.gold, 0.16)}`,
         borderRadius: '50%',
-        boxShadow: '0 0 0 54px rgba(212,160,23,0.025), 0 0 0 108px rgba(212,160,23,0.016)',
+        boxShadow: '0 0 0 54px rgba(245,184,0,0.025), 0 0 0 108px rgba(245,184,0,0.016)',
       }}
     />
 
@@ -104,7 +101,7 @@ const Hero = (): JSX.Element => (
         py: { xs: 8, md: 10 },
       }}
     >
-      <Grid container spacing={{ xs: 5, md: 7 }} alignItems="center" sx={{ width: '100%' }}>
+      <Grid container spacing={{ xs: 5, md: 7 }} sx={{ alignItems: 'center', width: '100%' }}>
         <Grid size={{ xs: 12, md: 7 }}>
           <Box
             component={m.div}
@@ -181,7 +178,7 @@ const Hero = (): JSX.Element => (
               ml: 'auto',
               maxWidth: 390,
               p: 2,
-              border: '1px solid rgba(255,255,255,0.14)',
+              border: '1px solid rgba(255,255,255,0.16)',
               borderRadius: 4,
               bgcolor: 'rgba(255,255,255,0.08)',
               backdropFilter: 'blur(14px)',
@@ -191,13 +188,13 @@ const Hero = (): JSX.Element => (
               sx={{
                 p: 3,
                 borderRadius: 3,
-                bgcolor: 'rgba(255,255,255,0.9)',
-                color: 'text.primary',
+                bgcolor: 'rgba(255,255,255,0.92)',
+                color: brandColors.charcoalBlack,
               }}
             >
               <Typography
                 variant="overline"
-                sx={{ color: 'primary.main', fontWeight: 750, letterSpacing: 1.5 }}
+                sx={{ color: brandColors.forestGreen, fontWeight: 750, letterSpacing: 1.5 }}
               >
                 Our impact model
               </Typography>
@@ -212,17 +209,17 @@ const Hero = (): JSX.Element => (
                         flexShrink: 0,
                         placeItems: 'center',
                         borderRadius: 2,
-                        bgcolor: 'rgba(26,92,56,0.08)',
-                        color: 'primary.main',
+                        bgcolor: 'rgba(0,30,20,0.08)',
+                        color: brandColors.forestGreen,
                       }}
                     >
                       {item.icon}
                     </Box>
                     <Box>
-                      <Typography sx={{ fontWeight: 750, lineHeight: 1.2 }}>
+                      <Typography sx={{ fontWeight: 750, lineHeight: 1.2, color: brandColors.charcoalBlack }}>
                         {item.title}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography variant="body2" sx={{ color: brandColors.slate }}>
                         {item.text}
                       </Typography>
                     </Box>
@@ -235,51 +232,60 @@ const Hero = (): JSX.Element => (
       </Grid>
     </Container>
   </Box>
-);
+  );
+};
 
 const MissionStrip = (): JSX.Element => (
   <Box
     component="section"
     sx={{
-      bgcolor: 'background.paper',
-      borderBottom: 1,
-      borderColor: 'rgba(26,92,56,0.1)',
-      py: { xs: 5, md: 6 },
+      position: 'relative',
+      overflow: 'hidden',
+      bgcolor: 'common.black',
+      color: 'common.white',
+      py: { xs: 6, md: 8 },
     }}
   >
-    <Container>
-      <Grid container spacing={3} alignItems="center">
-        <Grid size={{ xs: 12, md: 5 }}>
-          <Typography variant="h4" sx={{ maxWidth: 520, fontSize: { xs: '1.65rem', md: '2rem' } }}>
-            Sustainable impact, built with clarity and care.
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, md: 7 }}>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-            {MISSION_POINTS.map((point) => (
-              <Stack
-                key={point}
-                direction="row"
-                spacing={1}
-                alignItems="center"
-                sx={{
-                  flex: 1,
-                  p: 1.5,
-                  border: 1,
-                  borderColor: 'rgba(26,92,56,0.1)',
-                  borderRadius: 2.5,
-                  bgcolor: '#F7F9F7',
-                }}
-              >
-                <CheckCircleRoundedIcon sx={{ color: 'primary.main', fontSize: 19 }} />
-                <Typography variant="body2" sx={{ fontWeight: 650, lineHeight: 1.45 }}>
-                  {point}
-                </Typography>
-              </Stack>
-            ))}
-          </Stack>
-        </Grid>
-      </Grid>
+    <Box
+      aria-hidden
+      sx={{
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        width: { xs: 360, md: 520 },
+        height: { xs: 360, md: 520 },
+        opacity: 0.08,
+        transform: 'translate(-50%, -50%)',
+        border: `1px solid ${alpha(brandColors.mint, 0.35)}`,
+        borderRadius: '50%',
+      }}
+    />
+    <Container sx={{ position: 'relative', zIndex: 1 }}>
+      <Typography
+        variant="h3"
+        sx={{
+          maxWidth: 900,
+          mx: 'auto',
+          textAlign: 'center',
+          fontSize: { xs: '1.55rem', sm: '2rem', md: '2.45rem' },
+          lineHeight: 1.25,
+          color: 'common.white',
+        }}
+      >
+        Driving sustainable impact across Africa through{' '}
+        <Box component="span" sx={{ color: 'primary.main' }}>
+          innovation
+        </Box>
+        ,{' '}
+        <Box component="span" sx={{ color: 'primary.main' }}>
+          education
+        </Box>
+        , and{' '}
+        <Box component="span" sx={{ color: 'primary.main' }}>
+          empowerment
+        </Box>
+        .
+      </Typography>
     </Container>
   </Box>
 );
@@ -304,17 +310,17 @@ const HomeImpactMetric = ({ stat, index }: { stat: ImpactStat; index: number }):
           bottom: -70,
           width: 150,
           height: 150,
-          border: '1px solid rgba(26,92,56,0.08)',
+          border: '1px solid rgba(0,30,20,0.08)',
           borderRadius: '50%',
           content: '""',
         },
         '&:hover': {
-          bgcolor: '#FBFCF9',
+          bgcolor: (theme) => (theme.palette.mode === 'light' ? '#F9F9F6' : '#112A22'),
           transform: 'translateY(-3px)',
         },
         '&:hover .impact-icon': {
           bgcolor: 'primary.main',
-          color: 'common.white',
+          color: 'primary.contrastText',
         },
       }}
     >
@@ -327,8 +333,8 @@ const HomeImpactMetric = ({ stat, index }: { stat: ImpactStat; index: number }):
             height: 46,
             placeItems: 'center',
             borderRadius: 2,
-            bgcolor: 'rgba(26,92,56,0.08)',
-            color: 'primary.main',
+            bgcolor: 'rgba(0,30,20,0.08)',
+            color: 'text.primary',
             transition: 'background-color 220ms ease, color 220ms ease',
           }}
         >
@@ -337,7 +343,7 @@ const HomeImpactMetric = ({ stat, index }: { stat: ImpactStat; index: number }):
         <Typography
           aria-hidden="true"
           sx={{
-            color: 'rgba(26,92,56,0.22)',
+            color: 'rgba(0,30,20,0.22)',
             fontSize: '0.72rem',
             fontWeight: 750,
             letterSpacing: 1.8,
@@ -348,7 +354,7 @@ const HomeImpactMetric = ({ stat, index }: { stat: ImpactStat; index: number }):
       </Stack>
 
       <Box sx={{ position: 'relative', zIndex: 1, mt: 4 }}>
-        <AnimatedCounter value={stat.value} suffix={stat.suffix} color="primary.main" />
+        <AnimatedCounter value={stat.value} suffix={stat.suffix} color="text.primary" />
         <Typography
           sx={{
             maxWidth: 210,
@@ -367,7 +373,7 @@ const HomeImpactMetric = ({ stat, index }: { stat: ImpactStat; index: number }):
 };
 
 const HomeImpactSkeleton = (): JSX.Element => (
-  <Grid container spacing={4} alignItems="stretch">
+  <Grid container spacing={4} sx={{ alignItems: 'stretch' }}>
     <Grid size={{ xs: 12, md: 4 }}>
       <Stack spacing={2}>
         <Skeleton width={150} />
@@ -395,7 +401,7 @@ const HomeImpactSkeleton = (): JSX.Element => (
             key={index}
             variant="rectangular"
             height={235}
-            sx={{ bgcolor: 'rgba(26,92,56,0.08)' }}
+            sx={{ bgcolor: 'rgba(0,30,20,0.08)' }}
           />
         ))}
       </Box>
@@ -403,13 +409,56 @@ const HomeImpactSkeleton = (): JSX.Element => (
   </Grid>
 );
 
+const PLACEHOLDER_STATS: ImpactStat[] = [
+  {
+    id: 'countries-placeholder',
+    key: 'countries',
+    value: 5,
+    suffix: '+',
+    label: 'West African Countries Active',
+    order: 1,
+    isActive: true,
+    createdAt: '',
+    updatedAt: '',
+  },
+  {
+    id: 'youth-placeholder',
+    key: 'youth',
+    value: 1000,
+    suffix: '+',
+    label: 'Youth Reached',
+    order: 2,
+    isActive: true,
+    createdAt: '',
+    updatedAt: '',
+  },
+  {
+    id: 'programs-placeholder',
+    key: 'programs',
+    value: 4,
+    suffix: '',
+    label: 'Flagship Programs',
+    order: 3,
+    isActive: true,
+    createdAt: '',
+    updatedAt: '',
+  },
+  {
+    id: 'women-placeholder',
+    key: 'women',
+    value: 500,
+    suffix: '+',
+    label: 'Women Empowered',
+    order: 4,
+    isActive: true,
+    createdAt: '',
+    updatedAt: '',
+  },
+];
+
 export const HomeImpactSection = (): JSX.Element => {
   const { data, isLoading } = useImpactStats();
-  if (!isLoading && (!data || data.items.length === 0)) {
-    return <></>;
-  }
-
-  const stats = data?.items ?? [];
+  const stats = data?.items.length ? data.items : PLACEHOLDER_STATS;
 
   return (
     <Box
@@ -418,7 +467,7 @@ export const HomeImpactSection = (): JSX.Element => {
       sx={{
         position: 'relative',
         overflow: 'hidden',
-        bgcolor: '#F1F5EF',
+        bgcolor: 'background.default',
         py: { xs: 8, md: 12 },
         '&::before': {
           position: 'absolute',
@@ -426,9 +475,9 @@ export const HomeImpactSection = (): JSX.Element => {
           left: -130,
           width: 360,
           height: 360,
-          border: '1px solid rgba(26,92,56,0.08)',
+          border: '1px solid rgba(0,30,20,0.08)',
           borderRadius: '50%',
-          boxShadow: '0 0 0 48px rgba(26,92,56,0.02), 0 0 0 96px rgba(26,92,56,0.015)',
+          boxShadow: '0 0 0 48px rgba(0,30,20,0.02), 0 0 0 96px rgba(0,30,20,0.015)',
           content: '""',
         },
       }}
@@ -437,7 +486,7 @@ export const HomeImpactSection = (): JSX.Element => {
         {isLoading ? (
           <HomeImpactSkeleton />
         ) : (
-          <Grid container spacing={{ xs: 5, md: 7 }} alignItems="stretch">
+          <Grid container spacing={{ xs: 5, md: 7 }} sx={{ alignItems: 'stretch' }}>
             <Grid size={{ xs: 12, md: 4 }}>
               <SectionReveal fillHeight>
                 <Box
@@ -453,7 +502,7 @@ export const HomeImpactSection = (): JSX.Element => {
                     <Box sx={{ width: 34, height: 2, bgcolor: 'secondary.main' }} />
                     <Typography
                       variant="overline"
-                      sx={{ color: 'success.main', fontWeight: 750, letterSpacing: 1.7 }}
+                      sx={{ color: 'text.primary', fontWeight: 750, letterSpacing: 1.7 }}
                     >
                       Our Impact at a Glance
                     </Typography>
@@ -493,9 +542,9 @@ export const HomeImpactSection = (): JSX.Element => {
                       p: 1.5,
                       pr: 2,
                       border: 1,
-                      borderColor: 'rgba(26,92,56,0.1)',
+                      borderColor: 'rgba(0,30,20,0.1)',
                       borderRadius: 2.5,
-                      bgcolor: 'rgba(255,255,255,0.55)',
+                      bgcolor: 'background.paper',
                     }}
                   >
                     <Box
@@ -506,7 +555,7 @@ export const HomeImpactSection = (): JSX.Element => {
                         placeItems: 'center',
                         borderRadius: '50%',
                         bgcolor: 'primary.main',
-                        color: 'common.white',
+                        color: 'primary.contrastText',
                       }}
                     >
                       <InsightsRoundedIcon fontSize="small" />
@@ -515,7 +564,7 @@ export const HomeImpactSection = (): JSX.Element => {
                       <Typography sx={{ fontSize: '0.75rem', fontWeight: 750, letterSpacing: 0.6 }}>
                         LIVE SNAPSHOT
                       </Typography>
-                      <Typography sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>
+                      <Typography sx={{ color: 'text.primary', fontSize: '0.75rem' }}>
                         Current programme reach
                       </Typography>
                     </Box>
@@ -543,9 +592,9 @@ export const HomeImpactSection = (): JSX.Element => {
                   gap: '1px',
                   overflow: 'hidden',
                   border: 1,
-                  borderColor: 'rgba(26,92,56,0.12)',
+                  borderColor: 'rgba(0,30,20,0.12)',
                   borderRadius: 4,
-                  bgcolor: 'rgba(26,92,56,0.12)',
+                  bgcolor: 'rgba(0,30,20,0.12)',
                   boxShadow: '0 28px 70px -54px rgba(18,66,42,0.8)',
                   '& > :last-child:nth-child(odd)': {
                     gridColumn: { sm: '1 / -1' },
@@ -579,7 +628,7 @@ const StoriesSection = (): JSX.Element => {
       sx={{
         position: 'relative',
         overflow: 'hidden',
-        bgcolor: brandColors.offWhite,
+        bgcolor: 'background.default',
         py: { xs: 8, md: 12 },
         '&::before': {
           position: 'absolute',
@@ -587,15 +636,15 @@ const StoriesSection = (): JSX.Element => {
           right: -150,
           width: 420,
           height: 420,
-          border: '1px solid rgba(26,92,56,0.08)',
+          border: '1px solid rgba(0,30,20,0.08)',
           borderRadius: '50%',
-          boxShadow: '0 0 0 58px rgba(26,92,56,0.02)',
+          boxShadow: '0 0 0 58px rgba(0,30,20,0.02)',
           content: '""',
         },
       }}
     >
       <Container sx={{ position: 'relative' }}>
-        <Grid container spacing={{ xs: 4, md: 6 }} alignItems="stretch">
+        <Grid container spacing={{ xs: 4, md: 6 }} sx={{ alignItems: 'stretch' }}>
           <Grid size={{ xs: 12, md: 4 }}>
             <SectionReveal fillHeight>
               <Box
@@ -609,7 +658,7 @@ const StoriesSection = (): JSX.Element => {
                   overflow: 'hidden',
                   p: { xs: 3.5, md: 4 },
                   borderRadius: 4,
-                  bgcolor: 'primary.dark',
+                  bgcolor: brandColors.deepForest,
                   color: 'common.white',
                   '&::after': {
                     position: 'absolute',
@@ -617,7 +666,7 @@ const StoriesSection = (): JSX.Element => {
                     bottom: -145,
                     width: 300,
                     height: 300,
-                    border: '1px solid rgba(212,160,23,0.18)',
+                    border: `1px solid ${alpha(brandColors.gold, 0.18)}`,
                     borderRadius: '50%',
                     content: '""',
                   },
@@ -654,7 +703,7 @@ const StoriesSection = (): JSX.Element => {
                       height: 54,
                       placeItems: 'center',
                       borderRadius: 2.5,
-                      bgcolor: 'rgba(212,160,23,0.14)',
+                      bgcolor: 'rgba(245,184,0,0.14)',
                       color: 'secondary.light',
                     }}
                   >
@@ -703,7 +752,7 @@ const StoryPerson = ({ story }: { story: Story }): JSX.Element => (
         width: 52,
         height: 52,
         bgcolor: 'primary.main',
-        color: 'common.white',
+        color: 'primary.contrastText',
         fontWeight: 800,
       }}
     >
@@ -737,15 +786,24 @@ const StoryImpactCard = ({
       overflow: 'hidden',
       p: { xs: 3, md: featured ? 4 : 3 },
       border: 1,
-      borderColor: 'rgba(26,92,56,0.12)',
+      borderColor: 'divider',
       borderRadius: 4,
       bgcolor: 'background.paper',
-      boxShadow: '0 24px 54px -46px rgba(18,66,42,0.8)',
+      boxShadow: '0 24px 54px -46px rgba(0,0,0,0.14)',
       transition: 'transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease',
       '&:hover': {
-        borderColor: 'rgba(26,92,56,0.3)',
-        boxShadow: '0 30px 62px -44px rgba(18,66,42,0.76)',
+        borderColor: (theme) => (theme.palette.mode === 'light' ? 'rgba(0,0,0,0.22)' : 'rgba(255,255,255,0.22)'),
+        boxShadow: '0 30px 62px -44px rgba(0,0,0,0.18)',
         transform: 'translateY(-5px)',
+      },
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 3,
+        background: (theme) => `linear-gradient(90deg, ${theme.palette.secondary.main}, ${theme.palette.primary.main})`,
       },
       '&::after': featured
         ? {
@@ -754,7 +812,7 @@ const StoryImpactCard = ({
             bottom: -90,
             width: 190,
             height: 190,
-            border: '1px solid rgba(212,160,23,0.12)',
+            border: '1px solid rgba(245,184,0,0.12)',
             borderRadius: '50%',
             content: '""',
           }
@@ -765,21 +823,21 @@ const StoryImpactCard = ({
       <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
         <FormatQuoteRoundedIcon
           sx={{
-            color: 'secondary.main',
+            color: 'text.secondary',
             fontSize: featured ? 42 : 32,
             transform: 'scaleX(-1)',
           }}
         />
         <Typography
           variant="overline"
-          sx={{ color: 'primary.main', fontWeight: 750, letterSpacing: 1.4 }}
+          sx={{ color: 'text.primary', fontWeight: 750, letterSpacing: 1.4 }}
         >
           {story.program}
         </Typography>
       </Stack>
       <Typography
         sx={{
-          fontFamily: "'Playfair Display', Georgia, serif",
+          fontFamily: brandFonts.heading,
           fontSize: featured ? { xs: '1.35rem', md: '1.55rem' } : '1.08rem',
           fontStyle: 'italic',
           lineHeight: featured ? 1.62 : 1.7,
@@ -824,7 +882,12 @@ const NewsSection = (): JSX.Element => {
     return <></>;
   }
   return (
-    <Section eyebrow="From the Frontlines" title="Latest News">
+    <Section
+      eyebrow="From the Frontlines"
+      title="Latest News"
+      watermark="radar"
+      watermarkPosition="top-right"
+    >
       {isLoading ? (
         <CardGridSkeleton count={3} />
       ) : (
@@ -836,7 +899,7 @@ const NewsSection = (): JSX.Element => {
           ))}
         </Grid>
       )}
-      <Box textAlign="center" sx={{ mt: 4 }}>
+      <Box sx={{ textAlign: 'center', mt: 4 }}>
         <Button component={RouterLink} to="/news" endIcon={<EastIcon />}>
           View All News
         </Button>
@@ -859,12 +922,19 @@ const VisionQuote = (): JSX.Element => (
       }}
     />
     <Box sx={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(13,40,26,0.82)' }} />
-    <Container sx={{ position: 'relative' }}>
+    <Watermark
+      variant="contours"
+      position="bottom-left"
+      size={{ xs: 260, md: 420 }}
+      opacity={0.06}
+      sx={{ color: 'secondary.main' }}
+    />
+    <Container sx={{ position: 'relative', zIndex: 1 }}>
       <SectionReveal>
         <Typography
           variant="h4"
           sx={{
-            fontFamily: 'Playfair Display, serif',
+            fontFamily: brandFonts.heading,
             fontStyle: 'italic',
             maxWidth: 880,
             mx: 'auto',
@@ -875,8 +945,21 @@ const VisionQuote = (): JSX.Element => (
           “Africa’s greatest resource is its people. When we invest in their potential, we don’t
           just change individual lives — we change the trajectory of an entire continent.”
         </Typography>
-        <Typography textAlign="center" sx={{ mt: 3, color: 'secondary.light', fontWeight: 700 }}>
+        <Typography sx={{ textAlign: 'center', mt: 3, color: 'primary.main', fontWeight: 700 }}>
           — Emmanuel Bansay, Co-Founder, {ORG.name}
+        </Typography>
+        <Typography
+          sx={{
+            textAlign: 'center',
+            maxWidth: 720,
+            mt: 3,
+            mx: 'auto',
+            color: 'rgba(255,255,255,0.78)',
+            lineHeight: 1.75,
+          }}
+        >
+          Impact Africa Alliance was founded by a generation of young African leaders who refused to
+          wait for change — and decided to be it.
         </Typography>
       </SectionReveal>
     </Container>
@@ -897,7 +980,7 @@ const Home = (): JSX.Element => (
       title="Four Transformative Initiatives"
       subtitle="One mission: a prosperous, inclusive Africa."
       textAlign="center"
-      bgcolor={brandColors.offWhite}
+      bgcolor="background.default"
     >
       <Grid container spacing={3}>
         {PILLARS.map((pillar) => (

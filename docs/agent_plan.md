@@ -69,7 +69,7 @@ impactafricaalliance/
 ├── docs/                     # Markdown specs (converted from .docx)
 ├── .github/workflows/ci.yml  # Lint + typecheck + test + build matrix
 ├── render.yaml               # Render Blueprint (api service + env)
-├── agent_plan.md             # This file
+├── docs/agent_plan.md        # This file
 ├── package.json              # npm workspaces root + orchestration scripts
 ├── tsconfig.base.json        # Shared compiler options
 ├── .eslintrc.cjs / .prettierrc / sonar-project.properties

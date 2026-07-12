@@ -1,6 +1,7 @@
 import type { Resend } from 'resend';
 import { inject, injectable } from 'tsyringe';
 
+import { ServiceUnavailableError } from '../common/errors.js';
 import type { AppConfig } from '../config/env.js';
 import type { AppLogger } from '../config/logger.js';
 import { TOKENS } from '../tokens.js';
@@ -39,7 +40,7 @@ export class ResendEmailProvider implements EmailProvider {
       );
       return;
     }
-    const { error } = await client.emails.send({
+    const { data, error } = await client.emails.send({
       from: this.config.email.from,
       to: message.to,
       subject: message.subject,
@@ -48,7 +49,11 @@ export class ResendEmailProvider implements EmailProvider {
     });
     if (error) {
       this.logger.error({ err: error }, 'Failed to send email');
-      throw new Error(`Email delivery failed: ${error.message}`);
+      throw new ServiceUnavailableError(`Email delivery failed: ${error.message}`);
+    }
+    if (!data?.id) {
+      this.logger.error('Resend returned no message id');
+      throw new ServiceUnavailableError('Email delivery failed: provider returned no id');
     }
   }
 

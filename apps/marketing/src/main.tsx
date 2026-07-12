@@ -8,17 +8,17 @@ import { BrowserRouter } from 'react-router-dom';
 
 import { App } from './app/App';
 import { queryClient } from './lib/query-client';
-import { theme } from './theme/theme';
+import { ColorModeProvider, useColorMode } from './theme/ColorModeContext';
+import { ViewTransitionStyles } from './theme/GlobalStyles';
+import { createMarketingTheme } from './theme/theme';
 
-const container = document.getElementById('root');
-if (!container) {
-  throw new Error('Root element #root not found');
-}
-
-createRoot(container).render(
-  <StrictMode>
+const ThemedApp = (): JSX.Element => {
+  const { mode } = useColorMode();
+  const theme = createMarketingTheme(mode);
+  return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
+      <ViewTransitionStyles />
       <QueryClientProvider client={queryClient}>
         <LazyMotion features={domAnimation} strict>
           <BrowserRouter>
@@ -27,5 +27,18 @@ createRoot(container).render(
         </LazyMotion>
       </QueryClientProvider>
     </ThemeProvider>
+  );
+};
+
+const container = document.getElementById('root');
+if (!container) {
+  throw new Error('Root element #root not found');
+}
+
+createRoot(container).render(
+  <StrictMode>
+    <ColorModeProvider>
+      <ThemedApp />
+    </ColorModeProvider>
   </StrictMode>,
 );

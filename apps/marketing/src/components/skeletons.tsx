@@ -57,7 +57,7 @@ export const StatsSkeleton = (): JSX.Element => (
 
 /** Skeleton for the partner logo grid. */
 export const PartnerLogosSkeleton = ({ count = 5 }: { count?: number }): JSX.Element => (
-  <Grid container spacing={3} justifyContent="center">
+  <Grid container spacing={3} sx={{ justifyContent: 'center' }}>
     {Array.from({ length: count }, (_, index) => (
       <Grid key={index} size={{ xs: 6, sm: 4, md: 3, lg: 2 }}>
         <Skeleton variant="rounded" height={64} sx={{ borderRadius: 2 }} />

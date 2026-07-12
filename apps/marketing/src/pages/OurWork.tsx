@@ -14,13 +14,14 @@ import { Seo } from '../components/Seo';
 import { programIcon } from '../content/icons';
 import { IMAGES, programImage } from '../content/images';
 import { PROGRAMS, type ProgramContent } from '../content/programs';
+import { useHeroImage } from '../lib/content-hooks';
 
 const ProgramFeature = ({ program, index }: { program: ProgramContent; index: number }): JSX.Element => {
   const Icon = programIcon(program.slug);
   const reversed = index % 2 === 1;
   return (
     <SectionReveal>
-      <Grid container spacing={{ xs: 3, md: 6 }} alignItems="center" direction={{ xs: 'column', md: reversed ? 'row-reverse' : 'row' }}>
+      <Grid container spacing={{ xs: 3, md: 6 }} sx={{ alignItems: 'center', flexDirection: { xs: 'column', md: reversed ? 'row-reverse' : 'row' } }}>
         <Grid size={{ xs: 12, md: 6 }}>
           <Box sx={{ position: 'relative', borderRadius: 4, overflow: 'hidden', boxShadow: '0 24px 50px -24px rgba(16,40,30,0.5)' }}>
             <Box
@@ -67,19 +68,25 @@ const ProgramFeature = ({ program, index }: { program: ProgramContent; index: nu
   );
 };
 
-const OurWork = (): JSX.Element => (
-  <>
-    <Seo
-      title="Our Programs — Digital Skills, STEM, Climate, Women Empowerment"
-      description="Four flagship initiatives forming an integrated ecosystem of change across Africa."
-    />
-    <PageHero
-      eyebrow="What We Do"
-      title="Our Work"
-      subtitle="Four flagship initiatives. One transformative mission."
-      image={IMAGES.programs['digital-skills']}
-    />
-    <Section subtitle="IAA's work is organized around four interconnected pillars — each addressing a critical gap in Africa's development landscape. Together, they form an integrated ecosystem of change.">
+const OurWork = (): JSX.Element => {
+  const heroImage = useHeroImage('our-work', IMAGES.programs['digital-skills']);
+  return (
+    <>
+      <Seo
+        title="Our Programs — Digital Skills, STEM, Climate, Women Empowerment"
+        description="Four flagship initiatives forming an integrated ecosystem of change across Africa."
+      />
+      <PageHero
+        eyebrow="What We Do"
+        title="Our Work"
+        subtitle="Four flagship initiatives. One transformative mission."
+        image={heroImage}
+      />
+    <Section
+      subtitle="IAA's work is organized around four interconnected pillars — each addressing a critical gap in Africa's development landscape. Together, they form an integrated ecosystem of change."
+      watermark="africa"
+      watermarkPosition="center"
+    >
       <Stack spacing={{ xs: 8, md: 12 }}>
         {PROGRAMS.map((program, index) => (
           <ProgramFeature key={program.slug} program={program} index={index} />
@@ -87,6 +94,7 @@ const OurWork = (): JSX.Element => (
       </Stack>
     </Section>
   </>
-);
+  );
+};
 
 export default OurWork;

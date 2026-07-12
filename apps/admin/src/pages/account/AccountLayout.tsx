@@ -1,9 +1,11 @@
 import BadgeRoundedIcon from '@mui/icons-material/BadgeRounded';
+import HelpCenterRoundedIcon from '@mui/icons-material/HelpCenterRounded';
 import LockResetRoundedIcon from '@mui/icons-material/LockResetRounded';
 import ManageAccountsRoundedIcon from '@mui/icons-material/ManageAccountsRounded';
 import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
+import VerifiedUserRoundedIcon from '@mui/icons-material/VerifiedUserRounded';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
@@ -17,8 +19,10 @@ const ACCOUNT_LINKS = [
   { to: '/account/profile', label: 'Profile', icon: <PersonRoundedIcon /> },
   { to: '/account/edit', label: 'Edit profile', icon: <ManageAccountsRoundedIcon /> },
   { to: '/account/password', label: 'Security', icon: <LockResetRoundedIcon /> },
+  { to: '/account/mfa', label: 'Two-factor auth', icon: <VerifiedUserRoundedIcon /> },
   { to: '/account/notifications', label: 'Notifications', icon: <NotificationsRoundedIcon /> },
   { to: '/account/settings', label: 'Settings', icon: <SettingsRoundedIcon /> },
+  { to: '/account/user-guide', label: 'User guide', icon: <HelpCenterRoundedIcon /> },
 ] as const;
 
 const initials = (name: string): string =>
@@ -52,16 +56,16 @@ const AccountLayout = (): JSX.Element => {
           bgcolor: 'primary.dark',
           color: 'common.white',
           background:
-            'radial-gradient(circle at 82% 12%, rgba(212,160,23,0.19), transparent 26%), linear-gradient(145deg, #123F29, #0D3020)',
+            'radial-gradient(circle at 82% 12%, alpha(brandColors.gold, 0.19), transparent 26%), linear-gradient(145deg, brandColors.forest, brandColors.deepForest)',
           '&::after': {
             position: 'absolute',
             right: -100,
             bottom: -180,
             width: 350,
             height: 350,
-            border: '1px solid rgba(212,160,23,0.16)',
+            border: '1px solid alpha(brandColors.gold, 0.16)',
             borderRadius: '50%',
-            boxShadow: '0 0 0 46px rgba(212,160,23,0.025)',
+            boxShadow: '0 0 0 46px alpha(brandColors.gold, 0.025)',
             content: '""',
           },
         }}
@@ -167,7 +171,7 @@ const AccountLayout = (): JSX.Element => {
                 textDecoration: 'none',
                 transition: 'background-color 160ms ease, color 160ms ease',
                 '& svg': { fontSize: 20 },
-                '&:hover': { bgcolor: 'rgba(26,92,56,0.06)', color: 'primary.main' },
+                '&:hover': { bgcolor: 'alpha(brandColors.forest, 0.06)', color: 'text.primary' },
                 '&.active': {
                   bgcolor: 'primary.main',
                   color: 'common.white',

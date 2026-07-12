@@ -1,11 +1,13 @@
-import { ORG } from '@iaa/shared';
+import { ORG, brandColors } from '@iaa/shared';
 import type { SvgIconComponent } from '@mui/icons-material';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
+import BusinessRoundedIcon from '@mui/icons-material/BusinessRounded';
 import Diversity3RoundedIcon from '@mui/icons-material/Diversity3Rounded';
 import EmailRoundedIcon from '@mui/icons-material/EmailRounded';
 import HandshakeRoundedIcon from '@mui/icons-material/HandshakeRounded';
 import LanguageRoundedIcon from '@mui/icons-material/LanguageRounded';
 import MarkEmailReadRoundedIcon from '@mui/icons-material/MarkEmailReadRounded';
+import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded';
 import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
 import PublicRoundedIcon from '@mui/icons-material/PublicRounded';
 import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded';
@@ -16,14 +18,18 @@ import Divider from '@mui/material/Divider';
 import Grid from '@mui/material/Grid';
 import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
+import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
+import { MintSurface } from '../components/MintSurface';
 import { Seo } from '../components/Seo';
 import { SocialLinks } from '../components/SocialLinks';
+import { Watermark } from '../components/Watermark';
 import { IMAGES } from '../content/images';
 import { ContactForm } from '../features/forms/ContactForm';
+import { useHeroImage } from '../lib/content-hooks';
 
 const REGIONS = ['Ghana', 'Sierra Leone', 'Nigeria'] as const;
 
@@ -36,6 +42,7 @@ interface ContactDetailProps {
 const ContactDetail = ({ icon: Icon, label, children }: ContactDetailProps): JSX.Element => (
   <Stack direction="row" spacing={2} alignItems="flex-start">
     <Box
+      className="mint-glass"
       sx={{
         display: 'grid',
         width: 46,
@@ -43,43 +50,43 @@ const ContactDetail = ({ icon: Icon, label, children }: ContactDetailProps): JSX
         flexShrink: 0,
         placeItems: 'center',
         border: 1,
-        borderColor: 'rgba(255,255,255,0.16)',
         borderRadius: 2,
-        bgcolor: 'rgba(255,255,255,0.08)',
       }}
     >
-      <Icon sx={{ color: 'secondary.light', fontSize: 22 }} />
+      <Icon sx={{ fontSize: 22 }} />
     </Box>
     <Box sx={{ minWidth: 0 }}>
       <Typography
         variant="overline"
-        sx={{ color: 'rgba(255,255,255,0.58)', fontWeight: 700, letterSpacing: 1.3 }}
+        sx={{ color: 'rgba(14,42,34,0.58)', fontWeight: 700, letterSpacing: 1.3 }}
       >
         {label}
       </Typography>
-      <Box sx={{ mt: -0.35, color: 'common.white', fontSize: '0.95rem', lineHeight: 1.6 }}>
+      <Box sx={{ mt: -0.35, fontSize: '0.95rem', lineHeight: 1.6 }}>
         {children}
       </Box>
     </Box>
   </Stack>
 );
 
-const ContactHero = (): JSX.Element => (
-  <Box
-    component="header"
-    sx={{
-      position: 'relative',
-      minHeight: { xs: 540, md: 620 },
-      overflow: 'hidden',
-      bgcolor: 'primary.dark',
-      color: 'common.white',
-    }}
-  >
+const ContactHero = (): JSX.Element => {
+  const heroImage = useHeroImage('contact', IMAGES.programs['stem-learning']);
+  return (
     <Box
+      component="header"
       sx={{
-        position: 'absolute',
-        inset: 0,
-        backgroundImage: `url(${IMAGES.programs['stem-learning']})`,
+        position: 'relative',
+        minHeight: { xs: 540, md: 620 },
+        overflow: 'hidden',
+        bgcolor: 'primary.dark',
+        color: 'common.white',
+      }}
+    >
+      <Box
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: `url(${heroImage})`,
         backgroundPosition: 'center',
         backgroundSize: 'cover',
       }}
@@ -100,9 +107,9 @@ const ContactHero = (): JSX.Element => (
         bottom: -260,
         width: { xs: 430, md: 620 },
         height: { xs: 430, md: 620 },
-        border: '1px solid rgba(212,160,23,0.18)',
+        border: `1px solid ${alpha(brandColors.gold, 0.18)}`,
         borderRadius: '50%',
-        boxShadow: '0 0 0 52px rgba(212,160,23,0.025), 0 0 0 104px rgba(212,160,23,0.018)',
+        boxShadow: `0 0 0 52px ${alpha(brandColors.gold, 0.025)}, 0 0 0 104px ${alpha(brandColors.gold, 0.018)}`,
       }}
     />
 
@@ -115,7 +122,7 @@ const ContactHero = (): JSX.Element => (
         py: { xs: 8, md: 11 },
       }}
     >
-      <Grid container spacing={5} alignItems="center" sx={{ width: '100%' }}>
+      <Grid container spacing={5} sx={{ alignItems: 'center', width: '100%' }}>
         <Grid size={{ xs: 12, md: 8 }}>
           <Stack direction="row" alignItems="center" spacing={1.3}>
             <Box sx={{ width: 38, height: 2, bgcolor: 'secondary.main' }} />
@@ -175,7 +182,7 @@ const ContactHero = (): JSX.Element => (
                   height: 46,
                   placeItems: 'center',
                   borderRadius: '50%',
-                  bgcolor: 'rgba(212,160,23,0.16)',
+                  bgcolor: alpha(brandColors.gold, 0.16),
                   color: 'secondary.light',
                 }}
               >
@@ -200,25 +207,24 @@ const ContactHero = (): JSX.Element => (
       </Grid>
     </Container>
   </Box>
-);
+  );
+};
 
 const ContactInformation = (): JSX.Element => (
-  <Box
+  <MintSurface
     sx={{
       position: 'relative',
       height: '100%',
       overflow: 'hidden',
       p: { xs: 3.5, md: 5 },
       borderRadius: 4,
-      bgcolor: 'primary.dark',
-      color: 'common.white',
       '&::after': {
         position: 'absolute',
         right: -100,
         bottom: -120,
         width: 270,
         height: 270,
-        border: '1px solid rgba(212,160,23,0.16)',
+        border: `1px solid ${alpha(brandColors.gold, 0.16)}`,
         borderRadius: '50%',
         content: '""',
       },
@@ -226,17 +232,17 @@ const ContactInformation = (): JSX.Element => (
   >
     <Typography
       variant="overline"
-      sx={{ color: 'secondary.light', fontWeight: 700, letterSpacing: 1.6 }}
+      sx={{ color: 'rgba(14,42,34,0.58)', fontWeight: 700, letterSpacing: 1.6 }}
     >
       Contact details
     </Typography>
     <Typography
       variant="h3"
-      sx={{ mt: 1, color: 'common.white', fontSize: { xs: '1.8rem', md: '2.3rem' } }}
+      sx={{ mt: 1, fontSize: { xs: '1.8rem', md: '2.3rem' } }}
     >
       We&apos;re closer than you think.
     </Typography>
-    <Typography sx={{ maxWidth: 410, mt: 1.5, color: 'rgba(255,255,255,0.68)' }}>
+    <Typography sx={{ maxWidth: 410, mt: 1.5, color: 'rgba(14,42,34,0.68)' }}>
       Reach our team directly or use the form and we&apos;ll route your message to the right person.
     </Typography>
 
@@ -245,9 +251,8 @@ const ContactInformation = (): JSX.Element => (
         <Link
           href={`mailto:${ORG.email}`}
           sx={{
-            color: 'common.white',
             fontWeight: 650,
-            textDecorationColor: 'rgba(255,255,255,0.35)',
+            textDecorationColor: 'rgba(14,42,34,0.35)',
             overflowWrap: 'anywhere',
           }}
         >
@@ -259,7 +264,7 @@ const ContactInformation = (): JSX.Element => (
           href={ORG.website}
           target="_blank"
           rel="noopener noreferrer"
-          sx={{ color: 'common.white', textDecorationColor: 'rgba(255,255,255,0.35)' }}
+          sx={{ textDecorationColor: 'rgba(14,42,34,0.35)' }}
         >
           impactafricaalliance.org
         </Link>
@@ -267,12 +272,18 @@ const ContactInformation = (): JSX.Element => (
       <ContactDetail icon={ScheduleRoundedIcon} label="Response time">
         Within 2 business days
       </ContactDetail>
+      <ContactDetail icon={PhoneRoundedIcon} label="Phone">
+        {ORG.phone}
+      </ContactDetail>
+      <ContactDetail icon={BusinessRoundedIcon} label="Headquarters">
+        {ORG.headquarters}
+      </ContactDetail>
     </Stack>
 
-    <Divider sx={{ my: 4, borderColor: 'rgba(255,255,255,0.14)' }} />
+    <Divider sx={{ my: 4 }} />
 
     <Stack direction="row" spacing={1.2} alignItems="center">
-      <PlaceRoundedIcon sx={{ color: 'secondary.light', fontSize: 20 }} />
+      <PlaceRoundedIcon sx={{ fontSize: 20 }} />
       <Typography sx={{ fontWeight: 700 }}>Regional presence</Typography>
     </Stack>
     <Stack direction="row" useFlexGap flexWrap="wrap" gap={1} sx={{ mt: 2 }}>
@@ -281,22 +292,17 @@ const ContactInformation = (): JSX.Element => (
           key={region}
           label={region}
           size="small"
-          sx={{
-            border: '1px solid rgba(255,255,255,0.16)',
-            bgcolor: 'rgba(255,255,255,0.08)',
-            color: 'common.white',
-          }}
         />
       ))}
     </Stack>
 
     <Box sx={{ position: 'relative', zIndex: 1, mt: 4 }}>
-      <Typography sx={{ mb: 1.2, color: 'rgba(255,255,255,0.64)', fontSize: '0.82rem' }}>
+      <Typography sx={{ mb: 1.2, color: 'rgba(14,42,34,0.64)', fontSize: '0.82rem' }}>
         Follow the journey
       </Typography>
       <SocialLinks color="inherit" />
     </Box>
-  </Box>
+  </MintSurface>
 );
 
 interface EnquiryPathProps {
@@ -325,20 +331,20 @@ const EnquiryPath = ({
       flexDirection: 'column',
       p: 3.5,
       border: 1,
-      borderColor: 'rgba(26,92,56,0.12)',
+      borderColor: 'rgba(0,30,20,0.12)',
       borderRadius: 3,
       bgcolor: 'background.paper',
       color: 'text.primary',
       textDecoration: 'none',
       transition: 'transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease',
       '&:hover': {
-        borderColor: 'rgba(26,92,56,0.32)',
+        borderColor: 'rgba(0,30,20,0.32)',
         boxShadow: '0 22px 50px -38px rgba(18,66,42,0.75)',
         transform: 'translateY(-4px)',
       },
       '&:hover .path-arrow': {
         bgcolor: 'primary.main',
-        color: 'common.white',
+        color: 'primary.contrastText',
         transform: 'translateX(3px)',
       },
     }}
@@ -350,15 +356,15 @@ const EnquiryPath = ({
         height: 48,
         placeItems: 'center',
         borderRadius: 2,
-        bgcolor: 'rgba(26,92,56,0.08)',
-        color: 'primary.main',
+        bgcolor: 'rgba(0,30,20,0.08)',
+        color: 'text.primary',
       }}
     >
       <Icon />
     </Box>
     <Typography
       variant="overline"
-      sx={{ mt: 3, color: 'success.main', fontWeight: 700, letterSpacing: 1.3 }}
+      sx={{ mt: 3, color: 'text.primary', fontWeight: 700, letterSpacing: 1.3 }}
     >
       {eyebrow}
     </Typography>
@@ -374,7 +380,7 @@ const EnquiryPath = ({
       justifyContent="space-between"
       sx={{ mt: 3, pt: 2.5, borderTop: 1, borderColor: 'divider' }}
     >
-      <Typography sx={{ color: 'primary.main', fontSize: '0.86rem', fontWeight: 750 }}>
+      <Typography sx={{ color: 'text.primary', fontSize: '0.86rem', fontWeight: 750 }}>
         {action}
       </Typography>
       <Box
@@ -385,9 +391,9 @@ const EnquiryPath = ({
           height: 36,
           placeItems: 'center',
           border: 1,
-          borderColor: 'rgba(26,92,56,0.18)',
+          borderColor: 'rgba(0,30,20,0.18)',
           borderRadius: '50%',
-          color: 'primary.main',
+          color: 'text.primary',
           transition: 'background-color 200ms ease, color 200ms ease, transform 200ms ease',
         }}
       >
@@ -401,13 +407,20 @@ const EnquiryPaths = (): JSX.Element => (
   <Box
     component="section"
     aria-labelledby="contact-paths-title"
-    sx={{ bgcolor: '#F1F5EF', py: { xs: 7, md: 10 } }}
+    sx={{ position: 'relative', overflow: 'hidden', bgcolor: 'background.default', py: { xs: 7, md: 10 } }}
   >
-    <Container>
+    <Watermark
+      variant="radar"
+      position="top-left"
+      size={{ xs: 220, md: 340 }}
+      opacity={0.05}
+      sx={{ color: 'primary.main' }}
+    />
+    <Container sx={{ position: 'relative', zIndex: 1 }}>
       <Box sx={{ maxWidth: 720, mb: 5 }}>
         <Typography
           variant="overline"
-          sx={{ color: 'success.main', fontWeight: 700, letterSpacing: 1.6 }}
+          sx={{ color: 'text.primary', fontWeight: 700, letterSpacing: 1.6 }}
         >
           Find the right path
         </Typography>
@@ -471,10 +484,10 @@ const Contact = (): JSX.Element => (
     <Box
       component="section"
       aria-labelledby="contact-form-title"
-      sx={{ position: 'relative', bgcolor: 'background.default', py: { xs: 7, md: 11 } }}
+      sx={{ position: 'relative', bgcolor: 'background.default', py: { xs: 5, md: 8 } }}
     >
       <Container>
-        <Grid container spacing={4} alignItems="stretch">
+        <Grid container spacing={4} sx={{ alignItems: 'flex-start' }}>
           <Grid size={{ xs: 12, md: 5 }}>
             <ContactInformation />
           </Grid>
@@ -482,17 +495,16 @@ const Contact = (): JSX.Element => (
             <Box
               id="contact-form"
               sx={{
-                height: '100%',
                 p: { xs: 3.5, sm: 4.5, md: 5 },
                 border: 1,
-                borderColor: 'rgba(26,92,56,0.1)',
+                borderColor: 'rgba(0,30,20,0.1)',
                 borderRadius: 4,
                 bgcolor: 'background.paper',
               }}
             >
               <Typography
                 variant="overline"
-                sx={{ color: 'success.main', fontWeight: 700, letterSpacing: 1.5 }}
+                sx={{ color: 'text.primary', fontWeight: 700, letterSpacing: 1.5 }}
               >
                 Send a message
               </Typography>

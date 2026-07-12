@@ -19,6 +19,7 @@ const article: Article = {
   },
   tags: ['digital-skills', 'programmes'],
   status: 'published',
+  autoPostToSocial: false,
   publishedAt: '2026-06-10T12:00:00.000Z',
   createdAt: '2026-06-09T12:00:00.000Z',
   updatedAt: '2026-06-10T12:00:00.000Z',

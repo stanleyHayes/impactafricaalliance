@@ -5,18 +5,82 @@
     <link rel="icon" type="image/png" href="/brand/favicon-32.png" />
     <link rel="apple-touch-icon" href="/brand/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#1A5C38" />
+    <meta name="theme-color" content="#171A17" />
+    <script>
+      (function () {
+        const key = 'iaa.marketing.theme';
+        const stored = localStorage.getItem(key);
+        const mode = stored === 'dark' || stored === 'light' ? stored : 'light';
+        document.documentElement.dataset.theme = mode;
+        if (mode === 'dark') document.documentElement.classList.add('dark');
+      })();
+    </script>
+
     <title>Impact Africa Alliance | Empowering Youth, Women & Communities Across Africa</title>
     <meta
       name="description"
       content="Impact Africa Alliance equips youth, women, and communities across Africa with the skills, tools, and opportunities to build a prosperous and equitable future."
     />
+    <link rel="canonical" href="https://www.impactafricaalliance.org/" />
+
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="Impact Africa Alliance" />
+    <meta property="og:title" content="Impact Africa Alliance | Empowering Youth, Women & Communities Across Africa" />
+    <meta
+      property="og:description"
+      content="Impact Africa Alliance equips youth, women, and communities across Africa with the skills, tools, and opportunities to build a prosperous and equitable future."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://www.impactafricaalliance.org/" />
+    <meta property="og:image" content="https://www.impactafricaalliance.org/brand/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Impact Africa Alliance — Empowering Africa. One Community at a Time." />
+    <meta property="og:locale" content="en_GH" />
+
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Impact Africa Alliance | Empowering Youth, Women & Communities Across Africa" />
+    <meta
+      name="twitter:description"
+      content="Impact Africa Alliance equips youth, women, and communities across Africa with the skills, tools, and opportunities to build a prosperous and equitable future."
+    />
+    <meta name="twitter:image" content="https://www.impactafricaalliance.org/brand/og-image.png" />
+    <meta name="twitter:image:alt" content="Impact Africa Alliance — Empowering Africa. One Community at a Time." />
+
+    <!-- JSON-LD Organization schema -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "Impact Africa Alliance",
+        "alternateName": "IAA",
+        "url": "https://www.impactafricaalliance.org",
+        "logo": "https://www.impactafricaalliance.org/brand/logo-primary.png",
+        "sameAs": [
+          "https://www.linkedin.com/company/impact-africa-alliance",
+          "https://www.instagram.com/impactafricaalliance",
+          "https://twitter.com/impactafricaall",
+          "https://www.facebook.com/impactafricaalliance",
+          "https://www.youtube.com/@impactafricaalliance"
+        ],
+        "description": "Impact Africa Alliance equips youth, women, and communities across Africa with the skills, tools, and opportunities to build a prosperous and equitable future.",
+        "areaServed": {
+          "@type": "Continent",
+          "name": "Africa"
+        }
+      }
+    </script>
+
+    <!-- Google Fonts: Fraunces (display/headings) + Outfit (body/UI) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700;800&family=Playfair+Display:ital@1&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
+
+    <!-- Google Analytics 4 is loaded dynamically by CookieBanner after consent. -->
   </head>
   <body>
     <div id="root"></div>

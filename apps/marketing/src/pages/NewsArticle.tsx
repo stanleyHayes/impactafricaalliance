@@ -5,6 +5,7 @@ import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
 import EmailRoundedIcon from '@mui/icons-material/EmailRounded';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import LocalOfferOutlinedIcon from '@mui/icons-material/LocalOfferOutlined';
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import XIcon from '@mui/icons-material/X';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -20,6 +21,7 @@ import Typography from '@mui/material/Typography';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 
 import { ArticleBody } from '../components/ArticleBody';
+import { MintSurface } from '../components/MintSurface';
 import { Seo } from '../components/Seo';
 import { IMAGES } from '../content/images';
 import {
@@ -32,13 +34,13 @@ import { useArticle } from '../lib/content-hooks';
 
 const ArticleLoading = (): JSX.Element => (
   <>
-    <Box sx={{ bgcolor: 'primary.dark', py: { xs: 8, md: 12 } }}>
+    <MintSurface sx={{ py: { xs: 8, md: 12 } }}>
       <Container>
-        <Skeleton width={120} sx={{ bgcolor: 'rgba(255,255,255,0.16)' }} />
-        <Skeleton width="82%" height={82} sx={{ mt: 4, bgcolor: 'rgba(255,255,255,0.16)' }} />
-        <Skeleton width="58%" height={36} sx={{ bgcolor: 'rgba(255,255,255,0.12)' }} />
+        <Skeleton width={120} sx={{ bgcolor: 'rgba(14,42,34,0.16)' }} />
+        <Skeleton width="82%" height={82} sx={{ mt: 4, bgcolor: 'rgba(14,42,34,0.16)' }} />
+        <Skeleton width="58%" height={36} sx={{ bgcolor: 'rgba(14,42,34,0.12)' }} />
       </Container>
-    </Box>
+    </MintSurface>
     <Container sx={{ py: 8 }}>
       <Grid container spacing={5}>
         <Grid size={{ xs: 12, md: 8 }}>
@@ -60,7 +62,7 @@ const ArticleNotFound = (): JSX.Element => (
   <Container sx={{ py: { xs: 10, md: 16 }, textAlign: 'center' }}>
     <Typography
       variant="overline"
-      sx={{ color: 'success.main', fontWeight: 700, letterSpacing: 1.5 }}
+      sx={{ color: 'text.primary', fontWeight: 700, letterSpacing: 1.5 }}
     >
       News &amp; Stories
     </Typography>
@@ -228,6 +230,11 @@ const ShareLinks = ({ article }: { article: Article }): JSX.Element => {
       href: `mailto:?subject=${encodedTitle}&body=${encodedUrl}`,
       Icon: EmailRoundedIcon,
     },
+    {
+      label: 'Share on WhatsApp',
+      href: `https://wa.me/?text=${encodedTitle}%20${encodedUrl}`,
+      Icon: WhatsAppIcon,
+    },
   ];
 
   return (
@@ -243,8 +250,8 @@ const ShareLinks = ({ article }: { article: Article }): JSX.Element => {
           sx={{
             border: 1,
             borderColor: 'divider',
-            color: 'primary.main',
-            '&:hover': { borderColor: 'primary.main', bgcolor: 'rgba(26,92,56,0.06)' },
+            color: 'text.primary',
+            '&:hover': { borderColor: 'primary.main', bgcolor: 'rgba(0,30,20,0.06)' },
           }}
         >
           <Icon fontSize="small" />
@@ -269,7 +276,7 @@ const ArticleSidebar = ({ article }: { article: Article }): JSX.Element => (
   >
     <Typography
       variant="overline"
-      sx={{ color: 'success.main', fontWeight: 700, letterSpacing: 1.3 }}
+      sx={{ color: 'text.primary', fontWeight: 700, letterSpacing: 1.3 }}
     >
       Story details
     </Typography>
@@ -296,7 +303,7 @@ const ArticleSidebar = ({ article }: { article: Article }): JSX.Element => (
       <>
         <Divider sx={{ my: 3 }} />
         <Stack direction="row" spacing={0.8} alignItems="center" sx={{ mb: 1.5 }}>
-          <LocalOfferOutlinedIcon sx={{ color: 'primary.main', fontSize: 18 }} />
+          <LocalOfferOutlinedIcon sx={{ color: 'text.secondary', fontSize: 18 }} />
           <Typography sx={{ fontSize: '0.82rem', fontWeight: 700 }}>Topics</Typography>
         </Stack>
         <Stack direction="row" useFlexGap flexWrap="wrap" gap={0.8}>
@@ -320,22 +327,20 @@ const ArticleSidebar = ({ article }: { article: Article }): JSX.Element => (
 );
 
 const ArticleFooter = (): JSX.Element => (
-  <Box
+  <MintSurface
     sx={{
       mt: 7,
       p: { xs: 3.5, md: 5 },
       borderRadius: 4,
-      bgcolor: 'primary.dark',
-      color: 'common.white',
     }}
   >
     <Typography
       variant="overline"
-      sx={{ color: 'secondary.light', fontWeight: 700, letterSpacing: 1.5 }}
+      sx={{ color: 'rgba(14,42,34,0.58)', fontWeight: 700, letterSpacing: 1.5 }}
     >
       Keep exploring
     </Typography>
-    <Typography variant="h4" sx={{ mt: 1, maxWidth: 560, color: 'common.white' }}>
+    <Typography variant="h4" sx={{ mt: 1, maxWidth: 560 }}>
       More stories from communities shaping Africa&apos;s future.
     </Typography>
     <Button
@@ -348,7 +353,7 @@ const ArticleFooter = (): JSX.Element => (
     >
       Back to all stories
     </Button>
-  </Box>
+  </MintSurface>
 );
 
 const NewsArticle = (): JSX.Element => {
@@ -365,19 +370,25 @@ const NewsArticle = (): JSX.Element => {
 
   return (
     <>
-      <Seo title={article.title} description={article.excerpt} />
+      <Seo
+        title={article.title}
+        description={article.excerpt}
+        image={article.coverImage?.url}
+        imageAlt={article.coverImage?.alt ?? article.title}
+        type="article"
+      />
       <ArticleHero article={article} />
 
       <Box component="main" sx={{ bgcolor: 'background.default', py: { xs: 6, md: 10 } }}>
         <Container>
-          <Grid container spacing={{ xs: 5, md: 7 }} alignItems="flex-start">
+          <Grid container spacing={{ xs: 5, md: 7 }} sx={{ alignItems: 'flex-start' }}>
             <Grid size={{ xs: 12, md: 8 }}>
               <Box
                 component="article"
                 sx={{
                   p: { xs: 3, sm: 4.5, md: 6 },
                   border: 1,
-                  borderColor: 'rgba(26,92,56,0.1)',
+                  borderColor: 'rgba(0,30,20,0.1)',
                   borderRadius: 4,
                   bgcolor: 'background.paper',
                 }}

@@ -8,6 +8,8 @@ interface SignedUpload {
   apiKey: string;
   cloudName: string;
   folder: string;
+  allowedFormats: string;
+  maxFileSize: number;
 }
 
 interface CloudinaryUploadResponse {
@@ -17,12 +19,26 @@ interface CloudinaryUploadResponse {
   height?: number;
 }
 
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
+
 /**
  * Upload a file directly to Cloudinary using a server-issued signature, so the
  * API secret never reaches the browser. Returns a MediaAsset for the form.
  */
 export const uploadToCloudinary = async (file: File): Promise<MediaAsset> => {
+  if (!ALLOWED_TYPES.includes(file.type)) {
+    throw new Error(
+      'Unsupported file type. Please upload JPG, PNG, GIF, WebP, or PDF.',
+    );
+  }
+
   const signature = await api.post<SignedUpload>('/admin/media/sign', {});
+
+  if (file.size > signature.maxFileSize) {
+    throw new Error(
+      `File is too large. Maximum size is ${Math.round(signature.maxFileSize / 1024 / 1024)} MB.`,
+    );
+  }
 
   const form = new FormData();
   form.append('file', file);
@@ -30,6 +46,8 @@ export const uploadToCloudinary = async (file: File): Promise<MediaAsset> => {
   form.append('timestamp', String(signature.timestamp));
   form.append('signature', signature.signature);
   form.append('folder', signature.folder);
+  form.append('allowed_formats', signature.allowedFormats);
+  form.append('max_file_size', String(signature.maxFileSize));
 
   const response = await fetch(
     `https://api.cloudinary.com/v1_1/${signature.cloudName}/auto/upload`,

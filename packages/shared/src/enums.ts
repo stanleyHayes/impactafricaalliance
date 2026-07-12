@@ -11,6 +11,76 @@ export const UserRole = {
 export type UserRole = (typeof UserRole)[keyof typeof UserRole];
 export const USER_ROLES = Object.values(UserRole);
 
+export const PermissionAction = {
+  Read: 'read',
+  Update: 'update',
+  Create: 'create',
+  Delete: 'delete',
+} as const;
+export type PermissionAction = (typeof PermissionAction)[keyof typeof PermissionAction];
+export const PERMISSION_ACTIONS = Object.values(PermissionAction);
+
+export const AdminResource = {
+  Articles: 'articles',
+  Stories: 'stories',
+  Team: 'team',
+  Partners: 'partners',
+  Reports: 'reports',
+  Jobs: 'jobs',
+  Events: 'events',
+  Stats: 'stats',
+  PageSettings: 'page-settings',
+  Submissions: 'submissions',
+  Subscribers: 'subscribers',
+  Donations: 'donations',
+  PrivacyRequests: 'privacy-requests',
+  SiteSettings: 'site-settings',
+  Media: 'media',
+  Users: 'users',
+  Roles: 'roles',
+} as const;
+export type AdminResource = (typeof AdminResource)[keyof typeof AdminResource];
+export const ADMIN_RESOURCES = Object.values(AdminResource);
+
+export type Permission = `${AdminResource}:${PermissionAction}`;
+
+const allPermissions = (): Permission[] =>
+  ADMIN_RESOURCES.flatMap((resource) =>
+    PERMISSION_ACTIONS.map((action) => `${resource}:${action}` as Permission),
+  );
+
+export const ALL_PERMISSIONS = allPermissions();
+
+const editorPermissions = (): Permission[] => {
+  const read = ADMIN_RESOURCES.map((resource) => `${resource}:read` as Permission);
+  const writeResources: AdminResource[] = [
+    AdminResource.Articles,
+    AdminResource.Stories,
+    AdminResource.Team,
+    AdminResource.Partners,
+    AdminResource.Reports,
+    AdminResource.Jobs,
+    AdminResource.Events,
+    AdminResource.Stats,
+    AdminResource.PageSettings,
+    AdminResource.Submissions,
+    AdminResource.Subscribers,
+    AdminResource.PrivacyRequests,
+    AdminResource.SiteSettings,
+    AdminResource.Media,
+  ];
+  const createUpdate = writeResources.flatMap((resource) => [
+    `${resource}:create` as Permission,
+    `${resource}:update` as Permission,
+  ]);
+  return [...read, ...createUpdate];
+};
+
+export const ROLE_TEMPLATES: Record<UserRole, Permission[]> = {
+  [UserRole.Admin]: allPermissions(),
+  [UserRole.Editor]: editorPermissions(),
+};
+
 export const ContentStatus = {
   Draft: 'draft',
   Published: 'published',
@@ -40,6 +110,7 @@ export const SubmissionType = {
   Contact: 'contact',
   Partner: 'partner',
   Volunteer: 'volunteer',
+  Job: 'job',
 } as const;
 export type SubmissionType = (typeof SubmissionType)[keyof typeof SubmissionType];
 export const SUBMISSION_TYPES = Object.values(SubmissionType);
@@ -73,3 +144,13 @@ export const DonationFrequency = {
 } as const;
 export type DonationFrequency = (typeof DonationFrequency)[keyof typeof DonationFrequency];
 export const DONATION_FREQUENCIES = Object.values(DonationFrequency);
+
+export const EventType = {
+  Webinar: 'webinar',
+  CohortLaunch: 'cohort-launch',
+  PartnerForum: 'partner-forum',
+  CommunityEvent: 'community-event',
+  Other: 'other',
+} as const;
+export type EventType = (typeof EventType)[keyof typeof EventType];
+export const EVENT_TYPES = Object.values(EventType);

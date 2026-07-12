@@ -1,4 +1,4 @@
-import type { Paginated, SubmissionInput, SubmissionStatus, SubscribeInput } from '@iaa/shared';
+import { CONSENT_VERSION, type Paginated, type SubmissionInput, type SubmissionStatus, type SubscribeInput } from '@iaa/shared';
 import { inject, injectable } from 'tsyringe';
 
 import { NotFoundError } from '../../common/errors.js';
@@ -28,22 +28,46 @@ export class SubmissionService {
   ) {}
 
   async submit(input: SubmissionInput): Promise<{ id: string }> {
-    const { type, ...payload } = input;
-    const created = await this.repo.createSubmission(type, payload);
+    const { type, consent, consentVersion, ...payload } = input;
+    const created = await this.repo.createSubmission({
+      type,
+      payload,
+      consent,
+      consentVersion: consentVersion ?? CONSENT_VERSION,
+      consentedAt: new Date(),
+    });
     await this.notify(type, payload);
     return { id: created.id };
   }
 
   async subscribe(input: SubscribeInput): Promise<{ subscribed: true }> {
+    const { consent, consentVersion, ...rest } = input;
     const existing = await this.repo.findSubscriberByEmail(input.email);
     if (existing) {
       if (existing.unsubscribedAt) {
-        await this.repo.reactivateSubscriber(existing.id);
+        await this.repo.reactivateSubscriber(existing.id, consentVersion ?? CONSENT_VERSION, new Date());
       }
       return { subscribed: true };
     }
-    await this.repo.createSubscriber(input);
+    await this.repo.createSubscriber({
+      ...rest,
+      consent,
+      consentVersion: consentVersion ?? CONSENT_VERSION,
+      consentedAt: new Date(),
+    });
     return { subscribed: true };
+  }
+
+  async unsubscribe(email: string): Promise<{ unsubscribed: boolean }> {
+    const subscriber = await this.repo.unsubscribeSubscriber(email);
+    return { unsubscribed: Boolean(subscriber) };
+  }
+
+  async deleteSubscriber(id: string): Promise<void> {
+    const deleted = await this.repo.deleteSubscriber(id);
+    if (!deleted) {
+      throw new NotFoundError('Subscriber');
+    }
   }
 
   async list(

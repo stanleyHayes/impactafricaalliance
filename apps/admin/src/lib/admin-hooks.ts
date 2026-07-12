@@ -1,16 +1,35 @@
 import type {
+  AcceptInvitationInput,
   AiAssistInput,
   AiAssistResponse,
   ChangePasswordInput,
   CreateUserInput,
+  DisableMfaInput,
   Donation,
+  Event,
+  EventInput,
+  EventUpdate,
+  ForgotPasswordInput,
+  InviteUserInput,
+  LoginResponse,
+  MfaSetupResponse,
+  MfaStatusResponse,
+  MfaVerifySetupResponse,
   Paginated,
+  PrivacyRequest,
   PublicUser,
+  ResetPasswordInput,
+  SetupMfaInput,
+  SiteSetting,
+  SiteSettingUpdate,
   Submission,
   SubmissionStatus,
   Subscriber,
+  UpdatePrivacyRequestInput,
   UpdateProfileInput,
   UpdateUserInput,
+  UpdateUserPermissionsInput,
+  VerifyMfaSetupInput,
 } from '@iaa/shared';
 import {
   useMutation,
@@ -21,6 +40,35 @@ import {
 } from '@tanstack/react-query';
 
 import { api } from './api-client';
+
+export const useEvents = (): UseQueryResult<Paginated<Event>> =>
+  useQuery({
+    queryKey: ['events'],
+    queryFn: () => api.get<Paginated<Event>>('/admin/events?pageSize=200'),
+  });
+
+export const useSaveEvent = (): UseMutationResult<
+  Event,
+  Error,
+  { id?: string; body: EventInput | EventUpdate }
+> => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }) =>
+      id
+        ? api.patch<Event>(`/admin/events/${id}`, body)
+        : api.post<Event>('/admin/events', body),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['events'] }),
+  });
+};
+
+export const useDeleteEvent = (): UseMutationResult<void, Error, string> => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id) => api.delete<void>(`/admin/events/${id}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['events'] }),
+  });
+};
 
 export const useSubmissions = (params: {
   type?: string;
@@ -99,5 +147,107 @@ export const useDeleteUser = (): UseMutationResult<void, Error, string> => {
   return useMutation({
     mutationFn: (id) => api.delete<void>(`/admin/users/${id}`),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['users'] }),
+  });
+};
+
+export const useInviteUser = (): UseMutationResult<
+  { message: string; email: string; role: string; token?: string },
+  Error,
+  InviteUserInput
+> => {
+  return useMutation({
+    mutationFn: (body) => api.post('/admin/invitations', body),
+  });
+};
+
+export const useUpdateUserPermissions = (): UseMutationResult<
+  PublicUser,
+  Error,
+  { id: string; body: UpdateUserPermissionsInput }
+> => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }) => api.patch<PublicUser>(`/admin/users/${id}/permissions`, body),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['users'] }),
+  });
+};
+
+export const useAcceptInvitation = (): UseMutationResult<LoginResponse, Error, AcceptInvitationInput> =>
+  useMutation({ mutationFn: (body) => api.post<LoginResponse>('/auth/accept-invitation', body, { auth: false }) });
+
+/** Hard-delete a newsletter subscriber (e.g. for an erasure request). */
+export const useDeleteSubscriber = (): UseMutationResult<void, Error, string> => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id) => api.delete<void>(`/admin/submissions/subscribers/${id}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['subscribers'] }),
+  });
+};
+
+export const useSiteSettings = (): UseQueryResult<SiteSetting> =>
+  useQuery({ queryKey: ['site-settings'], queryFn: () => api.get<SiteSetting>('/admin/site-settings') });
+
+export const useUpdateSiteSettings = (): UseMutationResult<SiteSetting, Error, SiteSettingUpdate> => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body) => api.patch<SiteSetting>('/admin/site-settings', body),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['site-settings'] }),
+  });
+};
+
+export const useForgotPassword = (): UseMutationResult<void, Error, ForgotPasswordInput> =>
+  useMutation({ mutationFn: (body) => api.post<void>('/auth/forgot-password', body) });
+
+export const useResetPassword = (): UseMutationResult<void, Error, ResetPasswordInput> =>
+  useMutation({ mutationFn: (body) => api.post<void>('/auth/reset-password', body) });
+
+/** List data-subject privacy requests (optionally filtered by status). */
+export const usePrivacyRequests = (
+  status?: string,
+): UseQueryResult<Paginated<PrivacyRequest>> => {
+  const query = new URLSearchParams({ pageSize: '100' });
+  if (status) query.set('status', status);
+  return useQuery({
+    queryKey: ['privacy-requests', status],
+    queryFn: () => api.get<Paginated<PrivacyRequest>>(`/admin/privacy-requests?${query.toString()}`),
+  });
+};
+
+/** Update the status or notes of a privacy request. */
+export const useUpdatePrivacyRequest = (): UseMutationResult<
+  PrivacyRequest,
+  Error,
+  { id: string; body: UpdatePrivacyRequestInput }
+> => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }) => api.patch<PrivacyRequest>(`/admin/privacy-requests/${id}`, body),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['privacy-requests'] }),
+  });
+};
+
+/** Fetch the current user's MFA status. */
+export const useMfaStatus = (): UseQueryResult<MfaStatusResponse> =>
+  useQuery({ queryKey: ['mfa-status'], queryFn: () => api.get<MfaStatusResponse>('/auth/mfa/status') });
+
+/** Begin MFA enrollment. */
+export const useSetupMfa = (): UseMutationResult<MfaSetupResponse, Error, SetupMfaInput> =>
+  useMutation({ mutationFn: (body) => api.post<MfaSetupResponse>('/auth/mfa/setup', body) });
+
+/** Verify an MFA enrollment code and enable MFA. */
+export const useVerifyMfaSetup = (): UseMutationResult<MfaVerifySetupResponse, Error, VerifyMfaSetupInput> => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body) => api.post<MfaVerifySetupResponse>('/auth/mfa/verify-setup', body),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['mfa-status'] }),
+  });
+};
+
+/** Disable MFA for the current user. */
+export const useDisableMfa = (): UseMutationResult<MfaStatusResponse, Error, DisableMfaInput> => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body) => api.post<MfaStatusResponse>('/auth/mfa/disable', body),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['mfa-status'] }),
   });
 };

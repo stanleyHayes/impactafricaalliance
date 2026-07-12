@@ -32,6 +32,24 @@ export class UnauthorizedError extends AppError {
   }
 }
 
+export class WebhookSignatureError extends AppError {
+  readonly statusCode = 401;
+  readonly code = 'WEBHOOK_SIGNATURE_INVALID';
+  constructor(message = 'Webhook signature verification failed') {
+    super(message);
+  }
+}
+
+export class MfaRequiredError extends AppError {
+  readonly statusCode = 401;
+  readonly code = 'MFA_REQUIRED';
+  override readonly details: { email: string };
+  constructor(email: string) {
+    super('MFA code required');
+    this.details = { email };
+  }
+}
+
 export class ForbiddenError extends AppError {
   readonly statusCode = 403;
   readonly code = 'FORBIDDEN';

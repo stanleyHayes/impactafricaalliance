@@ -1,4 +1,4 @@
-import { createUserSchema, updateUserSchema } from '@iaa/shared';
+import { createUserSchema, updateUserPermissionsSchema, updateUserSchema } from '@iaa/shared';
 import type { Request, Response } from 'express';
 import { inject, injectable } from 'tsyringe';
 
@@ -24,6 +24,11 @@ export class UserController {
   update = async (req: Request, res: Response): Promise<void> => {
     const input = parseWith(updateUserSchema, req.body);
     res.json(await this.users.update(pathParam(req, 'id'), input));
+  };
+
+  updatePermissions = async (req: Request, res: Response): Promise<void> => {
+    const input = parseWith(updateUserPermissionsSchema, req.body);
+    res.json(await this.users.updatePermissions(pathParam(req, 'id'), input));
   };
 
   remove = async (req: Request, res: Response): Promise<void> => {

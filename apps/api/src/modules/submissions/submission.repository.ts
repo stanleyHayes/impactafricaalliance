@@ -36,8 +36,14 @@ export class SubmissionRepository {
     return { items, total };
   }
 
-  createSubmission(type: SubmissionType, payload: Record<string, unknown>) {
-    return SubmissionModel.create({ type, payload });
+  createSubmission(data: {
+    type: SubmissionType;
+    payload: Record<string, unknown>;
+    consent: boolean;
+    consentVersion?: string;
+    consentedAt?: Date;
+  }) {
+    return SubmissionModel.create(data);
   }
 
   updateStatus(id: string, status: SubmissionStatus) {
@@ -52,12 +58,24 @@ export class SubmissionRepository {
     return SubscriberModel.create(data);
   }
 
-  reactivateSubscriber(id: string) {
+  reactivateSubscriber(id: string, consentVersion?: string, consentedAt?: Date) {
     return SubscriberModel.findByIdAndUpdate(
       id,
-      { $unset: { unsubscribedAt: 1 } },
+      { $unset: { unsubscribedAt: 1 }, consentVersion, consentedAt },
       { new: true },
     ).exec();
+  }
+
+  unsubscribeSubscriber(email: string) {
+    return SubscriberModel.findOneAndUpdate(
+      { email: email.toLowerCase() },
+      { unsubscribedAt: new Date() },
+      { new: true },
+    ).exec();
+  }
+
+  deleteSubscriber(id: string) {
+    return SubscriberModel.findByIdAndDelete(id).exec();
   }
 
   async listSubscribers(page: number, pageSize: number) {

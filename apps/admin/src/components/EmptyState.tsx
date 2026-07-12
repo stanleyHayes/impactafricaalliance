@@ -155,7 +155,7 @@ export const EmptyState = ({
             justifyContent: 'center',
             borderRadius: '50%',
             overflow: 'hidden',
-            color: 'primary.main',
+            color: 'text.primary',
             background: `linear-gradient(155deg, ${alpha(greenLight, 0.16)} 0%, ${alpha(green, 0.1)} 100%)`,
             border: `1px solid ${alpha(green, 0.18)}`,
             boxShadow: `inset 0 1px 0 ${alpha('#ffffff', 0.6)}, 0 12px 28px -16px ${alpha(green, 0.55)}`,

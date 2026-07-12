@@ -18,6 +18,7 @@ import { Link as RouterLink } from 'react-router-dom';
 
 import { useAuth } from '../../auth/AuthContext';
 import { AccountPanel, AccountSectionHeader } from '../../components/account/AccountSurface';
+import { formatUtcDate } from '../../lib/date';
 
 const initials = (name: string): string =>
   name
@@ -29,11 +30,7 @@ const initials = (name: string): string =>
 
 const formatDate = (iso?: string): string =>
   iso
-    ? new Date(iso).toLocaleDateString(undefined, {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      })
+    ? formatUtcDate(iso, { year: 'numeric', month: 'long', day: 'numeric' })
     : 'Not available';
 
 const formatRole = (role?: string): string =>
@@ -45,9 +42,9 @@ const formatRole = (role?: string): string =>
     : 'Member';
 
 const activeChipSx = (active: boolean) => ({
-  bgcolor: active ? 'rgba(70,180,112,0.18)' : 'rgba(255,255,255,0.1)',
-  color: active ? '#B8F0CC' : 'common.white',
-  '& .MuiChip-icon': { color: active ? '#B8F0CC' : 'rgba(255,255,255,0.78)' },
+  bgcolor: active ? 'rgba(14,42,34,0.08)' : 'rgba(255,255,255,0.1)',
+  color: active ? 'rgba(14,42,34,0.72)' : 'common.white',
+  '& .MuiChip-icon': { color: active ? 'rgba(14,42,34,0.72)' : 'rgba(255,255,255,0.78)' },
 });
 
 const identityModel = (user: PublicUser | null) => {
@@ -88,8 +85,8 @@ const DetailItem = ({
         flexShrink: 0,
         placeItems: 'center',
         borderRadius: 1.75,
-        bgcolor: 'rgba(26,92,56,0.07)',
-        color: 'primary.main',
+        bgcolor: 'alpha(brandColors.forest, 0.07)',
+        color: 'text.primary',
         '& svg': { fontSize: 20 },
       }}
     >
@@ -120,14 +117,14 @@ const IdentityCard = ({ user }: { user: PublicUser | null }): JSX.Element => {
           overflow: 'hidden',
           p: { xs: 3, sm: 4 },
           bgcolor: 'primary.main',
-          color: 'common.white',
+          color: 'common.black',
           '&::after': {
             position: 'absolute',
             right: -80,
             bottom: -130,
             width: 260,
             height: 260,
-            border: '1px solid rgba(255,255,255,0.12)',
+            border: '1px solid rgba(14,42,34,0.12)',
             borderRadius: '50%',
             content: '""',
           },
@@ -153,10 +150,10 @@ const IdentityCard = ({ user }: { user: PublicUser | null }): JSX.Element => {
             {model.initials}
           </Avatar>
           <Box>
-            <Typography variant="h4" sx={{ color: 'common.white', fontSize: '1.8rem' }}>
+            <Typography variant="h4" sx={{ color: 'common.black', fontSize: '1.8rem' }}>
               {model.name}
             </Typography>
-            <Typography sx={{ mt: 0.4, color: 'rgba(255,255,255,0.68)' }}>{model.email}</Typography>
+            <Typography sx={{ mt: 0.4, color: 'rgba(14,42,34,0.68)' }}>{model.email}</Typography>
             <Stack direction="row" useFlexGap flexWrap="wrap" gap={1} sx={{ mt: 1.5 }}>
               <Chip
                 size="small"
@@ -232,8 +229,8 @@ const QuickAction = ({
       textDecoration: 'none',
       transition: 'background-color 160ms ease, border-color 160ms ease, transform 160ms ease',
       '&:hover': {
-        borderColor: 'rgba(26,92,56,0.3)',
-        bgcolor: 'rgba(26,92,56,0.035)',
+        borderColor: 'alpha(brandColors.forest, 0.3)',
+        bgcolor: 'alpha(brandColors.forest, 0.035)',
         transform: 'translateX(3px)',
       },
     }}
@@ -246,8 +243,8 @@ const QuickAction = ({
         flexShrink: 0,
         placeItems: 'center',
         borderRadius: 2,
-        bgcolor: 'rgba(26,92,56,0.08)',
-        color: 'primary.main',
+        bgcolor: 'alpha(brandColors.forest, 0.08)',
+        color: 'text.primary',
       }}
     >
       {icon}
@@ -285,7 +282,7 @@ const Profile = (): JSX.Element => {
         }
       />
 
-      <Grid container spacing={3} alignItems="stretch">
+      <Grid container spacing={3} sx={{ alignItems: 'stretch' }}>
         <Grid size={{ xs: 12, xl: 8 }}>
           <IdentityCard user={user} />
         </Grid>
@@ -307,6 +304,16 @@ const Profile = (): JSX.Element => {
                 icon={<LockResetRoundedIcon />}
                 title="Strengthen account security"
                 description="Set a new console password."
+              />
+              <QuickAction
+                to="/account/mfa"
+                icon={<VerifiedUserRoundedIcon />}
+                title={user?.mfaEnabled ? 'Two-factor auth enabled' : 'Enable two-factor auth'}
+                description={
+                  user?.mfaEnabled
+                    ? 'Add an extra layer of protection to your account.'
+                    : 'Protect your account with an authenticator app.'
+                }
               />
             </Stack>
           </AccountPanel>
