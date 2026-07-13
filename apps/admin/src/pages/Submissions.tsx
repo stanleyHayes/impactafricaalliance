@@ -28,7 +28,7 @@ import { alpha, useTheme, type Theme } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import type { GridColDef } from '@mui/x-data-grid';
-import type { ReactNode } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 
 import { CardListSkeleton } from '../components/CardListSkeleton';
@@ -164,7 +164,7 @@ const URL_VALUE_RE = /^https?:\/\//i;
 const EMAIL_KEY_RE = /e-?mail/i;
 const PHONE_KEY_RE = /phone|mobile|tel/i;
 
-const CONTACT_ICON: Record<ContactKind, ReactNode> = {
+const CONTACT_ICON: Record<ContactKind, ReactElement> = {
   email: <EmailOutlinedIcon fontSize="small" />,
   phone: <PhoneOutlinedIcon fontSize="small" />,
   link: <LinkOutlinedIcon fontSize="small" />,
