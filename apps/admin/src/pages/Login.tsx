@@ -91,7 +91,7 @@ export const BrandPanel = (): JSX.Element => {
     <Box sx={{ position: 'relative', maxWidth: 460 }}>
       <Typography
         sx={{
-          fontFamily: brandFonts.heading,
+          fontFamily: brandFonts.body,
           fontStyle: 'italic',
           fontSize: { md: '1.25rem', lg: '1.4rem' },
           color: 'rgba(255,255,255,0.72)',

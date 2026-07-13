@@ -589,7 +589,7 @@ const Timeline = (): JSX.Element => (
                 <Typography
                   sx={{
                     color: isFuture ? 'secondary.dark' : 'text.primary',
-                    fontFamily: brandFonts.heading,
+                    fontFamily: brandFonts.body,
                     fontSize: { xs: '1.75rem', md: '2.15rem' },
                     fontStyle: 'italic',
                     fontWeight: 850,

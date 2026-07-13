@@ -1,8 +1,8 @@
 /**
  * IAA brand tokens — single source of truth for colours and typography.
  * Refreshed for higher contrast and a cleaner editorial feel:
- *  - Fraunces for display headings
- *  - Outfit for body / UI
+ *  - Fraunces for h1/h2 headings only
+ *  - Outfit for everything else (h3–h6, body, UI)
  *  - Calmer green/gold accents against warm sand and deep navy/forest surfaces
  */
 

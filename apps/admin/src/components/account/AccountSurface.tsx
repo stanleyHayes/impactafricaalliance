@@ -53,7 +53,7 @@ export const AccountSectionHeader = ({
         >
           {eyebrow}
         </Typography>
-        <Typography variant="h4" sx={{ mt: 0.35, fontSize: { xs: '1.55rem', md: '1.9rem' } }}>
+        <Typography variant="h2" sx={{ mt: 0.35, fontSize: { xs: '1.55rem', md: '1.9rem' } }}>
           {title}
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.35 }}>

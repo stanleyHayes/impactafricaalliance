@@ -89,7 +89,7 @@ export const PillarCard = ({ pillar }: { pillar: PillarDefinition }): JSX.Elemen
             flexDirection: 'column',
           }}
         >
-          <Typography variant="h6" sx={{ fontFamily: brandFonts.heading }}>{pillar.title}</Typography>
+          <Typography variant="h6">{pillar.title}</Typography>
           <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary', flexGrow: 1 }}>
             {pillar.description}
           </Typography>
@@ -153,7 +153,7 @@ export const StoryCard = ({
       />
       <Typography
         sx={{
-          fontFamily: brandFonts.heading,
+          fontFamily: brandFonts.body,
           fontStyle: 'italic',
           fontSize: '1.12rem',
           lineHeight: 1.7,

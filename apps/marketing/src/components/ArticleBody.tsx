@@ -178,7 +178,7 @@ const components: Components = {
         color: 'primary.dark',
         '& p': {
           m: 0,
-          fontFamily: brandFonts.heading,
+          fontFamily: brandFonts.body,
           fontSize: { xs: '1.2rem', md: '1.38rem' },
           fontStyle: 'italic',
           lineHeight: 1.65,

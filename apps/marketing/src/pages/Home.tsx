@@ -837,7 +837,7 @@ const StoryImpactCard = ({
       </Stack>
       <Typography
         sx={{
-          fontFamily: brandFonts.heading,
+          fontFamily: brandFonts.body,
           fontSize: featured ? { xs: '1.35rem', md: '1.55rem' } : '1.08rem',
           fontStyle: 'italic',
           lineHeight: featured ? 1.62 : 1.7,
@@ -934,7 +934,7 @@ const VisionQuote = (): JSX.Element => (
         <Typography
           variant="h4"
           sx={{
-            fontFamily: brandFonts.heading,
+            fontFamily: brandFonts.body,
             fontStyle: 'italic',
             maxWidth: 880,
             mx: 'auto',

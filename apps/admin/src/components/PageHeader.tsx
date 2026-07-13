@@ -80,7 +80,7 @@ export const PageHeader = ({
         <Box sx={{ minWidth: 0 }}>
           <Stack direction="row" spacing={1.25} alignItems="center">
             <Typography
-              variant="h4"
+              variant="h2"
               sx={{ fontSize: { xs: '1.6rem', sm: '2.125rem' }, lineHeight: 1.15 }}
             >
               {title}

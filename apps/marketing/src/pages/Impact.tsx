@@ -804,7 +804,7 @@ const AgendaSection = (): JSX.Element => (
               />
               <Typography
                 sx={{
-                  fontFamily: brandFonts.heading,
+                  fontFamily: brandFonts.body,
                   fontStyle: 'italic',
                   fontSize: '2.6rem',
                   fontWeight: 700,
