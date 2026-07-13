@@ -1,5 +1,7 @@
 # Render Blueprint — deploys the IAA API as a free web service.
 # Docs: https://render.com/docs/blueprint-spec
+# Env keys are kept in sync with apps/api/.env.production.
+# `--include=dev` is required: the build runs tsc and needs @types/* devDependencies.
 services:
   - type: web
     name: iaa-api
@@ -8,39 +10,69 @@ services:
     region: oregon
     branch: main
     autoDeploy: true
-    buildCommand: npm ci && npm run build:shared && npm run build -w @iaa/api
+    buildCommand: npm ci --include=dev && npm run build:shared && npm run build -w @iaa/api
     startCommand: node apps/api/dist/server.js
     healthCheckPath: /api/health
     envVars:
+      # ── Runtime ───────────────────────────────────────────────────────
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 10000
-      # Secrets & environment-specific values — set in the Render dashboard.
+      - key: TRUST_PROXY
+        value: "1"
+
+      # ── Public URLs ───────────────────────────────────────────────────
+      - key: PUBLIC_SITE_URL
+        value: https://impactafricaalliance.org
+      - key: ADMIN_URL
+        value: https://admin.impactafricaalliance.org
+      - key: CORS_ORIGINS
+        value: https://impactafricaalliance.org,https://admin.impactafricaalliance.org,https://impactafricaaliance-admin.vercel.app,https://impactafricaaliance.vercel.app
+
+      # ── Database & JWT (secrets — set in the Render dashboard) ────────
       - key: MONGODB_URI
         sync: false
-      - key: CORS_ORIGINS
-        sync: false # e.g. https://iaa-marketing.vercel.app,https://iaa-admin.vercel.app
-      - key: JWT_SECRET
+      - key: JWT_ACCESS_SECRET
         generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: JWT_ACCESS_TTL
+        value: "900"
+      - key: JWT_REFRESH_TTL
+        value: "2592000"
+
+      # ── Seed accounts ─────────────────────────────────────────────────
       - key: SEED_ADMIN_EMAIL
-        sync: false
+        value: admin@impactafricaalliance.org
+      - key: SEED_ADMIN_NAME
+        value: IAA Administrator
       - key: SEED_ADMIN_PASSWORD
         sync: false
       - key: SEED_EDITOR_PASSWORD
         sync: false
+
+      # ── Email ─────────────────────────────────────────────────────────
       - key: RESEND_API_KEY
         sync: false
       - key: EMAIL_FROM
-        sync: false
+        value: Impact Africa Alliance <no-reply@impactafricaalliance.org>
       - key: EMAIL_NOTIFY_TO
-        sync: false
+        value: info@impactafricaalliance.org
+      - key: DPO_EMAIL
+        value: info@impactafricaalliance.org
+
+      # ── Cloudinary ────────────────────────────────────────────────────
       - key: CLOUDINARY_CLOUD_NAME
         sync: false
       - key: CLOUDINARY_API_KEY
         sync: false
       - key: CLOUDINARY_API_SECRET
         sync: false
+      - key: CLOUDINARY_UPLOAD_FOLDER
+        value: iaa
+
+      # ── Payments ──────────────────────────────────────────────────────
       - key: STRIPE_SECRET_KEY
         sync: false
       - key: STRIPE_WEBHOOK_SECRET
@@ -49,3 +81,42 @@ services:
         sync: false
       - key: PAYSTACK_WEBHOOK_SECRET
         sync: false
+
+      # ── AI ────────────────────────────────────────────────────────────
+      - key: ANTHROPIC_API_KEY
+        sync: false
+
+      # ── MFA ───────────────────────────────────────────────────────────
+      # 32-byte base64 key: node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+      - key: MFA_ENCRYPTION_KEY
+        sync: false
+      - key: MFA_REQUIRED_FOR_ROLES
+        value: admin
+
+      # ── Social OAuth (secrets — set in the Render dashboard) ──────────
+      # 32-byte base64 key; falls back to MFA_ENCRYPTION_KEY in development only.
+      - key: SOCIAL_TOKEN_ENCRYPTION_KEY
+        sync: false
+      # Public base URL of this API service — confirm the actual onrender.com URL.
+      - key: SOCIAL_OAUTH_REDIRECT_BASE
+        value: https://iaa-api.onrender.com
+      - key: LINKEDIN_CLIENT_ID
+        sync: false
+      - key: LINKEDIN_CLIENT_SECRET
+        sync: false
+      - key: META_APP_ID
+        sync: false
+      - key: META_APP_SECRET
+        sync: false
+      - key: X_CLIENT_ID
+        sync: false
+      - key: X_CLIENT_SECRET
+        sync: false
+
+      # ── Data retention (days) ─────────────────────────────────────────
+      - key: SUBMISSION_RETENTION_DAYS
+        value: "1095"
+      - key: UNSUBSCRIBED_RETENTION_DAYS
+        value: "90"
+      - key: FAILED_DONATION_RETENTION_DAYS
+        value: "30"
