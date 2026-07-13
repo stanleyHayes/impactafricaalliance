@@ -1,10 +1,20 @@
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded';
 import MarkEmailReadIcon from '@mui/icons-material/MarkEmailRead';
+import Avatar from '@mui/material/Avatar';
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import Chip from '@mui/material/Chip';
 import IconButton from '@mui/material/IconButton';
+import Stack from '@mui/material/Stack';
+import { alpha, useTheme } from '@mui/material/styles';
 import Tooltip from '@mui/material/Tooltip';
-import type { GridColDef } from '@mui/x-data-grid';
+import Typography from '@mui/material/Typography';
+import type { GridColDef, GridRowModel } from '@mui/x-data-grid';
+import { useMemo } from 'react';
 
-import { DataTable } from '../components/data/DataTable';
+import { DataTable, type DataTableFilter } from '../components/data/DataTable';
+import { useViewMode } from '../components/data/useViewMode';
+import { ViewToggle } from '../components/data/ViewToggle';
 import { EmptyState } from '../components/EmptyState';
 import { PageHeader } from '../components/PageHeader';
 import { useDeleteSubscriber, useSubscribers } from '../lib/admin-hooks';
@@ -51,8 +61,72 @@ const SubscriberActions = ({ subscriberId }: { subscriberId: string }): JSX.Elem
   );
 };
 
+const SubscriberCard = ({ row }: { row: GridRowModel }): JSX.Element => {
+  const theme = useTheme();
+  const email = String(row.email ?? '');
+  const name = String(row.name ?? '');
+  const source = String(row.source ?? '');
+
+  return (
+    <Card
+      variant="outlined"
+      sx={{
+        height: '100%',
+        borderRadius: 2.5,
+        transition: theme.transitions.create(['box-shadow', 'border-color'], {
+          duration: theme.transitions.duration.shorter,
+        }),
+        '&:hover': { borderColor: 'primary.light', boxShadow: theme.shadows[3] },
+      }}
+    >
+      <Box sx={{ p: 2 }}>
+        <Stack direction="row" spacing={1.5} alignItems="center">
+          <Avatar
+            sx={{
+              width: 44,
+              height: 44,
+              flexShrink: 0,
+              fontWeight: 700,
+              color: 'text.primary',
+              bgcolor: alpha(theme.palette.primary.main, 0.12),
+            }}
+          >
+            {email.charAt(0).toUpperCase() || '?'}
+          </Avatar>
+          <Box sx={{ minWidth: 0, flexGrow: 1 }}>
+            <Typography variant="subtitle1" noWrap title={email} sx={{ fontWeight: 700, lineHeight: 1.3 }}>
+              {email}
+            </Typography>
+            {name && (
+              <Typography variant="body2" color="text.secondary" noWrap title={name}>
+                {name}
+              </Typography>
+            )}
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.75, flexWrap: 'wrap', gap: 0.5 }}>
+              {source && <Chip size="small" variant="outlined" label={source} sx={{ height: 22 }} />}
+              <Typography variant="caption" color="text.secondary">
+                {formatUtcDate(String(row.createdAt))}
+              </Typography>
+            </Stack>
+          </Box>
+          <SubscriberActions subscriberId={String(row.id)} />
+        </Stack>
+      </Box>
+    </Card>
+  );
+};
+
 const Subscribers = (): JSX.Element => {
   const { data, isLoading } = useSubscribers();
+  const [view, setView] = useViewMode('subscribers');
+
+  const filters = useMemo<DataTableFilter[]>(() => {
+    const items = data?.items ?? [];
+    const sources = [
+      ...new Set(items.map((item) => item.source).filter((source): source is string => Boolean(source))),
+    ].sort();
+    return [{ field: 'source', label: 'Source', options: sources.map((source) => ({ value: source, label: source })) }];
+  }, [data?.items]);
 
   return (
     <>
@@ -67,6 +141,10 @@ const Subscribers = (): JSX.Element => {
         rows={data?.items ?? []}
         columns={columns}
         loading={isLoading}
+        filters={filters}
+        view={view}
+        toolbarEnd={<ViewToggle value={view} onChange={setView} />}
+        renderCard={(row) => <SubscriberCard row={row} />}
         empty={
           <EmptyState
             icon={<MarkEmailReadIcon />}

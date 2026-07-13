@@ -1,17 +1,30 @@
+import { DONATION_FREQUENCIES, DONATION_STATUSES, PAYMENT_PROVIDERS } from '@iaa/shared';
 import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
 import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
 import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import { alpha, useTheme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
-import type { GridColDef } from '@mui/x-data-grid';
+import type { GridColDef, GridRowModel } from '@mui/x-data-grid';
 
-import { DataTable } from '../components/data/DataTable';
+import { DataTable, type DataTableFilter } from '../components/data/DataTable';
+import { useViewMode } from '../components/data/useViewMode';
+import { ViewToggle } from '../components/data/ViewToggle';
 import { EmptyState } from '../components/EmptyState';
 import { PageHeader } from '../components/PageHeader';
 import { useDonations } from '../lib/admin-hooks';
 import { formatUtcDate } from '../lib/date';
 import { pageGuides } from '../lib/page-guides';
+
+const toOptions = (values: readonly string[]): { value: string; label: string }[] =>
+  values.map((value) => ({ value, label: value.replace(/-/g, ' ') }));
+
+const filters: DataTableFilter[] = [
+  { field: 'status', label: 'Status', options: toOptions(DONATION_STATUSES) },
+  { field: 'provider', label: 'Provider', options: toOptions(PAYMENT_PROVIDERS) },
+  { field: 'frequency', label: 'Frequency', options: toOptions(DONATION_FREQUENCIES) },
+];
 
 const statusColor = (status: unknown): 'success' | 'warning' | 'error' | 'default' => {
   if (status === 'succeeded') {
@@ -79,9 +92,67 @@ const SummaryCard = ({ label, value }: { label: string; value: string }): JSX.El
   );
 };
 
+const DonationCard = ({ row }: { row: GridRowModel }): JSX.Element => {
+  const theme = useTheme();
+  const amount = Number(row.amountUsd ?? 0);
+
+  return (
+    <Card
+      variant="outlined"
+      sx={{
+        height: '100%',
+        borderRadius: 2.5,
+        transition: theme.transitions.create(['box-shadow', 'border-color'], {
+          duration: theme.transitions.duration.shorter,
+        }),
+        '&:hover': { borderColor: 'primary.light', boxShadow: theme.shadows[3] },
+      }}
+    >
+      <Box sx={{ p: 2 }}>
+        <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+          <Typography variant="h5" sx={{ fontWeight: 800, color: 'primary.main' }}>
+            ${amount.toLocaleString()}
+          </Typography>
+          <Chip size="small" label={String(row.status ?? 'unknown')} color={statusColor(row.status)} />
+        </Stack>
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          noWrap
+          title={String(row.donorEmail ?? '')}
+          sx={{ mt: 0.25 }}
+        >
+          {row.donorEmail ? String(row.donorEmail) : 'Anonymous donor'}
+        </Typography>
+        <Stack direction="row" sx={{ mt: 1.5, flexWrap: 'wrap', gap: 0.5 }}>
+          <Chip size="small" label={String(row.provider ?? '')} sx={{ height: 22, textTransform: 'capitalize' }} />
+          {row.frequency && (
+            <Chip
+              size="small"
+              variant="outlined"
+              label={String(row.frequency)}
+              sx={{ height: 22, textTransform: 'capitalize' }}
+            />
+          )}
+        </Stack>
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1.5 }}>
+          {formatUtcDate(String(row.createdAt), {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          })}
+        </Typography>
+      </Box>
+    </Card>
+  );
+};
+
 const Donations = (): JSX.Element => {
   const { data, isLoading } = useDonations();
   const items = data?.items ?? [];
+  const [view, setView] = useViewMode('donations');
 
   const succeeded = items.filter((donation) => donation.status === 'succeeded');
   const raised = succeeded.reduce((sum, donation) => sum + Number(donation.amountUsd ?? 0), 0);
@@ -108,6 +179,10 @@ const Donations = (): JSX.Element => {
         rows={items}
         columns={columns}
         loading={isLoading}
+        filters={filters}
+        view={view}
+        toolbarEnd={<ViewToggle value={view} onChange={setView} />}
+        renderCard={(row) => <DonationCard row={row} />}
         empty={
           <EmptyState
             icon={<VolunteerActivismIcon />}

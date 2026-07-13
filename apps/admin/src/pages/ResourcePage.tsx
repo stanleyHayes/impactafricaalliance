@@ -1,21 +1,18 @@
 import { UserRole } from '@iaa/shared';
 import AddIcon from '@mui/icons-material/Add';
-import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
 import InboxOutlinedIcon from '@mui/icons-material/InboxOutlined';
-import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
-import Stack from '@mui/material/Stack';
-import Tooltip from '@mui/material/Tooltip';
 import type { GridColDef } from '@mui/x-data-grid';
 import { useMemo, useState } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
 
 import { useAuth } from '../auth/AuthContext';
+import { ResourceCard, ResourceRowActions } from '../components/crud/ResourceCard';
 import { ResourceDetailDialog } from '../components/crud/ResourceDetailDialog';
 import { ResourceFormDialog } from '../components/crud/ResourceFormDialog';
-import { DataTable } from '../components/data/DataTable';
+import { DataTable, type DataTableFilter } from '../components/data/DataTable';
+import { useViewMode } from '../components/data/useViewMode';
+import { ViewToggle } from '../components/data/ViewToggle';
 import { EmptyState } from '../components/EmptyState';
 import { PageHeader } from '../components/PageHeader';
 import { resourceGuide } from '../lib/page-guides';
@@ -45,53 +42,26 @@ const deriveCopy = (resource: ResourceConfig): { description: string; empty: Emp
   };
 };
 
-interface RowActionsProps {
-  row: ResourceRow;
-  canEdit: boolean;
-  onView: (row: ResourceRow) => void;
-  onEdit: (row: ResourceRow) => void;
-  onDelete: (id: string) => void;
-}
-
-const tintButtonSx = (tone: 'primary' | 'error') => ({
-  color: tone === 'error' ? 'error.main' : 'text.secondary',
-  bgcolor: tone === 'error' ? 'rgba(211,47,47,0.06)' : 'alpha(brandColors.forest, 0.06)',
-  '&:hover': { bgcolor: tone === 'error' ? 'rgba(211,47,47,0.12)' : 'alpha(brandColors.forest, 0.12)' },
-});
-
-/** Per-row view / edit / delete controls. Edit + delete are gated by permission. */
-const RowActions = ({ row, canEdit, onView, onEdit, onDelete }: RowActionsProps): JSX.Element => (
-  <Stack direction="row" justifyContent="flex-end" spacing={0.5} sx={{ width: '100%' }}>
-    <Tooltip title="View">
-      <IconButton size="small" aria-label="View" onClick={() => onView(row)} sx={tintButtonSx('primary')}>
-        <VisibilityOutlinedIcon fontSize="small" />
-      </IconButton>
-    </Tooltip>
-    {canEdit && (
-      <Tooltip title="Edit">
-        <IconButton size="small" aria-label="Edit" onClick={() => onEdit(row)} sx={tintButtonSx('primary')}>
-          <EditIcon fontSize="small" />
-        </IconButton>
-      </Tooltip>
-    )}
-    {canEdit && (
-      <Tooltip title="Delete">
-        <IconButton
-          size="small"
-          aria-label="Delete"
-          onClick={() => {
-            if (window.confirm('Delete this item? This cannot be undone.')) {
-              onDelete(String(row.id));
-            }
-          }}
-          sx={tintButtonSx('error')}
-        >
-          <DeleteIcon fontSize="small" />
-        </IconButton>
-      </Tooltip>
-    )}
-  </Stack>
-);
+/** Builds toolbar filters from the resource config: selects + switches. */
+const deriveFilters = (resource: ResourceConfig): DataTableFilter[] => {
+  const result: DataTableFilter[] = [];
+  for (const field of resource.fields) {
+    if (field.type === 'select' && field.options && field.options.length > 0) {
+      result.push({ field: field.name, label: field.label, options: field.options });
+    }
+    if (field.type === 'switch') {
+      result.push({
+        field: field.name,
+        label: field.label,
+        options: [
+          { value: 'true', label: 'Yes' },
+          { value: 'false', label: 'No' },
+        ],
+      });
+    }
+  }
+  return result;
+};
 
 const ResourcePage = (): JSX.Element => {
   const { user } = useAuth();
@@ -104,6 +74,9 @@ const ResourcePage = (): JSX.Element => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<ResourceRow | null>(null);
   const [viewing, setViewing] = useState<ResourceRow | null>(null);
+  const [view, setView] = useViewMode(`resource-${key}`);
+
+  const filters = useMemo<DataTableFilter[]>(() => (resource ? deriveFilters(resource) : []), [resource]);
 
   const openCreate = (): void => {
     setEditing(null);
@@ -128,7 +101,7 @@ const ResourcePage = (): JSX.Element => {
       align: 'right',
       headerAlign: 'right',
       renderCell: (params) => (
-        <RowActions
+        <ResourceRowActions
           row={params.row as ResourceRow}
           canEdit={canEdit}
           onView={(row) => setViewing(row)}
@@ -144,6 +117,8 @@ const ResourcePage = (): JSX.Element => {
     return <Navigate to="/" replace />;
   }
 
+  // Captured with a narrowed type so the renderCard closure below type-checks.
+  const config = resource;
   const items = list.data?.items ?? [];
   const { description, empty } = deriveCopy(resource);
 
@@ -173,6 +148,19 @@ const ResourcePage = (): JSX.Element => {
         rows={items}
         columns={columns}
         loading={list.isLoading}
+        filters={filters}
+        view={view}
+        toolbarEnd={<ViewToggle value={view} onChange={setView} />}
+        renderCard={(row) => (
+          <ResourceCard
+            resource={config}
+            row={row as ResourceRow}
+            canEdit={canEdit}
+            onView={(cardRow) => setViewing(cardRow)}
+            onEdit={openEdit}
+            onDelete={(id) => remove.mutate(id)}
+          />
+        )}
         empty={
           <EmptyState
             icon={empty.icon}

@@ -5,26 +5,33 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import GroupsIcon from '@mui/icons-material/Groups';
 import MailOutlineIcon from '@mui/icons-material/MailOutlineOutlined';
+import PersonAddRoundedIcon from '@mui/icons-material/PersonAddRounded';
 import Alert from '@mui/material/Alert';
+import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import Card from '@mui/material/Card';
 import Chip from '@mui/material/Chip';
 import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
+import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
 import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
+import { alpha, useTheme } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
 import type { GridColDef } from '@mui/x-data-grid';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { InviteUserDialog } from '../components/auth/InviteUserDialog';
 import { UserPermissionsDialog } from '../components/auth/UserPermissionsDialog';
-import { DataTable } from '../components/data/DataTable';
+import { DataTable, type DataTableFilter } from '../components/data/DataTable';
+import { useViewMode } from '../components/data/useViewMode';
+import { ViewToggle } from '../components/data/ViewToggle';
+import { DialogFooter, DialogHeader, dialogPaperSx, dialogSectionSx } from '../components/dialogs/DialogShell';
 import { EmptyState } from '../components/EmptyState';
 import { PageHeader } from '../components/PageHeader';
 import { useDeleteUser, useSaveUser, useUsers } from '../lib/admin-hooks';
@@ -55,10 +62,16 @@ const CreateUserDialog = ({ open, onClose }: { open: boolean; onClose: () => voi
   );
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Create user</DialogTitle>
-      <DialogContent dividers>
-        <Stack component="form" id="user-form" spacing={2} onSubmit={onSubmit} sx={{ pt: 1 }}>
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth slotProps={{ paper: { sx: dialogPaperSx } }}>
+      <DialogHeader
+        icon={<PersonAddRoundedIcon />}
+        eyebrow="Team"
+        title="Create user"
+        description="Add a teammate directly with a temporary password."
+        onClose={onClose}
+      />
+      <DialogContent sx={{ bgcolor: 'background.default', py: 3 }}>
+        <Stack component="form" id="user-form" spacing={2} onSubmit={onSubmit} sx={dialogSectionSx}>
           <TextField label="Name" error={Boolean(errors.name)} helperText={errors.name?.message} {...register('name')} />
           <TextField
             label="Email"
@@ -93,12 +106,18 @@ const CreateUserDialog = ({ open, onClose }: { open: boolean; onClose: () => voi
           )}
         </Stack>
       </DialogContent>
-      <DialogActions>
+      <DialogFooter>
         <Button onClick={onClose}>Cancel</Button>
-        <Button type="submit" form="user-form" variant="contained" disabled={save.isPending}>
-          Create
+        <Button
+          type="submit"
+          form="user-form"
+          variant="contained"
+          startIcon={<PersonAddRoundedIcon />}
+          disabled={save.isPending}
+        >
+          {save.isPending ? 'Creating…' : 'Create'}
         </Button>
-      </DialogActions>
+      </DialogFooter>
     </Dialog>
   );
 };
@@ -109,12 +128,117 @@ const permissionSummary = (user: PublicUser): string => {
   return `${count} permission${count === 1 ? '' : 's'}`;
 };
 
+const filters: DataTableFilter[] = [
+  { field: 'role', label: 'Role', options: USER_ROLES.map((role) => ({ value: role, label: role })) },
+  {
+    field: 'isActive',
+    label: 'Status',
+    options: [
+      { value: 'true', label: 'Active' },
+      { value: 'false', label: 'Inactive' },
+    ],
+  },
+];
+
+interface UserCardProps {
+  user: PublicUser;
+  onManage: (user: PublicUser) => void;
+  onDelete: (id: string) => void;
+}
+
+const UserCard = ({ user, onManage, onDelete }: UserCardProps): JSX.Element => {
+  const theme = useTheme();
+  return (
+    <Card
+      variant="outlined"
+      sx={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        borderRadius: 2.5,
+        transition: theme.transitions.create(['box-shadow', 'border-color'], {
+          duration: theme.transitions.duration.shorter,
+        }),
+        '&:hover': { borderColor: 'primary.light', boxShadow: theme.shadows[3] },
+      }}
+    >
+      <Box sx={{ p: 2, flexGrow: 1, minWidth: 0 }}>
+        <Stack direction="row" spacing={1.5} alignItems="center">
+          <Avatar
+            sx={{
+              width: 44,
+              height: 44,
+              flexShrink: 0,
+              fontWeight: 700,
+              color: 'text.primary',
+              bgcolor: alpha(theme.palette.primary.main, 0.12),
+            }}
+          >
+            {user.name.charAt(0).toUpperCase()}
+          </Avatar>
+          <Box sx={{ minWidth: 0, flexGrow: 1 }}>
+            <Typography variant="subtitle1" noWrap title={user.name} sx={{ fontWeight: 700, lineHeight: 1.3 }}>
+              {user.name}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" noWrap title={user.email}>
+              {user.email}
+            </Typography>
+            <Stack direction="row" sx={{ mt: 0.75, flexWrap: 'wrap', gap: 0.5 }}>
+              <Chip size="small" label={user.role} sx={{ height: 22, textTransform: 'capitalize' }} />
+              <Chip
+                size="small"
+                variant="outlined"
+                label={user.isActive ? 'Active' : 'Inactive'}
+                color={user.isActive ? 'success' : 'default'}
+                sx={{ height: 22 }}
+              />
+            </Stack>
+          </Box>
+        </Stack>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
+          <Box component="span" sx={{ fontWeight: 600, color: 'text.primary' }}>
+            Permissions:{' '}
+          </Box>
+          {permissionSummary(user)}
+        </Typography>
+      </Box>
+      <Divider />
+      <Stack direction="row" justifyContent="flex-end" spacing={0.5} sx={{ px: 1.5, py: 0.75 }}>
+        <Tooltip title="Manage permissions">
+          <IconButton size="small" aria-label="Manage permissions" onClick={() => onManage(user)}>
+            <EditIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Delete user">
+          <IconButton
+            size="small"
+            aria-label="Delete user"
+            onClick={() => {
+              if (window.confirm('Delete this user?')) {
+                onDelete(user.id);
+              }
+            }}
+            sx={{
+              color: 'error.main',
+              bgcolor: 'rgba(211,47,47,0.06)',
+              '&:hover': { bgcolor: 'rgba(211,47,47,0.12)' },
+            }}
+          >
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      </Stack>
+    </Card>
+  );
+};
+
 const Users = (): JSX.Element => {
   const { data: users, isLoading } = useUsers();
   const remove = useDeleteUser();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<PublicUser | null>(null);
+  const [view, setView] = useViewMode('users');
 
   const columns: GridColDef[] = [
     { field: 'name', headerName: 'Name', flex: 1, minWidth: 160 },
@@ -225,7 +349,16 @@ const Users = (): JSX.Element => {
         rows={users ?? []}
         columns={columns}
         loading={isLoading}
-        height={560}
+        filters={filters}
+        view={view}
+        toolbarEnd={<ViewToggle value={view} onChange={setView} />}
+        renderCard={(row) => (
+          <UserCard
+            user={row as PublicUser}
+            onManage={setSelectedUser}
+            onDelete={(id) => remove.mutate(id)}
+          />
+        )}
         empty={
           <EmptyState
             icon={<GroupsIcon />}
