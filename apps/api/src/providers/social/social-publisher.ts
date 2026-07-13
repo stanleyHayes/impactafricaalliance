@@ -1,12 +1,12 @@
 import { inject, injectable } from 'tsyringe';
 
 import type { AppConfig } from '../../config/env.js';
-import type { AppLogger } from '../../config/logger.js';
 import { TOKENS } from '../../tokens.js';
 
 import { LinkedInGateway } from './linkedin.gateway.js';
 import { MetaGateway } from './meta.gateway.js';
 import type { ArticleForSocial, SocialGateway } from './types.js';
+import { XGateway } from './x.gateway.js';
 
 @injectable()
 export class SocialPublisher {
@@ -15,30 +15,33 @@ export class SocialPublisher {
   constructor(
     @inject(LinkedInGateway) linkedIn: LinkedInGateway,
     @inject(MetaGateway) meta: MetaGateway,
+    @inject(XGateway) x: XGateway,
     @inject(TOKENS.Config) private readonly config: AppConfig,
-    @inject(TOKENS.Logger) private readonly logger: AppLogger,
   ) {
-    this.gateways = [linkedIn, meta];
+    this.gateways = [linkedIn, meta, x];
   }
 
   async publish(article: ArticleForSocial): Promise<
     Array<{
-      platform: 'linkedin' | 'facebook' | 'instagram';
+      platform: 'linkedin' | 'facebook' | 'instagram' | 'x';
       postId?: string;
       postUrl?: string;
       postedAt: Date;
       error?: string;
     }>
   > {
-    const enabled = this.gateways.filter((gateway) => gateway.isEnabled());
+    const enabledResults = await Promise.all(
+      this.gateways.map(async (gateway) => ({ gateway, enabled: await gateway.isEnabled() })),
+    );
+    const enabled = enabledResults.filter((item) => item.enabled).map((item) => item.gateway);
+
     if (enabled.length === 0) {
-      this.logger.info('Social publishing skipped: no enabled gateways');
       return [];
     }
 
     const socialArticle = this.toSocialArticle(article);
     const records: Array<{
-      platform: 'linkedin' | 'facebook' | 'instagram';
+      platform: 'linkedin' | 'facebook' | 'instagram' | 'x';
       postId?: string;
       postUrl?: string;
       postedAt: Date;
@@ -53,9 +56,8 @@ export class SocialPublisher {
           records.push({ ...item, postedAt: new Date() });
         }
       } catch (err: unknown) {
-        this.logger.error({ err, gateway: gateway.name }, 'Social gateway failed');
         records.push({
-          platform: gateway.name === 'linkedin' ? 'linkedin' : 'facebook',
+          platform: gateway.name === 'meta' ? 'facebook' : (gateway.name as 'linkedin' | 'x'),
           postedAt: new Date(),
           error: err instanceof Error ? err.message : 'Unknown error',
         });

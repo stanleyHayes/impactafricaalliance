@@ -21,6 +21,7 @@ import PrivacyRequests from '../pages/PrivacyRequests';
 import ResetPassword from '../pages/ResetPassword';
 import ResourcePage from '../pages/ResourcePage';
 import SiteSettings from '../pages/SiteSettings';
+import SocialConnections from '../pages/SocialConnections';
 import Submissions from '../pages/Submissions';
 import Subscribers from '../pages/Subscribers';
 import Users from '../pages/Users';
@@ -45,6 +46,14 @@ export const App = (): JSX.Element => (
       <Route path="donations" element={<Donations />} />
       <Route path="privacy-requests" element={<PrivacyRequests />} />
       <Route path="site-settings" element={<SiteSettings />} />
+      <Route
+        path="social-connections"
+        element={
+          <RequireRole roles={['admin']}>
+            <SocialConnections />
+          </RequireRole>
+        }
+      />
       <Route path="events" element={<Events />} />
       <Route
         path="users"

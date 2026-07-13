@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { inject, injectable } from 'tsyringe';
 
-import type { AppConfig } from '../../config/env.js';
 import type { AppLogger } from '../../config/logger.js';
+import { SocialOAuthService } from '../../modules/social/social-oauth.service.js';
 import { TOKENS } from '../../tokens.js';
 
 import type { SocialArticle, SocialGateway, SocialPostResult } from './types.js';
@@ -14,32 +14,32 @@ export class MetaGateway implements SocialGateway {
   private readonly graphVersion = 'v20.0';
 
   constructor(
-    @inject(TOKENS.Config) private readonly config: AppConfig,
+    @inject(SocialOAuthService) private readonly oauth: SocialOAuthService,
     @inject(TOKENS.Logger) private readonly logger: AppLogger,
   ) {}
 
-  isEnabled(): boolean {
-    return Boolean(this.config.social.metaPageAccessToken && this.config.social.metaPageId);
+  async isEnabled(): Promise<boolean> {
+    return (await this.oauth.getValidAccessToken('meta')) !== null;
   }
 
   async publish(article: SocialArticle): Promise<SocialPostResult[]> {
     const results: SocialPostResult[] = [];
-    const pageToken = this.config.social.metaPageAccessToken;
-    const pageId = this.config.social.metaPageId;
-    const instagramAccountId = this.config.social.metaInstagramBusinessAccountId;
-
-    if (!pageToken || !pageId) {
-      return [{ platform: 'facebook', error: 'Meta page credentials not configured' }];
+    const credentials = await this.oauth.getValidAccessToken('meta');
+    if (!credentials) {
+      return [{ platform: 'facebook', error: 'Meta account not connected' }];
     }
+
+    const { accessToken, account } = credentials;
+    const instagramAccountId = account.metadata?.instagramBusinessAccountId as string | undefined;
 
     // Facebook page feed post
     try {
       const fbResponse = await axios.post(
-        `https://graph.facebook.com/${this.graphVersion}/${pageId}/feed`,
+        `https://graph.facebook.com/${this.graphVersion}/${account.accountId}/feed`,
         {
           message: `${article.title}\n\n${article.excerpt}`,
           link: article.url,
-          access_token: pageToken,
+          access_token: accessToken,
         },
       );
       results.push({
@@ -60,7 +60,7 @@ export class MetaGateway implements SocialGateway {
           {
             image_url: article.coverImageUrl,
             caption: `${article.title}\n\n${article.excerpt}\n\n${article.url}`,
-            access_token: pageToken,
+            access_token: accessToken,
           },
         );
 
@@ -70,7 +70,7 @@ export class MetaGateway implements SocialGateway {
             `https://graph.facebook.com/${this.graphVersion}/${instagramAccountId}/media_publish`,
             {
               creation_id: creationId,
-              access_token: pageToken,
+              access_token: accessToken,
             },
           );
           results.push({ platform: 'instagram', postId: creationId });

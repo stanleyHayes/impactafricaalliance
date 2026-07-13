@@ -17,6 +17,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import PrivacyTipIcon from '@mui/icons-material/PrivacyTip';
 import PublicIcon from '@mui/icons-material/Public';
 import SettingsIcon from '@mui/icons-material/Settings';
+import ShareIcon from '@mui/icons-material/Share';
 import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
 import WorkOutlineIcon from '@mui/icons-material/WorkOutlineOutlined';
 
@@ -59,6 +60,13 @@ export const buildNavGroups = (user: PublicUser | null): NavGroup[] => {
     operations.push({ to: '/users', label: 'Users', icon: <GroupsIcon /> });
   }
 
+  const siteItems: NavItem[] = [
+    { to: '/site-settings', label: 'Site settings', icon: <PublicIcon /> },
+  ];
+  if (user?.role === UserRole.Admin) {
+    siteItems.push({ to: '/social-connections', label: 'Social connections', icon: <ShareIcon /> });
+  }
+
   return [
     {
       title: 'Overview',
@@ -78,7 +86,7 @@ export const buildNavGroups = (user: PublicUser | null): NavGroup[] => {
     },
     {
       title: 'Site',
-      items: [{ to: '/site-settings', label: 'Site settings', icon: <PublicIcon /> }],
+      items: siteItems,
     },
     {
       title: 'Account',

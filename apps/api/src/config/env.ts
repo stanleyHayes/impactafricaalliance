@@ -92,11 +92,15 @@ const envSchema = z.object({
   UNSUBSCRIBED_RETENTION_DAYS: z.coerce.number().int().min(0).default(90),
   FAILED_DONATION_RETENTION_DAYS: z.coerce.number().int().min(0).default(30),
 
-  LINKEDIN_ACCESS_TOKEN: z.string().optional(),
-  LINKEDIN_ORGANIZATION_URN: z.string().optional(),
-  META_PAGE_ACCESS_TOKEN: z.string().optional(),
-  META_PAGE_ID: z.string().optional(),
-  META_INSTAGRAM_BUSINESS_ACCOUNT_ID: z.string().optional(),
+  // Social OAuth client credentials and token encryption for connected accounts.
+  SOCIAL_TOKEN_ENCRYPTION_KEY: z.string().optional(),
+  SOCIAL_OAUTH_REDIRECT_BASE: z.string().url().optional(),
+  LINKEDIN_CLIENT_ID: z.string().optional(),
+  LINKEDIN_CLIENT_SECRET: z.string().optional(),
+  META_APP_ID: z.string().optional(),
+  META_APP_SECRET: z.string().optional(),
+  X_CLIENT_ID: z.string().optional(),
+  X_CLIENT_SECRET: z.string().optional(),
 });
 
 export type RawEnv = z.infer<typeof envSchema>;
@@ -139,13 +143,47 @@ export interface AppConfig {
     failedDonationDays: number;
   };
   readonly social: {
-    linkedinAccessToken?: string;
-    linkedinOrganizationUrn?: string;
-    metaPageAccessToken?: string;
-    metaPageId?: string;
-    metaInstagramBusinessAccountId?: string;
+    tokenEncryptionKey: Buffer;
+    oauthRedirectBase?: string;
+    linkedin: { clientId?: string; clientSecret?: string };
+    meta: { appId?: string; appSecret?: string };
+    x: { clientId?: string; clientSecret?: string };
   };
 }
+
+const deriveSocialConfig = (raw: RawEnv): AppConfig['social'] => {
+  let tokenEncryptionKey: Buffer;
+  if (raw.SOCIAL_TOKEN_ENCRYPTION_KEY) {
+    tokenEncryptionKey = Buffer.from(raw.SOCIAL_TOKEN_ENCRYPTION_KEY, 'base64');
+    if (tokenEncryptionKey.length !== 32) {
+      throw new Error('SOCIAL_TOKEN_ENCRYPTION_KEY must be a base64-encoded 32-byte key');
+    }
+  } else if (raw.MFA_ENCRYPTION_KEY) {
+    tokenEncryptionKey = Buffer.from(raw.MFA_ENCRYPTION_KEY, 'base64');
+  } else if (raw.NODE_ENV === 'production') {
+    throw new Error('SOCIAL_TOKEN_ENCRYPTION_KEY (or MFA_ENCRYPTION_KEY fallback) is required in production');
+  } else {
+    // Deterministic fallback for local/test only. Not secure for production use.
+    tokenEncryptionKey = Buffer.alloc(32, 0xab);
+  }
+
+  return {
+    tokenEncryptionKey,
+    oauthRedirectBase: raw.SOCIAL_OAUTH_REDIRECT_BASE,
+    linkedin: {
+      clientId: raw.LINKEDIN_CLIENT_ID,
+      clientSecret: raw.LINKEDIN_CLIENT_SECRET,
+    },
+    meta: {
+      appId: raw.META_APP_ID,
+      appSecret: raw.META_APP_SECRET,
+    },
+    x: {
+      clientId: raw.X_CLIENT_ID,
+      clientSecret: raw.X_CLIENT_SECRET,
+    },
+  };
+};
 
 const deriveMfaConfig = (raw: RawEnv): AppConfig['mfa'] => {
   const requiredForRoles = csv(raw.MFA_REQUIRED_FOR_ROLES);
@@ -196,13 +234,7 @@ const buildConfig = (raw: RawEnv): AppConfig => ({
     unsubscribedDays: raw.UNSUBSCRIBED_RETENTION_DAYS,
     failedDonationDays: raw.FAILED_DONATION_RETENTION_DAYS,
   },
-  social: {
-    linkedinAccessToken: raw.LINKEDIN_ACCESS_TOKEN,
-    linkedinOrganizationUrn: raw.LINKEDIN_ORGANIZATION_URN,
-    metaPageAccessToken: raw.META_PAGE_ACCESS_TOKEN,
-    metaPageId: raw.META_PAGE_ID,
-    metaInstagramBusinessAccountId: raw.META_INSTAGRAM_BUSINESS_ACCOUNT_ID,
-  },
+  social: deriveSocialConfig(raw),
 });
 
 /** Parse `process.env` into a typed config, throwing a readable error on failure. */

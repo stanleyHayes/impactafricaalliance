@@ -4,7 +4,7 @@ import { Schema, model } from 'mongoose';
 import { baseSchemaOptions, mediaSubSchema } from '../../../common/model-helpers.js';
 
 export interface SocialPostRecord {
-  platform: 'linkedin' | 'facebook' | 'instagram';
+  platform: 'linkedin' | 'facebook' | 'instagram' | 'x';
   postId?: string;
   postUrl?: string;
   postedAt: Date;

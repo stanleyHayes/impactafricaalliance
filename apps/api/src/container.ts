@@ -9,6 +9,7 @@ import { CloudinaryMediaProvider } from './providers/media.provider.js';
 import { LinkedInGateway } from './providers/social/linkedin.gateway.js';
 import { MetaGateway } from './providers/social/meta.gateway.js';
 import { SocialPublisher } from './providers/social/social-publisher.js';
+import { XGateway } from './providers/social/x.gateway.js';
 import { TOKENS } from './tokens.js';
 
 /**
@@ -25,6 +26,7 @@ export const buildContainer = (config: AppConfig, logger: AppLogger): Dependency
   container.register(TOKENS.MediaProvider, { useClass: CloudinaryMediaProvider });
   container.register(LinkedInGateway, { useClass: LinkedInGateway });
   container.register(MetaGateway, { useClass: MetaGateway });
+  container.register(XGateway, { useClass: XGateway });
   container.register(SocialPublisher, { useClass: SocialPublisher });
 
   return container;

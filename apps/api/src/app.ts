@@ -14,11 +14,13 @@ import { sanitizeBody } from './middleware/sanitize.js';
 import { createAiRouter } from './modules/ai/ai.routes.js';
 import { createAuthRouter } from './modules/auth/auth.routes.js';
 import { buildContentModules } from './modules/content/content.registry.js';
+import { createDashboardRouter } from './modules/dashboard/dashboard.routes.js';
 import { createHealthRouter } from './modules/health/health.routes.js';
 import { createMediaRouter } from './modules/media/media.routes.js';
 import { createPaymentRouters } from './modules/payments/payment.routes.js';
 import { createPrivacyRequestRouters } from './modules/privacy/privacy-request.routes.js';
 import { createSiteSettingRouters } from './modules/site-settings/site-setting.routes.js';
+import { createSocialRouters } from './modules/social/social.routes.js';
 import { createSubmissionRouters } from './modules/submissions/submission.routes.js';
 import { createInvitationRouter } from './modules/users/invitation.routes.js';
 import { createUserRouter } from './modules/users/user.routes.js';
@@ -61,6 +63,7 @@ export const createApp = (
   app.use('/api/admin/submissions', submissions.adminRouter);
 
   app.use('/api/admin/users', createUserRouter(container));
+  app.use('/api/admin/dashboard', createDashboardRouter(container));
   app.use('/api/admin/invitations', createInvitationRouter(container));
   app.use('/api/admin/media', createMediaRouter(container));
   app.use('/api/admin/ai', createAiRouter(container, config));
@@ -75,6 +78,10 @@ export const createApp = (
   const siteSettings = createSiteSettingRouters(container);
   app.use('/api/site-settings', siteSettings.publicRouter);
   app.use('/api/admin/site-settings', siteSettings.adminRouter);
+
+  const social = createSocialRouters(container);
+  app.use('/api/social', social.publicRouter);
+  app.use('/api/admin/social', social.adminRouter);
 
   app.use(notFoundHandler);
   app.use(errorMiddleware(logger));

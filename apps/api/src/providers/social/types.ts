@@ -9,7 +9,7 @@ export interface SocialArticle {
 }
 
 export interface SocialPostResult {
-  platform: 'linkedin' | 'facebook' | 'instagram';
+  platform: 'linkedin' | 'facebook' | 'instagram' | 'x';
   postId?: string;
   postUrl?: string;
   error?: string;
@@ -17,7 +17,7 @@ export interface SocialPostResult {
 
 export interface SocialGateway {
   readonly name: string;
-  isEnabled(): boolean;
+  isEnabled(): Promise<boolean>;
   publish(article: SocialArticle): Promise<SocialPostResult | SocialPostResult[]>;
 }
 

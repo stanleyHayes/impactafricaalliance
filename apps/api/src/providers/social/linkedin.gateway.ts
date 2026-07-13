@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { inject, injectable } from 'tsyringe';
 
-import type { AppConfig } from '../../config/env.js';
 import type { AppLogger } from '../../config/logger.js';
+import { SocialOAuthService } from '../../modules/social/social-oauth.service.js';
 import { TOKENS } from '../../tokens.js';
 
 import type { SocialArticle, SocialGateway, SocialPostResult } from './types.js';
@@ -12,27 +12,27 @@ export class LinkedInGateway implements SocialGateway {
   readonly name = 'linkedin';
 
   constructor(
-    @inject(TOKENS.Config) private readonly config: AppConfig,
+    @inject(SocialOAuthService) private readonly oauth: SocialOAuthService,
     @inject(TOKENS.Logger) private readonly logger: AppLogger,
   ) {}
 
-  isEnabled(): boolean {
-    return Boolean(this.config.social.linkedinAccessToken && this.config.social.linkedinOrganizationUrn);
+  async isEnabled(): Promise<boolean> {
+    return (await this.oauth.getValidAccessToken('linkedin')) !== null;
   }
 
   async publish(article: SocialArticle): Promise<SocialPostResult> {
-    const token = this.config.social.linkedinAccessToken;
-    const author = this.config.social.linkedinOrganizationUrn;
-
-    if (!token || !author) {
-      return { platform: 'linkedin', error: 'LinkedIn credentials not configured' };
+    const credentials = await this.oauth.getValidAccessToken('linkedin');
+    if (!credentials) {
+      return { platform: 'linkedin', error: 'LinkedIn account not connected' };
     }
+
+    const { accessToken, account } = credentials;
 
     try {
       const response = await axios.post(
         'https://api.linkedin.com/v2/ugcPosts',
         {
-          author,
+          author: account.accountId,
           lifecycleState: 'PUBLISHED',
           visibility: {
             'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC',
@@ -59,7 +59,7 @@ export class LinkedInGateway implements SocialGateway {
         },
         {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${accessToken}`,
             'X-Restli-Protocol-Version': '2.0.0',
             'Content-Type': 'application/json',
           },
