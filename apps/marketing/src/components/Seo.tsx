@@ -38,19 +38,27 @@ const removeRobots = (): void => {
   }
 };
 
-const ORG_IMAGE = `${ORG.website}/brand/og-image.png`;
+/**
+ * Origin used for canonical URLs and the default OG image.
+ * Uses the serving origin so previews work on Vercel deployments and the
+ * production domain alike, falling back to the org website when unavailable.
+ */
+const servingOrigin = (): string =>
+  typeof window === 'undefined' ? ORG.website : window.location.origin;
 
 /** Per-route SEO: title, description, canonical, Open Graph and Twitter Cards. */
 export const Seo = ({
   title,
   description = ORG.description,
-  image = ORG_IMAGE,
+  image,
   imageAlt = `${ORG.name} — ${ORG.tagline}`,
   type = 'website',
   noindex = false,
 }: SeoProps): null => {
   const { pathname } = useLocation();
-  const canonicalUrl = `${ORG.website}${pathname === '/' ? '' : pathname}`;
+  const origin = servingOrigin();
+  const canonicalUrl = `${origin}${pathname === '/' ? '' : pathname}`;
+  const resolvedImage = image ?? `${origin}/brand/og-image.png`;
   const fullTitle = `${title} | ${ORG.name}`;
 
   useEffect(() => {
@@ -65,7 +73,7 @@ export const Seo = ({
     upsertMeta('og:description', 'property', description);
     upsertMeta('og:type', 'property', type);
     upsertMeta('og:url', 'property', canonicalUrl);
-    upsertMeta('og:image', 'property', image);
+    upsertMeta('og:image', 'property', resolvedImage);
     upsertMeta('og:image:alt', 'property', imageAlt);
     upsertMeta('og:locale', 'property', 'en_GH');
 
@@ -73,7 +81,7 @@ export const Seo = ({
     upsertMeta('twitter:card', 'name', 'summary_large_image');
     upsertMeta('twitter:title', 'name', fullTitle);
     upsertMeta('twitter:description', 'name', description);
-    upsertMeta('twitter:image', 'name', image);
+    upsertMeta('twitter:image', 'name', resolvedImage);
     upsertMeta('twitter:image:alt', 'name', imageAlt);
 
     if (noindex) {
@@ -86,7 +94,7 @@ export const Seo = ({
       // Keep the tags in place; they will be overwritten by the next route.
       // This avoids empty-head flashes during SPA navigation.
     };
-  }, [canonicalUrl, description, fullTitle, image, imageAlt, noindex, title, type]);
+  }, [canonicalUrl, description, fullTitle, imageAlt, noindex, resolvedImage, title, type]);
 
   return null;
 };
