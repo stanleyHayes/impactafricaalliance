@@ -4,6 +4,7 @@ import type {
   AiAssistResponse,
   ChangePasswordInput,
   CreateUserInput,
+  DashboardSummary,
   DisableMfaInput,
   Donation,
   Event,
@@ -16,6 +17,7 @@ import type {
   MfaStatusResponse,
   MfaVerifySetupResponse,
   Paginated,
+  PaymentSettingsStatus,
   PrivacyRequest,
   PublicUser,
   ResetPasswordInput,
@@ -25,6 +27,7 @@ import type {
   Submission,
   SubmissionStatus,
   Subscriber,
+  UpdatePaymentSettingsInput,
   UpdatePrivacyRequestInput,
   UpdateProfileInput,
   UpdateUserInput,
@@ -44,7 +47,7 @@ import { api } from './api-client';
 export const useEvents = (): UseQueryResult<Paginated<Event>> =>
   useQuery({
     queryKey: ['events'],
-    queryFn: () => api.get<Paginated<Event>>('/admin/events?pageSize=200'),
+    queryFn: () => api.get<Paginated<Event>>('/admin/events?pageSize=100'),
   });
 
 export const useSaveEvent = (): UseMutationResult<
@@ -111,6 +114,27 @@ export const useDonations = (): UseQueryResult<Paginated<Donation>> =>
     queryKey: ['donations'],
     queryFn: () => api.get<Paginated<Donation>>('/admin/donations?pageSize=100'),
   });
+
+/** Server-aggregated overview feeding the dashboard KPIs and charts. */
+export const useDashboardSummary = (): UseQueryResult<DashboardSummary> =>
+  useQuery({
+    queryKey: ['dashboard-summary'],
+    queryFn: () => api.get<DashboardSummary>('/admin/dashboard'),
+    refetchInterval: 60_000,
+  });
+
+/** Toggle a payment provider on/off (admin only; provider must be configured). */
+export const useUpdatePaymentSettings = (): UseMutationResult<
+  PaymentSettingsStatus,
+  Error,
+  UpdatePaymentSettingsInput
+> => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body) => api.patch<PaymentSettingsStatus>('/admin/donations/settings', body),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] }),
+  });
+};
 
 /** Update the signed-in user's own profile (name / email). */
 export const useUpdateProfile = (): UseMutationResult<PublicUser, Error, UpdateProfileInput> =>
@@ -249,5 +273,29 @@ export const useDisableMfa = (): UseMutationResult<MfaStatusResponse, Error, Dis
   return useMutation({
     mutationFn: (body) => api.post<MfaStatusResponse>('/auth/mfa/disable', body),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['mfa-status'] }),
+  });
+};
+
+export interface SocialAccount {
+  platform: 'linkedin' | 'meta' | 'x';
+  accountId: string;
+  accountName?: string;
+  accountHandle?: string;
+  tokenExpiry?: string;
+  connectedBy?: string;
+  createdAt: string;
+}
+
+export const useSocialAccounts = (): UseQueryResult<SocialAccount[]> =>
+  useQuery({
+    queryKey: ['social-accounts'],
+    queryFn: () => api.get<SocialAccount[]>('/admin/social/accounts'),
+  });
+
+export const useDisconnectSocial = (): UseMutationResult<void, Error, string> => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (platform) => api.delete<void>(`/admin/social/${platform}/disconnect`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['social-accounts'] }),
   });
 };

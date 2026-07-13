@@ -98,13 +98,13 @@ export const ThemeToggle = (): JSX.Element => {
               top: reveal.y,
               width: reveal.size,
               height: reveal.size,
-              ml: -reveal.size / 2,
-              mt: -reveal.size / 2,
               borderRadius: '50%',
               bgcolor: reveal.color,
               zIndex: 9999,
               pointerEvents: 'none',
-              transform: reveal.active ? 'scale(1)' : 'scale(0)',
+              transform: reveal.active
+                ? 'translate(-50%, -50%) scale(1)'
+                : 'translate(-50%, -50%) scale(0)',
               transition: 'transform 700ms cubic-bezier(0.22, 1, 0.36, 1)',
             }}
           />
