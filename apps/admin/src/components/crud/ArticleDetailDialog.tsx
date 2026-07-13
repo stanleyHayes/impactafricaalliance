@@ -10,18 +10,19 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import Divider from '@mui/material/Divider';
 import Grid from '@mui/material/Grid';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
+import { alpha, useTheme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
 import { formatUtcDate } from '../../lib/date';
 import type { ResourceRow } from '../../resources/types';
+import { DialogFooter, dialogPaperSx } from '../dialogs/DialogShell';
 import { Markdown } from '../markdown/Markdown';
 
 interface ArticleDetailDialogProps {
@@ -147,35 +148,38 @@ const ArticleHero = ({
 }: {
   article: ArticleDetail;
   onClose: () => void;
-}): JSX.Element => (
-  <DialogTitle component="div" sx={{ position: 'relative', minHeight: { xs: 330, md: 390 }, p: 0 }}>
-    {article.cover ? (
-      <Box
-        component="img"
-        src={article.cover.url}
-        alt=""
-        sx={{
-          position: 'absolute',
-          inset: 0,
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-        }}
-      />
-    ) : (
-      <Box
-        sx={{
-          position: 'absolute',
-          inset: 0,
-          display: 'grid',
-          placeItems: 'center',
-          background:
-            'radial-gradient(circle at 75% 20%, alpha(brandColors.gold, 0.3), transparent 24%), linear-gradient(145deg, brandColors.forest, brandColors.forest)',
-        }}
-      >
-        <NewspaperRoundedIcon sx={{ color: 'rgba(255,255,255,0.16)', fontSize: 112 }} />
-      </Box>
-    )}
+}): JSX.Element => {
+  const theme = useTheme();
+  const gold = theme.palette.secondary.main;
+
+  return (
+    <DialogTitle component="div" sx={{ position: 'relative', minHeight: { xs: 330, md: 390 }, p: 0 }}>
+      {article.cover ? (
+        <Box
+          component="img"
+          src={article.cover.url}
+          alt=""
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+          }}
+        />
+      ) : (
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            display: 'grid',
+            placeItems: 'center',
+            background: `radial-gradient(circle at 75% 20%, ${alpha(gold, 0.35)}, transparent 45%), linear-gradient(145deg, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
+          }}
+        >
+          <NewspaperRoundedIcon sx={{ color: 'rgba(255,255,255,0.16)', fontSize: 112 }} />
+        </Box>
+      )}
     <Box
       sx={{
         position: 'absolute',
@@ -261,7 +265,8 @@ const ArticleHero = ({
       )}
     </Box>
   </DialogTitle>
-);
+  );
+};
 
 const ArticleBodyPreview = ({ body }: { body: string }): JSX.Element => (
   <Box sx={{ maxWidth: 780, mx: 'auto', p: { xs: 3, sm: 4, md: 6 } }}>
@@ -343,10 +348,10 @@ const ArticleMetadata = ({ article }: { article: ArticleDetail }): JSX.Element =
             overflow: 'hidden',
             px: 1.25,
             py: 1,
-            border: 1,
+            border: '1px solid',
             borderColor: 'divider',
             borderRadius: 1.5,
-            bgcolor: 'common.white',
+            bgcolor: 'background.paper',
             color: 'text.secondary',
             fontSize: '0.78rem',
             textOverflow: 'ellipsis',
@@ -372,7 +377,7 @@ const ArticleMetadata = ({ article }: { article: ArticleDetail }): JSX.Element =
             size="small"
             variant="outlined"
             label={formatTag(tag)}
-            sx={{ bgcolor: 'common.white' }}
+            sx={{ bgcolor: 'background.paper' }}
           />
         ))}
       </Stack>
@@ -415,12 +420,13 @@ export const ArticleDetailDialog = ({
       slotProps={{
         paper: {
           sx: {
+            ...dialogPaperSx,
             width: { xs: 'calc(100% - 16px)', sm: 'calc(100% - 48px)' },
             height: { xs: 'calc(100% - 16px)', sm: 'min(92vh, 940px)' },
             maxHeight: 'none',
             m: { xs: 1, sm: 3 },
             overflow: 'hidden',
-            borderRadius: { xs: 2, sm: 4 },
+            borderRadius: { xs: 2, sm: 3.5 },
           },
         },
       }}
@@ -438,7 +444,7 @@ export const ArticleDetailDialog = ({
               borderTop: { xs: 1, md: 0 },
               borderLeft: { md: 1 },
               borderColor: 'divider',
-              bgcolor: '#F7F9F7',
+              bgcolor: 'background.default',
             }}
           >
             <ArticleMetadata article={article} />
@@ -446,14 +452,14 @@ export const ArticleDetailDialog = ({
         </Grid>
       </DialogContent>
 
-      <DialogActions sx={{ borderTop: 1, borderColor: 'divider' }}>
+      <DialogFooter>
         <Button onClick={onClose}>Close</Button>
         {canEdit && onEdit && (
           <Button variant="contained" startIcon={<EditRoundedIcon />} onClick={onEdit}>
             Edit article
           </Button>
         )}
-      </DialogActions>
+      </DialogFooter>
     </Dialog>
   );
 };

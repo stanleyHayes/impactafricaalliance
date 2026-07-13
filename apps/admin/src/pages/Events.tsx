@@ -12,9 +12,7 @@ import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
 import Chip from '@mui/material/Chip';
 import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
 import IconButton from '@mui/material/IconButton';
 import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
@@ -25,6 +23,7 @@ import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Typography from '@mui/material/Typography';
 import { useEffect, useMemo, useState } from 'react';
 
+import { DialogFooter, DialogHeader, dialogPaperSx, dialogSectionSx } from '../components/dialogs/DialogShell';
 import { EmptyState } from '../components/EmptyState';
 import { CalendarGrid } from '../components/events/CalendarGrid';
 import { PageHeader } from '../components/PageHeader';
@@ -192,10 +191,21 @@ const EventDialog = ({ open, event, initialStart, onClose }: EventDialogProps): 
   })();
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{event ? 'Edit event' : 'Create event'}</DialogTitle>
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth slotProps={{ paper: { sx: dialogPaperSx } }}>
+      <DialogHeader
+        icon={<CalendarTodayIcon />}
+        eyebrow="Events"
+        title={event ? 'Edit event' : 'Create event'}
+        description={
+          event
+            ? 'Update the details of this event.'
+            : 'Schedule a new event for the community calendar.'
+        }
+        onClose={onClose}
+      />
       <Box component="form" id="event-form" onSubmit={handleSubmit}>
-        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <DialogContent sx={{ bgcolor: 'background.default', py: 3 }}>
+          <Stack spacing={2} sx={dialogSectionSx}>
           <TextField
             label="Title"
             required
@@ -262,13 +272,14 @@ const EventDialog = ({ open, event, initialStart, onClose }: EventDialogProps): 
               Could not save the event. Please check the fields and try again.
             </Typography>
           )}
+          </Stack>
         </DialogContent>
-        <DialogActions>
+        <DialogFooter>
           <Button onClick={onClose}>Cancel</Button>
           <Button type="submit" form="event-form" variant="contained" disabled={save.isPending}>
             {submitLabel}
           </Button>
-        </DialogActions>
+        </DialogFooter>
       </Box>
     </Dialog>
   );
@@ -289,19 +300,25 @@ const DeleteConfirmDialog = ({ open, event, onClose }: DeleteConfirmDialogProps)
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-      <DialogTitle>Delete event?</DialogTitle>
-      <DialogContent>
+    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth slotProps={{ paper: { sx: dialogPaperSx } }}>
+      <DialogHeader
+        icon={<DeleteOutlinedIcon />}
+        eyebrow="Events"
+        title="Delete event?"
+        tone="error"
+        onClose={onClose}
+      />
+      <DialogContent sx={{ py: 3 }}>
         <Typography variant="body2" color="text.secondary">
           Are you sure you want to delete <strong>{event?.title}</strong>? This cannot be undone.
         </Typography>
       </DialogContent>
-      <DialogActions>
+      <DialogFooter>
         <Button onClick={onClose}>Cancel</Button>
         <Button onClick={handleConfirm} variant="contained" color="error" disabled={remove.isPending}>
           {remove.isPending ? 'Deleting…' : 'Delete'}
         </Button>
-      </DialogActions>
+      </DialogFooter>
     </Dialog>
   );
 };

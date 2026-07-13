@@ -1,24 +1,20 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
+import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
-import IconButton from '@mui/material/IconButton';
-import Stack from '@mui/material/Stack';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
-import Typography from '@mui/material/Typography';
 import { useEffect, useState } from 'react';
 import { useForm, type Resolver } from 'react-hook-form';
 
 import { useSaveResource } from '../../resources/hooks';
 import type { ResourceConfig, ResourceRow } from '../../resources/types';
+import { DialogFooter, DialogHeader, dialogPaperSx } from '../dialogs/DialogShell';
 
 import { FieldRenderer } from './FieldRenderer';
 
@@ -70,31 +66,19 @@ export const ResourceFormDialog = ({
       onClose={onClose}
       maxWidth="md"
       fullWidth
-      slotProps={{ paper: { sx: { maxHeight: '92vh', overflow: 'hidden' } } }}
+      slotProps={{ paper: { sx: { ...dialogPaperSx, maxHeight: '92vh', overflow: 'hidden' } } }}
     >
-      <DialogTitle sx={{ pb: canPreview ? 1.5 : 2.5 }}>
-        <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={2}>
-          <Box>
-            <Typography
-              variant="overline"
-              sx={{ color: 'text.primary', fontWeight: 750, letterSpacing: '0.1em' }}
-            >
-              {resource.singular} workspace
-            </Typography>
-            <Typography variant="h5" sx={{ mt: 0.25 }}>
-              {initial ? `Edit ${resource.singular}` : `Create ${resource.singular}`}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              {initial
-                ? 'Update the record and review any changes before saving.'
-                : `Add a new ${resource.singular.toLowerCase()} to the workspace.`}
-            </Typography>
-          </Box>
-          <IconButton aria-label="Close form" onClick={onClose} sx={{ mt: -0.5, mr: -0.5 }}>
-            <CloseRoundedIcon />
-          </IconButton>
-        </Stack>
-      </DialogTitle>
+      <DialogHeader
+        icon={resource.icon}
+        eyebrow={`${resource.singular} workspace`}
+        title={initial ? `Edit ${resource.singular}` : `Create ${resource.singular}`}
+        description={
+          initial
+            ? 'Update the record and review any changes before saving.'
+            : `Add a new ${resource.singular.toLowerCase()} to the workspace.`
+        }
+        onClose={onClose}
+      />
 
       {canPreview && (
         <Tabs
@@ -118,10 +102,7 @@ export const ResourceFormDialog = ({
         </Tabs>
       )}
 
-      <DialogContent
-        dividers
-        sx={{ bgcolor: 'background.default', py: 3, borderTop: canPreview ? 0 : undefined }}
-      >
+      <DialogContent sx={{ bgcolor: 'background.default', py: 3 }}>
         {/* Form stays mounted (hidden while previewing) so RHF state + submit persist. */}
         <Box sx={{ display: tab === 'edit' ? 'block' : 'none' }}>
           <Box
@@ -168,12 +149,18 @@ export const ResourceFormDialog = ({
         )}
       </DialogContent>
 
-      <DialogActions sx={{ borderTop: 1, borderColor: 'divider' }}>
+      <DialogFooter>
         <Button onClick={onClose}>Cancel</Button>
-        <Button type="submit" form="resource-form" variant="contained" disabled={save.isPending}>
+        <Button
+          type="submit"
+          form="resource-form"
+          variant="contained"
+          startIcon={<SaveRoundedIcon />}
+          disabled={save.isPending}
+        >
           {save.isPending ? 'Saving…' : 'Save'}
         </Button>
-      </DialogActions>
+      </DialogFooter>
     </Dialog>
   );
 };

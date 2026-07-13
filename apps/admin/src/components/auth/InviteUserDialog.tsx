@@ -1,14 +1,13 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { USER_ROLES, inviteUserSchema, type InviteUserInput, type UserRole } from '@iaa/shared';
-import AddIcon from '@mui/icons-material/Add';
+import MailOutlineRoundedIcon from '@mui/icons-material/MailOutlineRounded';
+import SendRoundedIcon from '@mui/icons-material/SendRounded';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Checkbox from '@mui/material/Checkbox';
 import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
@@ -18,6 +17,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { useInviteUser } from '../../lib/admin-hooks';
+import { DialogFooter, DialogHeader, dialogPaperSx, dialogSectionSx } from '../dialogs/DialogShell';
 
 import { PermissionMatrix } from './PermissionMatrix';
 
@@ -64,51 +64,63 @@ export const InviteUserDialog = ({ open, onClose }: InviteUserDialogProps): JSX.
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-      <DialogTitle>Invite user</DialogTitle>
-      <DialogContent dividers>
-        <Stack component="form" id="invite-form" spacing={2.5} onSubmit={onSubmit} sx={{ pt: 1 }}>
-          <TextField
-            label="Email"
-            type="email"
-            placeholder="colleague@example.com"
-            error={Boolean(errors.email)}
-            helperText={errors.email?.message}
-            {...register('email')}
-          />
-          <TextField
-            select
-            label="Role"
-            defaultValue="editor"
-            error={Boolean(errors.role)}
-            helperText={errors.role?.message}
-            {...register('role')}
-            onChange={(event) => {
-              setValue('role', event.target.value as UserRole);
-            }}
-          >
-            {USER_ROLES.map((r) => (
-              <MenuItem key={r} value={r} sx={{ textTransform: 'capitalize' }}>
-                {r}
-              </MenuItem>
-            ))}
-          </TextField>
-          <FormControlLabel
-            control={<Checkbox checked={customize} onChange={(event) => setCustomize(event.target.checked)} />}
-            label="Customize permissions"
-          />
+    <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth slotProps={{ paper: { sx: dialogPaperSx } }}>
+      <DialogHeader
+        icon={<MailOutlineRoundedIcon />}
+        eyebrow="Team"
+        title="Invite user"
+        description="Send an email invitation to join the admin console."
+        onClose={handleClose}
+      />
+      <DialogContent sx={{ bgcolor: 'background.default', py: 3 }}>
+        <Stack component="form" id="invite-form" spacing={2.5} onSubmit={onSubmit}>
+          <Stack spacing={2.5} sx={dialogSectionSx}>
+            <TextField
+              label="Email"
+              type="email"
+              placeholder="colleague@example.com"
+              error={Boolean(errors.email)}
+              helperText={errors.email?.message}
+              {...register('email')}
+            />
+            <TextField
+              select
+              label="Role"
+              defaultValue="editor"
+              error={Boolean(errors.role)}
+              helperText={errors.role?.message}
+              {...register('role')}
+              onChange={(event) => {
+                setValue('role', event.target.value as UserRole);
+              }}
+            >
+              {USER_ROLES.map((r) => (
+                <MenuItem key={r} value={r} sx={{ textTransform: 'capitalize' }}>
+                  {r}
+                </MenuItem>
+              ))}
+            </TextField>
+            <Box>
+              <FormControlLabel
+                control={
+                  <Checkbox checked={customize} onChange={(event) => setCustomize(event.target.checked)} />
+                }
+                label="Customize permissions"
+              />
+              {!customize && (
+                <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
+                  The invitee will receive the standard permissions for the <strong>{role}</strong> role.
+                  You can edit their permissions after they accept.
+                </Typography>
+              )}
+            </Box>
+          </Stack>
           {customize && (
             <PermissionMatrix
               role={role as UserRole}
               permissions={permissions}
               onChange={(next) => setValue('permissions', next, { shouldValidate: true })}
             />
-          )}
-          {!customize && (
-            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              The invitee will receive the standard permissions for the <strong>{role}</strong> role. You can edit
-              their permissions after they accept.
-            </Typography>
           )}
           {invite.isSuccess && (
             <Alert severity="success">
@@ -127,12 +139,18 @@ export const InviteUserDialog = ({ open, onClose }: InviteUserDialogProps): JSX.
           )}
         </Stack>
       </DialogContent>
-      <DialogActions>
+      <DialogFooter>
         <Button onClick={handleClose}>Cancel</Button>
-        <Button type="submit" form="invite-form" variant="contained" startIcon={<AddIcon />} disabled={invite.isPending}>
-          Send invitation
+        <Button
+          type="submit"
+          form="invite-form"
+          variant="contained"
+          startIcon={<SendRoundedIcon />}
+          disabled={invite.isPending}
+        >
+          {invite.isPending ? 'Sending…' : 'Send invitation'}
         </Button>
-      </DialogActions>
+      </DialogFooter>
     </Dialog>
   );
 };

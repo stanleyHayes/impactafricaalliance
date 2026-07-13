@@ -1,28 +1,26 @@
 import type { MediaAsset } from '@iaa/shared';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import EditIcon from '@mui/icons-material/Edit';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
-import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
+import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 
 import { formatUtcDate } from '../../lib/date';
 import type { FieldConfig, ResourceConfig, ResourceRow } from '../../resources/types';
+import { DialogFooter, DialogHeader, dialogPaperSx } from '../dialogs/DialogShell';
 import { Markdown } from '../markdown/Markdown';
 
 import { ArticleDetailDialog } from './ArticleDetailDialog';
 
 const Empty = (): JSX.Element => (
-  <Typography variant="body2" color="text.disabled">
-    —
+  <Typography variant="body2" color="text.disabled" sx={{ fontStyle: 'italic' }}>
+    Not set
   </Typography>
 );
 
@@ -38,10 +36,10 @@ const renderImage: ValueRenderer = (field, value) => {
       sx={{
         display: 'block',
         width: '100%',
-        maxHeight: 300,
-        border: 1,
+        maxHeight: 260,
+        border: '1px solid',
         borderColor: 'divider',
-        borderRadius: 2.5,
+        borderRadius: 2,
         objectFit: 'cover',
       }}
     />
@@ -178,34 +176,15 @@ export const ResourceDetailDialog = ({
     `${resource.singular} details`;
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>
-        <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={2}>
-          <Box>
-            <Typography
-              variant="overline"
-              sx={{
-                display: 'block',
-                color: 'text.primary',
-                fontWeight: 750,
-                letterSpacing: '0.1em',
-              }}
-            >
-              {resource.singular} record
-            </Typography>
-            <Typography variant="h5" sx={{ mt: 0.25, lineHeight: 1.25 }}>
-              {heading}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              Review the saved information and attached assets.
-            </Typography>
-          </Box>
-          <IconButton aria-label="Close details" onClick={onClose} sx={{ mt: -0.5, mr: -0.5 }}>
-            <CloseRoundedIcon />
-          </IconButton>
-        </Stack>
-      </DialogTitle>
-      <DialogContent dividers sx={{ bgcolor: 'background.default', py: 3 }}>
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth slotProps={{ paper: { sx: dialogPaperSx } }}>
+      <DialogHeader
+        icon={resource.icon}
+        eyebrow={`${resource.singular} record`}
+        title={heading}
+        description="Review the saved information and attached assets."
+        onClose={onClose}
+      />
+      <DialogContent sx={{ bgcolor: 'background.default', py: 3 }}>
         {row ? (
           <Box
             sx={{
@@ -217,15 +196,19 @@ export const ResourceDetailDialog = ({
             {resource.fields.map((field) => (
               <Box
                 key={field.name}
-                sx={{
+                sx={(theme) => ({
                   minWidth: 0,
                   gridColumn: field.wide ? '1 / -1' : 'auto',
                   p: 2,
-                  border: 1,
+                  border: '1px solid',
                   borderColor: 'divider',
-                  borderRadius: 2,
+                  borderRadius: 2.5,
                   bgcolor: 'background.paper',
-                }}
+                  transition: theme.transitions.create('border-color', {
+                    duration: theme.transitions.duration.shorter,
+                  }),
+                  '&:hover': { borderColor: alpha(theme.palette.primary.main, 0.3) },
+                })}
               >
                 <Typography
                   variant="caption"
@@ -246,14 +229,14 @@ export const ResourceDetailDialog = ({
           </Box>
         ) : null}
       </DialogContent>
-      <DialogActions sx={{ borderTop: 1, borderColor: 'divider' }}>
+      <DialogFooter>
         <Button onClick={onClose}>Close</Button>
         {canEdit && onEdit && (
           <Button variant="contained" startIcon={<EditIcon />} onClick={onEdit}>
             Edit
           </Button>
         )}
-      </DialogActions>
+      </DialogFooter>
     </Dialog>
   );
 };
