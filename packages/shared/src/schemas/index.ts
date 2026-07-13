@@ -11,6 +11,8 @@ export * from './event.js';
 export * from './stat.js';
 export * from './submission.js';
 export * from './payment.js';
+export * from './payment-settings.js';
+export * from './dashboard.js';
 export * from './page-setting.js';
 export * from './site-setting.js';
 export * from './privacy-request.js';

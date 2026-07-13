@@ -21,10 +21,10 @@ import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Typography from '@mui/material/Typography';
 import { Elements } from '@stripe/react-stripe-js';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller, useForm, type Resolver } from 'react-hook-form';
 
-import { useCreateDonation } from '../../lib/mutations';
+import { useCreateDonation, usePaymentProviders } from '../../lib/mutations';
 
 import { getStripe, isStripeEnabled } from './stripe';
 import { StripeCheckout } from './StripeCheckout';
@@ -85,9 +85,45 @@ const DonationImpacts = (): JSX.Element => (
   </Stack>
 );
 
+interface ProviderAvailability {
+  stripe: boolean;
+  paystack: boolean;
+}
+
+/** Stripe additionally needs the publishable key on the client; Paystack only the server secret. */
+const useProviderAvailability = (): ProviderAvailability & {
+  loaded: boolean;
+  noneAvailable: boolean;
+} => {
+  const providers = usePaymentProviders();
+  const stripe = Boolean(providers.data?.stripe) && isStripeEnabled();
+  const paystack = Boolean(providers.data?.paystack);
+  return {
+    stripe,
+    paystack,
+    loaded: Boolean(providers.data),
+    noneAvailable: Boolean(providers.data) && !stripe && !paystack,
+  };
+};
+
+/** Fall back to whichever provider can take donations when the selection is unavailable. */
+const resolveProvider = (
+  current: CreateDonationInput['provider'],
+  availability: ProviderAvailability,
+): CreateDonationInput['provider'] | undefined => {
+  if (current === PaymentProvider.Stripe && !availability.stripe && availability.paystack) {
+    return PaymentProvider.Paystack;
+  }
+  if (current === PaymentProvider.Paystack && !availability.paystack && availability.stripe) {
+    return PaymentProvider.Stripe;
+  }
+  return undefined;
+};
+
 /** Donation form: amount + provider selection, then Stripe Elements or Paystack redirect. */
 export const DonateForm = (): JSX.Element => {
   const createDonation = useCreateDonation();
+  const { loaded, stripe, paystack, noneAvailable } = useProviderAvailability();
   const [init, setInit] = useState<DonationInitResponse | null>(null);
   const {
     register,
@@ -108,6 +144,16 @@ export const DonateForm = (): JSX.Element => {
 
   const amount = watch('amountUsd');
   const provider = watch('provider');
+
+  useEffect(() => {
+    if (!loaded) {
+      return;
+    }
+    const next = resolveProvider(provider, { stripe, paystack });
+    if (next) {
+      setValue('provider', next);
+    }
+  }, [loaded, provider, stripe, paystack, setValue]);
 
   const onSubmit = handleSubmit((values) => {
     createDonation.mutate(values, {
@@ -210,15 +256,22 @@ export const DonateForm = (): JSX.Element => {
                 value={field.value}
                 onChange={(_event, value) => value && field.onChange(value)}
               >
-                <ToggleButton value={PaymentProvider.Stripe} disabled={!isStripeEnabled()}>
+                <ToggleButton value={PaymentProvider.Stripe} disabled={!stripe}>
                   Card (Stripe)
                 </ToggleButton>
-                <ToggleButton value={PaymentProvider.Paystack}>
+                <ToggleButton value={PaymentProvider.Paystack} disabled={!paystack}>
                   Card / Mobile (Paystack)
                 </ToggleButton>
               </ToggleButtonGroup>
             )}
           />
+
+          {noneAvailable && (
+            <Alert severity="warning">
+              Online donations are temporarily unavailable. Please check back soon or contact us
+              directly.
+            </Alert>
+          )}
 
           <FormControlLabel
             control={<Checkbox {...register('marketingConsent')} color="primary" />}
@@ -236,7 +289,7 @@ export const DonateForm = (): JSX.Element => {
             variant="contained"
             color="secondary"
             size="large"
-            disabled={createDonation.isPending}
+            disabled={createDonation.isPending || noneAvailable}
           >
             {createDonation.isPending
               ? 'Preparing…'

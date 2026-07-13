@@ -38,11 +38,14 @@ export const createPaymentRouters = (container: DependencyContainer): PaymentRou
   );
 
   const donateRouter = Router();
+  donateRouter.get('/providers', asyncHandler(controller.providers));
   donateRouter.post('/', sensitiveRateLimit, asyncHandler(controller.createDonation));
 
   const adminRouter = Router();
   adminRouter.use(requireAuth(tokens), requireRole(UserRole.Admin));
   adminRouter.get('/', asyncHandler(controller.list));
+  adminRouter.get('/settings', asyncHandler(controller.getSettings));
+  adminRouter.patch('/settings', asyncHandler(controller.updateSettings));
 
   return { webhookRouter, donateRouter, adminRouter };
 };

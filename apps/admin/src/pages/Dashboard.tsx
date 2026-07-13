@@ -1,16 +1,28 @@
-import { DonationStatus, SubmissionType, brandColors, type Submission } from '@iaa/shared';
+import {
+  brandColors,
+  SubmissionType,
+  type DashboardSummary,
+  type PaymentProviderStatus,
+  type Submission,
+} from '@iaa/shared';
 import type { SvgIconComponent } from '@mui/icons-material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import ArrowOutwardIcon from '@mui/icons-material/ArrowOutward';
+import AutoStoriesIcon from '@mui/icons-material/AutoStories';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import CreditCardIcon from '@mui/icons-material/CreditCard';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import GroupsIcon from '@mui/icons-material/Groups';
 import HandshakeIcon from '@mui/icons-material/Handshake';
 import MailOutlineIcon from '@mui/icons-material/MailOutlineOutlined';
 import InboxIcon from '@mui/icons-material/MoveToInbox';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutlineOutlined';
+import PrivacyTipIcon from '@mui/icons-material/PrivacyTip';
+import ShareIcon from '@mui/icons-material/Share';
 import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
 import WorkOutlineOutlinedIcon from '@mui/icons-material/WorkOutlineOutlined';
+import Alert from '@mui/material/Alert';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -20,20 +32,25 @@ import CardContent from '@mui/material/CardContent';
 import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
 import Grid from '@mui/material/Grid';
+import Skeleton from '@mui/material/Skeleton';
+import Snackbar from '@mui/material/Snackbar';
 import Stack from '@mui/material/Stack';
 import { alpha } from '@mui/material/styles';
+import Switch from '@mui/material/Switch';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
 import { useAuth } from '../auth/AuthContext';
 import { CardListSkeleton } from '../components/CardListSkeleton';
+import { BarChart } from '../components/charts/BarChart';
+import { DonutChart } from '../components/charts/DonutChart';
 import { PageHeader } from '../components/PageHeader';
 import {
-  useDonations,
+  useDashboardSummary,
   useSubmissions,
-  useSubscribers,
-  useUsers,
+  useUpdatePaymentSettings,
 } from '../lib/admin-hooks';
 import { formatUtcShort } from '../lib/date';
 import { pageGuides } from '../lib/page-guides';
@@ -45,6 +62,25 @@ const usd = new Intl.NumberFormat('en-US', {
   currency: 'USD',
   maximumFractionDigits: 0,
 });
+
+const usdCompact = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  notation: 'compact',
+  maximumFractionDigits: 1,
+});
+
+/** `2026-07` → `Jul` for chart axis labels. */
+const monthShortLabel = (bucket: string): string => {
+  const [year, month] = bucket.split('-').map(Number);
+  if (!year || !month) {
+    return bucket;
+  }
+  return new Date(Date.UTC(year, month - 1, 1)).toLocaleString('en-US', {
+    month: 'short',
+    timeZone: 'UTC',
+  });
+};
 
 const relativeTime = (iso: string): string => {
   const then = new Date(iso).getTime();
@@ -82,9 +118,7 @@ const SUBMISSION_META: Record<
 };
 
 /** Pull a human label + supporting line from an untyped submission payload, defensively. */
-const describeSubmission = (
-  submission: Submission,
-): { title: string; detail: string } => {
+const describeSubmission = (submission: Submission): { title: string; detail: string } => {
   const p = submission.payload;
   const str = (key: string): string | undefined =>
     typeof p[key] === 'string' && (p[key] as string).trim() ? (p[key] as string) : undefined;
@@ -343,8 +377,7 @@ const StatCard = ({
               height: 28,
               borderRadius: '50%',
               color: 'text.disabled',
-              transition: (t) =>
-                t.transitions.create(['color', 'background-color', 'transform']),
+              transition: (t) => t.transitions.create(['color', 'background-color', 'transform']),
               '.MuiCardActionArea-root:hover &': {
                 color: 'text.primary',
                 bgcolor: alpha(accent, 0.12),
@@ -436,97 +469,6 @@ const Panel = ({ title, subtitle, action, children }: PanelProps): JSX.Element =
   </Card>
 );
 
-/** Build the fourth, role-dependent stat card (team members for admins, content otherwise). */
-const buildRoleStat = (isAdmin: boolean, users: ReturnType<typeof useUsers>): StatCardProps => {
-  if (isAdmin) {
-    return {
-      label: 'Team members',
-      value: String(users.data?.length ?? 0),
-      caption: 'Console accounts',
-      icon: GroupsIcon,
-      to: '/users',
-      accent: brandColors.mint,
-      loading: users.isLoading,
-    };
-  }
-  return {
-    label: 'Content types',
-    value: String(RESOURCES.length),
-    caption: 'Collections to manage',
-    icon: PersonOutlineIcon,
-    to: `/content/${RESOURCES[0]?.key ?? ''}`,
-    accent: brandColors.mint,
-    loading: false,
-  };
-};
-
-interface Queries {
-  newSubmissions: ReturnType<typeof useSubmissions>;
-  recentSubmissions: ReturnType<typeof useSubmissions>;
-  subscribers: ReturnType<typeof useSubscribers>;
-  donations: ReturnType<typeof useDonations>;
-  users: ReturnType<typeof useUsers>;
-}
-
-/** Sum of succeeded donations (USD) plus the succeeded/total caption. */
-const summarizeDonations = (
-  donations: ReturnType<typeof useDonations>,
-): { value: string; caption: string } => {
-  const items = donations.data?.items ?? [];
-  let raised = 0;
-  let succeeded = 0;
-  for (const d of items) {
-    if (d.status === DonationStatus.Succeeded) {
-      raised += d.amountUsd;
-      succeeded += 1;
-    }
-  }
-  return {
-    value: usd.format(raised),
-    caption: `${succeeded} of ${donations.data?.total ?? 0} succeeded`,
-  };
-};
-
-const buildStats = (isAdmin: boolean, q: Queries): StatCardProps[] => {
-  const newCount = q.newSubmissions.data?.total ?? 0;
-  const donationSummary = summarizeDonations(q.donations);
-  return [
-    {
-      label: 'New submissions',
-      value: String(newCount),
-      caption: newCount > 0 ? 'Awaiting review' : 'All caught up',
-      icon: InboxIcon,
-      to: '/submissions',
-      accent: brandColors.forestGreen,
-      loading: q.newSubmissions.isLoading,
-    },
-    {
-      label: 'Subscribers',
-      value: String(q.subscribers.data?.total ?? 0),
-      caption: 'Newsletter audience',
-      icon: MailOutlineIcon,
-      to: '/subscribers',
-      accent: brandColors.mint,
-      loading: q.subscribers.isLoading,
-    },
-    {
-      label: 'Donations raised',
-      value: donationSummary.value,
-      caption: donationSummary.caption,
-      icon: VolunteerActivismIcon,
-      to: '/donations',
-      accent: brandColors.gold,
-      loading: q.donations.isLoading,
-    },
-    buildRoleStat(isAdmin, q.users),
-  ];
-};
-
-const sortRecent = (items: Submission[] | undefined): Submission[] =>
-  [...(items ?? [])]
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, 5);
-
 /** A compact content quick-tile — first-letter medallion + label + edit hint. */
 const ContentTile = ({
   resourceKey,
@@ -543,8 +485,7 @@ const ContentTile = ({
       height: '100%',
       borderRadius: 2.5,
       borderColor: 'divider',
-      transition: (t) =>
-        t.transitions.create(['border-color', 'background-color', 'box-shadow']),
+      transition: (t) => t.transitions.create(['border-color', 'background-color', 'box-shadow']),
       '&:hover': {
         borderColor: alpha(brandColors.forestGreen, 0.4),
         bgcolor: alpha(brandColors.forestGreen, 0.04),
@@ -603,108 +544,792 @@ const ContentTile = ({
   </Card>
 );
 
-const Dashboard = (): JSX.Element => {
-  const { user } = useAuth();
-  const queries: Queries = {
-    newSubmissions: useSubmissions({ status: 'new' }),
-    recentSubmissions: useSubmissions({}),
-    subscribers: useSubscribers(),
-    donations: useDonations(),
-    users: useUsers(),
+// ── Payment providers ───────────────────────────────────────────────────────
+
+type ProviderKey = 'stripe' | 'paystack';
+
+const PROVIDER_META: Record<ProviderKey, { label: string; envHint: string }> = {
+  stripe: { label: 'Stripe', envHint: 'STRIPE_SECRET_KEY' },
+  paystack: { label: 'Paystack', envHint: 'PAYSTACK_SECRET_KEY' },
+};
+
+const providerStatusChip = (status: PaymentProviderStatus): JSX.Element => {
+  if (status.accepting) {
+    return <Chip label="Accepting donations" color="success" size="small" />;
+  }
+  if (status.configured) {
+    return <Chip label="Disabled" color="warning" size="small" />;
+  }
+  return <Chip label="Not configured" size="small" variant="outlined" />;
+};
+
+const providerSwitchTooltip = (status: PaymentProviderStatus, isAdmin: boolean, envHint: string): string => {
+  if (!isAdmin) {
+    return 'Only admins can change payment settings';
+  }
+  if (!status.configured) {
+    return `Add ${envHint} to the API environment first`;
+  }
+  return '';
+};
+
+const providerHelperText = (status: PaymentProviderStatus, envHint: string): string => {
+  if (!status.configured) {
+    return `Add ${envHint} to the API environment`;
+  }
+  if (status.webhookConfigured) {
+    return 'API key and webhook secret configured';
+  }
+  return 'API key configured · webhook secret missing';
+};
+
+const ProviderRow = ({
+  providerKey,
+  status,
+  isAdmin,
+  disabled,
+  onToggle,
+}: {
+  providerKey: ProviderKey;
+  status: PaymentProviderStatus;
+  isAdmin: boolean;
+  disabled: boolean;
+  onToggle: (providerKey: ProviderKey, enabled: boolean) => void;
+}): JSX.Element => {
+  const meta = PROVIDER_META[providerKey];
+  const switchDisabled = disabled || !status.configured || !isAdmin;
+
+  return (
+    <Stack
+      direction="row"
+      spacing={1.75}
+      alignItems="center"
+      sx={{
+        p: 1.75,
+        borderRadius: 2.5,
+        border: '1px solid',
+        borderColor: 'divider',
+        bgcolor: status.accepting ? alpha(brandColors.forestGreen, 0.04) : 'transparent',
+      }}
+    >
+      <Avatar
+        variant="rounded"
+        sx={{
+          width: 40,
+          height: 40,
+          borderRadius: 2,
+          bgcolor: alpha(brandColors.forestGreen, 0.1),
+          color: 'text.primary',
+          boxShadow: `inset 0 0 0 1px ${alpha(brandColors.forestGreen, 0.16)}`,
+        }}
+      >
+        <CreditCardIcon fontSize="small" />
+      </Avatar>
+      <Box sx={{ minWidth: 0, flexGrow: 1 }}>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+            {meta.label}
+          </Typography>
+          {providerStatusChip(status)}
+        </Stack>
+        <Typography variant="caption" color="text.secondary" noWrap>
+          {providerHelperText(status, meta.envHint)}
+        </Typography>
+      </Box>
+      <Tooltip title={providerSwitchTooltip(status, isAdmin, meta.envHint)} placement="top" arrow>
+        <span>
+          <Switch
+            checked={status.enabled}
+            disabled={switchDisabled}
+            onChange={(event) => onToggle(providerKey, event.target.checked)}
+            slotProps={{ input: { 'aria-label': `Enable ${meta.label}` } }}
+          />
+        </span>
+      </Tooltip>
+    </Stack>
+  );
+};
+
+const PaymentProvidersPanel = ({
+  payments,
+  isAdmin,
+  loading,
+  onFeedback,
+}: {
+  payments?: DashboardSummary['payments'];
+  isAdmin: boolean;
+  loading: boolean;
+  onFeedback: (message: string, severity: 'success' | 'error') => void;
+}): JSX.Element => {
+  const update = useUpdatePaymentSettings();
+
+  const handleToggle = (providerKey: ProviderKey, enabled: boolean): void => {
+    const input =
+      providerKey === 'stripe' ? { stripeEnabled: enabled } : { paystackEnabled: enabled };
+    update.mutate(input, {
+      onSuccess: () =>
+        onFeedback(
+          `${PROVIDER_META[providerKey].label} ${enabled ? 'enabled — donations can now be taken' : 'disabled'}`,
+          'success',
+        ),
+      onError: (error) => onFeedback(error.message, 'error'),
+    });
   };
 
+  return (
+    <Panel
+      title="Payment providers"
+      subtitle="Enable or disable donation gateways"
+    >
+      <Stack spacing={1.5} sx={{ p: 2.5 }}>
+        {loading || !payments ? (
+          <>
+            <Skeleton variant="rounded" height={76} />
+            <Skeleton variant="rounded" height={76} />
+          </>
+        ) : (
+          (['stripe', 'paystack'] as ProviderKey[]).map((providerKey) => (
+            <ProviderRow
+              key={providerKey}
+              providerKey={providerKey}
+              status={payments[providerKey]}
+              isAdmin={isAdmin}
+              disabled={update.isPending}
+              onToggle={handleToggle}
+            />
+          ))
+        )}
+        <Typography variant="caption" color="text.secondary">
+          A provider only accepts donations when it is enabled here AND its API keys are set in
+          the API environment. Webhooks keep working for donations already in flight.
+        </Typography>
+      </Stack>
+    </Panel>
+  );
+};
+
+// ── Donations visualization ─────────────────────────────────────────────────
+
+const ProviderSplitBar = ({
+  label,
+  amount,
+  share,
+  color,
+}: {
+  label: string;
+  amount: number;
+  share: number;
+  color: string;
+}): JSX.Element => (
+  <Box>
+    <Stack direction="row" justifyContent="space-between" sx={{ mb: 0.5 }}>
+      <Typography variant="caption" sx={{ fontWeight: 700 }}>
+        {label}
+      </Typography>
+      <Typography variant="caption" color="text.secondary">
+        {usd.format(amount)}
+      </Typography>
+    </Stack>
+    <Box sx={{ height: 6, borderRadius: 99, bgcolor: alpha(color, 0.14), overflow: 'hidden' }}>
+      <Box sx={{ height: '100%', width: `${Math.round(share * 100)}%`, borderRadius: 99, bgcolor: color }} />
+    </Box>
+  </Box>
+);
+
+const DonationsPanel = ({
+  donations,
+  loading,
+}: {
+  donations?: DashboardSummary['donations'];
+  loading: boolean;
+}): JSX.Element => (
+  <Panel
+    title="Donations"
+    subtitle="Succeeded gifts · last 6 months"
+    action={
+      <Button
+        component={RouterLink}
+        to="/donations"
+        size="small"
+        endIcon={<ChevronRightIcon />}
+        sx={{ fontWeight: 600 }}
+      >
+        View all
+      </Button>
+    }
+  >
+    {loading || !donations ? (
+      <Box sx={{ p: 2.5 }}>
+        <Skeleton variant="text" width={160} height={44} />
+        <Skeleton variant="rounded" height={200} sx={{ mt: 1.5 }} />
+      </Box>
+    ) : (
+      <Box sx={{ p: 2.5 }}>
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={1.5}
+          justifyContent="space-between"
+          alignItems={{ xs: 'flex-start', sm: 'center' }}
+          sx={{ mb: 2 }}
+        >
+          <Box>
+            <Typography variant="h4" sx={{ fontWeight: 800, letterSpacing: '-0.02em' }}>
+              {usd.format(donations.totalRaisedUsd)}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Total raised · {donations.succeededCount} succeeded
+            </Typography>
+          </Box>
+          <Stack direction="row" spacing={1}>
+            <Chip size="small" variant="outlined" label={`${donations.pendingCount} pending`} />
+            <Chip
+              size="small"
+              variant="outlined"
+              color={donations.failedCount > 0 ? 'error' : 'default'}
+              label={`${donations.failedCount} failed`}
+            />
+          </Stack>
+        </Stack>
+
+        <BarChart
+          data={donations.monthly.map((bucket) => ({
+            label: bucket.month,
+            value: bucket.amountUsd,
+            displayValue: bucket.amountUsd > 0 ? usdCompact.format(bucket.amountUsd) : undefined,
+          }))}
+          color={brandColors.gold}
+          formatLabel={monthShortLabel}
+          formatValue={(value) => usdCompact.format(value)}
+          emptyMessage="No succeeded donations yet"
+        />
+
+        <Divider sx={{ my: 2 }} />
+        <Stack spacing={1.25}>
+          <ProviderSplitBar
+            label="Stripe"
+            amount={donations.byProvider.stripe}
+            share={
+              donations.totalRaisedUsd > 0
+                ? donations.byProvider.stripe / donations.totalRaisedUsd
+                : 0
+            }
+            color={brandColors.forestGreen}
+          />
+          <ProviderSplitBar
+            label="Paystack"
+            amount={donations.byProvider.paystack}
+            share={
+              donations.totalRaisedUsd > 0
+                ? donations.byProvider.paystack / donations.totalRaisedUsd
+                : 0
+            }
+            color={brandColors.mint}
+          />
+        </Stack>
+      </Box>
+    )}
+  </Panel>
+);
+
+// ── Submissions breakdown ───────────────────────────────────────────────────
+
+const SUBMISSION_TYPE_ORDER: Submission['type'][] = [
+  SubmissionType.Contact,
+  SubmissionType.Partner,
+  SubmissionType.Volunteer,
+  SubmissionType.Job,
+];
+
+const SubmissionsBreakdownPanel = ({
+  submissions,
+  loading,
+}: {
+  submissions?: DashboardSummary['submissions'];
+  loading: boolean;
+}): JSX.Element => {
+  const countOf = (key: string): number =>
+    submissions?.byType.find((entry) => entry.key === key)?.count ?? 0;
+  const statusCount = (key: string): number =>
+    submissions?.byStatus.find((entry) => entry.key === key)?.count ?? 0;
+
+  return (
+    <Panel
+      title="Submissions"
+      subtitle="Inbound forms by type and status"
+      action={
+        <Button
+          component={RouterLink}
+          to="/submissions"
+          size="small"
+          endIcon={<ChevronRightIcon />}
+          sx={{ fontWeight: 600 }}
+        >
+          Review
+        </Button>
+      }
+    >
+      {loading || !submissions ? (
+        <Box sx={{ p: 2.5 }}>
+          <Skeleton variant="circular" width={168} height={168} sx={{ mx: 'auto' }} />
+        </Box>
+      ) : (
+        <Box sx={{ p: 2.5 }}>
+          <DonutChart
+            data={SUBMISSION_TYPE_ORDER.map((type) => ({
+              label: SUBMISSION_META[type].label,
+              value: countOf(type),
+              color: SUBMISSION_META[type].color,
+            }))}
+            centerLabel="total"
+            emptyMessage="No submissions"
+          />
+          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mt: 2.5 }}>
+            <Chip size="small" color="secondary" label={`${statusCount('new')} new`} />
+            <Chip size="small" variant="outlined" label={`${statusCount('read')} read`} />
+            <Chip size="small" variant="outlined" label={`${statusCount('archived')} archived`} />
+          </Stack>
+        </Box>
+      )}
+    </Panel>
+  );
+};
+
+// ── Content inventory ───────────────────────────────────────────────────────
+
+const ContentInventoryPanel = ({
+  content,
+  loading,
+}: {
+  content?: DashboardSummary['content'];
+  loading: boolean;
+}): JSX.Element => (
+  <Panel
+    title="Content inventory"
+    subtitle="Live vs total across collections"
+    action={
+      <Button
+        component={RouterLink}
+        to={`/content/${RESOURCES[0]?.key ?? 'articles'}`}
+        size="small"
+        endIcon={<ChevronRightIcon />}
+        sx={{ fontWeight: 600 }}
+      >
+        Manage
+      </Button>
+    }
+  >
+    <Grid container spacing={1.5} sx={{ p: 2.5 }}>
+      {(loading || !content ? Array.from({ length: 4 }) : content).map((entry, index) => (
+        <Grid key={entry ? (entry as DashboardSummary['content'][number]).key : index} size={{ xs: 12, sm: 6 }}>
+          {!entry ? (
+            <Skeleton variant="rounded" height={66} />
+          ) : (
+            <ContentInventoryRow entry={entry as DashboardSummary['content'][number]} />
+          )}
+        </Grid>
+      ))}
+    </Grid>
+  </Panel>
+);
+
+const ContentInventoryRow = ({
+  entry,
+}: {
+  entry: DashboardSummary['content'][number];
+}): JSX.Element => {
+  const ratio = entry.total > 0 ? entry.published / entry.total : 0;
+  return (
+    <CardActionArea
+      component={RouterLink}
+      to={`/content/${entry.key}`}
+      sx={{
+        display: 'block',
+        p: 1.75,
+        borderRadius: 2.5,
+        border: '1px solid',
+        borderColor: 'divider',
+        transition: (t) => t.transitions.create(['border-color', 'background-color']),
+        '&:hover': {
+          borderColor: alpha(brandColors.forestGreen, 0.4),
+          bgcolor: alpha(brandColors.forestGreen, 0.04),
+        },
+        '& .MuiCardActionArea-focusHighlight': { opacity: 0 },
+      }}
+    >
+      <Stack direction="row" justifyContent="space-between" alignItems="baseline" sx={{ mb: 0.75 }}>
+        <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+          {entry.label}
+        </Typography>
+        <Typography variant="caption" color="text.secondary">
+          {entry.published} live · {entry.total} total
+        </Typography>
+      </Stack>
+      <Box
+        sx={{
+          height: 6,
+          borderRadius: 99,
+          bgcolor: alpha(brandColors.forestGreen, 0.14),
+          overflow: 'hidden',
+        }}
+      >
+        <Box
+          sx={{
+            height: '100%',
+            width: `${Math.round(ratio * 100)}%`,
+            borderRadius: 99,
+            bgcolor: brandColors.forestGreen,
+          }}
+        />
+      </Box>
+    </CardActionArea>
+  );
+};
+
+// ── System snapshot ─────────────────────────────────────────────────────────
+
+const SystemRow = ({
+  icon: Icon,
+  label,
+  value,
+  to,
+  accent,
+}: {
+  icon: SvgIconComponent;
+  label: string;
+  value: string;
+  to: string;
+  accent: string;
+}): JSX.Element => (
+  <CardActionArea
+    component={RouterLink}
+    to={to}
+    sx={{
+      px: 1.5,
+      py: 1.25,
+      borderRadius: 2,
+      '&:hover': { bgcolor: alpha(accent, 0.05) },
+      '& .MuiCardActionArea-focusHighlight': { opacity: 0 },
+    }}
+  >
+    <Stack direction="row" spacing={1.5} alignItems="center">
+      <Avatar
+        variant="rounded"
+        sx={{
+          width: 34,
+          height: 34,
+          borderRadius: 2,
+          bgcolor: alpha(accent, 0.12),
+          color: 'text.secondary',
+          boxShadow: `inset 0 0 0 1px ${alpha(accent, 0.16)}`,
+        }}
+      >
+        <Icon sx={{ fontSize: 18 }} />
+      </Avatar>
+      <Typography variant="body2" sx={{ fontWeight: 600, flexGrow: 1 }} noWrap>
+        {label}
+      </Typography>
+      <Typography variant="subtitle2" sx={{ fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>
+        {value}
+      </Typography>
+    </Stack>
+  </CardActionArea>
+);
+
+const SystemPanel = ({
+  summary,
+  loading,
+}: {
+  summary?: DashboardSummary;
+  loading: boolean;
+}): JSX.Element => (
+  <Panel title="Operations snapshot" subtitle="Across the whole console">
+    {loading || !summary ? (
+      <Box sx={{ p: 2 }}>
+        <CardListSkeleton count={3} />
+      </Box>
+    ) : (
+      <Stack sx={{ p: 1 }}>
+        <SystemRow
+          icon={CalendarMonthIcon}
+          label="Upcoming events"
+          value={`${summary.events.upcoming} / ${summary.events.total}`}
+          to="/events"
+          accent={brandColors.forestGreen}
+        />
+        <SystemRow
+          icon={PrivacyTipIcon}
+          label="Open privacy requests"
+          value={String(summary.privacyRequests.open)}
+          to="/privacy-requests"
+          accent={brandColors.gold}
+        />
+        <SystemRow
+          icon={ShareIcon}
+          label="Social accounts connected"
+          value={String(summary.socialConnections)}
+          to="/social-connections"
+          accent={brandColors.mint}
+        />
+        <SystemRow
+          icon={AutoStoriesIcon}
+          label="Content collections live"
+          value={`${summary.content.reduce((sum, entry) => sum + entry.published, 0)} items`}
+          to={`/content/${RESOURCES[0]?.key ?? 'articles'}`}
+          accent={brandColors.deepForest}
+        />
+      </Stack>
+    )}
+  </Panel>
+);
+
+// ── Page ────────────────────────────────────────────────────────────────────
+
+const sortRecent = (items: Submission[] | undefined): Submission[] =>
+  [...(items ?? [])]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 5);
+
+const buildSubtitle = (newCount: number): string => {
+  if (newCount > 0) {
+    return `You have ${newCount} new submission${newCount === 1 ? '' : 's'} waiting for review.`;
+  }
+  return 'Inbox is clear. Keep the Impact Africa Alliance site fresh and current.';
+};
+
+const buildRoleStat = (isAdmin: boolean, data: DashboardSummary | undefined, loading: boolean): StatCardProps => {
+  if (isAdmin) {
+    return {
+      label: 'Team members',
+      value: String(data?.users ?? 0),
+      caption: 'Console accounts',
+      icon: GroupsIcon,
+      to: '/users',
+      accent: brandColors.deepForest,
+      loading,
+    };
+  }
+  return {
+    label: 'Content types',
+    value: String(RESOURCES.length),
+    caption: 'Collections to manage',
+    icon: PersonOutlineIcon,
+    to: `/content/${RESOURCES[0]?.key ?? ''}`,
+    accent: brandColors.deepForest,
+    loading: false,
+  };
+};
+
+const buildStats = (
+  isAdmin: boolean,
+  data: DashboardSummary | undefined,
+  loading: boolean,
+): StatCardProps[] => [
+  {
+    label: 'New submissions',
+    value: String(data?.submissions.newCount ?? 0),
+    caption: (data?.submissions.newCount ?? 0) > 0 ? 'Awaiting review' : 'All caught up',
+    icon: InboxIcon,
+    to: '/submissions',
+    accent: brandColors.forestGreen,
+    loading,
+  },
+  {
+    label: 'Subscribers',
+    value: String(data?.subscribers.total ?? 0),
+    caption: `+${data?.subscribers.newLast30Days ?? 0} in the last 30 days`,
+    icon: MailOutlineIcon,
+    to: '/subscribers',
+    accent: brandColors.mint,
+    loading,
+  },
+  {
+    label: 'Donations raised',
+    value: usd.format(data?.donations.totalRaisedUsd ?? 0),
+    caption: `${data?.donations.succeededCount ?? 0} succeeded gifts`,
+    icon: VolunteerActivismIcon,
+    to: '/donations',
+    accent: brandColors.gold,
+    loading,
+  },
+  buildRoleStat(isAdmin, data, loading),
+];
+
+const HeaderActions = (): JSX.Element => (
+  <Stack
+    direction={{ xs: 'column', sm: 'row' }}
+    spacing={1.5}
+    sx={{ width: { xs: '100%', sm: 'auto' }, flexWrap: 'wrap' }}
+  >
+    <Button
+      component={RouterLink}
+      to="/submissions"
+      variant="contained"
+      endIcon={<ArrowForwardIcon />}
+      sx={{ borderRadius: 2.5, px: 2.5, fontWeight: 600, width: { xs: '100%', sm: 'auto' } }}
+    >
+      Review submissions
+    </Button>
+    <Button
+      component={RouterLink}
+      to="/subscribers"
+      variant="outlined"
+      startIcon={<MailOutlineIcon />}
+      sx={{ borderRadius: 2.5, px: 2.5, width: { xs: '100%', sm: 'auto' } }}
+    >
+      Newsletter
+    </Button>
+  </Stack>
+);
+
+const ManageContentPanel = (): JSX.Element => (
+  <Panel title="Manage content" subtitle="Jump into a collection">
+    <Grid container spacing={1.5} sx={{ p: 2.5 }}>
+      {RESOURCES.map((resource) => (
+        <Grid key={resource.key} size={{ xs: 12, sm: 6 }}>
+          <ContentTile
+            resourceKey={resource.key}
+            label={resource.label}
+            singular={resource.singular}
+          />
+        </Grid>
+      ))}
+    </Grid>
+  </Panel>
+);
+
+interface DashboardBodyProps {
+  data: DashboardSummary | undefined;
+  loading: boolean;
+  isAdmin: boolean;
+  recent: Submission[];
+  recentLoading: boolean;
+  onFeedback: (message: string, severity: 'success' | 'error') => void;
+}
+
+const DashboardBody = ({
+  data,
+  loading,
+  isAdmin,
+  recent,
+  recentLoading,
+  onFeedback,
+}: DashboardBodyProps): JSX.Element => (
+  <Stack spacing={3.5}>
+    {/* KPI stat cards */}
+    <Grid id="admin-dashboard-stats" container spacing={2.5}>
+      {buildStats(isAdmin, data, loading).map((stat) => (
+        <Grid key={stat.label} size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard {...stat} />
+        </Grid>
+      ))}
+    </Grid>
+
+    {/* Donations — full width */}
+    <DonationsPanel donations={data?.donations} loading={loading} />
+
+    {/* Payment providers + operations snapshot, side by side */}
+    <Grid container spacing={2.5} sx={{ alignItems: 'stretch' }}>
+      <Grid size={{ xs: 12, md: 6 }}>
+        <PaymentProvidersPanel
+          payments={data?.payments}
+          isAdmin={isAdmin}
+          loading={loading}
+          onFeedback={onFeedback}
+        />
+      </Grid>
+      <Grid size={{ xs: 12, md: 6 }}>
+        <SystemPanel summary={data} loading={loading} />
+      </Grid>
+    </Grid>
+
+    {/* Submissions breakdown + content inventory */}
+    <Grid container spacing={2.5} sx={{ alignItems: 'stretch' }}>
+      <Grid size={{ xs: 12, md: 5 }}>
+        <SubmissionsBreakdownPanel submissions={data?.submissions} loading={loading} />
+      </Grid>
+      <Grid size={{ xs: 12, md: 7 }}>
+        <ContentInventoryPanel content={data?.content} loading={loading} />
+      </Grid>
+    </Grid>
+
+    {/* Recent activity + content quick links */}
+    <Grid container spacing={2.5} sx={{ alignItems: 'stretch' }}>
+      <Grid size={{ xs: 12, md: 7 }}>
+        <Panel
+          title="Recent submissions"
+          subtitle="Latest inbound activity"
+          action={
+            <Button
+              component={RouterLink}
+              to="/submissions"
+              size="small"
+              endIcon={<ChevronRightIcon />}
+              sx={{ fontWeight: 600 }}
+            >
+              View all
+            </Button>
+          }
+        >
+          <RecentSubmissions loading={recentLoading} items={recent} />
+        </Panel>
+      </Grid>
+      <Grid size={{ xs: 12, md: 5 }}>
+        <ManageContentPanel />
+      </Grid>
+    </Grid>
+  </Stack>
+);
+
+const Dashboard = (): JSX.Element => {
+  const { user } = useAuth();
+  const summary = useDashboardSummary();
+  const recentSubmissions = useSubmissions({});
+  const [snackbar, setSnackbar] = useState<{
+    message: string;
+    severity: 'success' | 'error';
+  } | null>(null);
+
   const firstName = user?.name.split(' ')[0] ?? 'there';
-  const newCount = queries.newSubmissions.data?.total ?? 0;
-  const subtitle =
-    newCount > 0
-      ? `You have ${newCount} new submission${newCount === 1 ? '' : 's'} waiting for review.`
-      : 'Inbox is clear. Keep the Impact Africa Alliance site fresh and current.';
-  const stats = buildStats(user?.role === 'admin', queries);
-  const recent = sortRecent(queries.recentSubmissions.data?.items);
 
   return (
     <>
       <PageHeader
         icon={<DashboardIcon />}
         title="Dashboard"
-        description={`Welcome back, ${firstName}. ${subtitle}`}
+        description={`Welcome back, ${firstName}. ${buildSubtitle(summary.data?.submissions.newCount ?? 0)}`}
         help={pageGuides.Dashboard}
-        action={
-          <Stack
-            direction={{ xs: 'column', sm: 'row' }}
-            spacing={1.5}
-            sx={{ width: { xs: '100%', sm: 'auto' }, flexWrap: 'wrap' }}
-          >
-            <Button
-              component={RouterLink}
-              to="/submissions"
-              variant="contained"
-              endIcon={<ArrowForwardIcon />}
-              sx={{ borderRadius: 2.5, px: 2.5, fontWeight: 600, width: { xs: '100%', sm: 'auto' } }}
-            >
-              Review submissions
-            </Button>
-            <Button
-              component={RouterLink}
-              to="/subscribers"
-              variant="outlined"
-              startIcon={<MailOutlineIcon />}
-              sx={{ borderRadius: 2.5, px: 2.5, width: { xs: '100%', sm: 'auto' } }}
-            >
-              Newsletter
-            </Button>
-          </Stack>
-        }
+        action={<HeaderActions />}
       />
-      <Stack spacing={3.5}>
-        {/* KPI stat cards — equal height */}
-        <Grid id="admin-dashboard-stats" container spacing={2.5}>
-          {stats.map((stat) => (
-            <Grid key={stat.label} size={{ xs: 12, sm: 6, md: 3 }}>
-              <StatCard {...stat} />
-            </Grid>
-          ))}
-        </Grid>
 
-        {/* Two-column working area */}
-        <Grid container spacing={2.5} sx={{ alignItems: 'stretch' }}>
-          <Grid size={{ xs: 12, md: 7 }}>
-            <Panel
-              title="Recent submissions"
-              subtitle="Latest inbound activity"
-              action={
-                <Button
-                  component={RouterLink}
-                  to="/submissions"
-                  size="small"
-                  endIcon={<ChevronRightIcon />}
-                  sx={{ fontWeight: 600 }}
-                >
-                  View all
-                </Button>
-              }
-            >
-              <RecentSubmissions loading={queries.recentSubmissions.isLoading} items={recent} />
-            </Panel>
-          </Grid>
+      {summary.isError && (
+        <Alert severity="error" sx={{ mb: 2.5 }}>
+          Couldn&apos;t load the dashboard overview — {summary.error.message}
+        </Alert>
+      )}
 
-          <Grid size={{ xs: 12, md: 5 }}>
-            <Panel title="Manage content" subtitle="Jump into a collection">
-              <Grid container spacing={1.5} sx={{ p: 2.5 }}>
-                {RESOURCES.map((resource) => (
-                  <Grid key={resource.key} size={{ xs: 12, sm: 6 }}>
-                    <ContentTile
-                      resourceKey={resource.key}
-                      label={resource.label}
-                      singular={resource.singular}
-                    />
-                  </Grid>
-                ))}
-              </Grid>
-            </Panel>
-          </Grid>
-        </Grid>
-      </Stack>
+      <DashboardBody
+        data={summary.data}
+        loading={summary.isLoading}
+        isAdmin={user?.role === 'admin'}
+        recent={sortRecent(recentSubmissions.data?.items)}
+        recentLoading={recentSubmissions.isLoading}
+        onFeedback={(message, severity) => setSnackbar({ message, severity })}
+      />
+
+      <Snackbar
+        open={Boolean(snackbar)}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setSnackbar(null)}
+          severity={snackbar?.severity ?? 'success'}
+          variant="filled"
+        >
+          {snackbar?.message}
+        </Alert>
+      </Snackbar>
     </>
   );
 };
