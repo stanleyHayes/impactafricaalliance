@@ -28,7 +28,7 @@ services:
       - key: ADMIN_URL
         value: https://admin.impactafricaalliance.org
       - key: CORS_ORIGINS
-        value: https://impactafricaalliance.org,https://admin.impactafricaalliance.org,https://impactafricaaliance-admin.vercel.app,https://impactafricaaliance.vercel.app
+        value: https://impactafricaalliance.org,https://admin.impactafricaalliance.org,https://impactafricaalliance-admin.vercel.app,https://impactafricaalliance.vercel.app
 
       # ── Database & JWT (secrets — set in the Render dashboard) ────────
       - key: MONGODB_URI
