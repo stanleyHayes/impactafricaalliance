@@ -38,7 +38,12 @@ cp .env.example apps/api/.env
 # 4. Seed the first admin user (reads SEED_ADMIN_* from apps/api/.env)
 npm run seed
 
-# 5. Run the three apps (separate terminals)
+# 5. Recover an existing admin without SEED_ADMIN_PASSWORD (optional)
+cd apps/api
+DOTENV_CONFIG_PATH=.env.production npm run admin:reset -- admin@impactafricaalliance.org
+cd ../..
+
+# 6. Run the three apps (separate terminals)
 npm run dev:api          # http://localhost:4000
 npm run dev:marketing    # http://localhost:5173
 npm run dev:admin        # http://localhost:5174
@@ -68,6 +73,10 @@ The [`render.yaml`](render.yaml) Blueprint provisions a free Node web service:
 (`MONGODB_URI`, `CORS_ORIGINS`, `RESEND_API_KEY`, `CLOUDINARY_*`, `STRIPE_*`, `PAYSTACK_*`,
 `SEED_ADMIN_*`) in the Render dashboard, then run the seed once from a Render shell:
 `npm run seed`.
+
+For account recovery, `npm run admin:reset -w @iaa/api -- <admin-email>` prompts for a new
+password, stores only its bcrypt hash, restores Admin permissions, revokes existing sessions, and
+clears stale MFA state. It does not read `SEED_ADMIN_PASSWORD`.
 
 > Render's free tier sleeps after inactivity; the first request after idle incurs a cold start.
 
