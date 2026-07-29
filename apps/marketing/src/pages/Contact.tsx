@@ -1,13 +1,11 @@
 import { ORG, brandColors } from '@iaa/shared';
 import type { SvgIconComponent } from '@mui/icons-material';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
-import BusinessRoundedIcon from '@mui/icons-material/BusinessRounded';
 import Diversity3RoundedIcon from '@mui/icons-material/Diversity3Rounded';
 import EmailRoundedIcon from '@mui/icons-material/EmailRounded';
 import HandshakeRoundedIcon from '@mui/icons-material/HandshakeRounded';
 import LanguageRoundedIcon from '@mui/icons-material/LanguageRounded';
 import MarkEmailReadRoundedIcon from '@mui/icons-material/MarkEmailReadRounded';
-import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded';
 import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
 import PublicRoundedIcon from '@mui/icons-material/PublicRounded';
 import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded';
@@ -24,12 +22,13 @@ import type { ReactNode } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
 import { MintSurface } from '../components/MintSurface';
+import { PageCta } from '../components/PageCta';
 import { Seo } from '../components/Seo';
 import { SocialLinks } from '../components/SocialLinks';
 import { Watermark } from '../components/Watermark';
 import { IMAGES } from '../content/images';
 import { ContactForm } from '../features/forms/ContactForm';
-import { useHeroImage } from '../lib/content-hooks';
+import { usePageCopy, type PageCopyDefaults } from '../lib/content-hooks';
 
 const REGIONS = ['Ghana', 'Sierra Leone', 'Nigeria'] as const;
 
@@ -69,8 +68,13 @@ const ContactDetail = ({ icon: Icon, label, children }: ContactDetailProps): JSX
   </Stack>
 );
 
-const ContactHero = (): JSX.Element => {
-  const heroImage = useHeroImage('contact', IMAGES.programs['stem-learning']);
+const ContactHero = ({
+  copy,
+  heroImage,
+}: {
+  copy: PageCopyDefaults;
+  heroImage: string;
+}): JSX.Element => {
   return (
     <Box
       component="header"
@@ -130,7 +134,7 @@ const ContactHero = (): JSX.Element => {
               variant="overline"
               sx={{ color: 'secondary.light', fontWeight: 700, letterSpacing: 2 }}
             >
-              Start a conversation
+              {copy.heroEyebrow}
             </Typography>
           </Stack>
           <Typography
@@ -145,7 +149,7 @@ const ContactHero = (): JSX.Element => {
               letterSpacing: '-0.025em',
             }}
           >
-            Let&apos;s build something meaningful together.
+            {copy.heroTitle}
           </Typography>
           <Typography
             sx={{
@@ -156,8 +160,7 @@ const ContactHero = (): JSX.Element => {
               lineHeight: 1.75,
             }}
           >
-            Whether you have a question, an idea, or an opportunity to collaborate, our team is
-            ready to listen.
+            {copy.heroSubtitle}
           </Typography>
         </Grid>
 
@@ -271,12 +274,6 @@ const ContactInformation = (): JSX.Element => (
       </ContactDetail>
       <ContactDetail icon={ScheduleRoundedIcon} label="Response time">
         Within 2 business days
-      </ContactDetail>
-      <ContactDetail icon={PhoneRoundedIcon} label="Phone">
-        {ORG.phone}
-      </ContactDetail>
-      <ContactDetail icon={BusinessRoundedIcon} label="Headquarters">
-        {ORG.headquarters}
       </ContactDetail>
     </Stack>
 
@@ -473,13 +470,19 @@ const EnquiryPaths = (): JSX.Element => (
   </Box>
 );
 
-const Contact = (): JSX.Element => (
+const Contact = (): JSX.Element => {
+  const copy = usePageCopy('contact', {
+    seoTitle: 'Contact Us',
+    seoDescription: "Reach out to Impact Africa Alliance and let's build something impactful together.",
+    heroEyebrow: 'Start a conversation',
+    heroTitle: "Let's build something meaningful together.",
+    heroSubtitle: 'Whether you have a question, an idea, or an opportunity to collaborate, our team is ready to listen.',
+  });
+
+  return (
   <>
-    <Seo
-      title="Contact Us"
-      description="Reach out to Impact Africa Alliance — let's build something impactful together."
-    />
-    <ContactHero />
+    <Seo title={copy.seoTitle} description={copy.seoDescription} />
+    <ContactHero copy={copy} heroImage={copy.heroImageUrl ?? IMAGES.programs['stem-learning']} />
 
     <Box
       component="section"
@@ -527,7 +530,9 @@ const Contact = (): JSX.Element => (
     </Box>
 
     <EnquiryPaths />
+    <PageCta copy={copy} />
   </>
-);
+  );
+};
 
 export default Contact;

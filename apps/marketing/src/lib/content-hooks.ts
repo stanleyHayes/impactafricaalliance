@@ -58,3 +58,46 @@ export const useHeroImage = (pageKey: string, fallback: string): string => {
   const { data } = usePageSetting(pageKey);
   return data?.heroImage?.url ?? fallback;
 };
+
+export interface PageCopyDefaults {
+  seoTitle: string;
+  seoDescription: string;
+  heroEyebrow?: string;
+  heroTitle: string;
+  heroSubtitle: string;
+  introEyebrow?: string;
+  introTitle?: string;
+  introBody?: string;
+  ctaTitle?: string;
+  ctaBody?: string;
+  ctaLabel?: string;
+  ctaUrl?: string;
+}
+
+/** Merge published CMS page copy over stable in-code defaults. */
+export const usePageCopy = (
+  pageKey: string,
+  defaults: PageCopyDefaults,
+): PageCopyDefaults & { heroImageUrl?: string } => {
+  const { data } = usePageSetting(pageKey);
+  const value = (key: keyof PageCopyDefaults): string | undefined => {
+    const candidate = data?.[key];
+    return typeof candidate === 'string' && candidate.trim() ? candidate : defaults[key];
+  };
+
+  return {
+    seoTitle: value('seoTitle') ?? defaults.seoTitle,
+    seoDescription: value('seoDescription') ?? defaults.seoDescription,
+    heroEyebrow: value('heroEyebrow'),
+    heroTitle: value('heroTitle') ?? defaults.heroTitle,
+    heroSubtitle: value('heroSubtitle') ?? defaults.heroSubtitle,
+    introEyebrow: value('introEyebrow'),
+    introTitle: value('introTitle'),
+    introBody: value('introBody'),
+    ctaTitle: value('ctaTitle'),
+    ctaBody: value('ctaBody'),
+    ctaLabel: value('ctaLabel'),
+    ctaUrl: value('ctaUrl'),
+    heroImageUrl: data?.heroImage?.url,
+  };
+};

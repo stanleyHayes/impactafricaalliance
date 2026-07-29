@@ -21,7 +21,7 @@ import { Section } from '../components/Section';
 import { Seo } from '../components/Seo';
 import { CardGridSkeleton } from '../components/skeletons';
 import { IMAGES } from '../content/images';
-import { useEvents, useHeroImage } from '../lib/content-hooks';
+import { useEvents, usePageCopy } from '../lib/content-hooks';
 import {
   formatEventDate,
   formatEventTime,
@@ -168,7 +168,13 @@ const EventsCardList = ({ events }: EventsCardListProps): JSX.Element => {
 type EventView = 'calendar' | 'card';
 
 const Events = (): JSX.Element => {
-  const heroImage = useHeroImage('events', IMAGES.community);
+  const copy = usePageCopy('events', {
+    seoTitle: 'Events',
+    seoDescription: 'Webinars, cohort launches, partner forums and community events from Impact Africa Alliance.',
+    heroEyebrow: 'Events',
+    heroTitle: 'Events across the Alliance',
+    heroSubtitle: 'Webinars, cohort launches, partner forums and community gatherings. Find what’s coming up and look back at where we’ve been.',
+  });
   const { data, isLoading, isError } = useEvents();
   const events = data?.items ?? [];
   const [view, setView] = useState<EventView>('calendar');
@@ -196,16 +202,13 @@ const Events = (): JSX.Element => {
 
   return (
     <>
-      <Seo
-        title="Events"
-        description="Webinars, cohort launches, partner forums and community events from Impact Africa Alliance."
-      />
+      <Seo title={copy.seoTitle} description={copy.seoDescription} />
       <PageHero
-        eyebrow="Events"
-        title="Events across the Alliance"
-        subtitle="Webinars, cohort launches, partner forums and community gatherings — find what’s coming up and look back at where we’ve been."
+        eyebrow={copy.heroEyebrow}
+        title={copy.heroTitle}
+        subtitle={copy.heroSubtitle}
         watermark="africa"
-        image={heroImage}
+        image={copy.heroImageUrl ?? IMAGES.community}
       />
       <Section>
         <Stack direction="row" justifyContent={{ xs: 'flex-start', md: 'flex-end' }} sx={{ mb: 4 }}>

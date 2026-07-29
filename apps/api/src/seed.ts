@@ -23,6 +23,7 @@ import { connectDatabase, disconnectDatabase } from './db/mongoose.js';
 import { PasswordService } from './modules/auth/password.service.js';
 import { ArticleModel } from './modules/content/models/article.model.js';
 import { JobModel } from './modules/content/models/job.model.js';
+import { PageSettingModel } from './modules/content/models/page-setting.model.js';
 import { PartnerModel } from './modules/content/models/partner.model.js';
 import { ReportModel } from './modules/content/models/report.model.js';
 import { ImpactStatModel } from './modules/content/models/stat.model.js';
@@ -38,6 +39,81 @@ const EDITORS = [
   { name: 'Tunde Bello', email: 'tunde.editor@impactafricaalliance.org' },
   { name: 'Lerato Khumalo', email: 'lerato.editor@impactafricaalliance.org' },
 ];
+
+const PAGE_SETTINGS = [
+  {
+    pageKey: 'home',
+    seoTitle: 'Empowering Youth, Women & Communities Across Africa',
+    seoDescription: 'Impact Africa Alliance equips youth, women, and communities across Africa with the skills, tools, and opportunities to build a prosperous and equitable future.',
+    heroEyebrow: 'Impact Africa Alliance',
+    heroTitle: 'Empowering Africa, one community at a time.',
+    heroSubtitle: 'We equip youth, women, and communities with practical skills, trusted partnerships, and opportunities to build a prosperous and equitable future.',
+    introEyebrow: 'What We Do',
+    introTitle: 'Four Transformative Initiatives',
+    introBody: 'One mission: a prosperous, inclusive Africa.',
+  },
+  {
+    pageKey: 'about',
+    seoTitle: 'About Us — Our Mission, Vision & Team',
+    seoDescription: 'Impact Africa Alliance is a purpose-driven, Pan-African organization committed to sustainable development and transformative change across Africa.',
+    heroEyebrow: 'About Impact Africa Alliance',
+    heroTitle: 'Purpose-driven. Pan-African. Built to last.',
+    heroSubtitle: "We equip youth, women, and communities with the skills, partnerships, and opportunities to shape Africa's future from the inside out.",
+  },
+  {
+    pageKey: 'our-work',
+    seoTitle: 'Our Programs — Digital Skills, STEM, Climate, Women Empowerment',
+    seoDescription: 'Four flagship initiatives forming an integrated ecosystem of change across Africa.',
+    heroEyebrow: 'What We Do',
+    heroTitle: 'Our Work',
+    heroSubtitle: 'Four flagship initiatives. One transformative mission.',
+    introBody: "IAA's work is organized around four interconnected pillars, each addressing a critical gap in Africa's development landscape.",
+  },
+  {
+    pageKey: 'impact',
+    seoTitle: 'Our Impact — Transforming Lives Across West Africa',
+    seoDescription: "How Impact Africa Alliance contributes to the UN Sustainable Development Goals and the African Union's Agenda 2063.",
+    heroEyebrow: 'Our Reach',
+    heroTitle: 'Our Impact',
+    heroSubtitle: 'Numbers tell part of the story. People tell the rest.',
+  },
+  {
+    pageKey: 'get-involved',
+    seoTitle: 'Get Involved — Partner, Volunteer, or Donate',
+    seoDescription: "There are many ways to be part of Africa's transformation. Partner with us, volunteer, donate, or join our team.",
+    heroEyebrow: 'Take Action',
+    heroTitle: 'Get Involved',
+    heroSubtitle: "There are many ways to be part of Africa's transformation. Find yours.",
+  },
+  {
+    pageKey: 'contact',
+    seoTitle: 'Contact Us',
+    seoDescription: "Reach out to Impact Africa Alliance and let's build something impactful together.",
+    heroEyebrow: 'Start a conversation',
+    heroTitle: "Let's build something meaningful together.",
+    heroSubtitle: 'Whether you have a question, an idea, or an opportunity to collaborate, our team is ready to listen.',
+  },
+  {
+    pageKey: 'resources',
+    seoTitle: 'Resources',
+    seoDescription: 'Explore IAA resources: blog articles, research and reports, media kit, newsletters, and upcoming events.',
+    heroEyebrow: 'Resources',
+    heroTitle: 'Knowledge, stories, and tools for impact.',
+    heroSubtitle: 'Explore our latest thinking, download reports, access media assets, and stay up to date with events across the Alliance.',
+  },
+  {
+    pageKey: 'events',
+    seoTitle: 'Events',
+    seoDescription: 'Webinars, cohort launches, partner forums and community events from Impact Africa Alliance.',
+    heroEyebrow: 'Events',
+    heroTitle: 'Events across the Alliance',
+    heroSubtitle: 'Webinars, cohort launches, partner forums and community gatherings. Find what is coming up and revisit past events.',
+  },
+  ...['news', 'privacy-policy', 'cookie-policy', 'terms-of-use'].map((pageKey) => ({
+    pageKey,
+    status: ContentStatus.Published,
+  })),
+].map((setting) => ({ ...setting, status: ContentStatus.Published }));
 
 const generatePassword = (): string => {
   const bytes = crypto.randomBytes(16);
@@ -403,6 +479,7 @@ const seed = async (): Promise<void> => {
       JobModel.updateOne({ slug: doc.slug }, { $set: doc }, { upsert: true }).exec(),
     );
     await ensure('Impact stats', await ImpactStatModel.countDocuments().exec(), () => ImpactStatModel.create(STATS));
+    await ensure('Page settings', await PageSettingModel.countDocuments().exec(), () => PageSettingModel.create(PAGE_SETTINGS));
     await ensure('Subscribers', await SubscriberModel.countDocuments().exec(), () => SubscriberModel.create(SUBSCRIBERS));
     await ensure('Submissions', await SubmissionModel.countDocuments().exec(), () => SubmissionModel.create(SUBMISSIONS));
 

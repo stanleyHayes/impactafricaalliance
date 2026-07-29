@@ -3,9 +3,8 @@ import type { SvgIconComponent } from '@mui/icons-material';
 import FacebookIcon from '@mui/icons-material/Facebook';
 import InstagramIcon from '@mui/icons-material/Instagram';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
-import WhatsAppIcon from '@mui/icons-material/WhatsApp';
+import MusicNoteRoundedIcon from '@mui/icons-material/MusicNoteRounded';
 import XIcon from '@mui/icons-material/X';
-import YouTubeIcon from '@mui/icons-material/YouTube';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 
@@ -18,8 +17,7 @@ const LINKS: ReadonlyArray<{ label: string; href: string; Icon: SvgIconComponent
   { label: 'Instagram', href: SOCIAL_LINKS.instagram, Icon: InstagramIcon },
   { label: 'X (Twitter)', href: SOCIAL_LINKS.twitter, Icon: XIcon },
   { label: 'Facebook', href: SOCIAL_LINKS.facebook, Icon: FacebookIcon },
-  { label: 'YouTube', href: SOCIAL_LINKS.youtube, Icon: YouTubeIcon },
-  { label: 'WhatsApp', href: SOCIAL_LINKS.whatsapp, Icon: WhatsAppIcon },
+  { label: 'TikTok', href: SOCIAL_LINKS.tiktok, Icon: MusicNoteRoundedIcon },
 ];
 
 /** Row of social icon links; opens each in a new tab with safe rel attributes. */

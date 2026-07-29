@@ -38,14 +38,14 @@ export const PILLARS: readonly PillarDefinition[] = [
     key: 'digital-skills',
     title: 'Digital Skills & Innovation Hub',
     description:
-      'Bridging the gap between education and employment — one digital skill at a time. We train youth in coding, social media, e-commerce, and entrepreneurship.',
+      'Bridging the gap between education and employment, one digital skill at a time. We train youth in coding, social media, e-commerce, and entrepreneurship.',
     path: '/our-work/digital-skills',
   },
   {
     key: 'stem-learning',
     title: 'STEM & Vocational Digital Learning',
     description:
-      'Accessible, market-relevant STEM and vocational training through an engaging online platform. Certified. Practical. Career-connected.',
+      'Accessible, market-relevant STEM and vocational training through an engaging online platform. Certified, practical, and connected to careers.',
     path: '/our-work/stem-learning',
   },
   {
@@ -114,12 +114,11 @@ export const SDG_GOALS: readonly SdgGoal[] = [
 ];
 
 export const SOCIAL_LINKS = {
-  linkedin: 'https://www.linkedin.com/company/impact-africa-alliance',
-  instagram: 'https://www.instagram.com/impactafricaalliance',
-  twitter: 'https://twitter.com/impactafricaall',
-  facebook: 'https://www.facebook.com/impactafricaalliance',
-  youtube: 'https://www.youtube.com/@impactafricaalliance',
-  whatsapp: 'https://wa.me/233000000000',
+  facebook: 'https://www.facebook.com/share/1CaxnPfuFZ/?mibextid=wwXIfr',
+  instagram: 'https://www.instagram.com/impactafricaalliance.global/',
+  linkedin: 'https://www.linkedin.com/company/impact-africa-alliance/',
+  twitter: 'https://x.com/impactafricang',
+  tiktok: 'https://www.tiktok.com/@impact_aa',
 } as const;
 
 export const ORG = {
@@ -129,8 +128,6 @@ export const ORG = {
   email: 'info@impactafricaalliance.org',
   careersEmail: 'careers@impactafricaalliance.org',
   website: 'https://www.impactafricaalliance.org',
-  phone: '+233 [Insert Number]',
-  headquarters: '[Insert Physical Address, Accra, Ghana]',
   description:
     'Impact Africa Alliance equips youth, women, and communities across Africa with the skills, tools, and opportunities to build a prosperous and equitable future.',
 } as const;

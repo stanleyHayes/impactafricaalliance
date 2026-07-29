@@ -38,14 +38,6 @@ const removeRobots = (): void => {
   }
 };
 
-/**
- * Origin used for canonical URLs and the default OG image.
- * Uses the serving origin so previews work on Vercel deployments and the
- * production domain alike, falling back to the org website when unavailable.
- */
-const servingOrigin = (): string =>
-  typeof window === 'undefined' ? ORG.website : window.location.origin;
-
 /** Per-route SEO: title, description, canonical, Open Graph and Twitter Cards. */
 export const Seo = ({
   title,
@@ -56,7 +48,7 @@ export const Seo = ({
   noindex = false,
 }: SeoProps): null => {
   const { pathname } = useLocation();
-  const origin = servingOrigin();
+  const origin = ORG.website;
   const canonicalUrl = `${origin}${pathname === '/' ? '' : pathname}`;
   const resolvedImage = image ?? `${origin}/brand/og-image.png`;
   const fullTitle = `${title} | ${ORG.name}`;

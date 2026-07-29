@@ -19,6 +19,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 
 import { MintSurface } from '../components/MintSurface';
+import { PageCta } from '../components/PageCta';
 import { PageHero } from '../components/PageHero';
 import { Section } from '../components/Section';
 import { Seo } from '../components/Seo';
@@ -27,7 +28,7 @@ import { IMAGES } from '../content/images';
 import { DonateForm } from '../features/donate/DonateForm';
 import { PartnerForm } from '../features/forms/PartnerForm';
 import { VolunteerForm } from '../features/forms/VolunteerForm';
-import { useHeroImage, useJobs } from '../lib/content-hooks';
+import { useJobs, usePageCopy } from '../lib/content-hooks';
 
 const TABS = ['partner', 'volunteer', 'donate', 'careers'] as const;
 type TabKey = (typeof TABS)[number];
@@ -259,19 +260,22 @@ const GetInvolved = (): JSX.Element => {
     }
   }, [hash]);
 
-  const heroImage = useHeroImage('get-involved', IMAGES.programs['climate-action']);
+  const copy = usePageCopy('get-involved', {
+    seoTitle: 'Get Involved — Partner, Volunteer, or Donate',
+    seoDescription: "There are many ways to be part of Africa's transformation. Partner with us, volunteer, donate, or join our team.",
+    heroEyebrow: 'Take Action',
+    heroTitle: 'Get Involved',
+    heroSubtitle: "There are many ways to be part of Africa's transformation. Find yours.",
+  });
 
   return (
     <>
-      <Seo
-        title="Get Involved — Partner, Volunteer, or Donate"
-        description="There are many ways to be part of Africa's transformation. Partner with us, volunteer, donate, or join our team."
-      />
+      <Seo title={copy.seoTitle} description={copy.seoDescription} />
       <PageHero
-        eyebrow="Take Action"
-        title="Get Involved"
-        subtitle="There are many ways to be part of Africa's transformation. Find yours."
-        image={heroImage}
+        eyebrow={copy.heroEyebrow}
+        title={copy.heroTitle}
+        subtitle={copy.heroSubtitle}
+        image={copy.heroImageUrl ?? IMAGES.programs['climate-action']}
         watermark="africa"
       />
 
@@ -381,6 +385,7 @@ const GetInvolved = (): JSX.Element => {
           </Box>
         </Paper>
       </Section>
+      <PageCta copy={copy} />
     </>
   );
 };

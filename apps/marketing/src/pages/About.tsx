@@ -30,13 +30,14 @@ import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import { Link as RouterLink } from 'react-router-dom';
 
+import { PageCta } from '../components/PageCta';
 import { PageHero } from '../components/PageHero';
 import { Section } from '../components/Section';
 import { SectionReveal } from '../components/SectionReveal';
 import { Seo } from '../components/Seo';
 import { CardGridSkeleton, PartnerLogosSkeleton } from '../components/skeletons';
 import { IMAGES } from '../content/images';
-import { useHeroImage, usePartners, useTeam } from '../lib/content-hooks';
+import { usePageCopy, usePartners, useTeam } from '../lib/content-hooks';
 
 const PROOF_POINTS = [
   { value: '5+', label: 'Countries in reach', text: 'A growing West African footprint.' },
@@ -1009,18 +1010,21 @@ const PartnersSection = (): JSX.Element => {
 };
 
 const About = (): JSX.Element => {
-  const heroImage = useHeroImage('about', IMAGES.community);
+  const copy = usePageCopy('about', {
+    seoTitle: 'About Us — Our Mission, Vision & Team',
+    seoDescription: 'Impact Africa Alliance is a purpose-driven, Pan-African organization committed to sustainable development and transformative change across Africa.',
+    heroEyebrow: 'About Impact Africa Alliance',
+    heroTitle: 'Purpose-driven. Pan-African. Built to last.',
+    heroSubtitle: "We equip youth, women, and communities with the skills, partnerships, and opportunities to shape Africa's future from the inside out.",
+  });
   return (
     <>
-      <Seo
-        title="About Us — Our Mission, Vision & Team"
-        description="Impact Africa Alliance is a purpose-driven, Pan-African organization committed to sustainable development and transformative change across Africa."
-      />
+      <Seo title={copy.seoTitle} description={copy.seoDescription} />
       <PageHero
-        eyebrow="About Impact Africa Alliance"
-        title="Purpose-driven. Pan-African. Built to last."
-        subtitle="We equip youth, women, and communities with the skills, partnerships, and opportunities to shape Africa's future from the inside out."
-        image={heroImage}
+        eyebrow={copy.heroEyebrow}
+        title={copy.heroTitle}
+        subtitle={copy.heroSubtitle}
+        image={copy.heroImageUrl ?? IMAGES.community}
       />
       <AboutIntro />
       <VisionMission />
@@ -1030,6 +1034,7 @@ const About = (): JSX.Element => {
       <TeamSection />
       <OrgStructureSection />
       <PartnersSection />
+      <PageCta copy={copy} />
     </>
   );
 };

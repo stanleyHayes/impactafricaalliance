@@ -7,7 +7,9 @@ import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
+import { Markdown } from '../components/Markdown';
 import { Seo } from '../components/Seo';
+import { usePageCopy } from '../lib/content-hooks';
 
 const Section = ({ title, children }: { title: string; children: ReactNode }): JSX.Element => (
   <Box component="section" sx={{ mb: 4.5 }}>
@@ -33,12 +35,17 @@ const List = ({ items }: { items: string[] }): JSX.Element => (
 );
 
 /** Privacy Policy page aligned with Ghana Data Protection Act 2012 (Act 843). */
-const PrivacyPolicy = (): JSX.Element => (
+const PrivacyPolicy = (): JSX.Element => {
+  const copy = usePageCopy('privacy-policy', {
+    seoTitle: 'Privacy Policy',
+    seoDescription: 'Read the Impact Africa Alliance privacy policy to understand how we collect, use, and protect your personal information.',
+    heroTitle: 'Privacy Policy',
+    heroSubtitle: 'Last updated: July 2026',
+  });
+
+  return (
   <>
-    <Seo
-      title="Privacy Policy"
-      description="Read the Impact Africa Alliance privacy policy to understand how we collect, use, and protect your personal information."
-    />
+    <Seo title={copy.seoTitle} description={copy.seoDescription} />
     <Box
       component="header"
       sx={{
@@ -52,15 +59,18 @@ const PrivacyPolicy = (): JSX.Element => (
           variant="h1"
           sx={{ fontSize: { xs: '2.4rem', md: '3.25rem' }, lineHeight: 1.08 }}
         >
-          Privacy Policy
+          {copy.heroTitle}
         </Typography>
         <Typography sx={{ mt: 2, color: 'rgba(255,255,255,0.72)' }}>
-          Last updated: July 2026
+          {copy.heroSubtitle}
         </Typography>
       </Container>
     </Box>
 
     <Container sx={{ py: { xs: 6, md: 8 } }}>
+      {copy.introBody ? (
+        <Markdown>{copy.introBody}</Markdown>
+      ) : (
       <Stack spacing={1}>
         <Body>
           Impact Africa Alliance ({ORG.shortName}) is committed to protecting your privacy. This
@@ -205,8 +215,10 @@ const PrivacyPolicy = (): JSX.Element => (
           </Body>
         </Section>
       </Stack>
+      )}
     </Container>
   </>
-);
+  );
+};
 
 export default PrivacyPolicy;

@@ -27,6 +27,7 @@ import Stack from '@mui/material/Stack';
 import type { GridColDef } from '@mui/x-data-grid';
 
 import { ArticlePreview } from '../components/markdown/ArticlePreview';
+import { PageSettingPreview } from '../components/markdown/PageSettingPreview';
 import { formatUtcDate } from '../lib/date';
 
 import type { ResourceConfig, SelectOption } from './types';
@@ -298,10 +299,11 @@ export const RESOURCES: readonly ResourceConfig[] = [
     label: 'Page Settings',
     singular: 'Page setting',
     icon: <ImageIcon />,
-    description: 'Manage hero banner images for each marketing page.',
+    description: 'Manage SEO, hero, introduction, call-to-action copy, and imagery for static pages.',
     emptyTitle: 'No page settings yet',
-    emptyDescription: 'Add a hero image for each page so the marketing site can swap banners from the dashboard.',
+    emptyDescription: 'Add a page record to manage its public copy, search metadata, calls to action, and hero image.',
     createSchema: pageSettingInputSchema,
+    renderPreview: (values) => <PageSettingPreview values={values} />,
     defaultValues: { pageKey: PAGE_KEYS[0], status: 'draft' },
     fields: [
       {
@@ -311,7 +313,19 @@ export const RESOURCES: readonly ResourceConfig[] = [
         options: PAGE_KEYS.map((key) => ({ value: key, label: key.replace(/-/g, ' ') })),
         wide: true,
       },
+      { name: 'seoTitle', label: 'SEO title', type: 'text', wide: true, helperText: 'Keep this under 60 characters where possible.' },
+      { name: 'seoDescription', label: 'SEO description', type: 'textarea', wide: true, helperText: 'Aim for 150–160 characters.' },
+      { name: 'heroEyebrow', label: 'Hero eyebrow', type: 'text' },
+      { name: 'heroTitle', label: 'Hero title', type: 'text', wide: true },
+      { name: 'heroSubtitle', label: 'Hero subtitle', type: 'textarea', wide: true },
       { name: 'heroImage', label: 'Hero image', type: 'image', wide: true },
+      { name: 'introEyebrow', label: 'Introduction eyebrow', type: 'text' },
+      { name: 'introTitle', label: 'Introduction title', type: 'text', wide: true },
+      { name: 'introBody', label: 'Introduction body', type: 'richtext', wide: true },
+      { name: 'ctaTitle', label: 'Call to action title', type: 'text', wide: true },
+      { name: 'ctaBody', label: 'Call to action body', type: 'textarea', wide: true },
+      { name: 'ctaLabel', label: 'Call to action button', type: 'text' },
+      { name: 'ctaUrl', label: 'Call to action URL', type: 'text' },
       { name: 'status', label: 'Status', type: 'select', options: toOptions(CONTENT_STATUSES) },
     ],
     columns: [

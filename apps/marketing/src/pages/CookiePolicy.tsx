@@ -5,7 +5,9 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
+import { Markdown } from '../components/Markdown';
 import { Seo } from '../components/Seo';
+import { usePageCopy } from '../lib/content-hooks';
 
 const Section = ({ title, children }: { title: string; children: ReactNode }): JSX.Element => (
   <Box component="section" sx={{ mb: 4.5 }}>
@@ -20,12 +22,17 @@ const Body = ({ children }: { children: ReactNode }): JSX.Element => (
   <Typography sx={{ mb: 1.5, color: 'text.secondary', lineHeight: 1.75 }}>{children}</Typography>
 );
 
-const CookiePolicy = (): JSX.Element => (
+const CookiePolicy = (): JSX.Element => {
+  const copy = usePageCopy('cookie-policy', {
+    seoTitle: 'Cookie Policy',
+    seoDescription: 'Learn how Impact Africa Alliance uses cookies and how you can manage your preferences.',
+    heroTitle: 'Cookie Policy',
+    heroSubtitle: 'Last updated: July 2026',
+  });
+
+  return (
   <>
-    <Seo
-      title="Cookie Policy"
-      description="Learn how Impact Africa Alliance uses cookies and how you can manage your preferences."
-    />
+    <Seo title={copy.seoTitle} description={copy.seoDescription} />
     <Box
       component="header"
       sx={{
@@ -39,15 +46,18 @@ const CookiePolicy = (): JSX.Element => (
           variant="h1"
           sx={{ fontSize: { xs: '2.4rem', md: '3.25rem' }, lineHeight: 1.08 }}
         >
-          Cookie Policy
+          {copy.heroTitle}
         </Typography>
         <Typography sx={{ mt: 2, color: 'rgba(255,255,255,0.72)' }}>
-          Last updated: July 2026
+          {copy.heroSubtitle}
         </Typography>
       </Container>
     </Box>
 
     <Container sx={{ py: { xs: 6, md: 8 } }}>
+      {copy.introBody ? (
+        <Markdown>{copy.introBody}</Markdown>
+      ) : (
       <Stack spacing={1}>
         <Body>
           {ORG.shortName} uses cookies and similar technologies to make our website work, understand
@@ -102,8 +112,10 @@ const CookiePolicy = (): JSX.Element => (
           </Body>
         </Section>
       </Stack>
+      )}
     </Container>
   </>
-);
+  );
+};
 
 export default CookiePolicy;

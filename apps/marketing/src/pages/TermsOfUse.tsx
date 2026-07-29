@@ -6,8 +6,9 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
-
+import { Markdown } from '../components/Markdown';
 import { Seo } from '../components/Seo';
+import { usePageCopy } from '../lib/content-hooks';
 
 const Section = ({ title, children }: { title: string; children: ReactNode }): JSX.Element => (
   <Box component="section" sx={{ mb: 4.5 }}>
@@ -23,12 +24,17 @@ const Body = ({ children }: { children: ReactNode }): JSX.Element => (
 );
 
 /** Terms of Use page. */
-const TermsOfUse = (): JSX.Element => (
+const TermsOfUse = (): JSX.Element => {
+  const copy = usePageCopy('terms-of-use', {
+    seoTitle: 'Terms of Use',
+    seoDescription: 'Read the Impact Africa Alliance terms of use governing access to and use of our website and content.',
+    heroTitle: 'Terms of Use',
+    heroSubtitle: 'Last updated: July 2026',
+  });
+
+  return (
   <>
-    <Seo
-      title="Terms of Use"
-      description="Read the Impact Africa Alliance terms of use governing access to and use of our website and content."
-    />
+    <Seo title={copy.seoTitle} description={copy.seoDescription} />
     <Box
       component="header"
       sx={{
@@ -42,15 +48,18 @@ const TermsOfUse = (): JSX.Element => (
           variant="h1"
           sx={{ fontSize: { xs: '2.4rem', md: '3.25rem' }, lineHeight: 1.08 }}
         >
-          Terms of Use
+          {copy.heroTitle}
         </Typography>
         <Typography sx={{ mt: 2, color: 'rgba(255,255,255,0.72)' }}>
-          Last updated: July 2026
+          {copy.heroSubtitle}
         </Typography>
       </Container>
     </Box>
 
     <Container sx={{ py: { xs: 6, md: 8 } }}>
+      {copy.introBody ? (
+        <Markdown>{copy.introBody}</Markdown>
+      ) : (
       <Stack spacing={1}>
         <Body>
           Welcome to the Impact Africa Alliance website. By accessing or using this website, you
@@ -129,8 +138,10 @@ const TermsOfUse = (): JSX.Element => (
           </Body>
         </Section>
       </Stack>
+      )}
     </Container>
   </>
-);
+  );
+};
 
 export default TermsOfUse;

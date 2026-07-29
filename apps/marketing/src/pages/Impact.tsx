@@ -29,13 +29,14 @@ import { Link as RouterLink } from 'react-router-dom';
 
 import { AnimatedCounter } from '../components/AnimatedCounter';
 import { MintSurface } from '../components/MintSurface';
+import { PageCta } from '../components/PageCta';
 import { PageHero } from '../components/PageHero';
 import { Section } from '../components/Section';
 import { SectionReveal } from '../components/SectionReveal';
 import { Seo } from '../components/Seo';
 import { Watermark } from '../components/Watermark';
 import { IMAGES } from '../content/images';
-import { useHeroImage, useImpactStats, useReports } from '../lib/content-hooks';
+import { useImpactStats, usePageCopy, useReports } from '../lib/content-hooks';
 import { getStatIcon } from '../lib/stat-icons';
 
 /** Official UN SDG brand colours, used to make the goal grid recognisable. */
@@ -322,18 +323,20 @@ export const ImpactNumbersSection = (): JSX.Element => {
   const [featuredStat, ...supportingStats] = stats;
 
   return (
-    <MintSurface
+    <Box
       component="section"
       aria-labelledby="impact-numbers-title"
       sx={{
         position: 'relative',
         overflow: 'hidden',
+        bgcolor: '#E8F5EE',
+        color: brandColors.forestGreen,
         py: { xs: 8, md: 12 },
         '&::before': {
           position: 'absolute',
           inset: 0,
           background:
-            `radial-gradient(circle at 82% 16%, ${alpha(brandColors.gold, 0.16)}, transparent 24%), radial-gradient(circle at 8% 88%, rgba(46,125,79,0.55), transparent 32%)`,
+            `radial-gradient(circle at 82% 16%, ${alpha(brandColors.gold, 0.12)}, transparent 24%), radial-gradient(circle at 8% 88%, rgba(46,125,79,0.12), transparent 32%)`,
           content: '""',
         },
         '&::after': {
@@ -343,7 +346,7 @@ export const ImpactNumbersSection = (): JSX.Element => {
           width: { xs: 210, md: 460 },
           height: '100%',
           backgroundImage:
-            'linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)',
+            'linear-gradient(rgba(14,42,34,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(14,42,34,0.035) 1px, transparent 1px)',
           backgroundSize: '44px 44px',
           content: '""',
           maskImage: 'linear-gradient(to left, black, transparent)',
@@ -357,7 +360,7 @@ export const ImpactNumbersSection = (): JSX.Element => {
               <Box sx={{ width: 36, height: 2, bgcolor: 'secondary.main' }} />
               <Typography
                 variant="overline"
-                sx={{ color: 'secondary.light', fontWeight: 700, letterSpacing: 2 }}
+                sx={{ color: brandColors.forestGreen, fontWeight: 700, letterSpacing: 2 }}
               >
                 Measured progress
               </Typography>
@@ -368,7 +371,7 @@ export const ImpactNumbersSection = (): JSX.Element => {
               sx={{
                 mt: 1.5,
                 maxWidth: 760,
-                color: 'common.white',
+                color: brandColors.forestGreen,
                 fontSize: { xs: '2.25rem', md: '3.5rem' },
                 lineHeight: 1.08,
               }}
@@ -379,7 +382,7 @@ export const ImpactNumbersSection = (): JSX.Element => {
               sx={{
                 maxWidth: 670,
                 mt: 2,
-                color: 'rgba(255,255,255,0.7)',
+                color: alpha(brandColors.forestGreen, 0.72),
                 fontSize: { xs: '1rem', md: '1.08rem' },
               }}
             >
@@ -410,7 +413,7 @@ export const ImpactNumbersSection = (): JSX.Element => {
                   placeItems: 'center',
                   borderRadius: '50%',
                   bgcolor: alpha(brandColors.gold, 0.14),
-                  color: 'secondary.light',
+                  color: brandColors.forestGreen,
                 }}
               >
                 <InsightsRoundedIcon fontSize="small" />
@@ -419,7 +422,7 @@ export const ImpactNumbersSection = (): JSX.Element => {
                 <Typography sx={{ fontSize: '0.78rem', fontWeight: 700, letterSpacing: 0.8 }}>
                   IMPACT SNAPSHOT
                 </Typography>
-                <Typography sx={{ mt: 0.25, color: 'rgba(255,255,255,0.58)', fontSize: '0.78rem' }}>
+                <Typography sx={{ mt: 0.25, color: alpha(brandColors.forestGreen, 0.62), fontSize: '0.78rem' }}>
                   Current programme reach
                 </Typography>
               </Box>
@@ -458,7 +461,7 @@ export const ImpactNumbersSection = (): JSX.Element => {
           direction={{ xs: 'column', sm: 'row' }}
           alignItems={{ xs: 'flex-start', sm: 'center' }}
           spacing={1.25}
-          sx={{ mt: 4.5, color: 'rgba(14,42,34,0.56)' }}
+          sx={{ mt: 4.5, color: alpha(brandColors.forestGreen, 0.62) }}
         >
           <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: 'secondary.main' }} />
           <Typography variant="caption" sx={{ letterSpacing: 0.2 }}>
@@ -466,7 +469,7 @@ export const ImpactNumbersSection = (): JSX.Element => {
           </Typography>
         </Stack>
       </Container>
-    </MintSurface>
+    </Box>
   );
 };
 
@@ -1199,24 +1202,28 @@ export const ReportsSection = (): JSX.Element => {
 };
 
 const Impact = (): JSX.Element => {
-  const heroImage = useHeroImage('impact', IMAGES.programs['women-empowerment']);
+  const copy = usePageCopy('impact', {
+    seoTitle: 'Our Impact — Transforming Lives Across West Africa',
+    seoDescription: "How Impact Africa Alliance contributes to the UN Sustainable Development Goals and the African Union's Agenda 2063.",
+    heroEyebrow: 'Our Reach',
+    heroTitle: 'Our Impact',
+    heroSubtitle: 'Numbers tell part of the story. People tell the rest.',
+  });
   return (
     <>
-      <Seo
-        title="Our Impact — Transforming Lives Across West Africa"
-        description="How Impact Africa Alliance contributes to the UN Sustainable Development Goals and the African Union's Agenda 2063."
-      />
+      <Seo title={copy.seoTitle} description={copy.seoDescription} />
       <PageHero
-        eyebrow="Our Reach"
-        title="Our Impact"
-        subtitle="Numbers tell part of the story. People tell the rest."
-        image={heroImage}
+        eyebrow={copy.heroEyebrow}
+        title={copy.heroTitle}
+        subtitle={copy.heroSubtitle}
+        image={copy.heroImageUrl ?? IMAGES.programs['women-empowerment']}
       />
     <ImpactNumbersSection />
     <SdgSection />
     <AgendaSection />
     <VoicesBand />
     <ReportsSection />
+    <PageCta copy={copy} />
   </>
   );
 };

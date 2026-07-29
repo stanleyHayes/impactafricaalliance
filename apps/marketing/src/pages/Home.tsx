@@ -16,17 +16,19 @@ import Stack from '@mui/material/Stack';
 import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import { m } from 'framer-motion';
+import { useEffect, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
 import { AnimatedCounter } from '../components/AnimatedCounter';
 import { ArticleCard, PillarCard } from '../components/cards';
+import { PageCta } from '../components/PageCta';
 import { Section } from '../components/Section';
 import { SectionReveal } from '../components/SectionReveal';
 import { Seo } from '../components/Seo';
 import { CardGridSkeleton } from '../components/skeletons';
 import { Watermark } from '../components/Watermark';
 import { IMAGES } from '../content/images';
-import { useArticles, useHeroImage, useImpactStats, useStories } from '../lib/content-hooks';
+import { useArticles, useImpactStats, usePageCopy, useStories, type PageCopyDefaults } from '../lib/content-hooks';
 import { getStatIcon } from '../lib/stat-icons';
 
 const HERO_MODEL = [
@@ -47,8 +49,30 @@ const HERO_MODEL = [
   },
 ] as const;
 
-const Hero = (): JSX.Element => {
-  const heroImage = useHeroImage('home', IMAGES.hero);
+const HERO_STORY = [
+  { image: IMAGES.hero, position: 'center', label: 'Youth building practical digital skills' },
+  { image: IMAGES.programs['digital-skills'], position: 'center', label: 'Digital skills for work and enterprise' },
+  { image: IMAGES.programs['stem-learning'], position: 'center', label: 'Accessible STEM learning across communities' },
+  { image: IMAGES.programs['climate-action'], position: 'center', label: 'Local leadership for climate action' },
+  { image: IMAGES.programs['women-empowerment'], position: 'center', label: 'Women leading economic change' },
+] as const;
+
+const Hero = ({ copy, heroImage }: { copy: PageCopyDefaults; heroImage: string }): JSX.Element => {
+  const [activeSlide, setActiveSlide] = useState(0);
+
+  useEffect(() => {
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reducedMotion) return undefined;
+    const timer = window.setInterval(() => {
+      setActiveSlide((current) => (current + 1) % HERO_STORY.length);
+    }, 5200);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const story = HERO_STORY.map((slide, index) =>
+    index === 0 ? { ...slide, image: heroImage } : slide,
+  );
+
   return (
     <Box
       component="header"
@@ -60,16 +84,28 @@ const Hero = (): JSX.Element => {
         color: 'common.white',
       }}
     >
-      <Box
-        sx={{
-          position: 'absolute',
-          inset: 0,
-          backgroundImage: `url(${heroImage})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        transform: 'scale(1.025)',
-      }}
-    />
+      {story.map((slide, index) => (
+        <Box
+          key={slide.image}
+          role="img"
+          aria-label={index === activeSlide ? slide.label : undefined}
+          aria-hidden={index !== activeSlide}
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            backgroundImage: `url(${slide.image})`,
+            backgroundPosition: slide.position,
+            backgroundSize: 'cover',
+            opacity: index === activeSlide ? 1 : 0,
+            transform: index === activeSlide ? 'scale(1.04)' : 'scale(1)',
+            transition: 'opacity 1.1s ease, transform 7s ease',
+            '@media (prefers-reduced-motion: reduce)': {
+              transition: 'none',
+              transform: 'none',
+            },
+          }}
+        />
+      ))}
     <Box
       sx={{
         position: 'absolute',
@@ -115,7 +151,7 @@ const Hero = (): JSX.Element => {
                 variant="overline"
                 sx={{ color: 'secondary.light', fontWeight: 750, letterSpacing: 2 }}
               >
-                Impact Africa Alliance
+                {copy.heroEyebrow}
               </Typography>
             </Stack>
             <Typography
@@ -127,7 +163,7 @@ const Hero = (): JSX.Element => {
                 lineHeight: 1.02,
               }}
             >
-              Empowering Africa, one community at a time.
+              {copy.heroTitle}
             </Typography>
             <Typography
               sx={{
@@ -138,8 +174,7 @@ const Hero = (): JSX.Element => {
                 lineHeight: 1.75,
               }}
             >
-              We equip youth, women, and communities with practical skills, trusted partnerships,
-              and opportunities to build a prosperous and equitable future.
+              {copy.heroSubtitle}
             </Typography>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 4 }}>
               <Button
@@ -168,6 +203,29 @@ const Hero = (): JSX.Element => {
               >
                 Partner With Us
               </Button>
+            </Stack>
+            <Stack direction="row" spacing={1} sx={{ mt: 4 }} aria-label="Featured impact stories">
+              {story.map((slide, index) => (
+                <Box
+                  component="button"
+                  key={slide.label}
+                  type="button"
+                  onClick={() => setActiveSlide(index)}
+                  aria-label={`Show story ${index + 1}: ${slide.label}`}
+                  aria-current={index === activeSlide ? 'true' : undefined}
+                  sx={{
+                    width: index === activeSlide ? 34 : 9,
+                    height: 9,
+                    p: 0,
+                    border: 0,
+                    borderRadius: 99,
+                    bgcolor: index === activeSlide ? 'secondary.main' : 'rgba(255,255,255,0.48)',
+                    cursor: 'pointer',
+                    transition: 'width 240ms ease, background-color 240ms ease',
+                    '&:focus-visible': { outline: '2px solid white', outlineOffset: 3 },
+                  }}
+                />
+              ))}
             </Stack>
           </Box>
         </Grid>
@@ -942,11 +1000,11 @@ const VisionQuote = (): JSX.Element => (
             lineHeight: 1.5,
           }}
         >
-          “Africa’s greatest resource is its people. When we invest in their potential, we don’t
-          just change individual lives — we change the trajectory of an entire continent.”
+          “Africa’s greatest resource is its people. When we invest in their potential, we change
+          individual lives and the trajectory of an entire continent.”
         </Typography>
         <Typography sx={{ textAlign: 'center', mt: 3, color: 'primary.main', fontWeight: 700 }}>
-          — Emmanuel Bansay, Co-Founder, {ORG.name}
+          Emmanuel Mbansi, Co-Founder, {ORG.name}
         </Typography>
         <Typography
           sx={{
@@ -959,43 +1017,54 @@ const VisionQuote = (): JSX.Element => (
           }}
         >
           Impact Africa Alliance was founded by a generation of young African leaders who refused to
-          wait for change — and decided to be it.
+          wait for change and decided to be it.
         </Typography>
       </SectionReveal>
     </Container>
   </Box>
 );
 
-const Home = (): JSX.Element => (
-  <>
-    <Seo
-      title="Empowering Youth, Women & Communities Across Africa"
-      description="Impact Africa Alliance equips youth, women, and communities across Africa with the skills, tools, and opportunities to build a prosperous and equitable future."
-    />
-    <Hero />
-    <MissionStrip />
-    <HomeImpactSection />
-    <Section
-      eyebrow="What We Do"
-      title="Four Transformative Initiatives"
-      subtitle="One mission: a prosperous, inclusive Africa."
-      textAlign="center"
-      bgcolor="background.default"
-    >
-      <Grid container spacing={3}>
-        {PILLARS.map((pillar) => (
-          <Grid key={pillar.key} size={{ xs: 12, sm: 6, md: 3 }} sx={{ display: 'flex' }}>
-            <SectionReveal fillHeight>
-              <PillarCard pillar={pillar} />
-            </SectionReveal>
-          </Grid>
-        ))}
-      </Grid>
-    </Section>
-    <VisionQuote />
-    <StoriesSection />
-    <NewsSection />
-  </>
-);
+const Home = (): JSX.Element => {
+  const copy = usePageCopy('home', {
+    seoTitle: 'Empowering Youth, Women & Communities Across Africa',
+    seoDescription: 'Impact Africa Alliance equips youth, women, and communities across Africa with the skills, tools, and opportunities to build a prosperous and equitable future.',
+    heroEyebrow: 'Impact Africa Alliance',
+    heroTitle: 'Empowering Africa, one community at a time.',
+    heroSubtitle: 'We equip youth, women, and communities with practical skills, trusted partnerships, and opportunities to build a prosperous and equitable future.',
+    introEyebrow: 'What We Do',
+    introTitle: 'Four Transformative Initiatives',
+    introBody: 'One mission: a prosperous, inclusive Africa.',
+  });
+
+  return (
+    <>
+      <Seo title={copy.seoTitle} description={copy.seoDescription} />
+      <Hero copy={copy} heroImage={copy.heroImageUrl ?? IMAGES.hero} />
+      <MissionStrip />
+      <HomeImpactSection />
+      <Section
+        eyebrow={copy.introEyebrow}
+        title={copy.introTitle}
+        subtitle={copy.introBody}
+        textAlign="center"
+        bgcolor="background.default"
+      >
+        <Grid container spacing={3}>
+          {PILLARS.map((pillar) => (
+            <Grid key={pillar.key} size={{ xs: 12, sm: 6, md: 3 }} sx={{ display: 'flex' }}>
+              <SectionReveal fillHeight>
+                <PillarCard pillar={pillar} />
+              </SectionReveal>
+            </Grid>
+          ))}
+        </Grid>
+      </Section>
+      <VisionQuote />
+      <StoriesSection />
+      <NewsSection />
+      <PageCta copy={copy} />
+    </>
+  );
+};
 
 export default Home;

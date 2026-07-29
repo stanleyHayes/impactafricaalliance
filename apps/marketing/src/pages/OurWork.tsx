@@ -7,6 +7,7 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { Link as RouterLink } from 'react-router-dom';
 
+import { PageCta } from '../components/PageCta';
 import { PageHero } from '../components/PageHero';
 import { Section } from '../components/Section';
 import { SectionReveal } from '../components/SectionReveal';
@@ -14,7 +15,7 @@ import { Seo } from '../components/Seo';
 import { programIcon } from '../content/icons';
 import { IMAGES, programImage } from '../content/images';
 import { PROGRAMS, type ProgramContent } from '../content/programs';
-import { useHeroImage } from '../lib/content-hooks';
+import { usePageCopy } from '../lib/content-hooks';
 
 const ProgramFeature = ({ program, index }: { program: ProgramContent; index: number }): JSX.Element => {
   const Icon = programIcon(program.slug);
@@ -69,21 +70,27 @@ const ProgramFeature = ({ program, index }: { program: ProgramContent; index: nu
 };
 
 const OurWork = (): JSX.Element => {
-  const heroImage = useHeroImage('our-work', IMAGES.programs['digital-skills']);
+  const copy = usePageCopy('our-work', {
+    seoTitle: 'Our Programs — Digital Skills, STEM, Climate, Women Empowerment',
+    seoDescription: 'Four flagship initiatives forming an integrated ecosystem of change across Africa.',
+    heroEyebrow: 'What We Do',
+    heroTitle: 'Our Work',
+    heroSubtitle: 'Four flagship initiatives. One transformative mission.',
+    introBody: "IAA's work is organized around four interconnected pillars, each addressing a critical gap in Africa's development landscape. Together, they form an integrated ecosystem of change.",
+  });
   return (
     <>
-      <Seo
-        title="Our Programs — Digital Skills, STEM, Climate, Women Empowerment"
-        description="Four flagship initiatives forming an integrated ecosystem of change across Africa."
-      />
+      <Seo title={copy.seoTitle} description={copy.seoDescription} />
       <PageHero
-        eyebrow="What We Do"
-        title="Our Work"
-        subtitle="Four flagship initiatives. One transformative mission."
-        image={heroImage}
+        eyebrow={copy.heroEyebrow}
+        title={copy.heroTitle}
+        subtitle={copy.heroSubtitle}
+        image={copy.heroImageUrl ?? IMAGES.programs['digital-skills']}
       />
     <Section
-      subtitle="IAA's work is organized around four interconnected pillars — each addressing a critical gap in Africa's development landscape. Together, they form an integrated ecosystem of change."
+      eyebrow={copy.introEyebrow}
+      title={copy.introTitle}
+      subtitle={copy.introBody}
       watermark="africa"
       watermarkPosition="center"
     >
@@ -93,6 +100,7 @@ const OurWork = (): JSX.Element => {
         ))}
       </Stack>
     </Section>
+    <PageCta copy={copy} />
   </>
   );
 };

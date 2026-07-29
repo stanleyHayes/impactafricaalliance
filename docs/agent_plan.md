@@ -236,3 +236,44 @@ Upgrade-driven code adaptations worth noting: Express 5 makes `req.query`/`req.p
 params); Mongoose 9 removed the public `FilterQuery` export (replaced by `common/mongo-types.ts`);
 React 19 dropped the global `JSX` namespace (restored per-app via `react-jsx.d.ts`) and `useRef`
 now requires an initial argument.
+
+---
+
+## 13. Stakeholder website review updates (29 July 2026)
+
+Source: `Impact Africa Alliance Website Updates.pdf`
+
+- ✅ Homepage hero now tells a five-image impact story with timed crossfades, manual controls, and
+  reduced-motion support. It uses the existing optimized image catalogue and remains compatible
+  with the CMS-managed primary hero image.
+- ⏳ Newly requested photography was not included with the review PDF. The animated story is ready
+  for direct asset replacement when the approved files are supplied.
+- ✅ Corrected the co-founder attribution to “Emmanuel Mbansi, Co-Founder, Impact Africa Alliance.”
+- ✅ Revised prominent marketing copy to replace unnecessary dash-heavy sentence construction.
+- ✅ Replaced stale social destinations with the supplied Facebook, Instagram, LinkedIn, X, and
+  TikTok links; removed unconfirmed YouTube and WhatsApp destinations.
+- ✅ Reworked the Impact page’s “By the Numbers” band to the recommended soft green `#E8F5EE`.
+- ✅ Kept the primary description at 159 characters and aligned canonical, Open Graph, Twitter Card,
+  and Organization schema URLs to `https://www.impactafricaalliance.org`.
+- ✅ Removed public phone and headquarters placeholders until verified information is supplied.
+- ✅ Verified marketing tests, typecheck, lint, and production build.
+
+---
+
+## 14. Static-page CMS expansion (29 July 2026)
+
+- ✅ Expanded Page Settings from an image-only resource into a reusable page-content editor for
+  Home, About, Our Work, Impact, Get Involved, Contact, News, Resources, Events, Privacy Policy,
+  Cookie Policy, and Terms of Use.
+- ✅ Added editable SEO title/description, hero eyebrow/title/subtitle/image, introduction
+  eyebrow/title/Markdown body, and call-to-action title/body/button/URL fields.
+- ✅ Kept short structural content as constrained inputs and routed long-form content through the
+  existing Markdown editor with formatting toolbar, AI assist, and Write/Preview modes.
+- ✅ Added a full Page Settings preview showing the composed hero, Markdown body, and CTA before
+  publishing.
+- ✅ Wired published page settings into the marketing routes with stable in-code fallbacks so a
+  missing or draft CMS record cannot blank a public page.
+- ✅ Legal pages accept a complete CMS-authored Markdown document and fall back to the reviewed
+  compiled policy when no published document exists.
+- ✅ Added optional reusable CMS CTA bands to the primary static marketing pages.
+- ✅ Added idempotent published page-setting seed records for the expanded routes.

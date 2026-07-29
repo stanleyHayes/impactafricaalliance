@@ -13,9 +13,11 @@ import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import { Link as RouterLink } from 'react-router-dom';
 
+import { PageCta } from '../components/PageCta';
 import { Section } from '../components/Section';
 import { SectionReveal } from '../components/SectionReveal';
 import { Seo } from '../components/Seo';
+import { usePageCopy } from '../lib/content-hooks';
 
 const RESOURCE_CARDS = [
   {
@@ -111,12 +113,18 @@ const ResourceCard = ({
 };
 
 /** Resources hub: blog, reports, media kit, newsletters, and events. */
-const Resources = (): JSX.Element => (
+const Resources = (): JSX.Element => {
+  const copy = usePageCopy('resources', {
+    seoTitle: 'Resources',
+    seoDescription: 'Explore IAA resources: blog articles, research and reports, media kit, newsletters, and upcoming events.',
+    heroEyebrow: 'Resources',
+    heroTitle: 'Knowledge, stories, and tools for impact.',
+    heroSubtitle: 'Explore our latest thinking, download reports, access media assets, and stay up to date with events across the Alliance.',
+  });
+
+  return (
   <>
-    <Seo
-      title="Resources"
-      description="Explore IAA resources: blog articles, research and reports, media kit, newsletters, and upcoming events."
-    />
+    <Seo title={copy.seoTitle} description={copy.seoDescription} />
     <Box
       component="header"
       sx={{
@@ -146,7 +154,7 @@ const Resources = (): JSX.Element => (
             variant="overline"
             sx={{ color: 'primary.main', fontWeight: 750, letterSpacing: 2 }}
           >
-            Resources
+            {copy.heroEyebrow}
           </Typography>
         </Stack>
         <Typography
@@ -157,7 +165,7 @@ const Resources = (): JSX.Element => (
             lineHeight: 1.05,
           }}
         >
-          Knowledge, stories, and tools for impact.
+          {copy.heroTitle}
         </Typography>
         <Typography
           sx={{
@@ -168,8 +176,7 @@ const Resources = (): JSX.Element => (
             lineHeight: 1.75,
           }}
         >
-          Explore our latest thinking, download reports, access media assets, and stay up to date
-          with events across the Alliance.
+          {copy.heroSubtitle}
         </Typography>
       </Container>
     </Box>
@@ -185,7 +192,9 @@ const Resources = (): JSX.Element => (
         ))}
       </Grid>
     </Section>
+    <PageCta copy={copy} />
   </>
-);
+  );
+};
 
 export default Resources;

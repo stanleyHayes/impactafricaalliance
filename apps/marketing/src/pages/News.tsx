@@ -11,7 +11,7 @@ import { PageHero } from '../components/PageHero';
 import { Section } from '../components/Section';
 import { Seo } from '../components/Seo';
 import { IMAGES } from '../content/images';
-import { useArticles, useHeroImage } from '../lib/content-hooks';
+import { useArticles, usePageCopy } from '../lib/content-hooks';
 
 const NewsSkeleton = (): JSX.Element => (
   <Stack spacing={6}>
@@ -68,7 +68,13 @@ const NewsMessage = ({ children }: { children: string }): JSX.Element => (
 );
 
 const News = (): JSX.Element => {
-  const heroImage = useHeroImage('news', IMAGES.community);
+  const copy = usePageCopy('news', {
+    seoTitle: 'News & Stories',
+    seoDescription: "Updates, stories, and insights from Impact Africa Alliance's work across the continent.",
+    heroEyebrow: 'News & Insights',
+    heroTitle: 'From the Frontlines',
+    heroSubtitle: 'Updates, stories, and insights from our work across the continent.',
+  });
   const { data, isLoading, isError } = useArticles();
   const articles = data?.items ?? [];
 
@@ -140,15 +146,12 @@ const News = (): JSX.Element => {
 
   return (
     <>
-      <Seo
-        title="News & Stories"
-        description="Updates, stories, and insights from Impact Africa Alliance's work across the continent."
-      />
+      <Seo title={copy.seoTitle} description={copy.seoDescription} />
       <PageHero
-        eyebrow="News & Insights"
-        title="From the Frontlines"
-        subtitle="Updates, stories, and insights from our work across the continent."
-        image={heroImage}
+        eyebrow={copy.heroEyebrow}
+        title={copy.heroTitle}
+        subtitle={copy.heroSubtitle}
+        image={copy.heroImageUrl ?? IMAGES.community}
       />
       <Section watermark="radar" watermarkPosition="bottom-right">{renderArticles()}</Section>
     </>
