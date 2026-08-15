@@ -8,6 +8,7 @@ export * from './partner.js';
 export * from './report.js';
 export * from './job.js';
 export * from './event.js';
+export * from './gallery.js';
 export * from './stat.js';
 export * from './submission.js';
 export * from './payment.js';

@@ -2,6 +2,7 @@ import { UserRole, type PublicUser } from '@iaa/shared';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import AutoStoriesIcon from '@mui/icons-material/AutoStories';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import CollectionsIcon from '@mui/icons-material/Collections';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import Diversity3Icon from '@mui/icons-material/Diversity3';
 import GroupsIcon from '@mui/icons-material/Groups';
@@ -44,6 +45,7 @@ const CONTENT_ICONS: Record<string, JSX.Element> = {
   partners: <HandshakeIcon />,
   reports: <AssessmentIcon />,
   jobs: <WorkOutlineIcon />,
+  gallery: <CollectionsIcon />,
   stats: <InsightsIcon />,
 };
 

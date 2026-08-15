@@ -49,11 +49,11 @@ export const PILLARS: readonly PillarDefinition[] = [
     path: '/our-work/stem-learning',
   },
   {
-    key: 'climate-action',
-    title: 'Climate Action & Renewable Energy',
+    key: 'youth-inclusion',
+    title: 'Youth Inclusion & Ready for Work',
     description:
-      'Mobilizing communities and youth to fight climate change through clean energy, climate-smart farming, and land restoration programs.',
-    path: '/our-work/climate-action',
+      'Preparing young people for the world of work through employability training, mentorship, and structured pathways into jobs, apprenticeships, and enterprise.',
+    path: '/our-work/youth-inclusion',
   },
   {
     key: 'women-empowerment',
@@ -82,14 +82,9 @@ export const SDG_GOALS: readonly SdgGoal[] = [
     contribution: "Women's empowerment program, digital entrepreneurship, mentorship",
   },
   {
-    number: 7,
-    title: 'Clean Energy',
-    contribution: 'Community solar, wind, and biogas installations',
-  },
-  {
     number: 8,
     title: 'Decent Work & Growth',
-    contribution: 'Job placement, startup incubation, apprenticeships',
+    contribution: 'Ready for Work training, job placement, apprenticeships, startup incubation',
   },
   {
     number: 9,
@@ -99,12 +94,13 @@ export const SDG_GOALS: readonly SdgGoal[] = [
   {
     number: 10,
     title: 'Reduced Inequalities',
-    contribution: 'Focus on marginalized communities, gender-inclusive programming',
+    contribution:
+      'Youth inclusion pathways, focus on marginalized communities, gender-inclusive programming',
   },
   {
     number: 13,
     title: 'Climate Action',
-    contribution: 'Reforestation, climate-smart agriculture, youth climate advocacy',
+    contribution: 'Green-skills modules and youth climate advocacy within our training programmes',
   },
   {
     number: 17,

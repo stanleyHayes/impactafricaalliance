@@ -1,5 +1,10 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { siteSettingUpdateSchema, type SiteSettingUpdate } from '@iaa/shared';
+import {
+  siteSettingUpdateSchema,
+  type SiteSetting,
+  type SiteSettingUpdate,
+  type SiteSettingUpdateInput,
+} from '@iaa/shared';
 import PublicIcon from '@mui/icons-material/Public';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
@@ -41,14 +46,16 @@ const getPath = (object: unknown, path: string): unknown =>
   }, object);
 
 interface FormTextFieldProps {
-  name: keyof SiteSettingUpdate | `socials.${keyof NonNullable<SiteSettingUpdate['socials']>}`;
+  name:
+    | keyof SiteSettingUpdateInput
+    | `socials.${keyof NonNullable<SiteSettingUpdateInput['socials']>}`;
   label: string;
   type?: string;
   helperText?: string;
 }
 
 const FormTextField = ({ name, label, type = 'text', helperText }: FormTextFieldProps): JSX.Element => {
-  const { register, formState } = useFormContext<SiteSettingUpdate>();
+  const { register, formState } = useFormContext<SiteSettingUpdateInput>();
   const error = getPath(formState.errors, name) as { message?: string } | undefined;
 
   return (
@@ -56,7 +63,7 @@ const FormTextField = ({ name, label, type = 'text', helperText }: FormTextField
       label={label}
       type={type}
       fullWidth
-      {...register(name as keyof SiteSettingUpdate)}
+      {...register(name as keyof SiteSettingUpdateInput)}
       error={Boolean(error)}
       helperText={error?.message ?? helperText}
     />
@@ -75,7 +82,23 @@ const ContactSection = (): JSX.Element => (
     <FormTextField name="contactEmail" label="Contact email" type="email" />
     <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
       <FormTextField name="contactPhone" label="Phone" />
-      <FormTextField name="alternatePhone" label="Alternate phone" />
+      <FormTextField
+        name="whatsappPhone"
+        label="WhatsApp"
+        helperText="Leave blank to reuse the phone number above."
+      />
+    </Stack>
+    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+      <FormTextField
+        name="alternatePhone"
+        label="Alternate phone"
+        helperText="Second office line, e.g. the Nigeria number."
+      />
+      <FormTextField
+        name="alternatePhoneLabel"
+        label="Alternate phone label"
+        helperText='Shown as the heading, e.g. "Nigeria".'
+      />
     </Stack>
   </Section>
 );
@@ -92,6 +115,11 @@ const LocationSection = (): JSX.Element => (
       <FormTextField name="postalCode" label="Postal code" />
       <FormTextField name="country" label="Country" />
     </Stack>
+    <FormTextField
+      name="regionalPresence"
+      label="Regional presence"
+      helperText="Comma-separated countries shown as chips on the Contact page, e.g. Nigeria, Sierra Leone"
+    />
     <FormTextField
       name="mapUrl"
       label="Map URL"
@@ -112,19 +140,34 @@ const SocialSection = (): JSX.Element => (
   </Section>
 );
 
+const SOCIAL_KEYS = ['facebook', 'x', 'instagram', 'linkedin', 'youtube', 'tiktok'] as const;
+
+/**
+ * Map a saved record onto the form's edit shape: every field becomes a
+ * controlled string, and `regionalPresence` flattens to comma-separated text
+ * (the zod schema parses it back to an array on submit).
+ */
+const toFormValues = (data: SiteSetting): SiteSettingUpdateInput => ({
+  ...data,
+  regionalPresence: (data.regionalPresence ?? []).join(', '),
+  socials: Object.fromEntries(SOCIAL_KEYS.map((key) => [key, data.socials?.[key] ?? ''])),
+});
+
 const SiteSettings = (): JSX.Element => {
   const { data, isLoading } = useSiteSettings();
   const update = useUpdateSiteSettings();
   const [success, setSuccess] = useState(false);
 
-  const form = useForm<SiteSettingUpdate>({
+  const form = useForm<SiteSettingUpdateInput, unknown, SiteSettingUpdate>({
     resolver: zodResolver(siteSettingUpdateSchema),
     defaultValues: {
       siteName: '',
       tagline: '',
       contactEmail: '',
       contactPhone: '',
+      whatsappPhone: '',
       alternatePhone: '',
+      alternatePhoneLabel: '',
       addressLine1: '',
       addressLine2: '',
       city: '',
@@ -145,17 +188,7 @@ const SiteSettings = (): JSX.Element => {
 
   useEffect(() => {
     if (data) {
-      form.reset({
-        ...data,
-        socials: {
-          facebook: data.socials?.facebook ?? '',
-          x: data.socials?.x ?? '',
-          instagram: data.socials?.instagram ?? '',
-          linkedin: data.socials?.linkedin ?? '',
-          youtube: data.socials?.youtube ?? '',
-          tiktok: data.socials?.tiktok ?? '',
-        },
-      });
+      form.reset(toFormValues(data));
     }
   }, [data, form]);
 

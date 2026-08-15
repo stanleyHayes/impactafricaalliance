@@ -37,17 +37,33 @@ import { SectionReveal } from '../components/SectionReveal';
 import { Seo } from '../components/Seo';
 import { CardGridSkeleton, PartnerLogosSkeleton } from '../components/skeletons';
 import { IMAGES } from '../content/images';
-import { usePageCopy, usePartners, useTeam } from '../lib/content-hooks';
+import { useImpactStats, usePageCopy, usePartners, useTeam } from '../lib/content-hooks';
 
-const PROOF_POINTS = [
-  { value: '5+', label: 'Countries in reach', text: 'A growing West African footprint.' },
-  {
-    value: '4',
-    label: 'Flagship programs',
-    text: 'Skills, STEM, climate, and women-led enterprise.',
-  },
-  { value: '1,000+', label: 'Lives impacted', text: 'Training, mentorship, and community action.' },
-] as const;
+interface ProofPoint {
+  value: string;
+  label: string;
+  text: string;
+}
+
+/** Short descriptor shown under each proof point, matched on the stat's label. */
+const PROOF_BLURBS: readonly (readonly [RegExp, string])[] = [
+  [/\b(countr(y|ies)|nations?|regions?)\b/i, 'A growing West African footprint.'],
+  [/\b(women|woman|girls?)\b/i, 'Training, mentorship, and enterprise support.'],
+  [/\b(youth|young|students?|learners?)\b/i, 'Skills, mentorship, and pathways into work.'],
+  [/\b(programs?|programmes?|initiatives?)\b/i, 'Flagship initiatives across the alliance.'],
+  [/\b(partners?|allies)\b/i, 'Multi-sector collaboration across the continent.'],
+];
+
+const blurbFor = (label: string): string =>
+  PROOF_BLURBS.find(([pattern]) => pattern.test(label))?.[1] ??
+  'Measured progress across our programmes.';
+
+/** Shown only until the CMS impact stats load. Keep in step with the CMS values. */
+const FALLBACK_PROOF_POINTS: readonly ProofPoint[] = [
+  { value: '3+', label: 'Countries reached', text: 'A growing West African footprint.' },
+  { value: '500+', label: 'Women', text: 'Training, mentorship, and enterprise support.' },
+  { value: '200+', label: 'Youth', text: 'Skills, mentorship, and pathways into work.' },
+];
 
 const DISCIPLINES: ReadonlyArray<{ label: string; icon: SvgIconComponent }> = [
   { label: 'Technology', icon: CodeRoundedIcon },
@@ -144,7 +160,17 @@ const STRUCTURE_LEVELS = [
   },
 ] as const;
 
-const AboutIntro = (): JSX.Element => (
+const AboutIntro = (): JSX.Element => {
+  const { data } = useImpactStats();
+  const proofPoints: readonly ProofPoint[] = data?.items.length
+    ? data.items.slice(0, 3).map((stat) => ({
+        value: `${stat.value.toLocaleString()}${stat.suffix}`,
+        label: stat.label,
+        text: blurbFor(stat.label),
+      }))
+    : FALLBACK_PROOF_POINTS;
+
+  return (
   <Section bgcolor="background.default">
     <Grid container spacing={{ xs: 4, md: 6 }} sx={{ alignItems: 'stretch' }}>
       <Grid size={{ xs: 12, md: 7 }}>
@@ -239,7 +265,7 @@ const AboutIntro = (): JSX.Element => (
     </Grid>
 
     <Grid container spacing={2.5} sx={{ mt: { xs: 4, md: 6 } }}>
-      {PROOF_POINTS.map((item, index) => (
+      {proofPoints.map((item, index) => (
         <Grid key={item.label} size={{ xs: 12, md: 4 }}>
           <SectionReveal delay={index * 0.06}>
             <Box
@@ -272,7 +298,8 @@ const AboutIntro = (): JSX.Element => (
       ))}
     </Grid>
   </Section>
-);
+  );
+};
 
 const DirectionCard = ({
   eyebrow,
@@ -443,8 +470,7 @@ const PurposeSection = (): JSX.Element => (
                 </Typography>
                 <Typography sx={{ mt: 1, color: 'rgba(255,255,255,0.72)', lineHeight: 1.75 }}>
                   The alliance contributes directly to priority global goals through education,
-                  gender equity, clean energy, decent work, innovation, inclusion, climate action,
-                  and partnerships.
+                  gender equity, decent work, innovation, youth inclusion, and partnerships.
                 </Typography>
                 <Grid container spacing={1.25} sx={{ mt: 3 }}>
                   {SDG_GOALS.map((goal) => (

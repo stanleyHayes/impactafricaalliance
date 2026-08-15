@@ -275,7 +275,7 @@ const GetInvolved = (): JSX.Element => {
         eyebrow={copy.heroEyebrow}
         title={copy.heroTitle}
         subtitle={copy.heroSubtitle}
-        image={copy.heroImageUrl ?? IMAGES.programs['climate-action']}
+        image={copy.heroImageUrl ?? IMAGES.programs['youth-inclusion']}
         watermark="africa"
       />
 

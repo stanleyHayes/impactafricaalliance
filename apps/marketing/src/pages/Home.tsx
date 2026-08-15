@@ -53,7 +53,7 @@ const HERO_STORY = [
   { image: IMAGES.hero, position: 'center', label: 'Youth building practical digital skills' },
   { image: IMAGES.programs['digital-skills'], position: 'center', label: 'Digital skills for work and enterprise' },
   { image: IMAGES.programs['stem-learning'], position: 'center', label: 'Accessible STEM learning across communities' },
-  { image: IMAGES.programs['climate-action'], position: 'center', label: 'Local leadership for climate action' },
+  { image: IMAGES.programs['youth-inclusion'], position: 'center', label: 'Young people ready for work' },
   { image: IMAGES.programs['women-empowerment'], position: 'center', label: 'Women leading economic change' },
 ] as const;
 
@@ -349,7 +349,7 @@ const MissionStrip = (): JSX.Element => (
 );
 
 const HomeImpactMetric = ({ stat, index }: { stat: ImpactStat; index: number }): JSX.Element => {
-  const Icon = getStatIcon(stat.key);
+  const Icon = getStatIcon(stat.key, stat.label);
 
   return (
     <Box

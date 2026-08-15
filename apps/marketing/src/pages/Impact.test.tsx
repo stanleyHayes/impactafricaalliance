@@ -1,4 +1,4 @@
-import type { ImpactStat, Paginated, Report } from '@iaa/shared';
+import { SDG_GOALS, type ImpactStat, type Paginated, type Report } from '@iaa/shared';
 import { screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -146,9 +146,9 @@ describe('SdgSection', () => {
       screen.getByRole('heading', { name: 'UN Sustainable Development Goals' }),
     ).toBeInTheDocument();
     expect(screen.getByText('priority goals advanced')).toBeInTheDocument();
-    expect(screen.getAllByRole('article')).toHaveLength(8);
+    expect(screen.getAllByRole('article')).toHaveLength(SDG_GOALS.length);
     expect(screen.getByRole('heading', { name: 'Quality Education' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Climate Action' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Decent Work & Growth' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Partnerships' })).toBeInTheDocument();
   });
 });

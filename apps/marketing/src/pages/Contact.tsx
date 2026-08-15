@@ -1,14 +1,17 @@
-import { ORG, brandColors } from '@iaa/shared';
+import { ORG, brandColors, type SiteSetting } from '@iaa/shared';
 import type { SvgIconComponent } from '@mui/icons-material';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
+import BusinessRoundedIcon from '@mui/icons-material/BusinessRounded';
 import Diversity3RoundedIcon from '@mui/icons-material/Diversity3Rounded';
 import EmailRoundedIcon from '@mui/icons-material/EmailRounded';
 import HandshakeRoundedIcon from '@mui/icons-material/HandshakeRounded';
 import LanguageRoundedIcon from '@mui/icons-material/LanguageRounded';
 import MarkEmailReadRoundedIcon from '@mui/icons-material/MarkEmailReadRounded';
+import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded';
 import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
 import PublicRoundedIcon from '@mui/icons-material/PublicRounded';
 import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded';
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import Container from '@mui/material/Container';
@@ -28,9 +31,15 @@ import { SocialLinks } from '../components/SocialLinks';
 import { Watermark } from '../components/Watermark';
 import { IMAGES } from '../content/images';
 import { ContactForm } from '../features/forms/ContactForm';
-import { usePageCopy, type PageCopyDefaults } from '../lib/content-hooks';
+import { usePageCopy, useSiteSettings, type PageCopyDefaults } from '../lib/content-hooks';
 
-const REGIONS = ['Ghana', 'Sierra Leone', 'Nigeria'] as const;
+/** Used only until Site Settings loads, or if a field has not been filled in yet. */
+const FALLBACK_REGIONS = ['Nigeria', 'Sierra Leone'] as const;
+const FALLBACK_HEAD_OFFICE = 'Atlantic Tower Airport City, Accra — Ghana';
+
+/** `+233 50 661 9598` → `233506619598`, the form wa.me expects. */
+const toWhatsAppHref = (phone: string): string =>
+  `https://wa.me/${phone.replace(/[^\d]/g, '')}`;
 
 interface ContactDetailProps {
   icon: SvgIconComponent;
@@ -213,94 +222,160 @@ const ContactHero = ({
   );
 };
 
-const ContactInformation = (): JSX.Element => (
-  <MintSurface
-    sx={{
-      position: 'relative',
-      height: '100%',
-      overflow: 'hidden',
-      p: { xs: 3.5, md: 5 },
-      borderRadius: 4,
-      '&::after': {
-        position: 'absolute',
-        right: -100,
-        bottom: -120,
-        width: 270,
-        height: 270,
-        border: `1px solid ${alpha(brandColors.gold, 0.16)}`,
-        borderRadius: '50%',
-        content: '""',
-      },
-    }}
-  >
-    <Typography
-      variant="overline"
-      sx={{ color: 'rgba(14,42,34,0.58)', fontWeight: 700, letterSpacing: 1.6 }}
+interface ResolvedContact {
+  email: string;
+  whatsapp?: string;
+  headOffice: string;
+  regions: readonly string[];
+}
+
+/** Merge CMS site settings over the static defaults the site ships with. */
+const resolveContact = (site: SiteSetting | undefined): ResolvedContact => {
+  if (!site) {
+    return { email: ORG.email, headOffice: FALLBACK_HEAD_OFFICE, regions: FALLBACK_REGIONS };
+  }
+  const street = [site.addressLine1, site.addressLine2, site.city].filter(Boolean).join(', ');
+  return {
+    email: site.contactEmail,
+    whatsapp: site.whatsappPhone ?? site.contactPhone,
+    headOffice: site.country ? `${street} — ${site.country}` : street,
+    regions: site.regionalPresence?.length ? site.regionalPresence : FALLBACK_REGIONS,
+  };
+};
+
+const ContactInformation = (): JSX.Element => {
+  const { data: site } = useSiteSettings();
+  const { email, whatsapp, headOffice, regions } = resolveContact(site);
+
+  return (
+    <MintSurface
+      sx={{
+        position: 'relative',
+        height: '100%',
+        overflow: 'hidden',
+        p: { xs: 3.5, md: 5 },
+        borderRadius: 4,
+        '&::after': {
+          position: 'absolute',
+          right: -100,
+          bottom: -120,
+          width: 270,
+          height: 270,
+          border: `1px solid ${alpha(brandColors.gold, 0.16)}`,
+          borderRadius: '50%',
+          content: '""',
+        },
+      }}
     >
-      Contact details
-    </Typography>
-    <Typography
-      variant="h3"
-      sx={{ mt: 1, fontSize: { xs: '1.8rem', md: '2.3rem' } }}
-    >
-      We&apos;re closer than you think.
-    </Typography>
-    <Typography sx={{ maxWidth: 410, mt: 1.5, color: 'rgba(14,42,34,0.68)' }}>
-      Reach our team directly or use the form and we&apos;ll route your message to the right person.
-    </Typography>
-
-    <Stack spacing={3.25} sx={{ position: 'relative', zIndex: 1, mt: 4.5 }}>
-      <ContactDetail icon={EmailRoundedIcon} label="Email">
-        <Link
-          href={`mailto:${ORG.email}`}
-          sx={{
-            fontWeight: 650,
-            textDecorationColor: 'rgba(14,42,34,0.35)',
-            overflowWrap: 'anywhere',
-          }}
-        >
-          {ORG.email}
-        </Link>
-      </ContactDetail>
-      <ContactDetail icon={LanguageRoundedIcon} label="Website">
-        <Link
-          href={ORG.website}
-          target="_blank"
-          rel="noopener noreferrer"
-          sx={{ textDecorationColor: 'rgba(14,42,34,0.35)' }}
-        >
-          impactafricaalliance.org
-        </Link>
-      </ContactDetail>
-      <ContactDetail icon={ScheduleRoundedIcon} label="Response time">
-        Within 2 business days
-      </ContactDetail>
-    </Stack>
-
-    <Divider sx={{ my: 4 }} />
-
-    <Stack direction="row" spacing={1.2} alignItems="center">
-      <PlaceRoundedIcon sx={{ fontSize: 20 }} />
-      <Typography sx={{ fontWeight: 700 }}>Regional presence</Typography>
-    </Stack>
-    <Stack direction="row" useFlexGap flexWrap="wrap" gap={1} sx={{ mt: 2 }}>
-      {REGIONS.map((region) => (
-        <Chip
-          key={region}
-          label={region}
-          size="small"
-        />
-      ))}
-    </Stack>
-
-    <Box sx={{ position: 'relative', zIndex: 1, mt: 4 }}>
-      <Typography sx={{ mb: 1.2, color: 'rgba(14,42,34,0.64)', fontSize: '0.82rem' }}>
-        Follow the journey
+      <Typography
+        variant="overline"
+        sx={{ color: 'rgba(14,42,34,0.58)', fontWeight: 700, letterSpacing: 1.6 }}
+      >
+        Contact details
       </Typography>
-      <SocialLinks color="inherit" />
-    </Box>
-  </MintSurface>
-);
+      <Typography
+        variant="h3"
+        sx={{ mt: 1, fontSize: { xs: '1.8rem', md: '2.3rem' } }}
+      >
+        We&apos;re closer than you think.
+      </Typography>
+      <Typography sx={{ maxWidth: 410, mt: 1.5, color: 'rgba(14,42,34,0.68)' }}>
+        Reach our team directly or use the form and we&apos;ll route your message to the right
+        person.
+      </Typography>
+
+      <Stack spacing={3.25} sx={{ position: 'relative', zIndex: 1, mt: 4.5 }}>
+        {whatsapp && (
+          <ContactDetail icon={WhatsAppIcon} label="WhatsApp">
+            <Link
+              href={toWhatsAppHref(whatsapp)}
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{
+                fontWeight: 650,
+                textDecorationColor: 'rgba(14,42,34,0.35)',
+                overflowWrap: 'anywhere',
+              }}
+            >
+              {whatsapp}
+            </Link>
+          </ContactDetail>
+        )}
+        {site?.alternatePhone && (
+          <ContactDetail
+            icon={PhoneRoundedIcon}
+            label={site.alternatePhoneLabel ?? 'Alternate phone'}
+          >
+            <Link
+              href={`tel:${site.alternatePhone.replace(/\s/g, '')}`}
+              sx={{ fontWeight: 650, textDecorationColor: 'rgba(14,42,34,0.35)' }}
+            >
+              {site.alternatePhone}
+            </Link>
+          </ContactDetail>
+        )}
+        <ContactDetail icon={BusinessRoundedIcon} label="Head office">
+          {site?.mapUrl ? (
+            <Link
+              href={site.mapUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{ textDecorationColor: 'rgba(14,42,34,0.35)' }}
+            >
+              {headOffice}
+            </Link>
+          ) : (
+            headOffice
+          )}
+        </ContactDetail>
+        <ContactDetail icon={EmailRoundedIcon} label="Email">
+          <Link
+            href={`mailto:${email}`}
+            sx={{
+              fontWeight: 650,
+              textDecorationColor: 'rgba(14,42,34,0.35)',
+              overflowWrap: 'anywhere',
+            }}
+          >
+            {email}
+          </Link>
+        </ContactDetail>
+        <ContactDetail icon={LanguageRoundedIcon} label="Website">
+          <Link
+            href={ORG.website}
+            target="_blank"
+            rel="noopener noreferrer"
+            sx={{ textDecorationColor: 'rgba(14,42,34,0.35)' }}
+          >
+            impactafricaalliance.org
+          </Link>
+        </ContactDetail>
+        <ContactDetail icon={ScheduleRoundedIcon} label="Response time">
+          Within 2 business days
+        </ContactDetail>
+      </Stack>
+
+      <Divider sx={{ my: 4 }} />
+
+      <Stack direction="row" spacing={1.2} alignItems="center">
+        <PlaceRoundedIcon sx={{ fontSize: 20 }} />
+        <Typography sx={{ fontWeight: 700 }}>Regional presence</Typography>
+      </Stack>
+      <Stack direction="row" useFlexGap flexWrap="wrap" gap={1} sx={{ mt: 2 }}>
+        {regions.map((region) => (
+          <Chip key={region} label={region} size="small" />
+        ))}
+      </Stack>
+
+      <Box sx={{ position: 'relative', zIndex: 1, mt: 4 }}>
+        <Typography sx={{ mb: 1.2, color: 'rgba(14,42,34,0.64)', fontSize: '0.82rem' }}>
+          Follow the journey
+        </Typography>
+        <SocialLinks color="inherit" />
+      </Box>
+    </MintSurface>
+  );
+};
 
 interface EnquiryPathProps {
   icon: SvgIconComponent;

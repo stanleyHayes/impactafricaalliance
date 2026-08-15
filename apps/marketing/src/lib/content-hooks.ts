@@ -1,12 +1,14 @@
 import type {
   Article,
   Event,
+  GalleryItem,
   ImpactStat,
   Job,
   PageSetting,
   Paginated,
   Partner,
   Report,
+  SiteSetting,
   Story,
   TeamMember,
 } from '@iaa/shared';
@@ -46,6 +48,22 @@ export const useEvents = (): UseQueryResult<Paginated<Event>> =>
 
 export const useImpactStats = (): UseQueryResult<Paginated<ImpactStat>> =>
   useQuery({ queryKey: ['stats'], queryFn: () => page<ImpactStat>('stats', '?pageSize=20') });
+
+/** Published programme photography, newest programmes first. */
+export const useGallery = (): UseQueryResult<Paginated<GalleryItem>> =>
+  useQuery({ queryKey: ['gallery'], queryFn: () => page<GalleryItem>('gallery', '?pageSize=40') });
+
+/**
+ * Organisation contact details managed from the admin dashboard. Consumers
+ * fall back to the static `ORG` constants while this is loading or unset, so
+ * the site never renders an empty contact block.
+ */
+export const useSiteSettings = (): UseQueryResult<SiteSetting> =>
+  useQuery({
+    queryKey: ['site-settings'],
+    queryFn: () => apiGet<SiteSetting>('/site-settings'),
+    staleTime: 5 * 60 * 1000,
+  });
 
 export const usePageSetting = (pageKey: string): UseQueryResult<PageSetting> =>
   useQuery({

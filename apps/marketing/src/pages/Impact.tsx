@@ -31,6 +31,7 @@ import { AnimatedCounter } from '../components/AnimatedCounter';
 import { MintSurface } from '../components/MintSurface';
 import { PageCta } from '../components/PageCta';
 import { PageHero } from '../components/PageHero';
+import { ProgrammeGallery } from '../components/ProgrammeGallery';
 import { Section } from '../components/Section';
 import { SectionReveal } from '../components/SectionReveal';
 import { Seo } from '../components/Seo';
@@ -203,7 +204,7 @@ const METRIC_STYLES = {
 } as const;
 
 const ImpactMetric = ({ stat, index, featured = false }: ImpactMetricProps): JSX.Element => {
-  const Icon = getStatIcon(stat.key);
+  const Icon = getStatIcon(stat.key, stat.label);
   const styles = METRIC_STYLES[featured ? 'featured' : 'supporting'];
 
   return (
@@ -677,7 +678,7 @@ export const SdgSection = (): JSX.Element => (
             }}
           >
             Our programmes connect local action to a global framework, advancing education,
-            equality, decent work, innovation, climate resilience, and partnership.
+            equality, decent work, innovation, youth inclusion, and partnership.
           </Typography>
         </Grid>
 
@@ -1219,6 +1220,7 @@ const Impact = (): JSX.Element => {
         image={copy.heroImageUrl ?? IMAGES.programs['women-empowerment']}
       />
     <ImpactNumbersSection />
+    <ProgrammeGallery />
     <SdgSection />
     <AgendaSection />
     <VoicesBand />

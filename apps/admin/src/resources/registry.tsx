@@ -5,6 +5,7 @@ import {
   TEAM_TIERS,
   type MediaAsset,
   articleInputSchema,
+  galleryItemInputSchema,
   impactStatInputSchema,
   jobInputSchema,
   pageSettingInputSchema,
@@ -15,6 +16,7 @@ import {
 } from '@iaa/shared';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import AutoStoriesIcon from '@mui/icons-material/AutoStories';
+import CollectionsIcon from '@mui/icons-material/Collections';
 import Diversity3Icon from '@mui/icons-material/Diversity3';
 import HandshakeIcon from '@mui/icons-material/Handshake';
 import ImageIcon from '@mui/icons-material/Image';
@@ -270,6 +272,43 @@ export const RESOURCES: readonly ResourceConfig[] = [
       { field: 'location', headerName: 'Location', width: 160 },
       { field: 'type', headerName: 'Type', width: 130 },
       statusColumn,
+    ],
+  },
+  {
+    key: 'gallery',
+    label: 'Programme Gallery',
+    singular: 'Gallery photo',
+    icon: <CollectionsIcon />,
+    description:
+      'Photography from recent programmes and events, shown in the Impact Programme snapshot.',
+    emptyTitle: 'No programme photos yet',
+    emptyDescription:
+      'Upload shots from your most recent programme or festival. Published photos appear in the Impact Programme snapshot on the public site.',
+    createSchema: galleryItemInputSchema,
+    defaultValues: { status: 'draft', featured: false, order: 0, programme: '' },
+    fields: [
+      { name: 'image', label: 'Photo', type: 'image', wide: true },
+      { name: 'title', label: 'Title', type: 'text', wide: true },
+      {
+        name: 'programme',
+        label: 'Programme / event',
+        type: 'text',
+        helperText: 'Groups the photo on the public site, e.g. "Accra Impact Festival".',
+      },
+      { name: 'location', label: 'Location', type: 'text' },
+      { name: 'caption', label: 'Caption', type: 'textarea', wide: true },
+      { name: 'capturedOn', label: 'Date taken', type: 'datetime' },
+      { name: 'status', label: 'Status', type: 'select', options: toOptions(CONTENT_STATUSES) },
+      { name: 'featured', label: 'Feature (shown large)', type: 'switch' },
+      { name: 'order', label: 'Order', type: 'number' },
+    ],
+    columns: [
+      mediaColumn('image'),
+      { field: 'title', headerName: 'Title', flex: 1, minWidth: 200 },
+      { field: 'programme', headerName: 'Programme', flex: 1, minWidth: 180 },
+      dateColumn('capturedOn', 'Taken'),
+      statusColumn,
+      booleanColumn('featured', 'Featured'),
     ],
   },
   {

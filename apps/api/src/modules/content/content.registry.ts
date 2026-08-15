@@ -3,6 +3,8 @@ import {
   articleUpdateSchema,
   eventInputSchema,
   eventUpdateSchema,
+  galleryItemInputSchema,
+  galleryItemUpdateSchema,
   impactStatInputSchema,
   impactStatUpdateSchema,
   jobInputSchema,
@@ -26,6 +28,7 @@ import { SocialPublisher } from '../../providers/social/social-publisher.js';
 import { ArticlePublishingService } from './article-publishing.service.js';
 import { ArticleModel } from './models/article.model.js';
 import { EventModel } from './models/event.model.js';
+import { GalleryItemModel } from './models/gallery.model.js';
 import { JobModel } from './models/job.model.js';
 import { PageSettingModel } from './models/page-setting.model.js';
 import { PartnerModel } from './models/partner.model.js';
@@ -112,6 +115,16 @@ export const buildContentModules = (container: DependencyContainer): MountedCont
       model: EventModel,
       schemas: { create: eventInputSchema, update: eventUpdateSchema },
       defaultSort: { startAt: -1 },
+    },
+    container,
+  ),
+  mountContentModule(
+    {
+      path: 'gallery',
+      resource: 'Gallery item',
+      model: GalleryItemModel,
+      schemas: { create: galleryItemInputSchema, update: galleryItemUpdateSchema },
+      defaultSort: { order: 1, capturedOn: -1, createdAt: -1 },
     },
     container,
   ),

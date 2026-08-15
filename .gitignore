@@ -37,3 +37,9 @@ npm-debug.log*
 
 # Local docx originals are tracked; extracted media is not regenerated in CI
 tools/.mongo-uri
+
+# Raven agent scratch (session cache + local audit trail). Any versioned Raven
+# config (manifest.json, architecture.md) is deliberately NOT ignored here.
+.raven/.cache/
+.raven/.model-session.json
+.raven/audit/

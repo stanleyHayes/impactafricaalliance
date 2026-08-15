@@ -47,19 +47,20 @@ export const PROGRAMS: readonly ProgramContent[] = [
     goal: "To reduce the skills gap between African graduates and employer needs, creating a talent pipeline that supports Africa's industrialization agenda and contributes to SDG 4 and SDG 9.",
   },
   {
-    slug: 'climate-action',
+    slug: 'youth-inclusion',
     initiative: 'Initiative 03',
-    title: 'Community-Based Climate Action & Renewable Energy',
-    descriptor: 'Empowering African communities to lead the climate response from the ground up.',
+    title: 'Youth Inclusion & Ready for Work',
+    descriptor:
+      'Closing the gap between leaving school and landing work, so no young person is left on the sidelines.',
     challenge:
-      'Africa contributes less than 4% of global carbon emissions, yet its communities face some of the most devastating impacts of climate change, including droughts, floods, food insecurity, and displacement. Local action must be accelerated.',
+      'Africa adds millions of young people to its workforce every year, yet most arrive without the workplace readiness employers screen for: communication, teamwork, digital fluency, and the confidence to navigate a first job. Young women, rural youth, and young people with disabilities are excluded first and hardest.',
     whatWeDo: [
-      'Climate-smart agriculture training and demonstration projects for smallholder farmers',
-      'Renewable energy installations, including solar, wind, and biogas, for underserved communities',
-      'Reforestation and land restoration programs led by youth volunteers',
-      'Community-driven environmental awareness campaigns and youth climate advocacy',
+      'Ready for Work training in employability, communication, teamwork, and workplace confidence',
+      'Career guidance, CV and interview coaching, and one-to-one mentorship from working professionals',
+      'Internship, apprenticeship, and graduate placement pathways built with employer partners',
+      'Deliberate inclusion of young women, rural youth, and young people with disabilities in every cohort',
     ],
-    goal: 'To equip communities with clean energy access, resilient food systems, and a generation of young African climate champions while advancing SDG 7, SDG 13, and SDG 15.',
+    goal: 'To move young Africans from education into decent, dignified work through a structured Ready for Work pathway, and to make inclusion the default rather than the exception, advancing SDG 4, SDG 8, and SDG 10.',
   },
   {
     slug: 'women-empowerment',
