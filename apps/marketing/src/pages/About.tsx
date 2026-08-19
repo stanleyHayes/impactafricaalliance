@@ -17,7 +17,6 @@ import TrackChangesRoundedIcon from '@mui/icons-material/TrackChangesRounded';
 import VerifiedRoundedIcon from '@mui/icons-material/VerifiedRounded';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import VolunteerActivismRoundedIcon from '@mui/icons-material/VolunteerActivismRounded';
-import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
@@ -782,77 +781,180 @@ const TeamEmptyState = (): JSX.Element => (
   </Card>
 );
 
-const TeamMemberCard = ({ member }: { member: TeamMember }): JSX.Element => (
-  <Card
-    sx={{
-      width: '100%',
-      height: '100%',
-      overflow: 'hidden',
-      border: '1px solid rgba(0,30,20,0.1)',
-      borderRadius: 4,
-      boxShadow: 'none',
-      transition: 'transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease',
-      '&:hover': {
-        borderColor: 'rgba(0,30,20,0.28)',
-        boxShadow: '0 24px 54px -46px rgba(18,66,42,0.78)',
-        transform: 'translateY(-4px)',
-      },
-    }}
-  >
-    <CardContent sx={{ p: { xs: 3, md: 3.5 } }}>
-      <Stack direction="row" spacing={2.25} alignItems="center">
-        <Avatar
-          src={member.photo?.url}
-          alt={member.name}
-          sx={{
-            width: 88,
-            height: 88,
-            flexShrink: 0,
-            bgcolor: 'primary.main',
-            color: 'primary.contrastText',
-            fontSize: '1.8rem',
-            fontWeight: 850,
-            boxShadow: `0 0 0 4px ${brandColors.offWhite}, 0 0 0 6px ${brandColors.goldAmber}`,
-          }}
-        >
-          {member.name.charAt(0)}
-        </Avatar>
-        <Box sx={{ minWidth: 0, flexGrow: 1 }}>
-          <Typography variant="h6" sx={{ lineHeight: 1.2 }}>
-            {member.name}
-          </Typography>
-          <Typography sx={{ mt: 0.5, color: 'text.secondary', fontSize: '0.9rem', fontWeight: 750 }}>
-            {member.role}
-          </Typography>
-          {member.linkedInUrl && (
-            <IconButton
-              component="a"
-              href={member.linkedInUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`${member.name} on LinkedIn`}
-              size="small"
+const TEAM_TIER_LABELS: Record<TeamMember['tier'], string> = {
+  leadership: 'Leadership',
+  advisory: 'Advisory Board',
+  country: 'Country Team',
+};
+
+const memberInitials = (name: string): string =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join('');
+
+const TeamMemberCard = ({ member }: { member: TeamMember }): JSX.Element => {
+  const isLeadership = member.tier === 'leadership';
+
+  return (
+    <Card
+      sx={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        border: `1px solid ${alpha(brandColors.deepForest, 0.1)}`,
+        borderRadius: 4,
+        boxShadow: 'none',
+        transition: 'transform 260ms ease, border-color 260ms ease, box-shadow 260ms ease',
+        '&:hover': {
+          borderColor: alpha(brandColors.deepForest, 0.26),
+          boxShadow: '0 28px 60px -44px rgba(14,42,34,0.65)',
+          transform: 'translateY(-5px)',
+          '& .team-card-photo': { transform: 'scale(1.05)' },
+          '& .team-card-bar': { transform: 'scaleX(1)' },
+        },
+      }}
+    >
+      <Box
+        sx={{
+          position: 'relative',
+          aspectRatio: '4 / 5',
+          overflow: 'hidden',
+          bgcolor: brandColors.deepForest,
+        }}
+      >
+        {member.photo?.url ? (
+          <Box
+            className="team-card-photo"
+            component="img"
+            src={member.photo.url}
+            alt={member.name}
+            loading="lazy"
+            sx={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              transition: 'transform 600ms cubic-bezier(0.22, 1, 0.36, 1)',
+            }}
+          />
+        ) : (
+          <Box
+            sx={{
+              position: 'absolute',
+              inset: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: `radial-gradient(circle at 30% 20%, ${alpha(brandColors.forest, 0.85)}, ${brandColors.deepForest})`,
+            }}
+          >
+            <Typography
               sx={{
-                mt: 1,
-                ml: -0.5,
-                color: 'text.secondary',
-                bgcolor: 'rgba(0,30,20,0.06)',
-                '&:hover': { bgcolor: 'rgba(0,30,20,0.12)', color: 'primary.main' },
+                fontSize: '3.75rem',
+                fontWeight: 850,
+                letterSpacing: 2,
+                color: alpha(brandColors.gold, 0.9),
               }}
             >
-              <LinkedInIcon fontSize="small" />
-            </IconButton>
-          )}
-        </Box>
-      </Stack>
-      {member.bio && (
-        <Typography color="text.secondary" sx={{ mt: 2.5, lineHeight: 1.75 }}>
-          {member.bio}
+              {memberInitials(member.name)}
+            </Typography>
+          </Box>
+        )}
+        <Chip
+          label={TEAM_TIER_LABELS[member.tier]}
+          size="small"
+          sx={{
+            position: 'absolute',
+            top: 14,
+            left: 14,
+            fontWeight: 700,
+            letterSpacing: 0.4,
+            backdropFilter: 'blur(6px)',
+            ...(isLeadership
+              ? { bgcolor: alpha(brandColors.gold, 0.92), color: brandColors.charcoalBlack }
+              : {
+                  bgcolor: alpha(brandColors.charcoalBlack, 0.55),
+                  color: brandColors.white,
+                  border: `1px solid ${alpha(brandColors.white, 0.24)}`,
+                }),
+          }}
+        />
+        {member.linkedInUrl && (
+          <IconButton
+            component="a"
+            href={member.linkedInUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`${member.name} on LinkedIn`}
+            size="small"
+            sx={{
+              position: 'absolute',
+              right: 12,
+              bottom: 12,
+              bgcolor: alpha(brandColors.white, 0.92),
+              color: brandColors.forest,
+              transition: 'background-color 200ms ease, color 200ms ease, transform 200ms ease',
+              '&:hover': {
+                bgcolor: brandColors.gold,
+                color: brandColors.charcoalBlack,
+                transform: 'translateY(-2px)',
+              },
+            }}
+          >
+            <LinkedInIcon fontSize="small" />
+          </IconButton>
+        )}
+      </Box>
+      <CardContent
+        sx={{ p: { xs: 2.5, md: 3 }, display: 'flex', flexDirection: 'column', flexGrow: 1 }}
+      >
+        <Box
+          className="team-card-bar"
+          sx={{
+            height: 3,
+            width: 44,
+            mb: 2,
+            borderRadius: 2,
+            bgcolor: brandColors.gold,
+            transform: 'scaleX(0.45)',
+            transformOrigin: 'left',
+            transition: 'transform 320ms ease',
+          }}
+        />
+        <Typography variant="h6" sx={{ lineHeight: 1.2 }}>
+          {member.name}
         </Typography>
-      )}
-    </CardContent>
-  </Card>
-);
+        <Typography
+          sx={{ mt: 0.5, color: brandColors.forest, fontSize: '0.9rem', fontWeight: 750 }}
+        >
+          {member.role}
+        </Typography>
+        {member.bio && (
+          <Typography
+            color="text.secondary"
+            sx={{
+              mt: 1.5,
+              fontSize: '0.95rem',
+              lineHeight: 1.7,
+              display: '-webkit-box',
+              WebkitBoxOrient: 'vertical',
+              WebkitLineClamp: 4,
+              overflow: 'hidden',
+            }}
+          >
+            {member.bio}
+          </Typography>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
 
 const TeamSection = (): JSX.Element => {
   const { data, isLoading } = useTeam();
@@ -871,7 +973,7 @@ const TeamSection = (): JSX.Element => {
       {!isLoading && members.length > 0 && (
         <Grid container spacing={3}>
           {members.map((member, index) => (
-            <Grid key={member.id} size={{ xs: 12, md: 6 }} sx={{ display: 'flex' }}>
+            <Grid key={member.id} size={{ xs: 12, sm: 6, lg: 4 }} sx={{ display: 'flex' }}>
               <SectionReveal delay={index * 0.05} fillHeight>
                 <TeamMemberCard member={member} />
               </SectionReveal>
