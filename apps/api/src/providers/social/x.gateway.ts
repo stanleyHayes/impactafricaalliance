@@ -27,7 +27,7 @@ export class XGateway implements SocialGateway {
     }
 
     const { accessToken } = credentials;
-    const text = `${article.title}\n\n${article.excerpt}\n\n${article.url}`;
+    const text = [article.title, article.excerpt, article.url].filter(Boolean).join('\n\n');
 
     try {
       const response = await axios.post(

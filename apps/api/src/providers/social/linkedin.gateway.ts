@@ -40,7 +40,7 @@ export class LinkedInGateway implements SocialGateway {
           specificContent: {
             'com.linkedin.ugc.ShareContent': {
               shareCommentary: {
-                text: `${article.title}\n\n${article.excerpt}`,
+                text: [article.title, article.excerpt].filter(Boolean).join('\n\n'),
               },
               shareMediaCategory: article.coverImageUrl ? 'ARTICLE' : 'NONE',
               media: article.coverImageUrl

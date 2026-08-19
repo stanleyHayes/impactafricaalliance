@@ -37,8 +37,8 @@ export class MetaGateway implements SocialGateway {
       const fbResponse = await axios.post(
         `https://graph.facebook.com/${this.graphVersion}/${account.accountId}/feed`,
         {
-          message: `${article.title}\n\n${article.excerpt}`,
-          link: article.url,
+          message: [article.title, article.excerpt].filter(Boolean).join('\n\n'),
+          link: article.url || undefined,
           access_token: accessToken,
         },
       );
@@ -59,7 +59,7 @@ export class MetaGateway implements SocialGateway {
           `https://graph.facebook.com/${this.graphVersion}/${instagramAccountId}/media`,
           {
             image_url: article.coverImageUrl,
-            caption: `${article.title}\n\n${article.excerpt}\n\n${article.url}`,
+            caption: [article.title, article.excerpt, article.url].filter(Boolean).join('\n\n'),
             access_token: accessToken,
           },
         );

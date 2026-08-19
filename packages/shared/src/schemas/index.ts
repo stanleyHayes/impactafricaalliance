@@ -17,3 +17,4 @@ export * from './dashboard.js';
 export * from './page-setting.js';
 export * from './site-setting.js';
 export * from './privacy-request.js';
+export * from './social.js';

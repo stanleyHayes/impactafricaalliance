@@ -1,13 +1,15 @@
-import { UserRole } from '@iaa/shared';
+import { socialPostInputSchema, UserRole } from '@iaa/shared';
 import { Router } from 'express';
 import type { DependencyContainer } from 'tsyringe';
 
 import { asyncHandler } from '../../common/async-handler.js';
 import { ValidationError } from '../../common/errors.js';
 import { pathParam } from '../../common/http.js';
+import { parseWith } from '../../common/validate.js';
 import type { AppConfig } from '../../config/env.js';
 import type { AppLogger } from '../../config/logger.js';
 import { requireAuth, requireRole } from '../../middleware/auth.middleware.js';
+import { SocialPublisher } from '../../providers/social/social-publisher.js';
 import { TOKENS } from '../../tokens.js';
 import { TokenService } from '../auth/token.service.js';
 
@@ -30,6 +32,21 @@ export const createSocialRouters = (
 
   const adminRouter = Router();
   adminRouter.use(requireAuth(tokens), requireRole(UserRole.Admin));
+
+  adminRouter.post(
+    '/posts',
+    asyncHandler(async (req, res) => {
+      const input = parseWith(socialPostInputSchema, req.body);
+      const publisher = container.resolve(SocialPublisher);
+      const results = await publisher.publishPost({
+        message: input.message,
+        linkUrl: input.linkUrl || undefined,
+        imageUrl: input.imageUrl || undefined,
+        platforms: input.platforms,
+      });
+      res.json({ results });
+    }),
+  );
 
   adminRouter.get(
     '/accounts',

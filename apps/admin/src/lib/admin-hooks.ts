@@ -24,6 +24,7 @@ import type {
   SetupMfaInput,
   SiteSetting,
   SiteSettingUpdate,
+  SocialPostInput,
   Submission,
   SubmissionStatus,
   Subscriber,
@@ -299,3 +300,21 @@ export const useDisconnectSocial = (): UseMutationResult<void, Error, string> =>
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['social-accounts'] }),
   });
 };
+
+export interface SocialPostResult {
+  platform: 'linkedin' | 'facebook' | 'instagram' | 'x';
+  postId?: string;
+  postUrl?: string;
+  postedAt: string;
+  error?: string;
+}
+
+export const usePublishSocialPost = (): UseMutationResult<
+  { results: SocialPostResult[] },
+  Error,
+  SocialPostInput
+> =>
+  useMutation({
+    mutationFn: (body) =>
+      api.post<{ results: SocialPostResult[] }>('/admin/social/posts', body),
+  });
