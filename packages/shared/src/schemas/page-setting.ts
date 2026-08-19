@@ -19,6 +19,7 @@ export const PAGE_KEYS = [
   'privacy-policy',
   'cookie-policy',
   'terms-of-use',
+  'privacy-request',
 ] as const;
 
 export const pageKeySchema = z.enum(PAGE_KEYS);
@@ -37,6 +38,7 @@ export const pageSettingInputSchema = z.object({
   introEyebrow: optionalCopy(80),
   introTitle: optionalCopy(160),
   introBody: optionalCopy(2000),
+  bodyContent: optionalCopy(50_000),
   ctaTitle: optionalCopy(160),
   ctaBody: optionalCopy(600),
   ctaLabel: optionalCopy(60),
@@ -60,6 +62,7 @@ export interface PageSetting extends Timestamped {
   introEyebrow?: string;
   introTitle?: string;
   introBody?: string;
+  bodyContent?: string;
   ctaTitle?: string;
   ctaBody?: string;
   ctaLabel?: string;

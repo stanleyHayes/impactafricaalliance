@@ -57,8 +57,8 @@ const TermsOfUse = (): JSX.Element => {
     </Box>
 
     <Container sx={{ py: { xs: 6, md: 8 } }}>
-      {copy.introBody ? (
-        <Markdown>{copy.introBody}</Markdown>
+      {copy.bodyContent ? (
+        <Markdown>{copy.bodyContent}</Markdown>
       ) : (
       <Stack spacing={1}>
         <Body>

@@ -109,7 +109,7 @@ const PAGE_SETTINGS = [
     heroTitle: 'Events across the Alliance',
     heroSubtitle: 'Webinars, cohort launches, partner forums and community gatherings. Find what is coming up and revisit past events.',
   },
-  ...['news', 'privacy-policy', 'cookie-policy', 'terms-of-use'].map((pageKey) => ({
+  ...['news', 'privacy-policy', 'cookie-policy', 'terms-of-use', 'privacy-request'].map((pageKey) => ({
     pageKey,
     status: ContentStatus.Published,
   })),

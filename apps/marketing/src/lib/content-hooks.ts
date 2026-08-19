@@ -86,6 +86,7 @@ export interface PageCopyDefaults {
   introEyebrow?: string;
   introTitle?: string;
   introBody?: string;
+  bodyContent?: string;
   ctaTitle?: string;
   ctaBody?: string;
   ctaLabel?: string;
@@ -112,6 +113,7 @@ export const usePageCopy = (
     introEyebrow: value('introEyebrow'),
     introTitle: value('introTitle'),
     introBody: value('introBody'),
+    bodyContent: value('bodyContent'),
     ctaTitle: value('ctaTitle'),
     ctaBody: value('ctaBody'),
     ctaLabel: value('ctaLabel'),

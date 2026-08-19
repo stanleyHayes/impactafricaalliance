@@ -14,6 +14,7 @@ export interface PageSettingDocument {
   introEyebrow?: string;
   introTitle?: string;
   introBody?: string;
+  bodyContent?: string;
   ctaTitle?: string;
   ctaBody?: string;
   ctaLabel?: string;
@@ -35,6 +36,7 @@ const pageSettingSchema = new Schema<PageSettingDocument>(
     introEyebrow: { type: String, trim: true },
     introTitle: { type: String, trim: true },
     introBody: { type: String, trim: true },
+    bodyContent: { type: String, trim: true },
     ctaTitle: { type: String, trim: true },
     ctaBody: { type: String, trim: true },
     ctaLabel: { type: String, trim: true },

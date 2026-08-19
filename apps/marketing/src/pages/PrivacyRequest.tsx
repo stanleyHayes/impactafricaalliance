@@ -21,6 +21,7 @@ import { useForm } from 'react-hook-form';
 
 import { Seo } from '../components/Seo';
 import { apiPost } from '../lib/api-client';
+import { usePageCopy } from '../lib/content-hooks';
 
 const TYPE_LABELS: Record<PrivacyRequestType, string> = {
   access: 'Access my data',
@@ -31,6 +32,14 @@ const TYPE_LABELS: Record<PrivacyRequestType, string> = {
 };
 
 const PrivacyRequest = (): JSX.Element => {
+  const copy = usePageCopy('privacy-request', {
+    seoTitle: 'Privacy Request — Impact Africa Alliance',
+    seoDescription: 'Submit a data subject request under the Ghana Data Protection Act 2012.',
+    heroTitle: 'Privacy Request',
+    heroSubtitle: 'Exercise your rights under the Ghana Data Protection Act 2012 (Act 843).',
+    introBody:
+      'Use this form to ask about the personal data we hold, to correct it, to object to or restrict processing, or to request deletion. We may contact you to confirm your identity before acting on the request.',
+  });
   const mutation = useMutation({
     mutationFn: (input: PrivacyRequestInput) =>
       apiPost<{ id: string; verificationToken: string }>('/privacy/requests', input),
@@ -49,8 +58,8 @@ const PrivacyRequest = (): JSX.Element => {
   return (
     <>
       <Seo
-        title="Privacy Request — Impact Africa Alliance"
-        description="Submit a data subject request under the Ghana Data Protection Act 2012."
+        title={copy.seoTitle}
+        description={copy.seoDescription}
       />
       <Box
         component="header"
@@ -61,10 +70,10 @@ const PrivacyRequest = (): JSX.Element => {
             variant="h1"
             sx={{ fontSize: { xs: '2.4rem', md: '3.25rem' }, lineHeight: 1.08 }}
           >
-            Privacy Request
+            {copy.heroTitle}
           </Typography>
           <Typography sx={{ mt: 2, color: 'rgba(255,255,255,0.72)' }}>
-            Exercise your rights under the Ghana Data Protection Act 2012 (Act 843).
+            {copy.heroSubtitle}
           </Typography>
         </Container>
       </Box>
@@ -93,9 +102,7 @@ const PrivacyRequest = (): JSX.Element => {
         ) : (
           <Stack component="form" spacing={3} onSubmit={onSubmit} sx={{ maxWidth: 600 }}>
             <Typography color="text.secondary">
-              Use this form to ask about the personal data we hold, to correct it, to object to or
-              restrict processing, or to request deletion. We may contact you to confirm your
-              identity before acting on the request.
+              {copy.introBody}
             </Typography>
             <TextField
               label="Email address"

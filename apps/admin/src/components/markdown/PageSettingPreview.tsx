@@ -16,7 +16,7 @@ export const PageSettingPreview = ({
   values: Record<string, unknown>;
 }): JSX.Element => {
   const image = (values.heroImage as MediaAsset | undefined)?.url;
-  const body = text(values.introBody);
+  const body = text(values.bodyContent) || text(values.introBody);
 
   return (
     <Stack spacing={3}>

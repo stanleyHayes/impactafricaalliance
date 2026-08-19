@@ -361,6 +361,7 @@ export const RESOURCES: readonly ResourceConfig[] = [
       { name: 'introEyebrow', label: 'Introduction eyebrow', type: 'text' },
       { name: 'introTitle', label: 'Introduction title', type: 'text', wide: true },
       { name: 'introBody', label: 'Introduction body', type: 'richtext', wide: true },
+      { name: 'bodyContent', label: 'Page body', type: 'richtext', wide: true, helperText: 'Markdown. On Privacy Policy, Cookie Policy, and Terms of Use this replaces the entire default page body when set.' },
       { name: 'ctaTitle', label: 'Call to action title', type: 'text', wide: true },
       { name: 'ctaBody', label: 'Call to action body', type: 'textarea', wide: true },
       { name: 'ctaLabel', label: 'Call to action button', type: 'text' },
