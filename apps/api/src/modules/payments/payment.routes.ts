@@ -39,6 +39,11 @@ export const createPaymentRouters = (container: DependencyContainer): PaymentRou
 
   const donateRouter = Router();
   donateRouter.get('/providers', asyncHandler(controller.providers));
+  donateRouter.get(
+    '/paystack/verify/:reference',
+    sensitiveRateLimit,
+    asyncHandler(controller.paystackReturn),
+  );
   donateRouter.post('/', sensitiveRateLimit, asyncHandler(controller.createDonation));
 
   const adminRouter = Router();

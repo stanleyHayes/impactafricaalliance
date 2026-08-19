@@ -110,6 +110,34 @@ export class PaymentService {
   }
 
   /**
+   * Server-to-server verification for the browser return after Paystack checkout. The webhook
+   * remains the source of truth, but donors land back on the site before it arrives, so we
+   * verify directly with Paystack and reconcile through the same `confirmSuccess` path.
+   */
+  async confirmPaystackReturn(
+    reference: string,
+  ): Promise<{ status: DonationStatus; amountUsd?: number }> {
+    if (!this.paystack.isConfigured()) {
+      throw new ServiceUnavailableError('Paystack is not configured');
+    }
+    const verified = await this.paystack.verify(reference);
+    if (verified.status === 'success') {
+      await this.confirmSuccess(reference, {
+        gatewaySucceeded: true,
+        chargedMinorUnits: verified.amountUsdCents,
+        currency: verified.currency,
+      });
+    } else if (verified.status === 'failed' || verified.status === 'abandoned') {
+      await this.markStatus(reference, DonationStatus.Failed);
+    }
+    const donation = await this.donations.findByReference(reference);
+    return {
+      status: donation?.status ?? DonationStatus.Pending,
+      ...(donation ? { amountUsd: donation.amountUsd } : {}),
+    };
+  }
+
+  /**
    * Mark a donation `Succeeded` only after confirming, against the gateway's own record, that
    * the transaction actually succeeded for the exact amount and currency we recorded. This
    * closes the gap where a signed "success" event was trusted to imply the stored amount was

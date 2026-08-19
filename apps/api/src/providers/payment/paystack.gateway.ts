@@ -37,12 +37,16 @@ export class PaystackGateway {
     amountUsdCents: number,
     donorEmail: string,
     reference: string,
+    callbackUrl?: string,
   ): Promise<PaystackInit> {
     const { data } = await this.client().post<PaystackInitResponse>('/transaction/initialize', {
       email: donorEmail,
       amount: amountUsdCents,
       currency: 'USD',
       reference,
+      // Donors land back on the marketing site after checkout instead of Paystack's
+      // default receipt page; the return page re-verifies the transaction server-side.
+      callback_url: callbackUrl ?? `${this.config.siteUrl}/donate/complete`,
     });
     return { reference: data.data.reference, authorizationUrl: data.data.authorization_url };
   }

@@ -22,6 +22,7 @@ const Resources = lazy(() => import('../pages/Resources'));
 const JobApplication = lazy(() => import('../pages/JobApplication'));
 const Events = lazy(() => import('../pages/Events'));
 const PrivacyPolicy = lazy(() => import('../pages/PrivacyPolicy'));
+const DonateComplete = lazy(() => import('../pages/DonateComplete'));
 const PrivacyRequest = lazy(() => import('../pages/PrivacyRequest'));
 const CookiePolicy = lazy(() => import('../pages/CookiePolicy'));
 const TermsOfUse = lazy(() => import('../pages/TermsOfUse'));
@@ -173,6 +174,14 @@ export const App = (): JSX.Element => (
         element={
           <Suspense fallback={<PageFallback />}>
             <CookiePolicy />
+          </Suspense>
+        }
+      />
+      <Route
+        path="donate/complete"
+        element={
+          <Suspense fallback={<PageFallback />}>
+            <DonateComplete />
           </Suspense>
         }
       />

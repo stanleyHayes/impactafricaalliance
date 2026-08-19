@@ -7,6 +7,7 @@ import type { Request, Response } from 'express';
 import { inject, injectable } from 'tsyringe';
 
 import { ServiceUnavailableError, ValidationError } from '../../common/errors.js';
+import { pathParam } from '../../common/http.js';
 import { parseWith } from '../../common/validate.js';
 
 import { PaymentSettingsService } from './payment-settings.service.js';
@@ -43,6 +44,10 @@ export class PaymentController {
 
   providers = async (_req: Request, res: Response): Promise<void> => {
     res.json(await this.settings.getPublicProviders());
+  };
+
+  paystackReturn = async (req: Request, res: Response): Promise<void> => {
+    res.json(await this.payments.confirmPaystackReturn(pathParam(req, 'reference')));
   };
 
   stripeWebhook = async (req: Request, res: Response): Promise<void> => {
