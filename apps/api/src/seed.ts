@@ -13,7 +13,6 @@ import {
   ROLE_TEMPLATES,
   SubmissionStatus,
   SubmissionType,
-  TeamTier,
   UserRole,
 } from '@iaa/shared';
 
@@ -266,7 +265,6 @@ const TEAM = [
   {
     name: 'Dr. Naledi Mokoena',
     role: 'Executive Director',
-    tier: TeamTier.Leadership,
     bio: 'Two decades leading youth development and education programmes across the continent.',
     linkedInUrl: 'https://www.linkedin.com/in/example-naledi',
     order: 1,
@@ -276,7 +274,6 @@ const TEAM = [
   {
     name: 'Samuel Adeyemi',
     role: 'Director of Programmes',
-    tier: TeamTier.Leadership,
     bio: 'Designs and scales the Alliance’s flagship training programmes.',
     linkedInUrl: 'https://www.linkedin.com/in/example-samuel',
     order: 2,
@@ -286,7 +283,6 @@ const TEAM = [
   {
     name: 'Grace Wanjiru',
     role: 'Head of Partnerships',
-    tier: TeamTier.Leadership,
     bio: 'Builds the relationships that fund and extend our work.',
     order: 3,
     isActive: true,
@@ -295,7 +291,6 @@ const TEAM = [
   {
     name: 'Prof. Emmanuel Bance',
     role: 'Advisory Board Chair',
-    tier: TeamTier.Advisory,
     bio: 'Economist and long-time champion of pan-African education.',
     order: 4,
     isActive: true,
@@ -304,7 +299,6 @@ const TEAM = [
   {
     name: 'Fatou Sow',
     role: 'Country Lead — Senegal',
-    tier: TeamTier.Country,
     bio: 'Leads programme delivery and community engagement in West Africa.',
     order: 5,
     isActive: true,
@@ -313,7 +307,6 @@ const TEAM = [
   {
     name: 'David Otieno',
     role: 'Country Lead — Kenya',
-    tier: TeamTier.Country,
     bio: 'Oversees East Africa operations and the Nairobi innovation lab.',
     order: 6,
     isActive: true,

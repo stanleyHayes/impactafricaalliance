@@ -90,13 +90,6 @@ export const ContentStatus = {
 export type ContentStatus = (typeof ContentStatus)[keyof typeof ContentStatus];
 export const CONTENT_STATUSES = Object.values(ContentStatus);
 
-export const TeamTier = {
-  Leadership: 'leadership',
-  Advisory: 'advisory',
-  Country: 'country',
-} as const;
-export type TeamTier = (typeof TeamTier)[keyof typeof TeamTier];
-export const TEAM_TIERS = Object.values(TeamTier);
 
 export const JobType = {
   FullTime: 'full-time',

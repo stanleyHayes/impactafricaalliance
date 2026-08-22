@@ -6,17 +6,21 @@ import CampaignRoundedIcon from '@mui/icons-material/CampaignRounded';
 import CodeRoundedIcon from '@mui/icons-material/CodeRounded';
 import Diversity3RoundedIcon from '@mui/icons-material/Diversity3Rounded';
 import EastIcon from '@mui/icons-material/East';
+import FacebookIcon from '@mui/icons-material/Facebook';
 import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
 import HandshakeRoundedIcon from '@mui/icons-material/HandshakeRounded';
 import HubRoundedIcon from '@mui/icons-material/HubRounded';
+import InstagramIcon from '@mui/icons-material/Instagram';
 import LightbulbRoundedIcon from '@mui/icons-material/LightbulbRounded';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
+import MusicNoteRoundedIcon from '@mui/icons-material/MusicNoteRounded';
 import PublicRoundedIcon from '@mui/icons-material/PublicRounded';
 import RecyclingRoundedIcon from '@mui/icons-material/RecyclingRounded';
 import TrackChangesRoundedIcon from '@mui/icons-material/TrackChangesRounded';
 import VerifiedRoundedIcon from '@mui/icons-material/VerifiedRounded';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import VolunteerActivismRoundedIcon from '@mui/icons-material/VolunteerActivismRounded';
+import XIcon from '@mui/icons-material/X';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
@@ -781,11 +785,20 @@ const TeamEmptyState = (): JSX.Element => (
   </Card>
 );
 
-const TEAM_TIER_LABELS: Record<TeamMember['tier'], string> = {
-  leadership: 'Leadership',
-  advisory: 'Advisory Board',
-  country: 'Country Team',
-};
+type SocialField = 'linkedInUrl' | 'xUrl' | 'instagramUrl' | 'facebookUrl' | 'tiktokUrl';
+
+/** Rendered in this order, and only for the links a member actually has. */
+const MEMBER_SOCIALS: ReadonlyArray<{
+  field: SocialField;
+  label: string;
+  Icon: SvgIconComponent;
+}> = [
+  { field: 'linkedInUrl', label: 'LinkedIn', Icon: LinkedInIcon },
+  { field: 'xUrl', label: 'X', Icon: XIcon },
+  { field: 'instagramUrl', label: 'Instagram', Icon: InstagramIcon },
+  { field: 'facebookUrl', label: 'Facebook', Icon: FacebookIcon },
+  { field: 'tiktokUrl', label: 'TikTok', Icon: MusicNoteRoundedIcon },
+];
 
 const memberInitials = (name: string): string =>
   name
@@ -796,7 +809,10 @@ const memberInitials = (name: string): string =>
     .join('');
 
 const TeamMemberCard = ({ member }: { member: TeamMember }): JSX.Element => {
-  const isLeadership = member.tier === 'leadership';
+  const socials = MEMBER_SOCIALS.flatMap(({ field, label, Icon }) => {
+    const href = member[field];
+    return href ? [{ field, label, Icon, href }] : [];
+  });
 
   return (
     <Card
@@ -866,49 +882,37 @@ const TeamMemberCard = ({ member }: { member: TeamMember }): JSX.Element => {
             </Typography>
           </Box>
         )}
-        <Chip
-          label={TEAM_TIER_LABELS[member.tier]}
-          size="small"
-          sx={{
-            position: 'absolute',
-            top: 14,
-            left: 14,
-            fontWeight: 700,
-            letterSpacing: 0.4,
-            backdropFilter: 'blur(6px)',
-            ...(isLeadership
-              ? { bgcolor: alpha(brandColors.gold, 0.92), color: brandColors.charcoalBlack }
-              : {
-                  bgcolor: alpha(brandColors.charcoalBlack, 0.55),
-                  color: brandColors.white,
-                  border: `1px solid ${alpha(brandColors.white, 0.24)}`,
-                }),
-          }}
-        />
-        {member.linkedInUrl && (
-          <IconButton
-            component="a"
-            href={member.linkedInUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={`${member.name} on LinkedIn`}
-            size="small"
-            sx={{
-              position: 'absolute',
-              right: 12,
-              bottom: 12,
-              bgcolor: alpha(brandColors.white, 0.92),
-              color: brandColors.forest,
-              transition: 'background-color 200ms ease, color 200ms ease, transform 200ms ease',
-              '&:hover': {
-                bgcolor: brandColors.gold,
-                color: brandColors.charcoalBlack,
-                transform: 'translateY(-2px)',
-              },
-            }}
+        {socials.length > 0 && (
+          <Stack
+            direction="row"
+            spacing={0.75}
+            sx={{ position: 'absolute', right: 12, bottom: 12 }}
           >
-            <LinkedInIcon fontSize="small" />
-          </IconButton>
+            {socials.map(({ field, label, Icon, href }) => (
+              <IconButton
+                key={field}
+                component="a"
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`${member.name} on ${label}`}
+                size="small"
+                sx={{
+                  bgcolor: alpha(brandColors.white, 0.92),
+                  color: brandColors.forest,
+                  transition:
+                    'background-color 200ms ease, color 200ms ease, transform 200ms ease',
+                  '&:hover': {
+                    bgcolor: brandColors.gold,
+                    color: brandColors.charcoalBlack,
+                    transform: 'translateY(-2px)',
+                  },
+                }}
+              >
+                <Icon fontSize="small" />
+              </IconButton>
+            ))}
+          </Stack>
         )}
       </Box>
       <CardContent
