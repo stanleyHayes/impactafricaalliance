@@ -43,3 +43,4 @@ tools/.mongo-uri
 .raven/.cache/
 .raven/.model-session.json
 .raven/audit/
+.raven/state/

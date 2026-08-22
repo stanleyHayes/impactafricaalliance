@@ -2,8 +2,16 @@ import { ORG, PRIMARY_NAV } from '@iaa/shared';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import EmailRoundedIcon from '@mui/icons-material/EmailRounded';
+import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
+import InfoRoundedIcon from '@mui/icons-material/InfoRounded';
+import InsightsRoundedIcon from '@mui/icons-material/InsightsRounded';
+import LayersRoundedIcon from '@mui/icons-material/LayersRounded';
+import MailRoundedIcon from '@mui/icons-material/MailRounded';
+import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 import NewspaperRoundedIcon from '@mui/icons-material/NewspaperRounded';
+import SendRoundedIcon from '@mui/icons-material/SendRounded';
+import VolunteerActivismRoundedIcon from '@mui/icons-material/VolunteerActivismRounded';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -12,11 +20,9 @@ import Divider from '@mui/material/Divider';
 import Drawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
-import List from '@mui/material/List';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemText from '@mui/material/ListItemText';
 import Stack from '@mui/material/Stack';
 import { alpha, useTheme, type Theme } from '@mui/material/styles';
+import type { SvgIconProps } from '@mui/material/SvgIcon';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
@@ -135,184 +141,305 @@ interface MobileNavigationProps {
   onClose: () => void;
 }
 
-const drawerLinkSx = {
+type NavIcon = React.ComponentType<SvgIconProps>;
+
+/** Glyph per destination, so every tile in the grid reads at a glance. */
+const NAV_ICONS: Readonly<Record<string, NavIcon>> = {
+  '/': HomeRoundedIcon,
+  '/about': InfoRoundedIcon,
+  '/our-work': LayersRoundedIcon,
+  '/impact': InsightsRoundedIcon,
+  '/get-involved': VolunteerActivismRoundedIcon,
+  '/resources': MenuBookRoundedIcon,
+  '/contact': MailRoundedIcon,
+};
+
+const CORNERS = [
+  { id: 'tl', top: 0, left: 0, borderTop: '1px solid', borderLeft: '1px solid' },
+  { id: 'tr', top: 0, right: 0, borderTop: '1px solid', borderRight: '1px solid' },
+  { id: 'bl', bottom: 0, left: 0, borderBottom: '1px solid', borderLeft: '1px solid' },
+  { id: 'br', bottom: 0, right: 0, borderBottom: '1px solid', borderRight: '1px solid' },
+] as const;
+
+/**
+ * Four L-shaped corner marks framing a tile. Decorative only, so every mark is
+ * transparent to pointer events — the circle this drawer used to draw behind
+ * its header was not, and it silently ate taps on the close button.
+ */
+const CornerMarks = ({ color, size = 11 }: { color: string; size?: number }): JSX.Element => (
+  <>
+    {CORNERS.map(({ id, ...edges }) => (
+      <Box
+        key={id}
+        aria-hidden
+        sx={{
+          position: 'absolute',
+          width: size,
+          height: size,
+          borderColor: color,
+          pointerEvents: 'none',
+          ...edges,
+        }}
+      />
+    ))}
+  </>
+);
+
+const tileSx = {
   position: 'relative',
-  gap: 1.5,
-  minHeight: 56,
-  mb: 0.5,
-  px: 2,
-  borderRadius: 2,
-  color: 'text.primary',
-  transition: 'background-color 180ms ease, color 180ms ease, transform 180ms ease',
-  '&:hover': {
-    bgcolor: 'action.hover',
-    color: 'primary.main',
-    transform: 'translateX(2px)',
-  },
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 1.25,
+  minHeight: 128,
+  p: 2,
+  bgcolor: 'background.default',
+  color: 'text.secondary',
+  textDecoration: 'none',
+  transition: 'background-color 200ms ease, color 200ms ease',
+  '&:hover': { bgcolor: 'action.hover', color: 'text.primary' },
   '&.active': {
-    bgcolor: (theme: Theme) => alpha(theme.palette.secondary.main, 0.15),
+    bgcolor: (theme: Theme) => alpha(theme.palette.secondary.main, 0.14),
     color: 'text.primary',
   },
-  '&.active::before': {
-    position: 'absolute',
-    top: 14,
-    bottom: 14,
-    left: 0,
-    width: 3,
-    borderRadius: 999,
-    bgcolor: 'secondary.main',
-    content: '""',
+  '&:focus-visible': {
+    outline: '2px solid rgba(0,214,139,0.55)',
+    outlineOffset: -3,
   },
 } as const;
 
-const MobileNavigation = ({ open, onClose }: MobileNavigationProps): JSX.Element => (
-  <Drawer
-    id="mobile-navigation"
-    anchor="right"
-    open={open}
-    onClose={onClose}
-    ModalProps={{ keepMounted: true }}
-    slotProps={{
-      paper: {
-        sx: {
-          width: { xs: '100%', sm: 390 },
-          maxWidth: '100%',
-          bgcolor: 'background.default',
-        },
-      },
-    }}
+interface NavTileProps {
+  label: string;
+  path: string;
+  index: number;
+  Icon: NavIcon;
+  onClose: () => void;
+}
+
+const NavTile = ({ label, path, index, Icon, onClose }: NavTileProps): JSX.Element => (
+  <Box
+    component={NavLink}
+    to={path}
+    end={path === '/'}
+    onClick={onClose}
+    sx={tileSx}
   >
-    <Box sx={{ display: 'flex', minHeight: '100%', flexDirection: 'column' }}>
-      <Box
-        sx={{
-          position: 'relative',
-          overflow: 'hidden',
-          bgcolor: 'common.black',
-          color: 'common.white',
-          p: 3,
-          pb: 3.5,
-          '&::after': {
-            position: 'absolute',
-            right: -65,
-            bottom: -92,
-            width: 210,
-            height: 210,
-            border: '1px solid rgba(0,214,139,0.24)',
-            borderRadius: '50%',
-            content: '""',
+    <CornerMarks color="divider" />
+    <Typography
+      aria-hidden="true"
+      sx={{
+        position: 'absolute',
+        top: 12,
+        left: 14,
+        color: 'text.disabled',
+        fontSize: '0.66rem',
+        fontWeight: 700,
+        letterSpacing: 1.6,
+        pointerEvents: 'none',
+      }}
+    >
+      {String(index + 1).padStart(2, '0')}
+    </Typography>
+    <Icon sx={{ fontSize: 27 }} />
+    <Typography
+      sx={{
+        fontSize: '0.76rem',
+        fontWeight: 700,
+        letterSpacing: 2,
+        textAlign: 'center',
+        textTransform: 'uppercase',
+        lineHeight: 1.35,
+      }}
+    >
+      {label}
+    </Typography>
+  </Box>
+);
+
+const MobileNavigation = ({ open, onClose }: MobileNavigationProps): JSX.Element => {
+  const tiles = [
+    ...PRIMARY_NAV.map((link) => ({
+      label: link.label,
+      path: link.path,
+      Icon: NAV_ICONS[link.path] ?? LayersRoundedIcon,
+    })),
+    { label: 'News & Stories', path: '/news', Icon: NewspaperRoundedIcon },
+  ];
+
+  return (
+    <Drawer
+      id="mobile-navigation"
+      anchor="right"
+      open={open}
+      onClose={onClose}
+      ModalProps={{ keepMounted: true }}
+      slotProps={{
+        paper: {
+          sx: {
+            width: { xs: '100%', sm: 400 },
+            maxWidth: '100%',
+            bgcolor: 'background.default',
+            backgroundImage: 'none',
           },
-        }}
-      >
-        <Stack direction="row" alignItems="flex-start" justifyContent="space-between">
-          <RouterLink to="/" aria-label="Impact Africa Alliance home" onClick={onClose}>
-            <Logo variant="white" height={44} />
-          </RouterLink>
-          <Stack direction="row" spacing={1} alignItems="center">
-            <ThemeToggle />
-            <IconButton
-              aria-label="Close navigation"
+        },
+      }}
+    >
+      <Box sx={{ display: 'flex', height: '100%', flexDirection: 'column' }}>
+        {/*
+          flexShrink: 0 keeps this bar at its natural height — as a plain flex
+          child it used to be squeezed (and clipped) by the taller nav below,
+          which is how the close button became unreachable. Sticky keeps it in
+          view once the tiles start scrolling.
+        */}
+        <Box
+          sx={{
+            position: 'sticky',
+            top: 0,
+            zIndex: 2,
+            flexShrink: 0,
+            borderBottom: 1,
+            borderColor: 'divider',
+            bgcolor: 'background.default',
+            px: 2.5,
+            py: 2,
+          }}
+        >
+          <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
+            <RouterLink
+              to="/"
+              aria-label="Impact Africa Alliance home"
               onClick={onClose}
-              sx={{
-              mt: -0.5,
-              mr: -0.5,
-              color: 'common.white',
-              border: '1px solid rgba(255,255,255,0.22)',
-              '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' },
+              style={{ display: 'inline-flex', flexShrink: 0 }}
+            >
+              <Logo variant="white" height={40} />
+            </RouterLink>
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ flexShrink: 0 }}>
+              <ThemeToggle />
+              <IconButton
+                aria-label="Close navigation"
+                onClick={onClose}
+                sx={{
+                  width: 44,
+                  height: 44,
+                  border: 1,
+                  borderColor: 'divider',
+                  color: 'text.primary',
+                  '&:hover': { bgcolor: 'action.hover', borderColor: 'text.primary' },
+                }}
+              >
+                <CloseRoundedIcon />
+              </IconButton>
+            </Stack>
+          </Stack>
+        </Box>
+
+        {/* minHeight: 0 lets this pane actually scroll instead of forcing the
+            column taller than the drawer and squeezing its siblings. */}
+        <Box
+          component="nav"
+          aria-label="Mobile navigation"
+          sx={{ flex: 1, minHeight: 0, overflowY: 'auto' }}
+        >
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '1px',
+              borderBottom: 1,
+              borderColor: 'divider',
+              bgcolor: 'divider',
             }}
           >
-            <CloseRoundedIcon />
-          </IconButton>
-        </Stack>
-      </Stack>
-      <Typography
-          sx={{
-            position: 'relative',
-            zIndex: 1,
-            mt: 2.5,
-            maxWidth: 270,
-            color: 'rgba(255,255,255,0.76)',
-            fontSize: '0.9rem',
-            lineHeight: 1.65,
-          }}
-        >
-          {ORG.tagline}
-        </Typography>
-      </Box>
-
-      <Box component="nav" aria-label="Mobile navigation" sx={{ flex: 1, p: 2.5 }}>
-        <Typography
-          variant="overline"
-          sx={{
-            display: 'block',
-            mb: 1,
-            color: 'text.secondary',
-            fontWeight: 700,
-            letterSpacing: 1.4,
-          }}
-        >
-          Explore
-        </Typography>
-        <List disablePadding>
-          {PRIMARY_NAV.map((link, index) => (
-            <ListItemButton
-              key={link.path}
-              component={NavLink}
-              to={link.path}
-              end={link.path === '/'}
-              onClick={onClose}
-              sx={drawerLinkSx}
-            >
-              <Typography
-                aria-hidden="true"
-                sx={{ minWidth: 24, color: 'text.secondary', fontSize: '0.72rem', fontWeight: 700 }}
-              >
-                {String(index + 1).padStart(2, '0')}
-              </Typography>
-              <ListItemText
-                primary={link.label}
-                slotProps={{ primary: { sx: { fontSize: '1rem', fontWeight: 650 } } }}
+            {tiles.map((tile, index) => (
+              <NavTile
+                key={tile.path}
+                label={tile.label}
+                path={tile.path}
+                index={index}
+                Icon={tile.Icon}
+                onClose={onClose}
               />
-              <ArrowForwardRoundedIcon sx={{ fontSize: 19, opacity: 0.62 }} />
-            </ListItemButton>
-          ))}
-        </List>
+            ))}
+          </Box>
 
-        <Divider sx={{ my: 2 }} />
+          <Box
+            component={RouterLink}
+            to="/get-involved#partner"
+            onClick={onClose}
+            sx={{
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 1.5,
+              minHeight: 92,
+              px: 3,
+              bgcolor: (theme) => alpha(theme.palette.secondary.main, 0.1),
+              color: 'text.primary',
+              textDecoration: 'none',
+              transition: 'background-color 200ms ease',
+              '&:hover': { bgcolor: (theme) => alpha(theme.palette.secondary.main, 0.2) },
+              '&:focus-visible': { outline: '2px solid rgba(0,214,139,0.55)', outlineOffset: -3 },
+            }}
+          >
+            <CornerMarks color="secondary.main" size={14} />
+            <Typography
+              aria-hidden="true"
+              sx={{
+                position: 'absolute',
+                top: 12,
+                left: 14,
+                color: 'text.disabled',
+                fontSize: '0.66rem',
+                fontWeight: 700,
+                letterSpacing: 1.6,
+                pointerEvents: 'none',
+              }}
+            >
+              {String(tiles.length + 1).padStart(2, '0')}
+            </Typography>
+            <SendRoundedIcon sx={{ color: 'secondary.main', fontSize: 24 }} />
+            <Typography
+              sx={{
+                fontSize: '0.95rem',
+                fontWeight: 800,
+                letterSpacing: 2,
+                textTransform: 'uppercase',
+              }}
+            >
+              Partner with us
+            </Typography>
+          </Box>
 
-        <ListItemButton component={NavLink} to="/news" onClick={onClose} sx={drawerLinkSx}>
-          <NewspaperRoundedIcon sx={{ ml: 0.25, mr: 0.25, color: 'text.primary', fontSize: 20 }} />
-          <ListItemText
-            primary="News & Stories"
-            slotProps={{ primary: { sx: { fontSize: '0.96rem', fontWeight: 650 } } }}
-          />
-          <ArrowForwardRoundedIcon sx={{ fontSize: 19, opacity: 0.62 }} />
-        </ListItemButton>
+          <Box sx={{ p: 3, textAlign: 'center' }}>
+            <Typography
+              sx={{ mb: 1.5, color: 'text.secondary', fontSize: '0.85rem', lineHeight: 1.6 }}
+            >
+              {ORG.tagline}
+            </Typography>
+            <Link
+              href={`mailto:${ORG.email}`}
+              underline="none"
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 0.8,
+                color: 'text.secondary',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                '&:hover': { color: 'primary.main' },
+              }}
+            >
+              <EmailRoundedIcon sx={{ fontSize: 16 }} />
+              {ORG.email}
+            </Link>
+          </Box>
+        </Box>
       </Box>
-
-      <Box sx={{ borderTop: 1, borderColor: 'divider', bgcolor: 'background.paper', p: 3 }}>
-        <PartnershipButton fullWidth />
-        <Link
-          href={`mailto:${ORG.email}`}
-          underline="none"
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 0.8,
-            mt: 2,
-            color: 'text.secondary',
-            fontSize: '0.8rem',
-            fontWeight: 600,
-            '&:hover': { color: 'primary.main' },
-          }}
-        >
-          <EmailRoundedIcon sx={{ fontSize: 16 }} />
-          {ORG.email}
-        </Link>
-      </Box>
-    </Box>
-  </Drawer>
-);
+    </Drawer>
+  );
+};
 
 /** Sticky header with segmented pill navigation and sliding active indicator. */
 export const Header = (): JSX.Element => {
@@ -322,6 +449,12 @@ export const Header = (): JSX.Element => {
   const { pathname } = useLocation();
   const navRef = useRef<HTMLElement>(null);
   const theme = useTheme();
+
+  // Safety net: whatever dismissed the drawer (tile tap, back button, a link
+  // rendered inside it), landing on a new route must never leave it open.
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     const updateScrolled = (): void => setScrolled(window.scrollY > 12);
