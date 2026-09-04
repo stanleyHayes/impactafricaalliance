@@ -1,4 +1,11 @@
-import { SDG_GOALS, brandColors, brandFonts, type TeamMember } from '@iaa/shared';
+import {
+  SDG_GOALS,
+  TEAM_TIERS,
+  TEAM_TIER_LABELS,
+  brandColors,
+  brandFonts,
+  type TeamMember,
+} from '@iaa/shared';
 import type { SvgIconComponent } from '@mui/icons-material';
 import AccountBalanceRoundedIcon from '@mui/icons-material/AccountBalanceRounded';
 import AccountTreeRoundedIcon from '@mui/icons-material/AccountTreeRounded';
@@ -1031,17 +1038,38 @@ const TeamSection = (): JSX.Element => {
     >
       {isLoading && <CardGridSkeleton count={4} columns={4} />}
       {isEmpty && <TeamEmptyState />}
-      {!isLoading && members.length > 0 && (
-        <Grid container spacing={3}>
-          {members.map((member, index) => (
-            <Grid key={member.id} size={{ xs: 12, sm: 6, lg: 4 }} sx={{ display: 'flex' }}>
-              <SectionReveal delay={index * 0.05} fillHeight>
-                <TeamMemberCard member={member} />
-              </SectionReveal>
-            </Grid>
-          ))}
-        </Grid>
-      )}
+      {!isLoading &&
+        TEAM_TIERS.map((tier) => {
+          const group = members.filter((member) => member.tier === tier);
+          if (group.length === 0) {
+            return null;
+          }
+          return (
+            <Box key={tier} sx={{ mb: 7, '&:last-of-type': { mb: 0 } }}>
+              <Typography
+                variant="overline"
+                sx={{
+                  display: 'block',
+                  mb: 2.5,
+                  color: 'text.primary',
+                  fontWeight: 800,
+                  letterSpacing: 1.8,
+                }}
+              >
+                {TEAM_TIER_LABELS[tier]}
+              </Typography>
+              <Grid container spacing={3}>
+                {group.map((member, index) => (
+                  <Grid key={member.id} size={{ xs: 12, sm: 6, lg: 4 }} sx={{ display: 'flex' }}>
+                    <SectionReveal delay={index * 0.05} fillHeight>
+                      <TeamMemberCard member={member} />
+                    </SectionReveal>
+                  </Grid>
+                ))}
+              </Grid>
+            </Box>
+          );
+        })}
     </Section>
   );
 };

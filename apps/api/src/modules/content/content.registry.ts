@@ -15,6 +15,8 @@ import {
   pageSettingUpdateSchema,
   partnerInputSchema,
   partnerUpdateSchema,
+  pillarImageInputSchema,
+  pillarImageUpdateSchema,
   reportInputSchema,
   reportUpdateSchema,
   storyInputSchema,
@@ -35,6 +37,7 @@ import { JobModel } from './models/job.model.js';
 import { OfficeModel } from './models/office.model.js';
 import { PageSettingModel } from './models/page-setting.model.js';
 import { PartnerModel } from './models/partner.model.js';
+import { PillarImageModel } from './models/pillar-image.model.js';
 import { ReportModel } from './models/report.model.js';
 import { ImpactStatModel } from './models/stat.model.js';
 import { StoryModel } from './models/story.model.js';
@@ -98,6 +101,17 @@ export const buildContentModules = (container: DependencyContainer): MountedCont
       schemas: { create: officeInputSchema, update: officeUpdateSchema },
       publicFilter: ACTIVE_ONLY,
       defaultSort: { order: 1, label: 1 },
+    },
+    container,
+  ),
+  mountContentModule(
+    {
+      path: 'pillar-images',
+      resource: 'PillarImage',
+      model: PillarImageModel,
+      schemas: { create: pillarImageInputSchema, update: pillarImageUpdateSchema },
+      publicFilter: ACTIVE_ONLY,
+      defaultSort: { pillarKey: 1 },
     },
     container,
   ),

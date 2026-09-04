@@ -7,6 +7,7 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import Diversity3Icon from '@mui/icons-material/Diversity3';
 import GroupsIcon from '@mui/icons-material/Groups';
 import HandshakeIcon from '@mui/icons-material/Handshake';
+import ImageIcon from '@mui/icons-material/Image';
 import InboxIcon from '@mui/icons-material/Inbox';
 import InsightsIcon from '@mui/icons-material/Insights';
 import LockResetIcon from '@mui/icons-material/LockReset';
@@ -49,6 +50,7 @@ const CONTENT_ICONS: Record<string, JSX.Element> = {
   gallery: <CollectionsIcon />,
   stats: <InsightsIcon />,
   offices: <PlaceIcon />,
+  'pillar-images': <ImageIcon />,
 };
 
 /** Build the grouped sidebar navigation, filtered to what the user may access. */

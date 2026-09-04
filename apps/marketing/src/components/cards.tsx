@@ -1,4 +1,4 @@
-import { brandFonts, type Article, type PillarDefinition } from '@iaa/shared';
+import { brandFonts, type Article, type PillarDefinition, pillarImageMap } from '@iaa/shared';
 import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
 import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
 import EastIcon from '@mui/icons-material/East';
@@ -23,9 +23,15 @@ import {
   formatArticleTag,
   getArticleDate,
 } from '../lib/article-utils';
+import { usePillarImages } from '../lib/content-hooks';
 
 export const PillarCard = ({ pillar }: { pillar: PillarDefinition }): JSX.Element => {
   const Icon = programIcon(pillar.key);
+  const { data: pillarImages } = usePillarImages();
+  // CMS upload wins; the shipped asset is the fallback so the card is never blank.
+  const pillarImageUrl =
+    pillarImageMap(pillarImages?.items ?? [])[pillar.key] ?? programImage(pillar.key);
+
   return (
     <Card
       sx={{
@@ -54,7 +60,7 @@ export const PillarCard = ({ pillar }: { pillar: PillarDefinition }): JSX.Elemen
             sx={{
               position: 'absolute',
               inset: 0,
-              backgroundImage: `url(${programImage(pillar.key)})`,
+              backgroundImage: `url(${pillarImageUrl})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               transition: 'transform .4s ease',

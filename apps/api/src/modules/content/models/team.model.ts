@@ -1,4 +1,4 @@
-import { type MediaAsset } from '@iaa/shared';
+import { TEAM_TIERS, TeamTier, type MediaAsset } from '@iaa/shared';
 import { Schema, model } from 'mongoose';
 
 import { baseSchemaOptions, mediaSubSchema } from '../../../common/model-helpers.js';
@@ -6,6 +6,7 @@ import { baseSchemaOptions, mediaSubSchema } from '../../../common/model-helpers
 export interface TeamMemberDocument {
   name: string;
   role: string;
+  tier: TeamTier;
   bio?: string;
   photo?: MediaAsset;
   linkedInUrl?: string;
@@ -23,6 +24,7 @@ const teamSchema = new Schema<TeamMemberDocument>(
   {
     name: { type: String, required: true, trim: true },
     role: { type: String, required: true, trim: true },
+    tier: { type: String, enum: TEAM_TIERS, default: TeamTier.Executive, index: true },
     bio: { type: String },
     photo: { type: mediaSubSchema, required: false },
     linkedInUrl: { type: String },

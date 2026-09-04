@@ -8,6 +8,7 @@ import type {
   PageSetting,
   Paginated,
   Partner,
+  PillarImage,
   Report,
   SiteSetting,
   Story,
@@ -31,6 +32,13 @@ export const useStories = (): UseQueryResult<Paginated<Story>> =>
 
 export const useTeam = (): UseQueryResult<Paginated<TeamMember>> =>
   useQuery({ queryKey: ['team'], queryFn: () => page<TeamMember>('team', '?pageSize=100') });
+
+export const usePillarImages = (): UseQueryResult<Paginated<PillarImage>> =>
+  useQuery({
+    queryKey: ['pillar-images'],
+    queryFn: () => page<PillarImage>('pillar-images', '?pageSize=50'),
+    staleTime: 5 * 60 * 1000,
+  });
 
 export const useOffices = (): UseQueryResult<Paginated<Office>> =>
   useQuery({ queryKey: ['offices'], queryFn: () => page<Office>('offices', '?pageSize=100') });

@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { TEAM_TIERS, type TeamTier } from '../enums.js';
+
 import { mediaAssetSchema, type Timestamped, type MediaAsset } from './common.js';
 
 /** Profile links are all optional; the admin form submits '' for untouched ones. */
@@ -8,9 +10,12 @@ const optionalUrl = z
   .optional()
   .transform((value) => (value === '' ? undefined : value));
 
+const tierEnum = z.enum(TEAM_TIERS as [TeamTier, ...TeamTier[]]);
+
 export const teamMemberInputSchema = z.object({
   name: z.string().min(2).max(120).trim(),
   role: z.string().min(2).max(120).trim(),
+  tier: tierEnum.default('executive'),
   bio: z.string().max(600).trim().optional(),
   photo: mediaAssetSchema.optional(),
   linkedInUrl: optionalUrl,
@@ -29,6 +34,7 @@ export type TeamMemberUpdate = z.infer<typeof teamMemberUpdateSchema>;
 export interface TeamMember extends Timestamped {
   name: string;
   role: string;
+  tier: TeamTier;
   bio?: string;
   photo?: MediaAsset;
   linkedInUrl?: string;

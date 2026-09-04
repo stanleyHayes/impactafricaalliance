@@ -148,6 +148,24 @@ export const EventType = {
   Other: 'other',
 } as const;
 export type EventType = (typeof EventType)[keyof typeof EventType];
+/**
+ * How the team page is grouped. Mirrors the org chart in the website review:
+ * the operating team, the board, and non-executive leadership.
+ */
+export const TeamTier = {
+  Executive: 'executive',
+  Board: 'board',
+  NonExecutive: 'non-executive',
+} as const;
+export type TeamTier = (typeof TeamTier)[keyof typeof TeamTier];
+export const TEAM_TIERS = Object.values(TeamTier);
+
+export const TEAM_TIER_LABELS: Record<TeamTier, string> = {
+  executive: 'Executive Team',
+  board: 'Board of Directors',
+  'non-executive': 'Non-Executive Team',
+};
+
 export const EVENT_TYPES = Object.values(EventType);
 
 /** Field kinds an editor can add to an event's custom questionnaire. */
