@@ -1,5 +1,7 @@
 import type {
   CreateDonationInput,
+  EventRegistrationInput,
+  EventRegistrationResult,
   DonationInitResponse,
   PaymentProvidersPublic,
   SubmissionInput,
@@ -15,6 +17,14 @@ export const useSubmitForm = (): UseMutationResult<{ id: string }, Error, Submis
 export const useSubscribe = (): UseMutationResult<{ subscribed: true }, Error, SubscribeInput> =>
   useMutation({
     mutationFn: (input) => apiPost<{ subscribed: true }>('/submissions/subscribe', input),
+  });
+
+export const useRegisterForEvent = (
+  eventId: string,
+): UseMutationResult<EventRegistrationResult, Error, EventRegistrationInput> =>
+  useMutation({
+    mutationFn: (input) =>
+      apiPost<EventRegistrationResult>(`/events/${eventId}/register`, input),
   });
 
 export const useCreateDonation = (): UseMutationResult<

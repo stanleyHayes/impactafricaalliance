@@ -21,6 +21,7 @@ import { createLogger } from './config/logger.js';
 import { connectDatabase, disconnectDatabase } from './db/mongoose.js';
 import { PasswordService } from './modules/auth/password.service.js';
 import { ArticleModel } from './modules/content/models/article.model.js';
+import { EventModel, type EventDocument } from './modules/content/models/event.model.js';
 import { JobModel } from './modules/content/models/job.model.js';
 import { OfficeModel } from './modules/content/models/office.model.js';
 import { PageSettingModel } from './modules/content/models/page-setting.model.js';
@@ -262,6 +263,111 @@ const STORIES = [
   },
 ];
 
+/**
+ * The mentorship webinar series. Registration is on, so each one exercises the
+ * stepwise sign-up flow; images are added from the dashboard when supplied.
+ */
+const LAUNCH_ANNOUNCEMENT = {
+  enabled: true,
+  message:
+    'IAA OFFICIAL LAUNCH — 8TH OCTOBER 2026 | GOOGLE COMMUNITY CENTRE, ACCRA. Supported by Google Africa.',
+};
+
+const EVENTS: Array<Partial<EventDocument>> = [
+  {
+    title: 'Leveraging AI to Accelerate Your Career',
+    description:
+      'AI is transforming how we learn, work, create, and build careers. The question is no longer whether AI will change the workplace; it is how you will use it to your advantage. A practical mentorship session on becoming more productive, competitive, and future-ready — covering the tools that boost your productivity, how to learn new skills faster, emerging AI career opportunities, and how to become an AI-ready professional.',
+    startAt: new Date('2026-09-08T17:00:00.000Z'),
+    location: 'Online',
+    type: 'webinar',
+    status: 'published',
+    host: 'Joshua Opoku Agyemang',
+    hostTitle: 'President, Ghana STEM Network & IoT Africa',
+    admission: 'FREE',
+    registrationEnabled: true,
+    questions: [
+      {
+        id: 'ai-usage',
+        label: 'How often do you use AI tools today?',
+        type: 'single-choice',
+        options: ['Never', 'Occasionally', 'Weekly', 'Every day'],
+        required: false,
+      },
+    ],
+  },
+  {
+    title: 'Scaling Your Business in West Africa: What Investors Are Demanding',
+    description:
+      'What does it take to move from operating in one market to building a scalable, investment-ready regional business? An insightful session exploring what investors look for when assessing businesses seeking to scale across West Africa — growth potential, business models, traction, leadership, market opportunity, and regional expansion.',
+    startAt: new Date('2026-09-11T17:00:00.000Z'),
+    location: 'Online',
+    type: 'webinar',
+    status: 'published',
+    hostTitle: 'Philanthropy, Partnerships & Ecosystem Leader',
+    admission: 'FREE',
+    registrationEnabled: true,
+    questions: [
+      {
+        id: 'stage',
+        label: 'Where is your business today?',
+        type: 'single-choice',
+        options: ['Just an idea', 'Pre-revenue', 'Generating revenue', 'Ready to expand'],
+        required: false,
+      },
+    ],
+  },
+  {
+    title: '“Ready for Work”: How to Land Your Dream Job in 60 Days',
+    description:
+      'The job market is changing, and having a degree is no longer enough. You need the right skills, mindset, strategy, and tools to stand out and get hired. A practical session on positioning yourself for the jobs you actually want, the skills employers look for, using AI to supercharge your search, improving your CV and LinkedIn, preparing for interviews, and a 60-day strategy for moving from job seeker to job offer.',
+    startAt: new Date('2026-09-18T17:00:00.000Z'),
+    location: 'Online',
+    type: 'webinar',
+    status: 'published',
+    host: 'Tom-Chris Emewulu',
+    hostTitle: 'Founder, Stars From All Nations (Nasdaq Milestone Maker) | AI Careers Coach',
+    admission: 'FREE',
+    registrationEnabled: true,
+    questions: [
+      {
+        id: 'search-status',
+        label: 'Where are you in your job search?',
+        type: 'single-choice',
+        options: [
+          'Still studying',
+          'Recent graduate',
+          'Actively applying',
+          'Employed, exploring options',
+        ],
+        required: false,
+      },
+    ],
+  },
+  {
+    title: 'Scholarships, Fellowships & Global Opportunities for Young People',
+    description:
+      'What if the opportunity you need to advance your education, career, or impact is already out there, but you simply do not know where to find it or how to apply? A session on navigating scholarships and opportunities — where to find credible programmes, how to identify ones that match your profile, how to build a competitive application, the mistakes that hold applicants back, and how to prepare for global programmes.',
+    startAt: new Date('2026-09-25T17:00:00.000Z'),
+    location: 'Online',
+    type: 'webinar',
+    status: 'published',
+    host: 'Aliyu Umar Sadiq',
+    hostTitle: 'Circular Economy & E-waste Researcher | Erasmus Scholar | International Development',
+    admission: 'FREE',
+    registrationEnabled: true,
+    questions: [
+      {
+        id: 'interest',
+        label: 'What are you most interested in?',
+        type: 'multi-choice',
+        options: ['Scholarships', 'Fellowships', 'Research funding', 'Exchange programmes'],
+        required: false,
+      },
+    ],
+  },
+];
+
 const OFFICES = [
   {
     label: 'Head Office',
@@ -499,9 +605,19 @@ const seed = async (): Promise<void> => {
     await ensure('Subscribers', await SubscriberModel.countDocuments().exec(), () => SubscriberModel.create(SUBSCRIBERS));
     await ensure('Submissions', await SubmissionModel.countDocuments().exec(), () => SubmissionModel.create(SUBMISSIONS));
 
-    const existingSiteSettings = await SiteSettingModel.countDocuments().exec();
-    if (existingSiteSettings > 0) {
-      logger.info('Site settings: existing — skipped');
+    // SiteSettingService.getOrCreate() writes a placeholder document the first
+    // time /api/site-settings is read, which can happen before this seed runs.
+    // Treating that placeholder as "already configured" silently dropped the
+    // launch announcement, so fill in what is missing instead of skipping.
+    const existingSettings = await SiteSettingModel.findOne({ key: 'site' }).exec();
+    if (existingSettings) {
+      if (!existingSettings.announcement?.message) {
+        existingSettings.announcement = LAUNCH_ANNOUNCEMENT;
+        await existingSettings.save();
+        logger.info('Site settings: existing — announcement added');
+      } else {
+        logger.info('Site settings: existing — skipped');
+      }
     } else {
       await SiteSettingModel.create({
         key: 'site',
@@ -513,14 +629,12 @@ const seed = async (): Promise<void> => {
         city: 'Accra',
         region: 'Greater Accra',
         country: 'Ghana',
-        announcement: {
-          enabled: true,
-          message:
-            'IAA OFFICIAL LAUNCH — 8TH OCTOBER 2026 | GOOGLE COMMUNITY CENTRE, ACCRA. Supported by Google Africa.',
-        },
+        announcement: LAUNCH_ANNOUNCEMENT,
       });
       logger.info('Site settings: seeded');
     }
+
+    await ensure('Events', await EventModel.countDocuments().exec(), () => EventModel.create(EVENTS));
 
     await ensure('Offices', await OfficeModel.countDocuments().exec(), () => OfficeModel.create(OFFICES));
 

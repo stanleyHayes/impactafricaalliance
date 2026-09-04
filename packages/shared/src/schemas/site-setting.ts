@@ -2,22 +2,25 @@ import { z } from 'zod';
 
 import { type Timestamped } from './common.js';
 
+// .optional() comes last on each of these so the inferred key is optional
+// rather than required-and-possibly-undefined, which would force every caller
+// to spell out fields it does not set.
 const optionalShortText = z
   .string()
   .max(200)
-  .optional()
-  .transform((value) => (value === '' ? undefined : value));
+  .transform((value) => (value === '' ? undefined : value))
+  .optional();
 
 const optionalPhone = z
   .string()
   .max(50)
-  .optional()
-  .transform((value) => (value === '' ? undefined : value));
+  .transform((value) => (value === '' ? undefined : value))
+  .optional();
 
 const optionalUrl = z
   .union([z.literal(''), z.string().url().max(500)])
-  .optional()
-  .transform((value) => (value === '' ? undefined : value));
+  .transform((value) => (value === '' ? undefined : value))
+  .optional();
 
 export const siteSettingSocialsSchema = z.object({
   facebook: optionalUrl,

@@ -1,10 +1,11 @@
-import type { Event } from '@iaa/shared';
+import { isRegistrationOpen, type Event } from '@iaa/shared';
 import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
 import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
 import EventRoundedIcon from '@mui/icons-material/EventRounded';
 import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
 import ViewListRoundedIcon from '@mui/icons-material/ViewListRounded';
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Chip from '@mui/material/Chip';
@@ -21,6 +22,7 @@ import { Section } from '../components/Section';
 import { Seo } from '../components/Seo';
 import { CardGridSkeleton } from '../components/skeletons';
 import { IMAGES } from '../content/images';
+import { EventRegistrationDialog } from '../features/events/EventRegistrationDialog';
 import { useEvents, usePageCopy } from '../lib/content-hooks';
 import {
   formatEventDate,
@@ -76,7 +78,11 @@ interface EventCardProps {
   event: Event;
 }
 
-const EventCard = ({ event }: EventCardProps): JSX.Element => (
+const EventCard = ({ event }: EventCardProps): JSX.Element => {
+  const [registering, setRegistering] = useState(false);
+  const canRegister = isRegistrationOpen(event, new Date());
+
+  return (
   <Card
     variant="outlined"
     sx={{
@@ -115,9 +121,34 @@ const EventCard = ({ event }: EventCardProps): JSX.Element => (
       <Typography variant="body2" color="text.secondary" sx={{ flexGrow: 1, lineHeight: 1.65 }}>
         {eventExcerpt(event.description)}
       </Typography>
+
+      {event.host && (
+        <Typography variant="body2" sx={{ mt: 1.5, fontWeight: 700 }}>
+          {event.host}
+          {event.hostTitle ? ` — ${event.hostTitle}` : ''}
+        </Typography>
+      )}
+
+      {canRegister && (
+        <>
+          <Button
+            variant="contained"
+            onClick={() => setRegistering(true)}
+            sx={{ mt: 2.5, alignSelf: 'flex-start', fontWeight: 750 }}
+          >
+            Register {event.admission ? `— ${event.admission}` : 'free'}
+          </Button>
+          <EventRegistrationDialog
+            event={event}
+            open={registering}
+            onClose={() => setRegistering(false)}
+          />
+        </>
+      )}
     </CardContent>
   </Card>
-);
+  );
+};
 
 interface EventsCardListProps {
   events: Event[];

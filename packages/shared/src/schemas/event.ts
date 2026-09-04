@@ -35,7 +35,12 @@ export const eventQuestionSchema = z.object({
   /** Choices for single-choice and multi-choice; ignored for other types. */
   options: z.array(z.string().min(1).max(200)).max(30).default([]),
   required: z.boolean().default(false),
-  helpText: optionalText,
+  // .optional() last so the inferred key is optional, not required-and-undefined.
+  helpText: z
+    .string()
+    .max(300)
+    .transform((value) => (value === '' ? undefined : value))
+    .optional(),
 });
 export type EventQuestion = z.infer<typeof eventQuestionSchema>;
 
