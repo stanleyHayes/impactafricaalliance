@@ -55,6 +55,8 @@ const CONTENT_ICONS: Record<string, JSX.Element> = {
 export const buildNavGroups = (user: PublicUser | null): NavGroup[] => {
   const operations: NavItem[] = [
     { to: '/submissions', label: 'Submissions', icon: <InboxIcon /> },
+    { to: '/submissions/partners', label: 'Partner enquiries', icon: <HandshakeIcon /> },
+    { to: '/submissions/mentors', label: 'Mentor applications', icon: <VolunteerActivismIcon /> },
     { to: '/subscribers', label: 'Subscribers', icon: <MailIcon /> },
     { to: '/events', label: 'Events', icon: <CalendarMonthIcon /> },
     { to: '/donations', label: 'Donations', icon: <VolunteerActivismIcon /> },

@@ -30,6 +30,7 @@ import Typography from '@mui/material/Typography';
 import type { GridColDef } from '@mui/x-data-grid';
 import type { ReactElement, ReactNode } from 'react';
 import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 
 import { CardListSkeleton } from '../components/CardListSkeleton';
 import { DataTable } from '../components/data/DataTable';
@@ -40,6 +41,37 @@ import { PageHeader } from '../components/PageHeader';
 import { useSubmissions, useUpdateSubmissionStatus } from '../lib/admin-hooks';
 import { formatUtcDate, formatUtcShort } from '../lib/date';
 import { pageGuides } from '../lib/page-guides';
+
+/**
+ * Dedicated inboxes. The combined list still lives at /submissions; these give
+ * partner and mentor enquiries a linkable home of their own, which is what the
+ * website review asked for.
+ */
+const INBOXES: Record<
+  string,
+  { type: Submission['type']; title: string; description: string }
+> = {
+  partners: {
+    type: SubmissionType.Partner,
+    title: 'Partner enquiries',
+    description: 'Organisations that asked to partner with the Alliance.',
+  },
+  mentors: {
+    type: SubmissionType.Volunteer,
+    title: 'Mentor & volunteer applications',
+    description: 'People offering their time and expertise to our programmes.',
+  },
+  contact: {
+    type: SubmissionType.Contact,
+    title: 'Contact messages',
+    description: 'General enquiries sent from the contact page.',
+  },
+  applications: {
+    type: SubmissionType.Job,
+    title: 'Job applications',
+    description: 'Applications submitted against open roles.',
+  },
+};
 
 /** Per-type presentation: an avatar icon, a human label, and a brand accent resolver. */
 const TYPE_META: Record<
@@ -574,30 +606,119 @@ const SubmissionsEmpty = ({
   </Box>
 );
 
+
+interface SubmissionsListProps {
+  view: string;
+  isLoading: boolean;
+  filtered: Submission[];
+  paged: Submission[];
+  pageCount: number;
+  currentPage: number;
+  onPageChange: (page: number) => void;
+  tableColumns: GridColDef[];
+  hasFilters: boolean;
+  onClearFilters: () => void;
+}
+
+/** Table or card rendering of the current result set, with its own paging. */
+const SubmissionsList = ({
+  view,
+  isLoading,
+  filtered,
+  paged,
+  pageCount,
+  currentPage,
+  onPageChange,
+  tableColumns,
+  hasFilters,
+  onClearFilters,
+}: SubmissionsListProps): JSX.Element => {
+  if (view === 'table') {
+    return (
+      <DataTable
+        rows={filtered}
+        columns={tableColumns}
+        loading={isLoading}
+        searchable={false}
+        empty={<SubmissionsEmpty hasFilters={hasFilters} onClear={onClearFilters} />}
+      />
+    );
+  }
+  if (isLoading) {
+    return <CardListSkeleton />;
+  }
+  if (filtered.length === 0) {
+    return <SubmissionsEmpty hasFilters={hasFilters} onClear={onClearFilters} />;
+  }
+  return (
+    <Stack spacing={2}>
+      {paged.map((submission) => (
+        <SubmissionCard key={submission.id} submission={submission} />
+      ))}
+      {pageCount > 1 && (
+        <Stack alignItems="center" sx={{ pt: 1 }}>
+          <Pagination
+            count={pageCount}
+            page={currentPage}
+            onChange={(_event, value) => onPageChange(value)}
+            color="primary"
+            shape="rounded"
+          />
+        </Stack>
+      )}
+    </Stack>
+  );
+};
+
+/** Resolve the page's identity and locked type from the optional route slug. */
+const resolveInbox = (
+  inbox: string | undefined,
+): {
+  isScoped: boolean;
+  lockedType?: Submission['type'];
+  title: string;
+  description: string;
+} => {
+  const scoped = inbox ? INBOXES[inbox] : undefined;
+  return {
+    isScoped: Boolean(scoped),
+    lockedType: scoped?.type,
+    title: scoped?.title ?? 'Submissions',
+    description:
+      scoped?.description ??
+      'Contact, partnership, volunteer, and job enquiries from the website.',
+  };
+};
+
+/** Free-text search across a submission's type, status and payload values. */
+const matchesTerm = (submission: Submission, term: string): boolean =>
+  [
+    submission.type,
+    submission.status,
+    ...Object.values(submission.payload).filter(
+      (value): value is string => typeof value === 'string',
+    ),
+  ]
+    .join(' ')
+    .toLowerCase()
+    .includes(term);
+
 const Submissions = (): JSX.Element => {
+  const { inbox } = useParams();
+  const { isScoped, lockedType, title, description } = resolveInbox(inbox);
   const [type, setType] = useState('');
   const [status, setStatus] = useState('');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [view, setView] = useViewMode('submissions');
-  const { data, isLoading } = useSubmissions({ type, status });
+  // A dedicated inbox locks the type; the combined view keeps the dropdown.
+  const { data, isLoading } = useSubmissions({ type: lockedType ?? type, status });
   const submissions = data?.items ?? [];
-  const hasFilters = Boolean(type || status || search);
+  const hasFilters = Boolean((!isScoped && type) || status || search);
 
   const term = search.trim().toLowerCase();
   const filtered = term
-    ? submissions.filter((submission) => {
-        const haystack = [
-          submission.type,
-          submission.status,
-          ...Object.values(submission.payload).filter(
-            (value): value is string => typeof value === 'string',
-          ),
-        ]
-          .join(' ')
-          .toLowerCase();
-        return haystack.includes(term);
-      })
+    ? submissions.filter((submission) => matchesTerm(submission, term))
     : submissions;
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -614,50 +735,12 @@ const Submissions = (): JSX.Element => {
     setSearch('');
   };
 
-  const renderList = (): JSX.Element => {
-    if (view === 'table') {
-      return (
-        <DataTable
-          rows={filtered}
-          columns={tableColumns}
-          loading={isLoading}
-          searchable={false}
-          empty={<SubmissionsEmpty hasFilters={hasFilters} onClear={clearFilters} />}
-        />
-      );
-    }
-    if (isLoading) {
-      return <CardListSkeleton />;
-    }
-    if (filtered.length === 0) {
-      return <SubmissionsEmpty hasFilters={hasFilters} onClear={clearFilters} />;
-    }
-    return (
-      <Stack spacing={2}>
-        {paged.map((submission) => (
-          <SubmissionCard key={submission.id} submission={submission} />
-        ))}
-        {pageCount > 1 && (
-          <Stack alignItems="center" sx={{ pt: 1 }}>
-            <Pagination
-              count={pageCount}
-              page={currentPage}
-              onChange={(_event, value) => setPage(value)}
-              color="primary"
-              shape="rounded"
-            />
-          </Stack>
-        )}
-      </Stack>
-    );
-  };
-
   return (
     <>
       <PageHeader
         icon={<InboxOutlinedIcon />}
-        title="Submissions"
-        description="Contact, partnership, volunteer, and job enquiries from the website."
+        title={title}
+        description={description}
         count={data?.total}
         help={pageGuides.Submissions}
       />
@@ -688,7 +771,7 @@ const Submissions = (): JSX.Element => {
           label="Type"
           value={type}
           onChange={(e) => setType(e.target.value)}
-          sx={{ minWidth: 160 }}
+          sx={{ minWidth: 160, display: isScoped ? 'none' : undefined }}
         >
           <MenuItem value="">All types</MenuItem>
           {SUBMISSION_TYPES.map((value) => (
@@ -727,7 +810,18 @@ const Submissions = (): JSX.Element => {
         </Box>
       </Stack>
 
-      {renderList()}
+      <SubmissionsList
+        view={view}
+        isLoading={isLoading}
+        filtered={filtered}
+        paged={paged}
+        pageCount={pageCount}
+        currentPage={currentPage}
+        onPageChange={setPage}
+        tableColumns={tableColumns}
+        hasFilters={hasFilters}
+        onClearFilters={clearFilters}
+      />
     </>
   );
 };

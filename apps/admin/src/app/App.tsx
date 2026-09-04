@@ -42,6 +42,7 @@ export const App = (): JSX.Element => (
       <Route index element={<Dashboard />} />
       <Route path="content/:resource" element={<ResourcePage />} />
       <Route path="submissions" element={<Submissions />} />
+      <Route path="submissions/:inbox" element={<Submissions />} />
       <Route path="subscribers" element={<Subscribers />} />
       <Route path="donations" element={<Donations />} />
       <Route path="privacy-requests" element={<PrivacyRequests />} />
