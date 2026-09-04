@@ -22,6 +22,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import { AnimatedCounter } from '../components/AnimatedCounter';
 import { ArticleCard, PillarCard } from '../components/cards';
 import { PageCta } from '../components/PageCta';
+import { ParallaxShowcase } from '../components/ParallaxShowcase';
 import { Section } from '../components/Section';
 import { SectionReveal } from '../components/SectionReveal';
 import { Seo } from '../components/Seo';
@@ -1059,6 +1060,31 @@ const Home = (): JSX.Element => {
           ))}
         </Grid>
       </Section>
+      <ParallaxShowcase
+        eyebrow="On the ground"
+        title="The work looks like people."
+        subtitle="Not slide decks or pilot schemes. Classrooms, workshops, market stalls and offices across Ghana, Nigeria and Sierra Leone, where the skills we teach turn into work people are paid for."
+        panels={[
+          {
+            src: IMAGES.programs['digital-skills'],
+            alt: 'Young people learning practical digital skills',
+            caption: 'Digital skills',
+            drift: 0.18,
+          },
+          {
+            src: IMAGES.programs['women-empowerment'],
+            alt: 'Women building businesses and leading in their communities',
+            caption: 'Women leading',
+            drift: 0.32,
+          },
+          {
+            src: IMAGES.community,
+            alt: 'Community members gathered at a programme session',
+            caption: 'Ready for work',
+            drift: 0.24,
+          },
+        ]}
+      />
       <VisionQuote />
       <StoriesSection />
       <NewsSection />
