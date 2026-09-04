@@ -1,4 +1,4 @@
-import type { SiteSettingSocials } from '@iaa/shared';
+import type { SiteSettingAnnouncement, SiteSettingSocials } from '@iaa/shared';
 import { Schema, model } from 'mongoose';
 
 import { baseSchemaOptions } from '../../common/model-helpers.js';
@@ -21,6 +21,7 @@ export interface SiteSettingDocument {
   regionalPresence?: string[];
   mapUrl?: string;
   socials?: SiteSettingSocials;
+  announcement?: SiteSettingAnnouncement;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -33,6 +34,16 @@ const socialsSubSchema = new Schema<SiteSettingSocials>(
     linkedin: { type: String },
     youtube: { type: String },
     tiktok: { type: String },
+  },
+  { _id: false },
+);
+
+const announcementSubSchema = new Schema<SiteSettingAnnouncement>(
+  {
+    enabled: { type: Boolean, default: false },
+    message: { type: String },
+    linkUrl: { type: String },
+    linkLabel: { type: String },
   },
   { _id: false },
 );
@@ -56,6 +67,7 @@ const siteSettingSchema = new Schema<SiteSettingDocument>(
     regionalPresence: { type: [String], default: undefined },
     mapUrl: { type: String },
     socials: { type: socialsSubSchema, required: false },
+    announcement: { type: announcementSubSchema, required: false },
   },
   baseSchemaOptions,
 );

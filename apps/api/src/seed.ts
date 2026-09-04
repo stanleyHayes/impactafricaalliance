@@ -490,6 +490,11 @@ const seed = async (): Promise<void> => {
         city: 'Accra',
         region: 'Greater Accra',
         country: 'Ghana',
+        announcement: {
+          enabled: true,
+          message:
+            'IAA OFFICIAL LAUNCH — 8TH OCTOBER 2026 | GOOGLE COMMUNITY CENTRE, ACCRA. Supported by Google Africa.',
+        },
       });
       logger.info('Site settings: seeded');
     }

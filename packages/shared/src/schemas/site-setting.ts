@@ -31,6 +31,24 @@ export const siteSettingSocialsSchema = z.object({
 export type SiteSettingSocials = z.infer<typeof siteSettingSocialsSchema>;
 
 /**
+ * Site-wide announcement bar. Kept in site settings rather than hard-coded so a
+ * launch notice can be edited or switched off from the dashboard without a
+ * deploy, and so the copy outlives any one campaign.
+ */
+export const siteSettingAnnouncementSchema = z.object({
+  enabled: z.boolean().optional().default(false),
+  message: z
+    .string()
+    .max(300)
+    .optional()
+    .transform((value) => (value === '' ? undefined : value)),
+  linkUrl: optionalUrl,
+  linkLabel: optionalShortText,
+});
+
+export type SiteSettingAnnouncement = z.infer<typeof siteSettingAnnouncementSchema>;
+
+/**
  * Countries where IAA has a presence, shown as chips on the Contact page.
  * Accepts a comma-separated string from the admin form and normalises to an
  * array so the public site never has to parse free text.
@@ -61,11 +79,15 @@ export const siteSettingInputSchema = z.object({
   regionalPresence: regionalPresenceSchema,
   mapUrl: optionalUrl,
   socials: siteSettingSocialsSchema.optional(),
+  announcement: siteSettingAnnouncementSchema.optional(),
 });
 
 export const siteSettingUpdateSchema = siteSettingInputSchema
   .partial()
-  .extend({ socials: siteSettingSocialsSchema.partial().optional() });
+  .extend({
+    socials: siteSettingSocialsSchema.partial().optional(),
+    announcement: siteSettingAnnouncementSchema.partial().optional(),
+  });
 
 export type SiteSettingInput = z.infer<typeof siteSettingInputSchema>;
 export type SiteSettingUpdate = z.infer<typeof siteSettingUpdateSchema>;
@@ -97,4 +119,5 @@ export interface SiteSetting extends Timestamped {
   regionalPresence?: string[];
   mapUrl?: string;
   socials?: SiteSettingSocials;
+  announcement?: SiteSettingAnnouncement;
 }

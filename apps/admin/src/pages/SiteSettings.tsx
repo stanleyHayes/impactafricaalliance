@@ -9,15 +9,17 @@ import PublicIcon from '@mui/icons-material/Public';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import FormControlLabel from '@mui/material/FormControlLabel';
 import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
 import Skeleton from '@mui/material/Skeleton';
 import Snackbar from '@mui/material/Snackbar';
 import Stack from '@mui/material/Stack';
+import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useEffect, useState } from 'react';
-import { FormProvider, useForm, useFormContext } from 'react-hook-form';
+import { Controller, FormProvider, useForm, useFormContext } from 'react-hook-form';
 
 import { PageHeader } from '../components/PageHeader';
 import { useSiteSettings, useUpdateSiteSettings } from '../lib/admin-hooks';
@@ -48,7 +50,8 @@ const getPath = (object: unknown, path: string): unknown =>
 interface FormTextFieldProps {
   name:
     | keyof SiteSettingUpdateInput
-    | `socials.${keyof NonNullable<SiteSettingUpdateInput['socials']>}`;
+    | `socials.${keyof NonNullable<SiteSettingUpdateInput['socials']>}`
+    | `announcement.${keyof NonNullable<SiteSettingUpdateInput['announcement']>}`;
   label: string;
   type?: string;
   helperText?: string;
@@ -129,6 +132,43 @@ const LocationSection = (): JSX.Element => (
   </Section>
 );
 
+const AnnouncementSection = (): JSX.Element => {
+  const { control } = useFormContext<SiteSettingUpdateInput>();
+
+  return (
+    <Section title="Announcement banner">
+      <Controller
+        control={control}
+        name="announcement.enabled"
+        render={({ field }) => (
+          <FormControlLabel
+            control={
+              <Switch
+                checked={Boolean(field.value)}
+                onChange={(event) => field.onChange(event.target.checked)}
+              />
+            }
+            label="Show the banner on the public site"
+          />
+        )}
+      />
+      <FormTextField
+        name="announcement.message"
+        label="Message"
+        helperText="Shown across the top of every page, above the header."
+      />
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+        <FormTextField name="announcement.linkUrl" label="Link URL" type="url" />
+        <FormTextField
+          name="announcement.linkLabel"
+          label="Link label"
+          helperText='e.g. "Register"'
+        />
+      </Stack>
+    </Section>
+  );
+};
+
 const SocialSection = (): JSX.Element => (
   <Section title="Social media">
     <FormTextField name="socials.facebook" label="Facebook" type="url" />
@@ -150,6 +190,12 @@ const SOCIAL_KEYS = ['facebook', 'x', 'instagram', 'linkedin', 'youtube', 'tikto
 const toFormValues = (data: SiteSetting): SiteSettingUpdateInput => ({
   ...data,
   regionalPresence: (data.regionalPresence ?? []).join(', '),
+  announcement: {
+    enabled: data.announcement?.enabled ?? false,
+    message: data.announcement?.message ?? '',
+    linkUrl: data.announcement?.linkUrl ?? '',
+    linkLabel: data.announcement?.linkLabel ?? '',
+  },
   socials: Object.fromEntries(SOCIAL_KEYS.map((key) => [key, data.socials?.[key] ?? ''])),
 });
 
@@ -175,6 +221,7 @@ const SiteSettings = (): JSX.Element => {
       postalCode: '',
       country: '',
       mapUrl: '',
+      announcement: { enabled: false, message: '', linkUrl: '', linkLabel: '' },
       socials: {
         facebook: '',
         x: '',
@@ -262,7 +309,10 @@ const SiteSettings = (): JSX.Element => {
             </Stack>
           </Grid>
           <Grid size={{ xs: 12, lg: 5 }}>
-            <SocialSection />
+            <Stack spacing={3}>
+              <AnnouncementSection />
+              <SocialSection />
+            </Stack>
           </Grid>
         </Grid>
       </Box>
