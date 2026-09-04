@@ -28,6 +28,7 @@ import CardContent from '@mui/material/CardContent';
 import Chip from '@mui/material/Chip';
 import Grid from '@mui/material/Grid';
 import IconButton from '@mui/material/IconButton';
+import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
@@ -121,11 +122,22 @@ const DIRECTION_CARDS = [
   },
 ] as const;
 
-const MILESTONES = [
+interface Milestone {
+  readonly year: string;
+  readonly title: string;
+  readonly text: string;
+  /** Optional attribution shown beneath the milestone copy. */
+  readonly linkUrl?: string;
+  readonly linkLabel?: string;
+}
+
+const MILESTONES: readonly Milestone[] = [
   {
     year: '2024',
     title: 'The Idea Takes Shape',
     text: 'Young African leaders come together with one conviction: the continent’s transformation must be led by Africans, for Africans.',
+    linkUrl: 'https://www.ali-wa.net/',
+    linkLabel: 'Powered by the ALIWA Youth Leadership Program',
   },
   {
     year: '2025',
@@ -139,10 +151,10 @@ const MILESTONES = [
   },
   {
     year: '2027+',
-    title: 'Scaling Across Africa',
-    text: 'The roadmap expands toward additional countries, a digital learning platform, and a Pan-African Youth Leadership Network.',
+    title: 'Scaling Across West Africa',
+    text: 'The roadmap expands across West Africa, toward a digital learning platform and a Pan-African Youth Leadership Network.',
   },
-] as const;
+];
 
 const STRUCTURE_LEVELS = [
   {
@@ -642,6 +654,23 @@ const Timeline = (): JSX.Element => (
                 <Typography color="text.secondary" sx={{ mt: 0.75, lineHeight: 1.75 }}>
                   {milestone.text}
                 </Typography>
+                {milestone.linkUrl && (
+                  <Link
+                    href={milestone.linkUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    underline="hover"
+                    sx={{
+                      display: 'inline-block',
+                      mt: 1,
+                      color: 'primary.main',
+                      fontSize: '0.88rem',
+                      fontWeight: 700,
+                    }}
+                  >
+                    {milestone.linkLabel ?? 'Learn more'}
+                  </Link>
+                )}
               </Box>
             </Box>
           </SectionReveal>

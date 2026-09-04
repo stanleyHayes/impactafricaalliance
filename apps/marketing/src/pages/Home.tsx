@@ -1004,7 +1004,7 @@ const VisionQuote = (): JSX.Element => (
           individual lives and the trajectory of an entire continent.”
         </Typography>
         <Typography sx={{ textAlign: 'center', mt: 3, color: 'primary.main', fontWeight: 700 }}>
-          Emmanuel Mbansi, Co-Founder, {ORG.name}
+          Emmanuel Mbansi, President, {ORG.name}
         </Typography>
         <Typography
           sx={{
