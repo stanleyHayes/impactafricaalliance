@@ -1,6 +1,6 @@
 /* eslint-disable react/display-name -- the values below are render helpers
    (field, rhf, error) => JSX, dispatched by field type, not React components. */
-import type { MediaAsset } from '@iaa/shared';
+import type { EventQuestion, MediaAsset } from '@iaa/shared';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import InputAdornment from '@mui/material/InputAdornment';
 import MenuItem from '@mui/material/MenuItem';
@@ -16,6 +16,7 @@ import {
 import type { FieldConfig, FieldType } from '../../resources/types';
 import { AiAssistButton } from '../ai/AiAssistButton';
 import { MediaUploadField } from '../fields/MediaUploadField';
+import { QuestionBuilder } from '../fields/QuestionBuilder';
 import { MarkdownEditor } from '../markdown/MarkdownEditor';
 
 interface FieldRendererProps {
@@ -165,6 +166,15 @@ const markdownRenderer: Renderer = (field, rhf, error) => (
   />
 );
 
+const questionsRenderer: Renderer = (field, rhf) => (
+  <QuestionBuilder
+    label={field.label}
+    helperText={field.helperText}
+    value={(rhf.value ?? []) as EventQuestion[]}
+    onChange={rhf.onChange}
+  />
+);
+
 const RENDERERS: Record<FieldType, Renderer> = {
   switch: switchRenderer,
   select: selectRenderer,
@@ -177,6 +187,7 @@ const RENDERERS: Record<FieldType, Renderer> = {
   slug: textRenderer(),
   textarea: textRenderer(3, true),
   richtext: markdownRenderer,
+  questions: questionsRenderer,
 };
 
 /** Renders a single configured field bound to react-hook-form. */

@@ -149,3 +149,14 @@ export const EventType = {
 } as const;
 export type EventType = (typeof EventType)[keyof typeof EventType];
 export const EVENT_TYPES = Object.values(EventType);
+
+/** Field kinds an editor can add to an event's custom questionnaire. */
+export const EventQuestionType = {
+  ShortText: 'short-text',
+  LongText: 'long-text',
+  SingleChoice: 'single-choice',
+  MultiChoice: 'multi-choice',
+  Date: 'date',
+} as const;
+export type EventQuestionType = (typeof EventQuestionType)[keyof typeof EventQuestionType];
+export const EVENT_QUESTION_TYPES = Object.values(EventQuestionType);

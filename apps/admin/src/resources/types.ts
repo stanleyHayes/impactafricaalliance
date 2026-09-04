@@ -13,7 +13,8 @@ export type FieldType =
   | 'tags'
   | 'datetime'
   | 'image'
-  | 'file';
+  | 'file'
+  | 'questions';
 
 export interface SelectOption {
   value: string;

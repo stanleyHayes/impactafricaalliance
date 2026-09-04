@@ -1,5 +1,12 @@
 import { CONTENT_STATUSES, EVENT_TYPES } from '@iaa/shared';
-import type { ContentStatus, EventType, Event, EventInput, EventUpdate } from '@iaa/shared';
+import type {
+  ContentStatus,
+  EventType,
+  Event,
+  EventInput,
+  EventQuestion,
+  EventUpdate,
+} from '@iaa/shared';
 import AddIcon from '@mui/icons-material/Add';
 import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
@@ -13,10 +20,13 @@ import Card from '@mui/material/Card';
 import Chip from '@mui/material/Chip';
 import Dialog from '@mui/material/Dialog';
 import DialogContent from '@mui/material/DialogContent';
+import Divider from '@mui/material/Divider';
+import FormControlLabel from '@mui/material/FormControlLabel';
 import IconButton from '@mui/material/IconButton';
 import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
 import { alpha, useTheme } from '@mui/material/styles';
+import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
@@ -26,6 +36,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { DialogFooter, DialogHeader, dialogPaperSx, dialogSectionSx } from '../components/dialogs/DialogShell';
 import { EmptyState } from '../components/EmptyState';
 import { CalendarGrid } from '../components/events/CalendarGrid';
+import { QuestionBuilder } from '../components/fields/QuestionBuilder';
 import { PageHeader } from '../components/PageHeader';
 import { PageSkeleton } from '../components/PageSkeleton';
 import { useDeleteEvent, useEvents, useSaveEvent } from '../lib/admin-hooks';
@@ -120,6 +131,13 @@ const emptyForm = (): EventFormState => ({
   location: '',
   type: 'other' as EventType,
   status: 'draft' as ContentStatus,
+  host: '',
+  hostTitle: '',
+  admission: '',
+  registrationEnabled: false,
+  capacity: '',
+  registrationClosesAt: '',
+  questions: [] as EventQuestion[],
 });
 
 interface EventFormState {
@@ -130,6 +148,13 @@ interface EventFormState {
   location: string;
   type: EventType;
   status: ContentStatus;
+  host: string;
+  hostTitle: string;
+  admission: string;
+  registrationEnabled: boolean;
+  capacity: string;
+  registrationClosesAt: string;
+  questions: EventQuestion[];
 }
 
 const EventDialog = ({ open, event, initialStart, onClose }: EventDialogProps): JSX.Element => {
@@ -149,6 +174,13 @@ const EventDialog = ({ open, event, initialStart, onClose }: EventDialogProps): 
         location: event.location,
         type: event.type,
         status: event.status,
+        host: event.host ?? '',
+        hostTitle: event.hostTitle ?? '',
+        admission: event.admission ?? '',
+        registrationEnabled: event.registrationEnabled ?? false,
+        capacity: event.capacity ? String(event.capacity) : '',
+        registrationClosesAt: isoToDatetimeLocal(event.registrationClosesAt),
+        questions: event.questions ?? [],
       });
     } else {
       const defaults = emptyForm();
@@ -163,12 +195,19 @@ const EventDialog = ({ open, event, initialStart, onClose }: EventDialogProps): 
     setForm((previous) => ({ ...previous, [field]: value }));
   };
 
+  const setField = <K extends keyof EventFormState>(field: K, value: EventFormState[K]): void => {
+    setForm((previous) => ({ ...previous, [field]: value }));
+  };
+
   const handleSubmit = (eventSubmit: React.FormEvent): void => {
     eventSubmit.preventDefault();
     const startAt = localToIso(form.startAt);
     if (!startAt) return;
 
     const endAtLocal = form.endAt.trim() ? localToIso(form.endAt.trim()) : undefined;
+    const closesAtIso = form.registrationClosesAt.trim()
+      ? localToIso(form.registrationClosesAt.trim())
+      : undefined;
     const body: EventInput | EventUpdate = {
       title: form.title.trim(),
       description: form.description.trim(),
@@ -176,7 +215,16 @@ const EventDialog = ({ open, event, initialStart, onClose }: EventDialogProps): 
       location: form.location.trim(),
       type: form.type,
       status: form.status,
+      registrationEnabled: form.registrationEnabled,
+      // Only questions with a label are worth persisting; a half-added row is
+      // noise the public form would render as an unlabelled step.
+      questions: form.questions.filter((question) => question.label.trim().length > 0),
       ...(endAtLocal ? { endAt: endAtLocal } : {}),
+      ...(form.host.trim() ? { host: form.host.trim() } : {}),
+      ...(form.hostTitle.trim() ? { hostTitle: form.hostTitle.trim() } : {}),
+      ...(form.admission.trim() ? { admission: form.admission.trim() } : {}),
+      ...(form.capacity.trim() ? { capacity: Number(form.capacity) } : {}),
+      ...(closesAtIso ? { registrationClosesAt: closesAtIso } : {}),
     };
 
     save.mutate(
@@ -191,7 +239,7 @@ const EventDialog = ({ open, event, initialStart, onClose }: EventDialogProps): 
   })();
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth slotProps={{ paper: { sx: dialogPaperSx } }}>
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth slotProps={{ paper: { sx: dialogPaperSx } }}>
       <DialogHeader
         icon={<CalendarTodayIcon />}
         eyebrow="Events"
@@ -267,6 +315,61 @@ const EventDialog = ({ open, event, initialStart, onClose }: EventDialogProps): 
               </MenuItem>
             ))}
           </TextField>
+          <TextField
+            label="Host / speaker (optional)"
+            value={form.host}
+            onChange={(eventChange) => handleChange('host', eventChange.target.value)}
+          />
+          <TextField
+            label="Host title (optional)"
+            value={form.hostTitle}
+            onChange={(eventChange) => handleChange('hostTitle', eventChange.target.value)}
+          />
+          <TextField
+            label="Admission (optional)"
+            placeholder="FREE"
+            value={form.admission}
+            onChange={(eventChange) => handleChange('admission', eventChange.target.value)}
+          />
+
+          <Divider sx={{ pt: 1 }} />
+          <FormControlLabel
+            control={
+              <Switch
+                checked={form.registrationEnabled}
+                onChange={(_e, checked) => setField('registrationEnabled', checked)}
+              />
+            }
+            label="Allow people to register on the website"
+          />
+          {form.registrationEnabled && (
+            <>
+              <TextField
+                label="Capacity (optional)"
+                type="number"
+                value={form.capacity}
+                onChange={(eventChange) => handleChange('capacity', eventChange.target.value)}
+                helperText="Leave blank for unlimited places."
+              />
+              <TextField
+                label="Registration closes (optional)"
+                type="datetime-local"
+                value={form.registrationClosesAt}
+                onChange={(eventChange) =>
+                  handleChange('registrationClosesAt', eventChange.target.value)
+                }
+                slotProps={{ inputLabel: { shrink: true } }}
+                helperText="Defaults to the event start time."
+              />
+              <QuestionBuilder
+                label="Extra questions for this event"
+                helperText="Everyone is asked the core audience questions. Add anything specific to this event here."
+                value={form.questions}
+                onChange={(questions) => setField('questions', questions)}
+              />
+            </>
+          )}
+
           {save.isError && (
             <Typography variant="body2" color="error">
               Could not save the event. Please check the fields and try again.

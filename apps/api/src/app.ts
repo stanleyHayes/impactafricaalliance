@@ -15,6 +15,7 @@ import { createAiRouter } from './modules/ai/ai.routes.js';
 import { createAuthRouter } from './modules/auth/auth.routes.js';
 import { buildContentModules } from './modules/content/content.registry.js';
 import { createDashboardRouter } from './modules/dashboard/dashboard.routes.js';
+import { createEventRegistrationRouters } from './modules/event-registrations/event-registration.routes.js';
 import { createHealthRouter } from './modules/health/health.routes.js';
 import { createMediaRouter } from './modules/media/media.routes.js';
 import { createPaymentRouters } from './modules/payments/payment.routes.js';
@@ -57,6 +58,10 @@ export const createApp = (
     app.use(`/api/${module.path}`, module.publicRouter);
     app.use(`/api/admin/${module.path}`, module.adminRouter);
   }
+
+  const eventRegistrations = createEventRegistrationRouters(container);
+  app.use('/api/events', eventRegistrations.publicRouter);
+  app.use('/api/admin/event-registrations', eventRegistrations.adminRouter);
 
   const submissions = createSubmissionRouters(container);
   app.use('/api/submissions', submissions.publicRouter);

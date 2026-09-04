@@ -1,12 +1,15 @@
 import {
   CONTENT_STATUSES,
+  EVENT_QUESTION_TYPES,
   EVENT_TYPES,
   type ContentStatus,
+  type EventQuestion,
   type EventType,
+  type MediaAsset,
 } from '@iaa/shared';
 import { Schema, model } from 'mongoose';
 
-import { baseSchemaOptions } from '../../../common/model-helpers.js';
+import { baseSchemaOptions, mediaSubSchema } from '../../../common/model-helpers.js';
 
 export interface EventDocument {
   title: string;
@@ -16,9 +19,29 @@ export interface EventDocument {
   location: string;
   type: EventType;
   status: ContentStatus;
+  image?: MediaAsset;
+  host?: string;
+  hostTitle?: string;
+  admission?: string;
+  registrationEnabled: boolean;
+  capacity?: number;
+  registrationClosesAt?: Date;
+  questions: EventQuestion[];
   createdAt: Date;
   updatedAt: Date;
 }
+
+const questionSubSchema = new Schema<EventQuestion>(
+  {
+    id: { type: String, required: true },
+    label: { type: String, required: true },
+    type: { type: String, enum: EVENT_QUESTION_TYPES, required: true },
+    options: { type: [String], default: [] },
+    required: { type: Boolean, default: false },
+    helpText: { type: String },
+  },
+  { _id: false },
+);
 
 const eventSchema = new Schema<EventDocument>(
   {
@@ -34,6 +57,14 @@ const eventSchema = new Schema<EventDocument>(
       default: 'draft',
       index: true,
     },
+    image: { type: mediaSubSchema, required: false },
+    host: { type: String },
+    hostTitle: { type: String },
+    admission: { type: String },
+    registrationEnabled: { type: Boolean, default: false },
+    capacity: { type: Number },
+    registrationClosesAt: { type: Date },
+    questions: { type: [questionSubSchema], default: [] },
   },
   baseSchemaOptions,
 );
