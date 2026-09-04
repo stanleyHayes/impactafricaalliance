@@ -32,6 +32,7 @@ import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
+import { useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
 import { PageCta } from '../components/PageCta';
@@ -40,6 +41,7 @@ import { Section } from '../components/Section';
 import { SectionReveal } from '../components/SectionReveal';
 import { Seo } from '../components/Seo';
 import { CardGridSkeleton, PartnerLogosSkeleton } from '../components/skeletons';
+import { TeamMemberDialog } from '../components/TeamMemberDialog';
 import { IMAGES } from '../content/images';
 import { useImpactStats, usePageCopy, usePartners, useTeam } from '../lib/content-hooks';
 
@@ -838,6 +840,7 @@ const memberInitials = (name: string): string =>
     .join('');
 
 const TeamMemberCard = ({ member }: { member: TeamMember }): JSX.Element => {
+  const [profileOpen, setProfileOpen] = useState(false);
   const socials = MEMBER_SOCIALS.flatMap(({ field, label, Icon }) => {
     const href = member[field];
     return href ? [{ field, label, Icon, href }] : [];
@@ -977,14 +980,39 @@ const TeamMemberCard = ({ member }: { member: TeamMember }): JSX.Element => {
               lineHeight: 1.7,
               display: '-webkit-box',
               WebkitBoxOrient: 'vertical',
-              WebkitLineClamp: 4,
+              WebkitLineClamp: 3,
               overflow: 'hidden',
             }}
           >
             {member.bio}
           </Typography>
         )}
+
+        <Box sx={{ flexGrow: 1 }} />
+        <Button
+          onClick={() => setProfileOpen(true)}
+          endIcon={<EastIcon sx={{ fontSize: 16 }} />}
+          sx={{
+            alignSelf: 'flex-start',
+            mt: 1.5,
+            px: 0,
+            color: brandColors.forest,
+            fontSize: '0.86rem',
+            fontWeight: 750,
+            '&:hover': { bgcolor: 'transparent', color: brandColors.deepForest },
+          }}
+        >
+          Read full bio
+        </Button>
       </CardContent>
+
+      <TeamMemberDialog
+        member={member}
+        socials={socials}
+        initials={memberInitials(member.name)}
+        open={profileOpen}
+        onClose={() => setProfileOpen(false)}
+      />
     </Card>
   );
 };
