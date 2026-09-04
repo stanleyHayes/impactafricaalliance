@@ -52,7 +52,8 @@ interface FormTextFieldProps {
     | keyof SiteSettingUpdateInput
     | `socials.${keyof NonNullable<SiteSettingUpdateInput['socials']>}`
     | `announcement.${keyof NonNullable<SiteSettingUpdateInput['announcement']>}`
-    | `popup.${keyof NonNullable<SiteSettingUpdateInput['popup']>}`;
+    | `popup.${keyof NonNullable<SiteSettingUpdateInput['popup']>}`
+    | `liveChat.${keyof NonNullable<SiteSettingUpdateInput['liveChat']>}`;
   label: string;
   type?: string;
   helperText?: string;
@@ -211,6 +212,40 @@ const PopupSection = (): JSX.Element => {
   );
 };
 
+const LiveChatSection = (): JSX.Element => {
+  const { control } = useFormContext<SiteSettingUpdateInput>();
+
+  return (
+    <Section title="Live chat">
+      <Controller
+        control={control}
+        name="liveChat.enabled"
+        render={({ field }) => (
+          <FormControlLabel
+            control={
+              <Switch
+                checked={Boolean(field.value)}
+                onChange={(event) => field.onChange(event.target.checked)}
+              />
+            }
+            label="Show a WhatsApp chat button on every page"
+          />
+        )}
+      />
+      <FormTextField
+        name="liveChat.label"
+        label="Button label"
+        helperText='Defaults to "Chat with us".'
+      />
+      <FormTextField
+        name="liveChat.greeting"
+        label="Pre-filled message"
+        helperText="What the visitor's message starts with when WhatsApp opens."
+      />
+    </Section>
+  );
+};
+
 const SocialSection = (): JSX.Element => (
   <Section title="Social media">
     <FormTextField name="socials.facebook" label="Facebook" type="url" />
@@ -257,6 +292,11 @@ const toFormValues = (data: SiteSetting): SiteSettingUpdateInput => ({
   regionalPresence: (data.regionalPresence ?? []).join(', '),
   announcement: toAnnouncementValues(data),
   popup: toPopupValues(data),
+  liveChat: {
+    enabled: data.liveChat?.enabled ?? false,
+    label: data.liveChat?.label ?? '',
+    greeting: data.liveChat?.greeting ?? '',
+  },
   socials: toSocialValues(data),
 });
 
@@ -283,6 +323,7 @@ const SiteSettings = (): JSX.Element => {
       country: '',
       mapUrl: '',
       announcement: { enabled: false, message: '', linkUrl: '', linkLabel: '' },
+      liveChat: { enabled: false, label: '', greeting: '' },
       popup: {
         enabled: false,
         title: '',
@@ -382,6 +423,7 @@ const SiteSettings = (): JSX.Element => {
             <Stack spacing={3}>
               <AnnouncementSection />
               <PopupSection />
+              <LiveChatSection />
               <SocialSection />
             </Stack>
           </Grid>

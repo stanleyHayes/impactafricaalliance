@@ -1,5 +1,6 @@
 import type {
   SiteSettingAnnouncement,
+  SiteSettingLiveChat,
   SiteSettingPopup,
   SiteSettingSocials,
 } from '@iaa/shared';
@@ -27,6 +28,7 @@ export interface SiteSettingDocument {
   socials?: SiteSettingSocials;
   announcement?: SiteSettingAnnouncement;
   popup?: SiteSettingPopup;
+  liveChat?: SiteSettingLiveChat;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -66,6 +68,15 @@ const popupSubSchema = new Schema<SiteSettingPopup>(
   { _id: false },
 );
 
+const liveChatSubSchema = new Schema<SiteSettingLiveChat>(
+  {
+    enabled: { type: Boolean, default: false },
+    label: { type: String },
+    greeting: { type: String },
+  },
+  { _id: false },
+);
+
 const siteSettingSchema = new Schema<SiteSettingDocument>(
   {
     key: { type: String, required: true, unique: true, index: true, default: 'site' },
@@ -87,6 +98,7 @@ const siteSettingSchema = new Schema<SiteSettingDocument>(
     socials: { type: socialsSubSchema, required: false },
     announcement: { type: announcementSubSchema, required: false },
     popup: { type: popupSubSchema, required: false },
+    liveChat: { type: liveChatSubSchema, required: false },
   },
   baseSchemaOptions,
 );

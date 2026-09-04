@@ -73,6 +73,23 @@ export const siteSettingPopupSchema = z.object({
 export type SiteSettingPopup = z.infer<typeof siteSettingPopupSchema>;
 
 /**
+ * Floating chat launcher. Routes to WhatsApp rather than a hosted widget:
+ * the number already exists, it needs no third-party script or account, and
+ * conversations land where the team already answers them.
+ */
+export const siteSettingLiveChatSchema = z.object({
+  enabled: z.boolean().optional().default(false),
+  label: optionalShortText,
+  greeting: z
+    .string()
+    .max(300)
+    .transform((value) => (value === '' ? undefined : value))
+    .optional(),
+});
+
+export type SiteSettingLiveChat = z.infer<typeof siteSettingLiveChatSchema>;
+
+/**
  * Countries where IAA has a presence, shown as chips on the Contact page.
  * Accepts a comma-separated string from the admin form and normalises to an
  * array so the public site never has to parse free text.
@@ -105,6 +122,7 @@ export const siteSettingInputSchema = z.object({
   socials: siteSettingSocialsSchema.optional(),
   announcement: siteSettingAnnouncementSchema.optional(),
   popup: siteSettingPopupSchema.optional(),
+  liveChat: siteSettingLiveChatSchema.optional(),
 });
 
 export const siteSettingUpdateSchema = siteSettingInputSchema
@@ -113,6 +131,7 @@ export const siteSettingUpdateSchema = siteSettingInputSchema
     socials: siteSettingSocialsSchema.partial().optional(),
     announcement: siteSettingAnnouncementSchema.partial().optional(),
     popup: siteSettingPopupSchema.partial().optional(),
+    liveChat: siteSettingLiveChatSchema.partial().optional(),
   });
 
 export type SiteSettingInput = z.infer<typeof siteSettingInputSchema>;
@@ -147,4 +166,5 @@ export interface SiteSetting extends Timestamped {
   socials?: SiteSettingSocials;
   announcement?: SiteSettingAnnouncement;
   popup?: SiteSettingPopup;
+  liveChat?: SiteSettingLiveChat;
 }

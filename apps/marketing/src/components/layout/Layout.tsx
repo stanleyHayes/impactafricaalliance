@@ -8,6 +8,7 @@ import { AnnouncementBanner } from './AnnouncementBanner';
 import { CookieBanner } from './CookieBanner';
 import { Footer } from './Footer';
 import { Header } from './Header';
+import { LiveChatButton } from './LiveChatButton';
 import { NewsletterBanner } from './NewsletterBanner';
 import { WelcomePopup } from './WelcomePopup';
 
@@ -33,6 +34,7 @@ export const Layout = (): JSX.Element => {
       <Footer />
       <CookieBanner />
       <WelcomePopup />
+      <LiveChatButton />
     </Box>
   );
 };

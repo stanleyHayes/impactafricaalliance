@@ -267,6 +267,12 @@ const STORIES = [
  * The mentorship webinar series. Registration is on, so each one exercises the
  * stepwise sign-up flow; images are added from the dashboard when supplied.
  */
+const LIVE_CHAT = {
+  enabled: true,
+  label: 'Chat with us',
+  greeting: "Hello Impact Africa Alliance, I'd like to ask about",
+};
+
 const LAUNCH_POPUP = {
   enabled: true,
   title: 'We launch on 8 October.',
@@ -676,6 +682,7 @@ const seed = async (): Promise<void> => {
       if (!existingSettings.announcement?.message || !existingSettings.popup?.message) {
         existingSettings.announcement ??= LAUNCH_ANNOUNCEMENT;
         existingSettings.popup ??= LAUNCH_POPUP;
+        existingSettings.liveChat ??= LIVE_CHAT;
         await existingSettings.save();
         logger.info('Site settings: existing — launch content added');
       } else {
@@ -694,6 +701,7 @@ const seed = async (): Promise<void> => {
         country: 'Ghana',
         announcement: LAUNCH_ANNOUNCEMENT,
         popup: LAUNCH_POPUP,
+        liveChat: LIVE_CHAT,
       });
       logger.info('Site settings: seeded');
     }
