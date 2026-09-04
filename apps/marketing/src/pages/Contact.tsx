@@ -1,4 +1,4 @@
-import { ORG, brandColors, type SiteSetting } from '@iaa/shared';
+import { ORG, brandColors, formatOfficeAddress, type SiteSetting } from '@iaa/shared';
 import type { SvgIconComponent } from '@mui/icons-material';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import BusinessRoundedIcon from '@mui/icons-material/BusinessRounded';
@@ -31,7 +31,7 @@ import { SocialLinks } from '../components/SocialLinks';
 import { Watermark } from '../components/Watermark';
 import { IMAGES } from '../content/images';
 import { ContactForm } from '../features/forms/ContactForm';
-import { usePageCopy, useSiteSettings, type PageCopyDefaults } from '../lib/content-hooks';
+import { useOffices, usePageCopy, useSiteSettings, type PageCopyDefaults } from '../lib/content-hooks';
 
 /** Used only until Site Settings loads, or if a field has not been filled in yet. */
 const FALLBACK_REGIONS = ['Nigeria', 'Sierra Leone'] as const;
@@ -245,7 +245,12 @@ const resolveContact = (site: SiteSetting | undefined): ResolvedContact => {
 
 const ContactInformation = (): JSX.Element => {
   const { data: site } = useSiteSettings();
+  const { data: officeData } = useOffices();
   const { email, whatsapp, headOffice, regions } = resolveContact(site);
+
+  // Offices are the source of truth once any exist; the single site-settings
+  // address stays as the fallback so the page never renders without a location.
+  const offices = officeData?.items ?? [];
 
   return (
     <MintSurface
@@ -314,20 +319,49 @@ const ContactInformation = (): JSX.Element => {
             </Link>
           </ContactDetail>
         )}
-        <ContactDetail icon={BusinessRoundedIcon} label="Head office">
-          {site?.mapUrl ? (
-            <Link
-              href={site.mapUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              sx={{ textDecorationColor: 'rgba(14,42,34,0.35)' }}
-            >
-              {headOffice}
-            </Link>
-          ) : (
-            headOffice
-          )}
-        </ContactDetail>
+        {offices.length > 0 ? (
+          offices.map((office) => (
+            <ContactDetail key={office.id} icon={BusinessRoundedIcon} label={office.label}>
+              {office.mapUrl ? (
+                <Link
+                  href={office.mapUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={{ textDecorationColor: 'rgba(14,42,34,0.35)' }}
+                >
+                  {formatOfficeAddress(office)}
+                </Link>
+              ) : (
+                formatOfficeAddress(office)
+              )}
+              {office.phone && (
+                <Box sx={{ mt: 0.5 }}>
+                  <Link
+                    href={`tel:${office.phone.replace(/\s/g, '')}`}
+                    sx={{ fontWeight: 650, textDecorationColor: 'rgba(14,42,34,0.35)' }}
+                  >
+                    {office.phone}
+                  </Link>
+                </Box>
+              )}
+            </ContactDetail>
+          ))
+        ) : (
+          <ContactDetail icon={BusinessRoundedIcon} label="Head office">
+            {site?.mapUrl ? (
+              <Link
+                href={site.mapUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{ textDecorationColor: 'rgba(14,42,34,0.35)' }}
+              >
+                {headOffice}
+              </Link>
+            ) : (
+              headOffice
+            )}
+          </ContactDetail>
+        )}
         <ContactDetail icon={EmailRoundedIcon} label="Email">
           <Link
             href={`mailto:${email}`}

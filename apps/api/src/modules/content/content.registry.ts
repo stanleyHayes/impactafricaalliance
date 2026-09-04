@@ -9,6 +9,8 @@ import {
   impactStatUpdateSchema,
   jobInputSchema,
   jobUpdateSchema,
+  officeInputSchema,
+  officeUpdateSchema,
   pageSettingInputSchema,
   pageSettingUpdateSchema,
   partnerInputSchema,
@@ -30,6 +32,7 @@ import { ArticleModel } from './models/article.model.js';
 import { EventModel } from './models/event.model.js';
 import { GalleryItemModel } from './models/gallery.model.js';
 import { JobModel } from './models/job.model.js';
+import { OfficeModel } from './models/office.model.js';
 import { PageSettingModel } from './models/page-setting.model.js';
 import { PartnerModel } from './models/partner.model.js';
 import { ReportModel } from './models/report.model.js';
@@ -84,6 +87,17 @@ export const buildContentModules = (container: DependencyContainer): MountedCont
       schemas: { create: partnerInputSchema, update: partnerUpdateSchema },
       publicFilter: ACTIVE_ONLY,
       defaultSort: { order: 1, name: 1 },
+    },
+    container,
+  ),
+  mountContentModule(
+    {
+      path: 'offices',
+      resource: 'Office',
+      model: OfficeModel,
+      schemas: { create: officeInputSchema, update: officeUpdateSchema },
+      publicFilter: ACTIVE_ONLY,
+      defaultSort: { order: 1, label: 1 },
     },
     container,
   ),

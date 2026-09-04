@@ -1,4 +1,13 @@
-import { ORG, PILLARS, PRIMARY_NAV, FOOTER_LEGAL_LINKS, brandColors } from '@iaa/shared';
+import {
+  ORG,
+  PILLARS,
+  PRIMARY_NAV,
+  FOOTER_LEGAL_LINKS,
+  brandColors,
+  formatOfficeAddress,
+  type Office,
+  type SiteSetting,
+} from '@iaa/shared';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import MailOutlineRoundedIcon from '@mui/icons-material/MailOutlineRounded';
 import PlaceOutlinedIcon from '@mui/icons-material/PlaceOutlined';
@@ -13,7 +22,7 @@ import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
-import { useSiteSettings } from '../../lib/content-hooks';
+import { useOffices, useSiteSettings } from '../../lib/content-hooks';
 import { Logo } from '../Logo';
 import { SocialLinks } from '../SocialLinks';
 
@@ -65,14 +74,32 @@ const FooterLink = ({ to, children }: { to: string; children: ReactNode }): JSX.
   </Link>
 );
 
+/**
+ * Prefer the office flagged primary, then the first one; fall back to the single
+ * address on site settings so installs with no offices yet still show a location.
+ */
+const resolveHeadOffice = (
+  offices: readonly Office[],
+  site: SiteSetting | undefined,
+): string | undefined => {
+  const primary = offices.find((office) => office.isPrimary) ?? offices[0];
+  if (primary) {
+    return formatOfficeAddress(primary);
+  }
+  if (!site) {
+    return undefined;
+  }
+  return [site.addressLine1, site.city, site.country].filter(Boolean).join(', ');
+};
+
 /** Clean site footer: brand summary, useful navigation, and a focused contact path. */
 export const Footer = (): JSX.Element => {
   const { data: site } = useSiteSettings();
+  const { data: officeData } = useOffices();
+  const offices = officeData?.items ?? [];
   const email = site?.contactEmail ?? ORG.email;
   const whatsapp = site?.whatsappPhone ?? site?.contactPhone;
-  const headOffice = site
-    ? [site.addressLine1, site.city, site.country].filter(Boolean).join(', ')
-    : undefined;
+  const headOffice = resolveHeadOffice(offices, site);
   const presence = site?.regionalPresence?.length ? site.regionalPresence : FALLBACK_PRESENCE;
 
   return (

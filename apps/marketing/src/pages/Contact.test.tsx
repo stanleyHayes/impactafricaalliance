@@ -1,8 +1,8 @@
-import { ORG, type SiteSetting } from '@iaa/shared';
+import { ORG, type Office, type SiteSetting } from '@iaa/shared';
 import { screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useSiteSettings } from '../lib/content-hooks';
+import { useOffices, useSiteSettings } from '../lib/content-hooks';
 import { renderWithProviders } from '../test/test-utils';
 
 import Contact from './Contact';
@@ -18,12 +18,29 @@ vi.mock('../lib/mutations', () => ({
 
 vi.mock('../lib/content-hooks', async (importOriginal) => {
   const actual = await importOriginal<Record<string, unknown>>();
-  return { ...actual, useSiteSettings: vi.fn() };
+  return { ...actual, useSiteSettings: vi.fn(), useOffices: vi.fn() };
 });
 
 const mockSiteSettings = (data: SiteSetting | undefined): void => {
   vi.mocked(useSiteSettings).mockReturnValue({ data } as ReturnType<typeof useSiteSettings>);
 };
+
+const mockOffices = (items: Office[]): void => {
+  vi.mocked(useOffices).mockReturnValue({
+    data: { items, total: items.length, page: 1, pageSize: 100, totalPages: 1 },
+  } as ReturnType<typeof useOffices>);
+};
+
+const now = '2026-09-04T00:00:00.000Z';
+const office = (over: Partial<Office> & Pick<Office, 'label' | 'addressLine1' | 'country'>): Office => ({
+  id: over.label.toLowerCase().replace(/\s+/g, '-'),
+  isPrimary: false,
+  order: 0,
+  isActive: true,
+  createdAt: now,
+  updatedAt: now,
+  ...over,
+});
 
 const siteSettings: SiteSetting = {
   id: 'site-1',
@@ -49,6 +66,7 @@ describe('Contact page', () => {
 
   it('presents contact details and routes specialised enquiries', () => {
     mockSiteSettings(undefined);
+    mockOffices([]);
 
     renderWithProviders(<Contact />);
 
@@ -71,6 +89,7 @@ describe('Contact page', () => {
 
   it('falls back to the static regions before site settings resolve', () => {
     mockSiteSettings(undefined);
+    mockOffices([]);
 
     renderWithProviders(<Contact />);
 
@@ -80,6 +99,7 @@ describe('Contact page', () => {
 
   it('renders contact details managed in the CMS', () => {
     mockSiteSettings(siteSettings);
+    mockOffices([]);
 
     renderWithProviders(<Contact />);
 
@@ -99,5 +119,46 @@ describe('Contact page', () => {
       'href',
       `mailto:${siteSettings.contactEmail}`,
     );
+  });
+});
+
+describe('Contact page offices', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockSiteSettings(siteSettings);
+  });
+
+  it('lists every office once any are published, not just a single head office', () => {
+    mockOffices([
+      office({
+        label: 'Head Office',
+        addressLine1: 'Atlantic Tower, Airport City',
+        city: 'Accra',
+        country: 'Ghana',
+        isPrimary: true,
+      }),
+      office({
+        label: 'Nigeria Office',
+        addressLine1: 'No. 69, Royal Anchor Estate, Kucigoro',
+        city: 'Abuja',
+        country: 'Nigeria',
+      }),
+    ]);
+
+    renderWithProviders(<Contact />);
+
+    expect(screen.getByText('Head Office')).toBeInTheDocument();
+    expect(screen.getByText('Nigeria Office')).toBeInTheDocument();
+    expect(screen.getByText(/Atlantic Tower, Airport City, Accra, Ghana/)).toBeInTheDocument();
+    expect(screen.getByText(/Royal Anchor Estate, Kucigoro, Abuja, Nigeria/)).toBeInTheDocument();
+  });
+
+  it('falls back to the site-settings address when no offices exist yet', () => {
+    mockOffices([]);
+
+    renderWithProviders(<Contact />);
+
+    expect(screen.getByText('Head office')).toBeInTheDocument();
+    expect(screen.getByText(/Atlantic Tower Airport City/)).toBeInTheDocument();
   });
 });

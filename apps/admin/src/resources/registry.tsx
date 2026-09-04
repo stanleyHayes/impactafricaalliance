@@ -8,6 +8,7 @@ import {
   impactStatInputSchema,
   jobInputSchema,
   pageSettingInputSchema,
+  officeInputSchema,
   partnerInputSchema,
   reportInputSchema,
   storyInputSchema,
@@ -21,6 +22,7 @@ import HandshakeIcon from '@mui/icons-material/Handshake';
 import ImageIcon from '@mui/icons-material/Image';
 import InsightsIcon from '@mui/icons-material/Insights';
 import NewspaperIcon from '@mui/icons-material/Newspaper';
+import PlaceIcon from '@mui/icons-material/Place';
 import WorkOutlineIcon from '@mui/icons-material/WorkOutlineOutlined';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
@@ -208,6 +210,36 @@ export const RESOURCES: readonly ResourceConfig[] = [
       mediaColumn('photo', { circle: true }),
       { field: 'name', headerName: 'Name', flex: 1, minWidth: 160 },
       { field: 'role', headerName: 'Role', flex: 1, minWidth: 160 },
+      booleanColumn('isActive', 'Active'),
+    ],
+  },
+  {
+    key: 'offices',
+    label: 'Offices',
+    singular: 'Office',
+    icon: <PlaceIcon />,
+    createSchema: officeInputSchema,
+    defaultValues: { isActive: true, isPrimary: false, order: 0 },
+    fields: [
+      { name: 'label', label: 'Label', type: 'text' },
+      { name: 'addressLine1', label: 'Address line 1', type: 'text', wide: true },
+      { name: 'addressLine2', label: 'Address line 2', type: 'text', wide: true },
+      { name: 'city', label: 'City', type: 'text' },
+      { name: 'region', label: 'Region / state', type: 'text' },
+      { name: 'postalCode', label: 'Postal code', type: 'text' },
+      { name: 'country', label: 'Country', type: 'text' },
+      { name: 'phone', label: 'Phone (optional)', type: 'text' },
+      { name: 'email', label: 'Email (optional)', type: 'text' },
+      { name: 'mapUrl', label: 'Map URL (optional)', type: 'text', wide: true },
+      { name: 'isPrimary', label: 'Primary (shown in footer)', type: 'switch' },
+      { name: 'order', label: 'Order', type: 'number' },
+      { name: 'isActive', label: 'Active', type: 'switch' },
+    ],
+    columns: [
+      { field: 'label', headerName: 'Label', flex: 1, minWidth: 150 },
+      { field: 'addressLine1', headerName: 'Address', flex: 1, minWidth: 200 },
+      { field: 'country', headerName: 'Country', width: 130 },
+      booleanColumn('isPrimary', 'Primary'),
       booleanColumn('isActive', 'Active'),
     ],
   },

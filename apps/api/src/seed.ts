@@ -22,6 +22,7 @@ import { connectDatabase, disconnectDatabase } from './db/mongoose.js';
 import { PasswordService } from './modules/auth/password.service.js';
 import { ArticleModel } from './modules/content/models/article.model.js';
 import { JobModel } from './modules/content/models/job.model.js';
+import { OfficeModel } from './modules/content/models/office.model.js';
 import { PageSettingModel } from './modules/content/models/page-setting.model.js';
 import { PartnerModel } from './modules/content/models/partner.model.js';
 import { ReportModel } from './modules/content/models/report.model.js';
@@ -258,6 +259,28 @@ const STORIES = [
     status: ContentStatus.Draft,
     order: 4,
     photo: media('story-brian', 800, 800),
+  },
+];
+
+const OFFICES = [
+  {
+    label: 'Head Office',
+    addressLine1: 'Atlantic Tower, Airport City',
+    city: 'Accra',
+    country: 'Ghana',
+    isPrimary: true,
+    order: 1,
+    isActive: true,
+  },
+  {
+    label: 'Nigeria Office',
+    addressLine1: 'No. 69, Royal Anchor Estate, Kucigoro',
+    addressLine2: 'Abuja Municipal Area Council (AMAC), FCT',
+    city: 'Abuja',
+    country: 'Nigeria',
+    isPrimary: false,
+    order: 2,
+    isActive: true,
   },
 ];
 
@@ -498,6 +521,8 @@ const seed = async (): Promise<void> => {
       });
       logger.info('Site settings: seeded');
     }
+
+    await ensure('Offices', await OfficeModel.countDocuments().exec(), () => OfficeModel.create(OFFICES));
 
     await ensure('Donations', await DonationModel.countDocuments().exec(), () => DonationModel.create(DONATIONS));
 

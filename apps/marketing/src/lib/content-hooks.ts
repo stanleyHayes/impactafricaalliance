@@ -4,6 +4,7 @@ import type {
   GalleryItem,
   ImpactStat,
   Job,
+  Office,
   PageSetting,
   Paginated,
   Partner,
@@ -30,6 +31,9 @@ export const useStories = (): UseQueryResult<Paginated<Story>> =>
 
 export const useTeam = (): UseQueryResult<Paginated<TeamMember>> =>
   useQuery({ queryKey: ['team'], queryFn: () => page<TeamMember>('team', '?pageSize=100') });
+
+export const useOffices = (): UseQueryResult<Paginated<Office>> =>
+  useQuery({ queryKey: ['offices'], queryFn: () => page<Office>('offices', '?pageSize=100') });
 
 export const usePartners = (): UseQueryResult<Paginated<Partner>> =>
   useQuery({ queryKey: ['partners'], queryFn: () => page<Partner>('partners', '?pageSize=100') });

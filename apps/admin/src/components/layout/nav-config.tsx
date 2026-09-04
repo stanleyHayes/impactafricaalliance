@@ -15,6 +15,7 @@ import MailIcon from '@mui/icons-material/MarkEmailRead';
 import NewspaperIcon from '@mui/icons-material/Newspaper';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import PersonIcon from '@mui/icons-material/Person';
+import PlaceIcon from '@mui/icons-material/Place';
 import PrivacyTipIcon from '@mui/icons-material/PrivacyTip';
 import PublicIcon from '@mui/icons-material/Public';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -47,6 +48,7 @@ const CONTENT_ICONS: Record<string, JSX.Element> = {
   jobs: <WorkOutlineIcon />,
   gallery: <CollectionsIcon />,
   stats: <InsightsIcon />,
+  offices: <PlaceIcon />,
 };
 
 /** Build the grouped sidebar navigation, filtered to what the user may access. */
