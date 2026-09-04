@@ -267,6 +267,16 @@ const STORIES = [
  * The mentorship webinar series. Registration is on, so each one exercises the
  * stepwise sign-up flow; images are added from the dashboard when supplied.
  */
+const LAUNCH_POPUP = {
+  enabled: true,
+  title: 'We launch on 8 October.',
+  message:
+    'Impact Africa Alliance goes live at the Google Community Centre in Accra, supported by Google Africa. Our mentorship webinars are open for registration now.',
+  ctaLabel: 'See upcoming events',
+  ctaUrl: 'https://www.impactafricaalliance.org/events',
+  delaySeconds: 3,
+};
+
 const LAUNCH_ANNOUNCEMENT = {
   enabled: true,
   message:
@@ -611,10 +621,11 @@ const seed = async (): Promise<void> => {
     // launch announcement, so fill in what is missing instead of skipping.
     const existingSettings = await SiteSettingModel.findOne({ key: 'site' }).exec();
     if (existingSettings) {
-      if (!existingSettings.announcement?.message) {
-        existingSettings.announcement = LAUNCH_ANNOUNCEMENT;
+      if (!existingSettings.announcement?.message || !existingSettings.popup?.message) {
+        existingSettings.announcement ??= LAUNCH_ANNOUNCEMENT;
+        existingSettings.popup ??= LAUNCH_POPUP;
         await existingSettings.save();
-        logger.info('Site settings: existing — announcement added');
+        logger.info('Site settings: existing — launch content added');
       } else {
         logger.info('Site settings: existing — skipped');
       }
@@ -630,6 +641,7 @@ const seed = async (): Promise<void> => {
         region: 'Greater Accra',
         country: 'Ghana',
         announcement: LAUNCH_ANNOUNCEMENT,
+        popup: LAUNCH_POPUP,
       });
       logger.info('Site settings: seeded');
     }

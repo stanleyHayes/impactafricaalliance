@@ -51,7 +51,8 @@ interface FormTextFieldProps {
   name:
     | keyof SiteSettingUpdateInput
     | `socials.${keyof NonNullable<SiteSettingUpdateInput['socials']>}`
-    | `announcement.${keyof NonNullable<SiteSettingUpdateInput['announcement']>}`;
+    | `announcement.${keyof NonNullable<SiteSettingUpdateInput['announcement']>}`
+    | `popup.${keyof NonNullable<SiteSettingUpdateInput['popup']>}`;
   label: string;
   type?: string;
   helperText?: string;
@@ -169,6 +170,47 @@ const AnnouncementSection = (): JSX.Element => {
   );
 };
 
+const PopupSection = (): JSX.Element => {
+  const { control } = useFormContext<SiteSettingUpdateInput>();
+
+  return (
+    <Section title="Welcome popup">
+      <Controller
+        control={control}
+        name="popup.enabled"
+        render={({ field }) => (
+          <FormControlLabel
+            control={
+              <Switch
+                checked={Boolean(field.value)}
+                onChange={(event) => field.onChange(event.target.checked)}
+              />
+            }
+            label="Show a popup to first-time visitors"
+          />
+        )}
+      />
+      <FormTextField name="popup.title" label="Title" />
+      <FormTextField
+        name="popup.message"
+        label="Message"
+        helperText="Shown once per visit. Visitors can turn it off permanently."
+      />
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+        <FormTextField name="popup.ctaLabel" label="Button label" />
+        <FormTextField name="popup.ctaUrl" label="Button link" type="url" />
+      </Stack>
+      <FormTextField name="popup.imageUrl" label="Image URL (optional)" type="url" />
+      <FormTextField
+        name="popup.delaySeconds"
+        label="Delay (seconds)"
+        type="number"
+        helperText="How long to wait after the page loads before showing."
+      />
+    </Section>
+  );
+};
+
 const SocialSection = (): JSX.Element => (
   <Section title="Social media">
     <FormTextField name="socials.facebook" label="Facebook" type="url" />
@@ -182,6 +224,29 @@ const SocialSection = (): JSX.Element => (
 
 const SOCIAL_KEYS = ['facebook', 'x', 'instagram', 'linkedin', 'youtube', 'tiktok'] as const;
 
+const toSocialValues = (data: SiteSetting): SiteSettingUpdateInput['socials'] =>
+  Object.fromEntries(SOCIAL_KEYS.map((key) => [key, data.socials?.[key] ?? '']));
+
+const toAnnouncementValues = (data: SiteSetting): SiteSettingUpdateInput['announcement'] => ({
+  enabled: data.announcement?.enabled ?? false,
+  message: data.announcement?.message ?? '',
+  linkUrl: data.announcement?.linkUrl ?? '',
+  linkLabel: data.announcement?.linkLabel ?? '',
+});
+
+const toPopupValues = (data: SiteSetting): SiteSettingUpdateInput['popup'] => {
+  const { enabled, title, message, ctaLabel, ctaUrl, imageUrl, delaySeconds } = data.popup ?? {};
+  return {
+    enabled: enabled ?? false,
+    title: title ?? '',
+    message: message ?? '',
+    ctaLabel: ctaLabel ?? '',
+    ctaUrl: ctaUrl ?? '',
+    imageUrl: imageUrl ?? '',
+    delaySeconds: delaySeconds ?? 2,
+  };
+};
+
 /**
  * Map a saved record onto the form's edit shape: every field becomes a
  * controlled string, and `regionalPresence` flattens to comma-separated text
@@ -190,13 +255,9 @@ const SOCIAL_KEYS = ['facebook', 'x', 'instagram', 'linkedin', 'youtube', 'tikto
 const toFormValues = (data: SiteSetting): SiteSettingUpdateInput => ({
   ...data,
   regionalPresence: (data.regionalPresence ?? []).join(', '),
-  announcement: {
-    enabled: data.announcement?.enabled ?? false,
-    message: data.announcement?.message ?? '',
-    linkUrl: data.announcement?.linkUrl ?? '',
-    linkLabel: data.announcement?.linkLabel ?? '',
-  },
-  socials: Object.fromEntries(SOCIAL_KEYS.map((key) => [key, data.socials?.[key] ?? ''])),
+  announcement: toAnnouncementValues(data),
+  popup: toPopupValues(data),
+  socials: toSocialValues(data),
 });
 
 const SiteSettings = (): JSX.Element => {
@@ -222,6 +283,15 @@ const SiteSettings = (): JSX.Element => {
       country: '',
       mapUrl: '',
       announcement: { enabled: false, message: '', linkUrl: '', linkLabel: '' },
+      popup: {
+        enabled: false,
+        title: '',
+        message: '',
+        ctaLabel: '',
+        ctaUrl: '',
+        imageUrl: '',
+        delaySeconds: 2,
+      },
       socials: {
         facebook: '',
         x: '',
@@ -311,6 +381,7 @@ const SiteSettings = (): JSX.Element => {
           <Grid size={{ xs: 12, lg: 5 }}>
             <Stack spacing={3}>
               <AnnouncementSection />
+              <PopupSection />
               <SocialSection />
             </Stack>
           </Grid>

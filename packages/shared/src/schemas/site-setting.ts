@@ -52,6 +52,27 @@ export const siteSettingAnnouncementSchema = z.object({
 export type SiteSettingAnnouncement = z.infer<typeof siteSettingAnnouncementSchema>;
 
 /**
+ * Welcome dialog shown on a visitor's first arrival. Separate from the
+ * announcement bar: the bar is passive and always present, this interrupts.
+ */
+export const siteSettingPopupSchema = z.object({
+  enabled: z.boolean().optional().default(false),
+  title: optionalShortText,
+  message: z
+    .string()
+    .max(600)
+    .transform((value) => (value === '' ? undefined : value))
+    .optional(),
+  ctaLabel: optionalShortText,
+  ctaUrl: optionalUrl,
+  imageUrl: optionalUrl,
+  /** Seconds to wait before showing, so it never lands mid-page-load. */
+  delaySeconds: z.number().int().min(0).max(60).optional().default(2),
+});
+
+export type SiteSettingPopup = z.infer<typeof siteSettingPopupSchema>;
+
+/**
  * Countries where IAA has a presence, shown as chips on the Contact page.
  * Accepts a comma-separated string from the admin form and normalises to an
  * array so the public site never has to parse free text.
@@ -83,6 +104,7 @@ export const siteSettingInputSchema = z.object({
   mapUrl: optionalUrl,
   socials: siteSettingSocialsSchema.optional(),
   announcement: siteSettingAnnouncementSchema.optional(),
+  popup: siteSettingPopupSchema.optional(),
 });
 
 export const siteSettingUpdateSchema = siteSettingInputSchema
@@ -90,6 +112,7 @@ export const siteSettingUpdateSchema = siteSettingInputSchema
   .extend({
     socials: siteSettingSocialsSchema.partial().optional(),
     announcement: siteSettingAnnouncementSchema.partial().optional(),
+    popup: siteSettingPopupSchema.partial().optional(),
   });
 
 export type SiteSettingInput = z.infer<typeof siteSettingInputSchema>;
@@ -123,4 +146,5 @@ export interface SiteSetting extends Timestamped {
   mapUrl?: string;
   socials?: SiteSettingSocials;
   announcement?: SiteSettingAnnouncement;
+  popup?: SiteSettingPopup;
 }

@@ -1,4 +1,8 @@
-import type { SiteSettingAnnouncement, SiteSettingSocials } from '@iaa/shared';
+import type {
+  SiteSettingAnnouncement,
+  SiteSettingPopup,
+  SiteSettingSocials,
+} from '@iaa/shared';
 import { Schema, model } from 'mongoose';
 
 import { baseSchemaOptions } from '../../common/model-helpers.js';
@@ -22,6 +26,7 @@ export interface SiteSettingDocument {
   mapUrl?: string;
   socials?: SiteSettingSocials;
   announcement?: SiteSettingAnnouncement;
+  popup?: SiteSettingPopup;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -48,6 +53,19 @@ const announcementSubSchema = new Schema<SiteSettingAnnouncement>(
   { _id: false },
 );
 
+const popupSubSchema = new Schema<SiteSettingPopup>(
+  {
+    enabled: { type: Boolean, default: false },
+    title: { type: String },
+    message: { type: String },
+    ctaLabel: { type: String },
+    ctaUrl: { type: String },
+    imageUrl: { type: String },
+    delaySeconds: { type: Number, default: 2 },
+  },
+  { _id: false },
+);
+
 const siteSettingSchema = new Schema<SiteSettingDocument>(
   {
     key: { type: String, required: true, unique: true, index: true, default: 'site' },
@@ -68,6 +86,7 @@ const siteSettingSchema = new Schema<SiteSettingDocument>(
     mapUrl: { type: String },
     socials: { type: socialsSubSchema, required: false },
     announcement: { type: announcementSubSchema, required: false },
+    popup: { type: popupSubSchema, required: false },
   },
   baseSchemaOptions,
 );

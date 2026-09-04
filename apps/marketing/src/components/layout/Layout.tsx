@@ -9,8 +9,9 @@ import { CookieBanner } from './CookieBanner';
 import { Footer } from './Footer';
 import { Header } from './Header';
 import { NewsletterBanner } from './NewsletterBanner';
+import { WelcomePopup } from './WelcomePopup';
 
-/** App shell: announcement bar, header, routed page content, newsletter CTA, footer, SEO schema, cookie banner. */
+/** App shell: announcement bar, header, routed page content, newsletter CTA, footer, SEO schema, cookie banner, welcome popup. */
 export const Layout = (): JSX.Element => {
   const { pathname, hash } = useLocation();
 
@@ -31,6 +32,7 @@ export const Layout = (): JSX.Element => {
       <NewsletterBanner />
       <Footer />
       <CookieBanner />
+      <WelcomePopup />
     </Box>
   );
 };
