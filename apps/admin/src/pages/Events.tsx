@@ -14,6 +14,7 @@ import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
 import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
+import QrCode2Icon from '@mui/icons-material/QrCode2';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
@@ -36,6 +37,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { DialogFooter, DialogHeader, dialogPaperSx, dialogSectionSx } from '../components/dialogs/DialogShell';
 import { EmptyState } from '../components/EmptyState';
 import { CalendarGrid } from '../components/events/CalendarGrid';
+import { EventQrDialog } from '../components/events/EventQrDialog';
 import { QuestionBuilder } from '../components/fields/QuestionBuilder';
 import { PageHeader } from '../components/PageHeader';
 import { PageSkeleton } from '../components/PageSkeleton';
@@ -429,10 +431,11 @@ const DeleteConfirmDialog = ({ open, event, onClose }: DeleteConfirmDialogProps)
 interface EventCardProps {
   event: Event;
   onEdit: (event: Event) => void;
+  onShowQr: (event: Event) => void;
   onDelete: (event: Event) => void;
 }
 
-const EventCard = ({ event, onEdit, onDelete }: EventCardProps): JSX.Element => {
+const EventCard = ({ event, onEdit, onDelete, onShowQr }: EventCardProps): JSX.Element => {
   const theme = useTheme();
 
   return (
@@ -476,6 +479,14 @@ const EventCard = ({ event, onEdit, onDelete }: EventCardProps): JSX.Element => 
           </Typography>
         </Box>
         <Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
+          <IconButton
+            aria-label="Show QR code"
+            onClick={() => onShowQr(event)}
+            size="small"
+            title="QR code for flyers and slides"
+          >
+            <QrCode2Icon />
+          </IconButton>
           <IconButton aria-label="Edit event" onClick={() => onEdit(event)} size="small">
             <EditOutlinedIcon />
           </IconButton>
@@ -497,6 +508,7 @@ const Events = (): JSX.Element => {
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [initialStart, setInitialStart] = useState<string | undefined>();
   const [deletingEvent, setDeletingEvent] = useState<Event | null>(null);
+  const [qrEvent, setQrEvent] = useState<Event | null>(null);
 
   const sortedEvents = useMemo(
     () => [...events].sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime()),
@@ -589,7 +601,13 @@ const Events = (): JSX.Element => {
           ) : (
             <Stack spacing={2}>
               {sortedEvents.map((event) => (
-                <EventCard key={event.id} event={event} onEdit={openEdit} onDelete={setDeletingEvent} />
+                <EventCard
+                  key={event.id}
+                  event={event}
+                  onEdit={openEdit}
+                  onDelete={setDeletingEvent}
+                  onShowQr={setQrEvent}
+                />
               ))}
             </Stack>
           )}
@@ -606,6 +624,11 @@ const Events = (): JSX.Element => {
         open={Boolean(deletingEvent)}
         event={deletingEvent}
         onClose={() => setDeletingEvent(null)}
+      />
+      <EventQrDialog
+        event={qrEvent}
+        open={Boolean(qrEvent)}
+        onClose={() => setQrEvent(null)}
       />
     </>
   );

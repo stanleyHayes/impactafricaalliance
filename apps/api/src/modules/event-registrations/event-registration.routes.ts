@@ -29,6 +29,7 @@ export const createEventRegistrationRouters = (
   const adminRouter = Router();
   adminRouter.use(requireAuth(tokens), requireRole(UserRole.Admin, UserRole.Editor));
   adminRouter.get('/counts', asyncHandler(controller.counts));
+  adminRouter.get('/:eventId/qr', asyncHandler(controller.qr));
   adminRouter.get('/:eventId', asyncHandler(controller.list));
 
   return { publicRouter, adminRouter };

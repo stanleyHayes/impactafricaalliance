@@ -6,10 +6,13 @@ import {
   type Paginated,
 } from '@iaa/shared';
 import { Types } from 'mongoose';
-import { injectable } from 'tsyringe';
+import QRCode from 'qrcode';
+import { inject, injectable } from 'tsyringe';
 
 import { ConflictError, NotFoundError } from '../../common/errors.js';
 import { paginate } from '../../common/pagination.js';
+import type { AppConfig } from '../../config/env.js';
+import { TOKENS } from '../../tokens.js';
 import { EventModel } from '../content/models/event.model.js';
 
 import {
@@ -21,6 +24,8 @@ const DUPLICATE_KEY = 11000;
 
 @injectable()
 export class EventRegistrationService {
+  constructor(@inject(TOKENS.Config) private readonly config: AppConfig) {}
+
   /** Register an attendee, or report that this email already holds a place. */
   register = async (
     eventId: string,
@@ -80,6 +85,27 @@ export class EventRegistrationService {
       EventRegistrationModel.countDocuments(filter).exec(),
     ]);
     return paginate(items, total, page, pageSize);
+  };
+
+  /**
+   * A printable QR code pointing at the event's page, for flyers and slides.
+   * Generated server-side so the admin never has to ship a QR library.
+   */
+  qrForEvent = async (eventId: string): Promise<{ targetUrl: string; dataUrl: string }> => {
+    if (!Types.ObjectId.isValid(eventId)) {
+      throw new NotFoundError('Event');
+    }
+    const event = await EventModel.findById(eventId).exec();
+    if (!event) {
+      throw new NotFoundError('Event');
+    }
+    const targetUrl = `${this.config.siteUrl.replace(/\/$/, '')}/events#${eventId}`;
+    const dataUrl = await QRCode.toDataURL(targetUrl, {
+      width: 720,
+      margin: 2,
+      errorCorrectionLevel: 'M',
+    });
+    return { targetUrl, dataUrl };
   };
 
   /** Registration totals keyed by event id, for the admin list column. */

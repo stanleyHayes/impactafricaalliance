@@ -24,6 +24,10 @@ export class EventRegistrationController {
     res.json(await this.registrations.listForEvent(pathParam(req, 'eventId'), page, pageSize));
   };
 
+  qr = async (req: Request, res: Response): Promise<void> => {
+    res.json(await this.registrations.qrForEvent(pathParam(req, 'eventId')));
+  };
+
   counts = async (_req: Request, res: Response): Promise<void> => {
     res.json(await this.registrations.countsByEvent());
   };
