@@ -21,6 +21,7 @@ import { Link as RouterLink, useLocation } from 'react-router-dom';
 import { MintSurface } from '../components/MintSurface';
 import { PageCta } from '../components/PageCta';
 import { PageHero } from '../components/PageHero';
+import { ParallaxShowcase } from '../components/ParallaxShowcase';
 import { Section } from '../components/Section';
 import { Seo } from '../components/Seo';
 import { CardGridSkeleton } from '../components/skeletons';
@@ -279,6 +280,31 @@ const GetInvolved = (): JSX.Element => {
         watermark="africa"
       />
 
+      <ParallaxShowcase
+        eyebrow="Why it matters"
+        title="Every route in changes something."
+        subtitle="Partner with us and a programme reaches a new city. Mentor and a young person gets the guidance no course provides. Give, and a place on a cohort is paid for."
+        panels={[
+          {
+            src: IMAGES.programs['digital-skills'],
+            alt: 'A training session in progress',
+            caption: 'Partner',
+            drift: 0.2,
+          },
+          {
+            src: IMAGES.community,
+            alt: 'A mentor working alongside a participant',
+            caption: 'Mentor',
+            drift: 0.34,
+          },
+          {
+            src: IMAGES.programs['women-empowerment'],
+            alt: 'A participant putting new skills to work',
+            caption: 'Give',
+            drift: 0.26,
+          },
+        ]}
+      />
       <Section bgcolor="background.default" watermark="africa" watermarkPosition="bottom-right">
         <Paper
           sx={{

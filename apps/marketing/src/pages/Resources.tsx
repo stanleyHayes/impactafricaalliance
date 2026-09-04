@@ -17,6 +17,7 @@ import { PageCta } from '../components/PageCta';
 import { Section } from '../components/Section';
 import { SectionReveal } from '../components/SectionReveal';
 import { Seo } from '../components/Seo';
+import { IMAGES } from '../content/images';
 import { usePageCopy } from '../lib/content-hooks';
 
 const RESOURCE_CARDS = [
@@ -57,16 +58,33 @@ const RESOURCE_CARDS = [
   },
 ] as const;
 
+/**
+ * Accents cycle through the brand palette so the grid reads as a set rather
+ * than one flat block. Index-based, so adding a card needs no new colour.
+ */
+const CARD_ACCENTS = [
+  brandColors.mint,
+  brandColors.gold,
+  brandColors.forest,
+  brandColors.mint,
+  brandColors.gold,
+  brandColors.forest,
+] as const;
+
 const ResourceCard = ({
   card,
+  accent,
 }: {
   card: (typeof RESOURCE_CARDS)[number];
+  accent: string;
 }): JSX.Element => {
   const Icon = card.icon;
   return (
     <Box
       sx={{
+        position: 'relative',
         display: 'flex',
+        overflow: 'hidden',
         height: '100%',
         flexDirection: 'column',
         p: { xs: 3, md: 3.5 },
@@ -74,9 +92,20 @@ const ResourceCard = ({
         borderRadius: 4,
         bgcolor: 'background.paper',
         transition: 'transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease',
+        '&::before': {
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 4,
+          background: `linear-gradient(90deg, ${accent}, ${alpha(accent, 0)})`,
+          borderRadius: '16px 16px 0 0',
+          content: '""',
+          pointerEvents: 'none',
+        },
         '&:hover': {
-          borderColor: alpha(brandColors.mint, 0.4),
-          boxShadow: `0 24px 54px -46px ${alpha(brandColors.mint, 0.25)}`,
+          borderColor: alpha(accent, 0.45),
+          boxShadow: `0 24px 54px -46px ${alpha(accent, 0.35)}`,
           transform: 'translateY(-4px)',
         },
       }}
@@ -88,8 +117,8 @@ const ResourceCard = ({
           height: 50,
           placeItems: 'center',
           borderRadius: 2,
-          bgcolor: alpha(brandColors.mint, 0.1),
-          color: 'text.primary',
+          bgcolor: alpha(accent, 0.12),
+          color: accent,
         }}
       >
         <Icon />
@@ -130,9 +159,11 @@ const Resources = (): JSX.Element => {
       sx={{
         position: 'relative',
         overflow: 'hidden',
-        bgcolor: 'common.black',
         color: 'common.white',
         py: { xs: 8, md: 12 },
+        backgroundImage: `linear-gradient(120deg, rgba(10,15,13,0.94) 8%, rgba(11,61,46,0.82) 52%, rgba(10,15,13,0.72) 100%), url(${IMAGES.programs['stem-learning']})`,
+        backgroundPosition: 'center',
+        backgroundSize: 'cover',
       }}
     >
       <Box
@@ -183,10 +214,10 @@ const Resources = (): JSX.Element => {
 
     <Section watermark="contours" watermarkPosition="top-left">
       <Grid container spacing={3}>
-        {RESOURCE_CARDS.map((card) => (
+        {RESOURCE_CARDS.map((card, index) => (
           <Grid key={card.title} size={{ xs: 12, sm: 6, md: 4 }} sx={{ display: 'flex' }}>
             <SectionReveal fillHeight>
-              <ResourceCard card={card} />
+              <ResourceCard card={card} accent={CARD_ACCENTS[index % CARD_ACCENTS.length]!} />
             </SectionReveal>
           </Grid>
         ))}
