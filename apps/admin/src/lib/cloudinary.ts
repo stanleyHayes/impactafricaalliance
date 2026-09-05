@@ -1,4 +1,4 @@
-import type { MediaAsset } from '@iaa/shared';
+import { mediaAssetSchema, type MediaAsset } from '@iaa/shared';
 
 import { api } from './api-client';
 
@@ -27,9 +27,7 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'ap
  */
 export const uploadToCloudinary = async (file: File): Promise<MediaAsset> => {
   if (!ALLOWED_TYPES.includes(file.type)) {
-    throw new Error(
-      'Unsupported file type. Please upload JPG, PNG, GIF, WebP, or PDF.',
-    );
+    throw new Error('Unsupported file type. Please upload JPG, PNG, GIF, WebP, or PDF.');
   }
 
   const signature = await api.post<SignedUpload>('/admin/media/sign', {});
@@ -57,10 +55,10 @@ export const uploadToCloudinary = async (file: File): Promise<MediaAsset> => {
     throw new Error('Upload failed. Please try again.');
   }
   const data = (await response.json()) as CloudinaryUploadResponse;
-  return {
+  return mediaAssetSchema.parse({
     url: data.secure_url,
     publicId: data.public_id,
     ...(data.width ? { width: data.width } : {}),
     ...(data.height ? { height: data.height } : {}),
-  };
+  });
 };

@@ -2,7 +2,7 @@ import { keyframes } from '@emotion/react';
 import Box from '@mui/material/Box';
 import type { SxProps, Theme } from '@mui/material/styles';
 
-export type WatermarkVariant = 'radar' | 'africa' | 'contours';
+export type WatermarkVariant = 'radar' | 'africa' | 'contours' | 'network';
 
 interface WatermarkProps {
   variant: WatermarkVariant;
@@ -14,6 +14,7 @@ interface WatermarkProps {
 }
 
 const urls: Record<WatermarkVariant, string> = {
+  network: '/patterns/alliance-network.svg',
   radar: '/patterns/radar-rings.svg',
   africa: '/patterns/africa-rings.svg',
   contours: '/patterns/contour-lines.svg',
@@ -60,10 +61,13 @@ export const Watermark = ({
     }
   };
 
-  const animation =
-    variant === 'contours'
-      ? `${slowFloat} 28s ease-in-out infinite`
-      : `${slowRotate} 120s linear infinite, ${slowPulse} 12s ease-in-out infinite`;
+  const animations: Record<WatermarkVariant, string> = {
+    contours: `${slowFloat} 28s ease-in-out infinite`,
+    africa: `${slowPulse} 18s ease-in-out infinite`,
+    radar: `${slowRotate} 120s linear infinite`,
+    network: `${slowRotate} 120s linear infinite`,
+  };
+  const animation = animations[variant];
 
   return (
     <Box
@@ -73,12 +77,14 @@ export const Watermark = ({
         width: size,
         height: variant === 'contours' ? 'auto' : size,
         aspectRatio: variant === 'contours' ? '1440/520' : '1 / 1',
-        background: `url(${urls[variant]}) no-repeat center / contain`,
+        bgcolor: 'currentColor',
+        mask: `url(${urls[variant]}) no-repeat center / contain`,
+        WebkitMask: `url(${urls[variant]}) no-repeat center / contain`,
         color,
         opacity,
         pointerEvents: 'none',
         zIndex: 0,
-        animation,
+        animation: position === 'center' ? 'none' : animation,
         '@media (prefers-reduced-motion: reduce)': {
           animation: 'none',
         },

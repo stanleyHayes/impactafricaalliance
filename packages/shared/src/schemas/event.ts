@@ -65,7 +65,19 @@ export const eventInputSchema = z.object({
 });
 export type EventInput = z.infer<typeof eventInputSchema>;
 
-export const eventUpdateSchema = eventInputSchema.partial();
+/** Explicit null clears optional fields on PATCH; omission preserves their current value. */
+export const eventUpdateSchema = eventInputSchema.partial().extend({
+  status: statusEnum.optional(),
+  registrationEnabled: z.boolean().optional(),
+  questions: z.array(eventQuestionSchema).max(40).optional(),
+  image: mediaAssetSchema.nullable().optional(),
+  endAt: z.string().datetime().nullable().optional(),
+  host: optionalText.nullable(),
+  hostTitle: optionalText.nullable(),
+  admission: optionalText.nullable(),
+  capacity: z.number().int().min(0).nullable().optional(),
+  registrationClosesAt: z.string().datetime().nullable().optional(),
+});
 export type EventUpdate = z.infer<typeof eventUpdateSchema>;
 
 export interface Event extends Timestamped {

@@ -14,7 +14,7 @@ import Stack from '@mui/material/Stack';
 import { alpha, useTheme } from '@mui/material/styles';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { uploadToCloudinary } from '../../lib/cloudinary';
 
@@ -23,15 +23,16 @@ interface MediaUploadFieldProps {
   accept: string;
   value?: MediaAsset;
   preview: boolean;
-  onChange: (asset: MediaAsset) => void;
-  /** Max upload size in MB (defaults: 10 for images, 25 for documents). */
+  onChange: (asset: MediaAsset | undefined) => void;
+  onUploadingChange?: (uploading: boolean) => void;
+  /** Max upload size in MB (defaults: 5, matching the signed upload limit). */
   maxSizeMB?: number;
 }
 
 /** Human-readable list of accepted formats for the given accept string. */
 const acceptedFormats = (accept: string): string => {
   if (accept.startsWith('image')) {
-    return 'PNG, JPG, GIF, SVG or WebP';
+    return 'PNG, JPG, GIF or WebP';
   }
   if (accept.includes('pdf')) {
     return 'PDF document';
@@ -57,18 +58,30 @@ export const MediaUploadField = ({
   preview,
   onChange,
   maxSizeMB,
+  onUploadingChange,
 }: MediaUploadFieldProps): JSX.Element => {
   const theme = useTheme();
   const green = theme.palette.primary.main;
   const isImage = accept.startsWith('image');
-  const sizeLimit = maxSizeMB ?? (isImage ? 10 : 25);
+  const sizeLimit = maxSizeMB ?? 5;
 
+  const uploadLock = useRef(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
 
   const handleFile = async (file: File | undefined): Promise<void> => {
-    if (!file) {
+    if (!file || uploadLock.current) {
+      return;
+    }
+    const matches = accept.split(',').some((item) => {
+      const format = item.trim();
+      if (format.endsWith('/*')) return file.type.startsWith(format.slice(0, -1));
+      if (format.startsWith('.')) return file.name.toLowerCase().endsWith(format.toLowerCase());
+      return file.type === format;
+    });
+    if (!matches) {
+      setError(`Choose ${acceptedFormats(accept)}.`);
       return;
     }
     if (file.size > sizeLimit * 1024 * 1024) {
@@ -77,14 +90,18 @@ export const MediaUploadField = ({
       );
       return;
     }
+    uploadLock.current = true;
     setUploading(true);
+    onUploadingChange?.(true);
     setError(null);
     try {
       onChange(await uploadToCloudinary(file));
-    } catch {
-      setError('Upload failed. Check the Cloudinary configuration and try again.');
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Upload failed. Please try again.');
     } finally {
+      uploadLock.current = false;
       setUploading(false);
+      onUploadingChange?.(false);
     }
   };
 
@@ -151,7 +168,8 @@ export const MediaUploadField = ({
             <IconButton
               size="small"
               aria-label="Remove file"
-              onClick={() => onChange(undefined as unknown as MediaAsset)}
+              disabled={uploading}
+              onClick={() => onChange(undefined)}
               sx={{ color: 'error.main' }}
             >
               <DeleteOutlineIcon fontSize="small" />
@@ -195,7 +213,10 @@ export const MediaUploadField = ({
           type="file"
           accept={accept}
           disabled={uploading}
-          onChange={(event) => void handleFile(event.target.files?.[0])}
+          onChange={(event) => {
+            void handleFile(event.target.files?.[0]);
+            event.target.value = '';
+          }}
         />
         {uploading ? (
           <CircularProgress size={26} color="primary" />
@@ -241,7 +262,10 @@ export const MediaUploadField = ({
             hidden
             type="file"
             accept={accept}
-            onChange={(event) => void handleFile(event.target.files?.[0])}
+            onChange={(event) => {
+              void handleFile(event.target.files?.[0]);
+              event.target.value = '';
+            }}
           />
         </Button>
       )}

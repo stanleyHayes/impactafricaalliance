@@ -351,81 +351,74 @@ const MissionStrip = (): JSX.Element => (
 
 const HomeImpactMetric = ({ stat, index }: { stat: ImpactStat; index: number }): JSX.Element => {
   const Icon = getStatIcon(stat.key, stat.label);
+  const featured = index === 0;
 
   return (
     <Box
       component="article"
       sx={{
-        position: 'relative',
-        minHeight: { xs: 210, md: 235 },
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        minHeight: { xs: 180, sm: 200 },
         height: '100%',
-        overflow: 'hidden',
-        bgcolor: 'background.paper',
+        minWidth: 0,
         p: { xs: 3, md: 3.5 },
-        transition: 'background-color 220ms ease, transform 220ms ease',
-        '&::after': {
-          position: 'absolute',
-          right: -52,
-          bottom: -70,
-          width: 150,
-          height: 150,
-          border: '1px solid rgba(0,30,20,0.08)',
-          borderRadius: '50%',
-          content: '""',
-        },
-        '&:hover': {
-          bgcolor: (theme) => (theme.palette.mode === 'light' ? '#F9F9F6' : '#112A22'),
-          transform: 'translateY(-3px)',
-        },
-        '&:hover .impact-icon': {
-          bgcolor: 'primary.main',
-          color: 'primary.contrastText',
-        },
+        border: 1,
+        borderColor: featured ? 'transparent' : 'divider',
+        borderRadius: 4,
+        bgcolor: featured ? 'primary.main' : 'background.paper',
+        color: featured ? 'primary.contrastText' : 'text.primary',
       }}
     >
-      <Stack direction="row" alignItems="center" justifyContent="space-between">
-        <Box
-          className="impact-icon"
-          sx={{
-            display: 'grid',
-            width: 46,
-            height: 46,
-            placeItems: 'center',
-            borderRadius: 2,
-            bgcolor: 'rgba(0,30,20,0.08)',
-            color: 'text.primary',
-            transition: 'background-color 220ms ease, color 220ms ease',
-          }}
-        >
-          <Icon sx={{ fontSize: 23 }} aria-hidden />
-        </Box>
+      <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={2}>
         <Typography
-          aria-hidden="true"
+          component="h3"
           sx={{
-            color: 'rgba(0,30,20,0.22)',
-            fontSize: '0.72rem',
-            fontWeight: 750,
-            letterSpacing: 1.8,
-          }}
-        >
-          {String(index + 1).padStart(2, '0')}
-        </Typography>
-      </Stack>
-
-      <Box sx={{ position: 'relative', zIndex: 1, mt: 4 }}>
-        <AnimatedCounter value={stat.value} suffix={stat.suffix} color="text.primary" />
-        <Typography
-          sx={{
-            maxWidth: 210,
-            mt: 1,
-            color: 'text.secondary',
-            fontSize: { xs: '0.9rem', md: '0.96rem' },
+            maxWidth: 220,
+            fontSize: { xs: '1rem', md: '1.1rem' },
             fontWeight: 600,
-            lineHeight: 1.45,
+            lineHeight: 1.4,
           }}
         >
           {stat.label}
         </Typography>
+        <Box
+          sx={{
+            display: 'grid',
+            flexShrink: 0,
+            width: 40,
+            height: 40,
+            placeItems: 'center',
+            borderRadius: '50%',
+            bgcolor: featured ? alpha(brandColors.deepForest, 0.09) : alpha(brandColors.mint, 0.1),
+            color: featured
+              ? 'primary.contrastText'
+              : (theme) =>
+                  theme.palette.mode === 'dark' ? 'primary.main' : brandColors.deepForest,
+          }}
+        >
+          <Icon sx={{ fontSize: 22 }} aria-hidden />
+        </Box>
+      </Stack>
+      <Box
+        sx={{
+          mt: { xs: 3, sm: 4 },
+          pt: 2.5,
+          borderTop: 1,
+          borderColor: featured ? alpha(brandColors.deepForest, 0.18) : 'divider',
+          '& > span': {
+            fontFamily: brandFonts.body,
+            fontSize: featured
+              ? { xs: '3.75rem', sm: '4.5rem', lg: '5.5rem' }
+              : { xs: '3rem', sm: '3.5rem' },
+            fontWeight: 600,
+            letterSpacing: '-0.055em',
+            lineHeight: 1,
+          },
+        }}
+      >
+        <AnimatedCounter value={stat.value} suffix={stat.suffix} color="inherit" />
       </Box>
     </Box>
   );
@@ -447,21 +440,11 @@ const HomeImpactSkeleton = (): JSX.Element => (
         sx={{
           display: 'grid',
           gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' },
-          gap: '1px',
-          overflow: 'hidden',
-          border: 1,
-          borderColor: 'divider',
-          borderRadius: 4,
-          bgcolor: 'divider',
+          gap: { xs: 1.5, sm: 2 },
         }}
       >
         {Array.from({ length: 4 }, (_, index) => (
-          <Skeleton
-            key={index}
-            variant="rectangular"
-            height={235}
-            sx={{ bgcolor: 'rgba(0,30,20,0.08)' }}
-          />
+          <Skeleton key={index} variant="rounded" height={200} sx={{ borderRadius: 4 }} />
         ))}
       </Box>
     </Grid>
@@ -647,21 +630,17 @@ export const HomeImpactSection = (): JSX.Element => {
                 sx={{
                   display: 'grid',
                   gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' },
-                  gridAutoRows: 'minmax(210px, auto)',
-                  gap: '1px',
-                  overflow: 'hidden',
-                  border: 1,
-                  borderColor: 'rgba(0,30,20,0.12)',
-                  borderRadius: 4,
-                  bgcolor: 'rgba(0,30,20,0.12)',
-                  boxShadow: '0 28px 70px -54px rgba(18,66,42,0.8)',
-                  '& > :last-child:nth-child(odd)': {
-                    gridColumn: { sm: '1 / -1' },
+                  gap: { xs: 1.5, sm: 2 },
+                  '& > :first-of-type': {
+                    gridRow: { sm: stats.length === 3 ? 'span 2' : 'auto' },
+                  },
+                  '& > :last-of-type:nth-of-type(odd):not(:first-of-type)': {
+                    gridColumn: { sm: stats.length === 3 ? 'auto' : '1 / -1' },
                   },
                 }}
               >
                 {stats.map((stat, index) => (
-                  <SectionReveal key={stat.key} delay={index * 0.06}>
+                  <SectionReveal key={stat.key} delay={index * 0.06} fillHeight>
                     <HomeImpactMetric stat={stat} index={index} />
                   </SectionReveal>
                 ))}

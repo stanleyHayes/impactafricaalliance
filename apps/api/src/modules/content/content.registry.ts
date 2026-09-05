@@ -30,6 +30,7 @@ import { mountContentModule, type MountedContentModule } from '../../common/crud
 import { SocialPublisher } from '../../providers/social/social-publisher.js';
 
 import { ArticlePublishingService } from './article-publishing.service.js';
+import { EventContentService } from './event-content.service.js';
 import { ArticleModel } from './models/article.model.js';
 import { EventModel } from './models/event.model.js';
 import { GalleryItemModel } from './models/gallery.model.js';
@@ -142,6 +143,7 @@ export const buildContentModules = (container: DependencyContainer): MountedCont
       resource: 'Event',
       model: EventModel,
       schemas: { create: eventInputSchema, update: eventUpdateSchema },
+      serviceFactory: (repo, options) => new EventContentService(repo, options),
       defaultSort: { startAt: -1 },
     },
     container,

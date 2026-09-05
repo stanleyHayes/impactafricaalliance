@@ -1,14 +1,9 @@
-import { brandColors } from '@iaa/shared';
-import Box from '@mui/material/Box';
-import CircularProgress from '@mui/material/CircularProgress';
-import Container from '@mui/material/Container';
-import Stack from '@mui/material/Stack';
-import { alpha } from '@mui/material/styles';
-import Typography from '@mui/material/Typography';
 import { Suspense, lazy } from 'react';
 import { Route, Routes } from 'react-router-dom';
 
 import { Layout } from '../components/layout/Layout';
+import { PageSkeleton } from '../components/skeletons';
+
 const Home = lazy(() => import('../pages/Home'));
 const About = lazy(() => import('../pages/About'));
 const OurWork = lazy(() => import('../pages/OurWork'));
@@ -21,37 +16,13 @@ const NewsArticle = lazy(() => import('../pages/NewsArticle'));
 const Resources = lazy(() => import('../pages/Resources'));
 const JobApplication = lazy(() => import('../pages/JobApplication'));
 const Events = lazy(() => import('../pages/Events'));
+const EventDetail = lazy(() => import('../pages/EventDetail'));
 const PrivacyPolicy = lazy(() => import('../pages/PrivacyPolicy'));
 const DonateComplete = lazy(() => import('../pages/DonateComplete'));
 const PrivacyRequest = lazy(() => import('../pages/PrivacyRequest'));
 const CookiePolicy = lazy(() => import('../pages/CookiePolicy'));
 const TermsOfUse = lazy(() => import('../pages/TermsOfUse'));
 const NotFound = lazy(() => import('../pages/NotFound'));
-
-const PageFallback = (): JSX.Element => (
-  <Container sx={{ py: { xs: 10, md: 14 } }}>
-    <Stack alignItems="center" spacing={2.5}>
-      <Box
-        sx={{
-          display: 'grid',
-          width: 72,
-          height: 72,
-          placeItems: 'center',
-          borderRadius: '50%',
-          bgcolor: alpha(brandColors.mint, 0.1),
-        }}
-      >
-        <CircularProgress size={34} thickness={3.5} />
-      </Box>
-      <Box sx={{ textAlign: 'center' }}>
-        <Typography sx={{ fontWeight: 750 }}>Loading the next page</Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-          Bringing the latest Alliance content into view.
-        </Typography>
-      </Box>
-    </Stack>
-  </Container>
-);
 
 /** Route table for the marketing site. */
 export const App = (): JSX.Element => (
@@ -60,7 +31,7 @@ export const App = (): JSX.Element => (
       <Route
         index
         element={
-          <Suspense fallback={<PageFallback />}>
+          <Suspense fallback={<PageSkeleton />}>
             <Home />
           </Suspense>
         }
@@ -68,7 +39,7 @@ export const App = (): JSX.Element => (
       <Route
         path="about"
         element={
-          <Suspense fallback={<PageFallback />}>
+          <Suspense fallback={<PageSkeleton />}>
             <About />
           </Suspense>
         }
@@ -76,7 +47,7 @@ export const App = (): JSX.Element => (
       <Route
         path="our-work"
         element={
-          <Suspense fallback={<PageFallback />}>
+          <Suspense fallback={<PageSkeleton />}>
             <OurWork />
           </Suspense>
         }
@@ -84,7 +55,7 @@ export const App = (): JSX.Element => (
       <Route
         path="our-work/:slug"
         element={
-          <Suspense fallback={<PageFallback />}>
+          <Suspense fallback={<PageSkeleton />}>
             <InitiativePage />
           </Suspense>
         }
@@ -92,7 +63,7 @@ export const App = (): JSX.Element => (
       <Route
         path="impact"
         element={
-          <Suspense fallback={<PageFallback />}>
+          <Suspense fallback={<PageSkeleton />}>
             <Impact />
           </Suspense>
         }
@@ -100,7 +71,7 @@ export const App = (): JSX.Element => (
       <Route
         path="get-involved"
         element={
-          <Suspense fallback={<PageFallback />}>
+          <Suspense fallback={<PageSkeleton />}>
             <GetInvolved />
           </Suspense>
         }
@@ -108,7 +79,7 @@ export const App = (): JSX.Element => (
       <Route
         path="contact"
         element={
-          <Suspense fallback={<PageFallback />}>
+          <Suspense fallback={<PageSkeleton />}>
             <Contact />
           </Suspense>
         }
@@ -116,7 +87,7 @@ export const App = (): JSX.Element => (
       <Route
         path="news"
         element={
-          <Suspense fallback={<PageFallback />}>
+          <Suspense fallback={<PageSkeleton />}>
             <News />
           </Suspense>
         }
@@ -124,7 +95,7 @@ export const App = (): JSX.Element => (
       <Route
         path="news/:slug"
         element={
-          <Suspense fallback={<PageFallback />}>
+          <Suspense fallback={<PageSkeleton />}>
             <NewsArticle />
           </Suspense>
         }
@@ -132,7 +103,7 @@ export const App = (): JSX.Element => (
       <Route
         path="resources"
         element={
-          <Suspense fallback={<PageFallback />}>
+          <Suspense fallback={<PageSkeleton />}>
             <Resources />
           </Suspense>
         }
@@ -140,7 +111,7 @@ export const App = (): JSX.Element => (
       <Route
         path="get-involved/careers/:slug/apply"
         element={
-          <Suspense fallback={<PageFallback />}>
+          <Suspense fallback={<PageSkeleton />}>
             <JobApplication />
           </Suspense>
         }
@@ -148,15 +119,23 @@ export const App = (): JSX.Element => (
       <Route
         path="events"
         element={
-          <Suspense fallback={<PageFallback />}>
+          <Suspense fallback={<PageSkeleton />}>
             <Events />
+          </Suspense>
+        }
+      />
+      <Route
+        path="events/:eventId"
+        element={
+          <Suspense fallback={<PageSkeleton />}>
+            <EventDetail />
           </Suspense>
         }
       />
       <Route
         path="privacy-policy"
         element={
-          <Suspense fallback={<PageFallback />}>
+          <Suspense fallback={<PageSkeleton />}>
             <PrivacyPolicy />
           </Suspense>
         }
@@ -164,7 +143,7 @@ export const App = (): JSX.Element => (
       <Route
         path="terms-of-use"
         element={
-          <Suspense fallback={<PageFallback />}>
+          <Suspense fallback={<PageSkeleton />}>
             <TermsOfUse />
           </Suspense>
         }
@@ -172,7 +151,7 @@ export const App = (): JSX.Element => (
       <Route
         path="cookie-policy"
         element={
-          <Suspense fallback={<PageFallback />}>
+          <Suspense fallback={<PageSkeleton />}>
             <CookiePolicy />
           </Suspense>
         }
@@ -180,7 +159,7 @@ export const App = (): JSX.Element => (
       <Route
         path="donate/complete"
         element={
-          <Suspense fallback={<PageFallback />}>
+          <Suspense fallback={<PageSkeleton />}>
             <DonateComplete />
           </Suspense>
         }
@@ -188,7 +167,7 @@ export const App = (): JSX.Element => (
       <Route
         path="privacy-request"
         element={
-          <Suspense fallback={<PageFallback />}>
+          <Suspense fallback={<PageSkeleton />}>
             <PrivacyRequest />
           </Suspense>
         }
@@ -196,7 +175,7 @@ export const App = (): JSX.Element => (
       <Route
         path="*"
         element={
-          <Suspense fallback={<PageFallback />}>
+          <Suspense fallback={<PageSkeleton />}>
             <NotFound />
           </Suspense>
         }

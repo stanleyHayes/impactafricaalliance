@@ -48,7 +48,15 @@ import { api } from './api-client';
 export const useEvents = (): UseQueryResult<Paginated<Event>> =>
   useQuery({
     queryKey: ['events'],
-    queryFn: () => api.get<Paginated<Event>>('/admin/events?pageSize=100'),
+    queryFn: async () => {
+      const first = await api.get<Paginated<Event>>('/admin/events?pageSize=100');
+      const items = [...first.items];
+      for (let current = 2; current <= first.totalPages; current += 1) {
+        const next = await api.get<Paginated<Event>>(`/admin/events?pageSize=100&page=${current}`);
+        items.push(...next.items);
+      }
+      return { ...first, items };
+    },
   });
 
 export interface EventQrCode {
@@ -73,9 +81,7 @@ export const useSaveEvent = (): UseMutationResult<
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, body }) =>
-      id
-        ? api.patch<Event>(`/admin/events/${id}`, body)
-        : api.post<Event>('/admin/events', body),
+      id ? api.patch<Event>(`/admin/events/${id}`, body) : api.post<Event>('/admin/events', body),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['events'] }),
   });
 };
@@ -211,8 +217,14 @@ export const useUpdateUserPermissions = (): UseMutationResult<
   });
 };
 
-export const useAcceptInvitation = (): UseMutationResult<LoginResponse, Error, AcceptInvitationInput> =>
-  useMutation({ mutationFn: (body) => api.post<LoginResponse>('/auth/accept-invitation', body, { auth: false }) });
+export const useAcceptInvitation = (): UseMutationResult<
+  LoginResponse,
+  Error,
+  AcceptInvitationInput
+> =>
+  useMutation({
+    mutationFn: (body) => api.post<LoginResponse>('/auth/accept-invitation', body, { auth: false }),
+  });
 
 /** Hard-delete a newsletter subscriber (e.g. for an erasure request). */
 export const useDeleteSubscriber = (): UseMutationResult<void, Error, string> => {
@@ -224,9 +236,16 @@ export const useDeleteSubscriber = (): UseMutationResult<void, Error, string> =>
 };
 
 export const useSiteSettings = (): UseQueryResult<SiteSetting> =>
-  useQuery({ queryKey: ['site-settings'], queryFn: () => api.get<SiteSetting>('/admin/site-settings') });
+  useQuery({
+    queryKey: ['site-settings'],
+    queryFn: () => api.get<SiteSetting>('/admin/site-settings'),
+  });
 
-export const useUpdateSiteSettings = (): UseMutationResult<SiteSetting, Error, SiteSettingUpdate> => {
+export const useUpdateSiteSettings = (): UseMutationResult<
+  SiteSetting,
+  Error,
+  SiteSettingUpdate
+> => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (body) => api.patch<SiteSetting>('/admin/site-settings', body),
@@ -241,14 +260,13 @@ export const useResetPassword = (): UseMutationResult<void, Error, ResetPassword
   useMutation({ mutationFn: (body) => api.post<void>('/auth/reset-password', body) });
 
 /** List data-subject privacy requests (optionally filtered by status). */
-export const usePrivacyRequests = (
-  status?: string,
-): UseQueryResult<Paginated<PrivacyRequest>> => {
+export const usePrivacyRequests = (status?: string): UseQueryResult<Paginated<PrivacyRequest>> => {
   const query = new URLSearchParams({ pageSize: '100' });
   if (status) query.set('status', status);
   return useQuery({
     queryKey: ['privacy-requests', status],
-    queryFn: () => api.get<Paginated<PrivacyRequest>>(`/admin/privacy-requests?${query.toString()}`),
+    queryFn: () =>
+      api.get<Paginated<PrivacyRequest>>(`/admin/privacy-requests?${query.toString()}`),
   });
 };
 
@@ -267,14 +285,21 @@ export const useUpdatePrivacyRequest = (): UseMutationResult<
 
 /** Fetch the current user's MFA status. */
 export const useMfaStatus = (): UseQueryResult<MfaStatusResponse> =>
-  useQuery({ queryKey: ['mfa-status'], queryFn: () => api.get<MfaStatusResponse>('/auth/mfa/status') });
+  useQuery({
+    queryKey: ['mfa-status'],
+    queryFn: () => api.get<MfaStatusResponse>('/auth/mfa/status'),
+  });
 
 /** Begin MFA enrollment. */
 export const useSetupMfa = (): UseMutationResult<MfaSetupResponse, Error, SetupMfaInput> =>
   useMutation({ mutationFn: (body) => api.post<MfaSetupResponse>('/auth/mfa/setup', body) });
 
 /** Verify an MFA enrollment code and enable MFA. */
-export const useVerifyMfaSetup = (): UseMutationResult<MfaVerifySetupResponse, Error, VerifyMfaSetupInput> => {
+export const useVerifyMfaSetup = (): UseMutationResult<
+  MfaVerifySetupResponse,
+  Error,
+  VerifyMfaSetupInput
+> => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (body) => api.post<MfaVerifySetupResponse>('/auth/mfa/verify-setup', body),
@@ -329,6 +354,5 @@ export const usePublishSocialPost = (): UseMutationResult<
   SocialPostInput
 > =>
   useMutation({
-    mutationFn: (body) =>
-      api.post<{ results: SocialPostResult[] }>('/admin/social/posts', body),
+    mutationFn: (body) => api.post<{ results: SocialPostResult[] }>('/admin/social/posts', body),
   });

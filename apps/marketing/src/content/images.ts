@@ -5,6 +5,7 @@
  * assets in production via this one module.
  */
 export const IMAGES = {
+  teamArtwork: '/images/team-alliance-artwork.webp',
   hero: '/images/hero.webp',
   community: '/images/community.webp',
   programs: {

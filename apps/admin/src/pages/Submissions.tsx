@@ -585,8 +585,6 @@ const SubmissionsEmpty = ({
     sx={{
       bgcolor: 'background.paper',
       borderRadius: 3,
-      border: 1,
-      borderColor: 'divider',
       display: 'flex',
       justifyContent: 'center',
     }}

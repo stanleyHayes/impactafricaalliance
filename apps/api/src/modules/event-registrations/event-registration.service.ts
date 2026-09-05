@@ -88,8 +88,8 @@ export class EventRegistrationService {
   };
 
   /**
-   * A printable QR code pointing at the event's page, for flyers and slides.
-   * Generated server-side so the admin never has to ship a QR library.
+   * A printable QR code pointing at the event's own page, for flyers and
+   * slides. Generated server-side so the admin never has to ship a QR library.
    */
   qrForEvent = async (eventId: string): Promise<{ targetUrl: string; dataUrl: string }> => {
     if (!Types.ObjectId.isValid(eventId)) {
@@ -99,7 +99,7 @@ export class EventRegistrationService {
     if (!event) {
       throw new NotFoundError('Event');
     }
-    const targetUrl = `${this.config.siteUrl.replace(/\/$/, '')}/events#${eventId}`;
+    const targetUrl = `${this.config.siteUrl.replace(/\/$/, '')}/events/${eventId}`;
     const dataUrl = await QRCode.toDataURL(targetUrl, {
       width: 720,
       margin: 2,

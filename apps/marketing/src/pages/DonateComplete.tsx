@@ -3,8 +3,8 @@ import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import HourglassTopRoundedIcon from '@mui/icons-material/HourglassTopRounded';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import CircularProgress from '@mui/material/CircularProgress';
 import Container from '@mui/material/Container';
+import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
@@ -73,8 +73,8 @@ const PendingView = ({ reference }: { reference: string }): JSX.Element => (
     <HourglassTopRoundedIcon sx={{ fontSize: 56, color: 'warning.main' }} />
     <Typography variant="h5">Your donation is being processed</Typography>
     <Typography color="text.secondary" sx={{ lineHeight: 1.75 }}>
-      Paystack has not confirmed the payment yet. This usually takes a few seconds — you can
-      refresh this page. If the amount was deducted, it will reflect shortly.
+      Paystack has not confirmed the payment yet. This usually takes a few seconds — you can refresh
+      this page. If the amount was deducted, it will reflect shortly.
     </Typography>
     <ReferenceLine reference={reference} />
   </>
@@ -96,9 +96,10 @@ const DonateComplete = (): JSX.Element => {
   const renderBody = (): JSX.Element => {
     if (reference && (isLoading || !data) && !isError) {
       return (
-        <Stack direction="row" spacing={2} alignItems="center">
-          <CircularProgress size={28} />
-          <Typography color="text.secondary">Confirming your donation with Paystack…</Typography>
+        <Stack role="status" aria-label="Confirming your donation with Paystack" spacing={2}>
+          <Skeleton variant="rounded" height={80} />
+          <Skeleton width="70%" height={28} />
+          <Skeleton width="45%" height={24} />
         </Stack>
       );
     }
@@ -116,10 +117,19 @@ const DonateComplete = (): JSX.Element => {
 
   return (
     <>
-      <Seo title="Donation status" description="Confirming your donation to Impact Africa Alliance." />
-      <Box component="header" sx={{ bgcolor: 'common.black', color: 'common.white', py: { xs: 7, md: 10 } }}>
+      <Seo
+        title="Donation status"
+        description="Confirming your donation to Impact Africa Alliance."
+      />
+      <Box
+        component="header"
+        sx={{ bgcolor: 'common.black', color: 'common.white', py: { xs: 7, md: 10 } }}
+      >
         <Container>
-          <Typography variant="h1" sx={{ fontSize: { xs: '2.4rem', md: '3.25rem' }, lineHeight: 1.08 }}>
+          <Typography
+            variant="h1"
+            sx={{ fontSize: { xs: '2.4rem', md: '3.25rem' }, lineHeight: 1.08 }}
+          >
             {data?.status === 'succeeded' ? 'Thank you for your donation' : 'Donation status'}
           </Typography>
         </Container>

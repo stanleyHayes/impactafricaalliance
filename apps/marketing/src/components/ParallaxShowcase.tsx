@@ -1,10 +1,12 @@
 import { brandColors, brandFonts } from '@iaa/shared';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
-import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { m, useReducedMotion, useScroll, useTransform, type MotionValue } from 'framer-motion';
-import { useRef } from 'react';
+import { useId, useRef } from 'react';
+
+import { AllianceSculpture } from './AllianceSculpture';
+import { Watermark } from './Watermark';
 
 interface ShowcasePanel {
   src: string;
@@ -29,17 +31,20 @@ interface PanelProps {
 }
 
 const ShowcaseImage = ({ panel, progress, reduceMotion, index }: PanelProps): JSX.Element => {
-  // Each panel travels a different distance, so the group separates as it passes.
-  const y = useTransform(progress, [0, 1], ['0%', `${-panel.drift * 100}%`]);
+  // Keep image movement inside the crop so the frame never exposes empty space.
+  const y = useTransform(progress, [0, 1], ['4%', `${-Math.min(panel.drift, 0.08) * 100}%`]);
   const scale = useTransform(progress, [0, 0.5, 1], [1.08, 1, 1.08]);
 
   return (
     <Box
+      component="figure"
       sx={{
+        m: 0,
+        height: '100%',
         position: 'relative',
         overflow: 'hidden',
         width: '100%',
-        aspectRatio: index % 2 === 0 ? '3 / 4' : '4 / 5',
+        minHeight: { xs: index === 0 ? 350 : 260, md: index === 0 ? 560 : 272 },
         borderRadius: 4,
         bgcolor: brandColors.deepForest,
       }}
@@ -59,10 +64,12 @@ const ShowcaseImage = ({ panel, progress, reduceMotion, index }: PanelProps): JS
       </Box>
 
       <Box
+        component="figcaption"
         sx={{
           position: 'absolute',
           inset: 'auto 0 0 0',
-          p: 2.5,
+          p: { xs: 3, md: 3.5 },
+          pt: 8,
           background: 'linear-gradient(180deg, transparent, rgba(0,30,20,0.82))',
           pointerEvents: 'none',
         }}
@@ -70,10 +77,10 @@ const ShowcaseImage = ({ panel, progress, reduceMotion, index }: PanelProps): JS
         <Typography
           sx={{
             color: brandColors.white,
-            fontSize: '0.82rem',
+            fontSize: index === 0 ? { xs: '1.8rem', md: '2.5rem' } : '1.25rem',
+            fontFamily: brandFonts.heading,
             fontWeight: 700,
-            letterSpacing: 1.2,
-            textTransform: 'uppercase',
+            letterSpacing: '-0.02em',
           }}
         >
           {panel.caption}
@@ -84,8 +91,7 @@ const ShowcaseImage = ({ panel, progress, reduceMotion, index }: PanelProps): JS
 };
 
 /**
- * Tall scroll section: the heading pins while the photography drifts past at
- * different rates. Pure transform work — no WebGL, no extra dependency — so it
+ * Editorial photo mosaic with gently drifting, clipped photography. Pure transform work — no WebGL, no extra dependency — so it
  * stays cheap on the mid-range phones most of our visitors use.
  */
 export const ParallaxShowcase = ({
@@ -94,6 +100,7 @@ export const ParallaxShowcase = ({
   subtitle,
   panels,
 }: ParallaxShowcaseProps): JSX.Element => {
+  const headingId = useId();
   const sectionRef = useRef<HTMLDivElement>(null);
   const reduceMotion = useReducedMotion() ?? false;
   const { scrollYProgress } = useScroll({
@@ -105,29 +112,38 @@ export const ParallaxShowcase = ({
     <Box
       ref={sectionRef}
       component="section"
+      aria-labelledby={headingId}
       sx={{
         position: 'relative',
         overflow: 'hidden',
-        py: { xs: 8, md: 14 },
+        py: { xs: 7, md: 10 },
         bgcolor: brandColors.deepForest,
         color: brandColors.white,
       }}
     >
-      <Container maxWidth="xl">
+      <Watermark
+        variant="network"
+        color={brandColors.mint}
+        size={620}
+        opacity={0.13}
+        position="top-right"
+      />
+      <Container sx={{ position: 'relative' }}>
         <Box
           sx={{
             display: 'grid',
-            gap: { xs: 5, md: 8 },
-            gridTemplateColumns: { xs: '1fr', md: '0.85fr 1.15fr' },
-            alignItems: 'start',
+            gridTemplateColumns: { xs: '1fr', md: '1fr 270px' },
+            gap: 3,
+            alignItems: 'center',
+            mb: { xs: 4, md: 6 },
           }}
         >
-          <Box sx={{ position: { md: 'sticky' }, top: { md: 120 } }}>
+          <Box>
             <Typography
               sx={{
                 color: brandColors.gold,
-                fontSize: '0.8rem',
-                fontWeight: 800,
+                fontSize: '.75rem',
+                fontWeight: 700,
                 letterSpacing: 2,
                 textTransform: 'uppercase',
               }}
@@ -135,50 +151,48 @@ export const ParallaxShowcase = ({
               {eyebrow}
             </Typography>
             <Typography
+              id={headingId}
               variant="h2"
               sx={{
                 mt: 2,
-                fontFamily: brandFonts.display,
-                fontSize: { xs: '2.2rem', md: '3.4rem' },
-                lineHeight: 1.08,
+                maxWidth: 650,
+                fontFamily: brandFonts.heading,
+                fontSize: { xs: '2.5rem', md: '3.75rem' },
+                lineHeight: 1.05,
               }}
             >
               {title}
             </Typography>
             {subtitle && (
               <Typography
-                sx={{
-                  maxWidth: 460,
-                  mt: 2.5,
-                  color: 'rgba(255,255,255,0.72)',
-                  fontSize: '1.02rem',
-                  lineHeight: 1.8,
-                }}
+                sx={{ mt: 2.5, maxWidth: 620, color: 'rgba(255,255,255,.75)', lineHeight: 1.8 }}
               >
                 {subtitle}
               </Typography>
             )}
           </Box>
-
-          <Stack
-            direction={{ xs: 'column', sm: 'row' }}
-            spacing={{ xs: 3, md: 4 }}
-            alignItems="flex-start"
-          >
-            {panels.map((panel, index) => (
-              <Box
-                key={panel.caption}
-                sx={{ flex: 1, width: '100%', mt: { sm: index % 2 === 0 ? 0 : 10 } }}
-              >
-                <ShowcaseImage
-                  panel={panel}
-                  progress={scrollYProgress}
-                  reduceMotion={reduceMotion}
-                  index={index}
-                />
-              </Box>
-            ))}
-          </Stack>
+          <AllianceSculpture variant="seed" />
+        </Box>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1.35fr 1fr' },
+            gap: 2,
+            '& > :first-of-type': {
+              gridColumn: { sm: '1 / -1', md: 'auto' },
+              gridRow: { md: panels.length === 3 ? 'span 2' : 'auto' },
+            },
+          }}
+        >
+          {panels.map((panel, index) => (
+            <ShowcaseImage
+              key={panel.caption}
+              panel={panel}
+              progress={scrollYProgress}
+              reduceMotion={reduceMotion}
+              index={index}
+            />
+          ))}
         </Box>
       </Container>
     </Box>

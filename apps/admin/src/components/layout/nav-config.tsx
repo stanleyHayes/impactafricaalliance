@@ -56,7 +56,9 @@ const CONTENT_ICONS: Record<string, JSX.Element> = {
 /** Build the grouped sidebar navigation, filtered to what the user may access. */
 export const buildNavGroups = (user: PublicUser | null): NavGroup[] => {
   const operations: NavItem[] = [
-    { to: '/submissions', label: 'Submissions', icon: <InboxIcon /> },
+    // `end` so the combined inbox does not also light up on its child routes
+    // (/submissions/partners and /submissions/mentors both prefix-match it).
+    { to: '/submissions', label: 'Submissions', icon: <InboxIcon />, end: true },
     { to: '/submissions/partners', label: 'Partner enquiries', icon: <HandshakeIcon /> },
     { to: '/submissions/mentors', label: 'Mentor applications', icon: <VolunteerActivismIcon /> },
     { to: '/subscribers', label: 'Subscribers', icon: <MailIcon /> },

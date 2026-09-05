@@ -1,5 +1,7 @@
+import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
+import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid';
 import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
@@ -64,4 +66,71 @@ export const PartnerLogosSkeleton = ({ count = 5 }: { count?: number }): JSX.Ele
       </Grid>
     ))}
   </Grid>
+);
+
+/** Shared route fallback reserves space for the hero and content. */
+export const PageSkeleton = (): JSX.Element => (
+  <Container
+    role="status"
+    aria-label="Loading page"
+    sx={{
+      py: { xs: 5, md: 8 },
+      '@media (prefers-reduced-motion: reduce)': {
+        '& .MuiSkeleton-root, & .MuiSkeleton-root::after': { animation: 'none' },
+      },
+    }}
+  >
+    <Box aria-hidden="true">
+      <Skeleton width={120} height={24} />
+      <Skeleton width="75%" height={80} />
+      <Skeleton width="50%" height={32} />
+      <Skeleton variant="rounded" height={300} sx={{ my: 4, borderRadius: 3 }} />
+      <CardGridSkeleton />
+    </Box>
+  </Container>
+);
+
+export const CalendarSkeleton = (): JSX.Element => (
+  <Box
+    role="status"
+    aria-label="Loading calendar"
+    sx={{
+      '@media (prefers-reduced-motion: reduce)': { '& .MuiSkeleton-root': { animation: 'none' } },
+    }}
+  >
+    <Skeleton width={220} height={42} sx={{ mb: 2 }} />
+    <Box aria-hidden="true" sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 1 }}>
+      {Array.from({ length: 35 }, (_, index) => (
+        <Skeleton key={index} variant="rounded" sx={{ height: { xs: 72, md: 142 } }} />
+      ))}
+    </Box>
+  </Box>
+);
+
+export const EventListSkeleton = (): JSX.Element => (
+  <Stack spacing={3} role="status" aria-label="Loading events">
+    {Array.from({ length: 3 }, (_, index) => (
+      <Box
+        key={index}
+        aria-hidden="true"
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: '34% 1fr' },
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: 3,
+          overflow: 'hidden',
+        }}
+      >
+        <Skeleton variant="rectangular" sx={{ height: { xs: 200, md: 280 } }} />
+        <Box sx={{ p: 3 }}>
+          <Skeleton width="45%" height={22} />
+          <Skeleton width="90%" height={42} />
+          <Skeleton width="65%" height={26} />
+          <Skeleton width="100%" sx={{ display: { xs: 'none', md: 'block' } }} />
+          <Skeleton variant="rounded" width={140} height={40} sx={{ mt: 3 }} />
+        </Box>
+      </Box>
+    ))}
+  </Stack>
 );

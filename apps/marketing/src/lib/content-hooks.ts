@@ -40,6 +40,13 @@ export const usePillarImages = (): UseQueryResult<Paginated<PillarImage>> =>
     staleTime: 5 * 60 * 1000,
   });
 
+export const useEvent = (eventId: string): UseQueryResult<Event> =>
+  useQuery({
+    queryKey: ['events', eventId],
+    queryFn: () => apiGet<Event>(`/events/${eventId}`),
+    enabled: Boolean(eventId),
+  });
+
 export const useOffices = (): UseQueryResult<Paginated<Office>> =>
   useQuery({ queryKey: ['offices'], queryFn: () => page<Office>('offices', '?pageSize=100') });
 
@@ -56,7 +63,18 @@ export const useJob = (slug: string): UseQueryResult<Job> =>
   useQuery({ queryKey: ['jobs', slug], queryFn: () => apiGet<Job>(`/jobs/${slug}`) });
 
 export const useEvents = (): UseQueryResult<Paginated<Event>> =>
-  useQuery({ queryKey: ['events'], queryFn: () => page<Event>('events', '?pageSize=100') });
+  useQuery({
+    queryKey: ['events'],
+    queryFn: async () => {
+      const first = await page<Event>('events', '?pageSize=100');
+      const items = [...first.items];
+      for (let current = 2; current <= first.totalPages; current += 1) {
+        const next = await page<Event>('events', `?pageSize=100&page=${current}`);
+        items.push(...next.items);
+      }
+      return { ...first, items };
+    },
+  });
 
 export const useImpactStats = (): UseQueryResult<Paginated<ImpactStat>> =>
   useQuery({ queryKey: ['stats'], queryFn: () => page<ImpactStat>('stats', '?pageSize=20') });

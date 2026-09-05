@@ -277,3 +277,107 @@ Source: `Impact Africa Alliance Website Updates.pdf`
   compiled policy when no published document exists.
 - ✅ Added optional reusable CMS CTA bands to the primary static marketing pages.
 - ✅ Added idempotent published page-setting seed records for the expanded routes.
+
+## 15. Marketing section and motion redesign (4 September 2026)
+
+- Completed homepage impact cards: featured mint metric, compact supporting metrics,
+  responsive stacking, matched skeletons, and preserved CMS values/counter behaviour.
+- Rebuilt the shared “On the ground” / Get Involved photo showcase as a lead-image
+  mosaic with readable captions and bounded image parallax.
+- Redesigned About proof points as a connected statistics strip, values as an editorial
+  list beside the introduction, and team tiers as compact profile groups. Missing photos
+  use small branded initials; biographies, social links, and profile dialogs remain available.
+- Added two lightweight CSS 3D sculpture variants with pointer rotation, keyboard/touch
+  sliders, pause/play controls, offscreen animation suspension, and reduced-motion support.
+- Added the alliance-network SVG and repaired theme-coloured SVG watermarks using masks;
+  section/hero geometry is now visible in both themes without covering text or controls.
+- Verification: marketing typecheck, production Vite build, changed-file ESLint, and both
+  homepage impact tests passed (single-threaded retry after machine-load timeouts). Browser verified the
+  homepage statistics in both themes, the photo mosaic, sculpture pause/keyboard controls,
+  and a 390px gallery with no horizontal overflow.
+- Verification limitation: browser disconnected during the About/mobile walkthrough;
+  the final About-page visual and profile-dialog checks remain unverified.
+
+### Team profile refinement (5 September 2026)
+
+- Four equal team cards per desktop row, two on tablet, and one on mobile.
+- Generated mint, forest-green glass, and brass artwork fills each card, with first name
+  and role overlaid on a dark lower gradient. Real photos remain in profile dialogs.
+- Biography appears only after selecting “Read full bio”. The link fades/slides into place
+  on hover or keyboard focus, stays visible on touch devices, and respects reduced motion.
+- Full names remain available to screen readers and in profile dialogs.
+- Artwork and generation prompt are recorded in `docs/design/team-artwork.md`.
+- Verification: About/content lint, marketing typecheck, and diff whitespace checks passed.
+  Browser remained unavailable for the final card hover/touch walkthrough.
+
+## 16. Grouped navigation and Events discovery (5 September 2026)
+
+- Replaced seven primary links with five: Home, About, Our Work, News & Events,
+  and Get Involved. The partnership button remains a separate action.
+- Our Work groups programmes and Impact; News & Events groups Events first, News & Stories,
+  and Resources; Get Involved groups participation and Contact.
+- Added icon/title/description dropdown entries and a theme-coloured network SVG watermark.
+- Desktop menus support click, ArrowDown, keyboard navigation, Escape, and focus restoration.
+  Mobile uses the same destinations in expandable groups with the existing accessible close control.
+- Parent navigation highlights nested routes, including individual event pages.
+- Verification: changed-file lint, marketing typecheck, production build, and diff checks passed.
+  Browser verified desktop dropdown appearance and Events routing, plus mobile expansion,
+  light/dark themes, and close-on-selection at 390px. Viewport and original theme were restored.
+- Automated checks: four Header tests passed, including keyboard focus/Escape and parent-route
+  highlighting. The mobile navigation test exceeded its timeout under machine load; its isolated
+  retry could not start a worker. The same mobile interaction passed in the live browser.
+
+## 17. Events discovery and profile detail redesign (5 September 2026)
+
+- Events now has an artwork-led card layout, text search across title/description/location/host,
+  type and date filters, result counts, clear/reset actions, and retry/empty states.
+- All published event pages are collected before client filtering, including events beyond 100.
+- The calendar opens on a relevant month, shows event titles and times on desktop, compact
+  counts on mobile, and an artwork agenda linking to the event detail pages. Includes Today,
+  month navigation, day selection, and recovery from an empty month.
+- Event cards and detail pages use supplied media or the generated Alliance artwork, including
+  failed-image fallback. Details prioritize artwork and practical metadata with explicit GMT times.
+  Registration forms and their open/closed rules are preserved.
+- Team dialogs reuse generated artwork around available portraits and show a role-specific SVG
+  watermark. Grow entrance animation respects reduced motion; biographies remain inside dialogs.
+- Shared route loading and donation verification use skeletons; calendar loading matches its layout.
+- Verification: production build and two filter tests passed. Calendar interaction test
+  could not start its worker under system load. Browser connection repeatedly timed out/disconnected;
+  final visual/responsive and profile-dialog checks remain unverified.
+
+### Event-card refinement
+
+- Desktop now shows one compact split card per row: artwork on the left, details on the right.
+- Mobile remains vertical with type, date/time, title, location, and one detail link. Description,
+  host credentials, and registration are available in the detail page; desktop retains registration.
+- List skeletons match the responsive split layout. Final filter checks also passed directly in Node
+  after the filter-options refactor; the Vitest retry could not start a worker.
+
+- Final split-card verification: production build, changed-file lint, formatting, direct filtering
+  checks, and diff checks passed. Type checking identified two imports bypassing the shared Stack
+  wrapper; both were corrected. The rerun was stopped under sustained system load and is unverified.
+  Browser visual checks remain unavailable; no live registrations were submitted.
+
+## 18. Admin event management and Cloudinary images (5 September 2026)
+
+- Added event image upload, replacement, preview, and removal to the editor using the existing
+  signed Cloudinary flow. Save/close waits for uploads; failed replacements retain the prior asset.
+- Corrected shared uploader guidance to the server's 5 MB limit and supported formats. Validates
+  dropped files, prevents overlapping uploads, permits retrying the same file, and validates returned
+  media metadata before it reaches the form.
+- Admin list cards and calendar agendas show uploaded media or the generated Alliance artwork.
+  Existing events open a detail dialog with an Edit action; date buttons create new events separately.
+- Calendar displays event titles/time/status, has a mobile agenda, and anchors month navigation on
+  day one to avoid skipping February or crossing the year incorrectly. All event pages are loaded.
+- Added icons to description, venue, date/time, host, registration and other editor labels; displayed
+  the editor's local timezone and added date/schema validation with visible save errors.
+- Event PATCH accepts null for clearable fields and uses MongoDB $unset to remove saved values.
+  Omitted fields preserve their current value. Explicitly removed create defaults from PATCH to avoid
+  inadvertently resetting publication status, registration settings, or questions.
+- Verification: nine focused tests passed (three persistence/date tests, two signed-upload tests,
+  two PATCH-contract tests, two calendar navigation tests). Shared build and admin production build
+  passed. Built-package checks also verify omitted values do not acquire defaults.
+- Live check: admin preview reached sign-in after correcting an unavailable icon import. User agreed
+  to sign in; authenticated edit/upload verification remains pending. No live content or media was
+  created or modified. API clearing/PATCH fixes require deployment alongside the updated admin.
+- Changed-file lint and diff checks passed. Admin/API type checks are still running under sustained machine load.

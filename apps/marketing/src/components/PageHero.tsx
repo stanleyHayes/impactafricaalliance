@@ -50,8 +50,8 @@ export const PageHero = ({
         variant={watermark}
         position="bottom-right"
         size={{ xs: 260, md: 420 }}
-        opacity={0.05}
-        sx={{ color: 'primary.main' }}
+        opacity={0.14}
+        sx={{ color: 'primary.main', zIndex: 1 }}
       />
     )}
     <Box
@@ -77,6 +77,7 @@ export const PageHero = ({
     <Container
       sx={{
         position: 'relative',
+        zIndex: 2,
         display: 'flex',
         minHeight: { xs: 390, md: 500 },
         alignItems: 'center',

@@ -18,7 +18,7 @@ interface SectionProps {
   watermarkPosition?: 'top-right' | 'bottom-right' | 'top-left' | 'bottom-left' | 'center';
 }
 
-const VARIANTS: WatermarkVariant[] = ['radar', 'africa', 'contours'];
+const VARIANTS: WatermarkVariant[] = ['network', 'africa', 'contours', 'radar'];
 const POSITIONS: Array<'top-right' | 'bottom-right' | 'top-left' | 'bottom-left'> = [
   'top-right',
   'bottom-right',
@@ -163,7 +163,7 @@ export const Section = ({
           variant={resolved.variant}
           position={resolved.position}
           size={{ xs: 220, md: 340 }}
-          opacity={resolved.explicit ? 0.05 : 0.04}
+          opacity={resolved.explicit ? 0.12 : 0.08}
           sx={{ color: isLight ? 'common.white' : 'primary.main' }}
         />
       )}

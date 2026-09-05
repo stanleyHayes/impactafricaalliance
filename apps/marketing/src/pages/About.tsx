@@ -34,7 +34,6 @@ import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Chip from '@mui/material/Chip';
 import Grid from '@mui/material/Grid';
-import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import { alpha } from '@mui/material/styles';
@@ -42,6 +41,7 @@ import Typography from '@mui/material/Typography';
 import { useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
+import { AllianceSculpture } from '../components/AllianceSculpture';
 import { PageCta } from '../components/PageCta';
 import { PageHero } from '../components/PageHero';
 import { Section } from '../components/Section';
@@ -288,39 +288,17 @@ const AboutIntro = (): JSX.Element => {
       </Grid>
     </Grid>
 
-    <Grid container spacing={2.5} sx={{ mt: { xs: 4, md: 6 } }}>
+    <Box sx={{ mt: { xs: 5, md: 7 }, borderTop: 1, borderBottom: 1, borderColor: 'divider', display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0, 1fr))' } }}>
       {proofPoints.map((item, index) => (
-        <Grid key={item.label} size={{ xs: 12, md: 4 }}>
+        <Box key={item.label} sx={{ py: { xs: 3, md: 4 }, px: { xs: 0, md: 3 }, borderLeft: { md: index ? 1 : 0 }, borderTop: { xs: index ? 1 : 0, md: 0 }, borderColor: 'divider' }}>
           <SectionReveal delay={index * 0.06}>
-            <Box
-              sx={{
-                height: '100%',
-                p: { xs: 2.5, md: 3 },
-                border: '1px solid rgba(0,30,20,0.1)',
-                borderRadius: 3,
-                bgcolor: 'background.paper',
-              }}
-            >
-              <Typography
-                sx={{
-                  color: 'text.primary',
-                  fontFamily: "'Montserrat', sans-serif",
-                  fontSize: { xs: '2.2rem', md: '2.7rem' },
-                  fontWeight: 850,
-                  lineHeight: 1,
-                }}
-              >
-                {item.value}
-              </Typography>
-              <Typography sx={{ mt: 1, fontWeight: 750 }}>{item.label}</Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.75 }}>
-                {item.text}
-              </Typography>
-            </Box>
+            <Typography sx={{ fontFamily: brandFonts.heading, fontSize: { xs: '3.5rem', md: '4.5rem' }, lineHeight: 1, letterSpacing: '-.05em', color: 'text.primary' }}>{item.value}</Typography>
+            <Typography component="h3" sx={{ mt: 2, fontWeight: 700 }}>{item.label}</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1, maxWidth: 270 }}>{item.text}</Typography>
           </SectionReveal>
-        </Grid>
+        </Box>
       ))}
-    </Grid>
+    </Box>
   </Section>
   );
 };
@@ -543,78 +521,72 @@ const PurposeSection = (): JSX.Element => (
 );
 
 const ValuesSection = (): JSX.Element => (
-  <Section
-    eyebrow="What Guides Us"
-    title="Core values with practical weight."
-    subtitle="These are not slogans. They shape how we choose partners, design programs, steward resources, and measure progress."
-    textAlign="center"
-    bgcolor="background.default"
-    watermark="radar"
-    watermarkPosition="top-left"
-  >
-    <Grid container spacing={2.5} sx={{ justifyContent: 'center' }}>
-      {VALUES.map((value, index) => {
-        const Icon = value.icon;
-        return (
-          <Grid key={value.name} size={{ xs: 12, sm: 6, md: index < 3 ? 4 : 5 }}>
-            <SectionReveal delay={index * 0.04} fillHeight>
-              <Card
+  <Section bgcolor="background.default" watermark="network" watermarkPosition="top-left">
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: { xs: '1fr', md: '.85fr 1.15fr' },
+        gap: { xs: 4, md: 8 },
+        alignItems: 'start',
+      }}
+    >
+      <Box>
+        <Typography variant="overline" sx={{ letterSpacing: 2, fontWeight: 700 }}>
+          What guides us
+        </Typography>
+        <Typography variant="h2" sx={{ mt: 2, fontSize: { xs: '2.5rem', md: '3.5rem' } }}>
+          Core values with practical weight.
+        </Typography>
+        <Typography color="text.secondary" sx={{ mt: 2.5, maxWidth: 420 }}>
+          These values shape how we choose partners, design programmes, steward resources, and
+          measure progress.
+        </Typography>
+        <AllianceSculpture />
+      </Box>
+      <Box>
+        {VALUES.map((value, index) => {
+          const Icon = value.icon;
+          return (
+            <SectionReveal key={value.name} delay={index * 0.04}>
+              <Box
+                component="article"
                 sx={{
-                  position: 'relative',
-                  height: '100%',
-                  overflow: 'hidden',
-                  border: '1px solid rgba(0,30,20,0.1)',
-                  borderRadius: 4,
-                  bgcolor: 'background.paper',
-                  boxShadow: 'none',
-                  transition:
-                    'transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease',
-                  '&:hover': {
-                    borderColor: 'rgba(0,30,20,0.26)',
-                    boxShadow: '0 24px 54px -46px rgba(18,66,42,0.8)',
-                    transform: 'translateY(-4px)',
-                  },
+                  display: 'grid',
+                  gridTemplateColumns: '48px 1fr',
+                  gap: { xs: 2, md: 3 },
+                  py: 3,
+                  borderTop: 1,
+                  borderColor: 'divider',
+                  borderBottom: index === VALUES.length - 1 ? 1 : 0,
                 }}
               >
-                <CardContent sx={{ p: { xs: 3, md: 3.5 }, textAlign: 'left' }}>
-                  <Stack direction="row" alignItems="center" justifyContent="space-between">
-                    <Box
-                      sx={{
-                        display: 'grid',
-                        width: 54,
-                        height: 54,
-                        placeItems: 'center',
-                        borderRadius: 2.5,
-                        bgcolor: 'rgba(0,30,20,0.08)',
-                        color: 'text.primary',
-                      }}
-                    >
-                      <Icon sx={{ fontSize: 29 }} />
-                    </Box>
-                    <Typography
-                      aria-hidden
-                      sx={{ color: 'rgba(0,30,20,0.18)', fontWeight: 850, letterSpacing: 1.5 }}
-                    >
-                      {String(index + 1).padStart(2, '0')}
-                    </Typography>
-                  </Stack>
-                  <Typography variant="h5" sx={{ mt: 3 }}>
+                <Box
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    display: 'grid',
+                    placeItems: 'center',
+                    borderRadius: '50%',
+                    bgcolor: index % 2 ? 'secondary.main' : 'primary.main',
+                    color: brandColors.deepForest,
+                  }}
+                >
+                  <Icon aria-hidden sx={{ fontSize: 24 }} />
+                </Box>
+                <Box>
+                  <Typography component="h3" sx={{ fontSize: '1.4rem', fontWeight: 600, mb: 1 }}>
                     {value.name}
                   </Typography>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ mt: 1.25, lineHeight: 1.75 }}
-                  >
+                  <Typography color="text.secondary" sx={{ fontSize: '.95rem', lineHeight: 1.75 }}>
                     {value.text}
                   </Typography>
-                </CardContent>
-              </Card>
+                </Box>
+              </Box>
             </SectionReveal>
-          </Grid>
-        );
-      })}
-    </Grid>
+          );
+        })}
+      </Box>
+    </Box>
   </Section>
 );
 
@@ -855,164 +827,89 @@ const TeamMemberCard = ({ member }: { member: TeamMember }): JSX.Element => {
 
   return (
     <Card
+      component="article"
       sx={{
+        position: 'relative',
         width: '100%',
         height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
+        minHeight: 350,
+        aspectRatio: '3 / 4',
         overflow: 'hidden',
-        border: `1px solid ${alpha(brandColors.deepForest, 0.1)}`,
+        border: 1,
+        borderColor: 'divider',
         borderRadius: 4,
         boxShadow: 'none',
-        transition: 'transform 260ms ease, border-color 260ms ease, box-shadow 260ms ease',
-        '&:hover': {
-          borderColor: alpha(brandColors.deepForest, 0.26),
-          boxShadow: '0 28px 60px -44px rgba(14,42,34,0.65)',
-          transform: 'translateY(-5px)',
-          '& .team-card-photo': { transform: 'scale(1.05)' },
-          '& .team-card-bar': { transform: 'scaleX(1)' },
+        bgcolor: brandColors.deepForest,
+        color: brandColors.white,
+        '&:hover .team-artwork, &:focus-within .team-artwork': { transform: 'scale(1.045)' },
+        '&:hover .team-bio-link, &:focus-within .team-bio-link': {
+          opacity: 1,
+          transform: 'translateY(0)',
+        },
+        '@media (hover: none)': {
+          '& .team-bio-link': { opacity: 1, transform: 'none' },
+        },
+        '@media (prefers-reduced-motion: reduce)': {
+          '& .team-artwork, & .team-bio-link': { transition: 'none', transform: 'none' },
         },
       }}
     >
       <Box
+        className="team-artwork"
+        component="img"
+        src={IMAGES.teamArtwork}
+        alt=""
+        loading="lazy"
         sx={{
-          position: 'relative',
-          aspectRatio: '4 / 5',
-          overflow: 'hidden',
-          bgcolor: brandColors.deepForest,
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          transition: 'transform 500ms ease',
         }}
-      >
-        {member.photo?.url ? (
-          <Box
-            className="team-card-photo"
-            component="img"
-            src={member.photo.url}
-            alt={member.name}
-            loading="lazy"
-            sx={{
-              position: 'absolute',
-              inset: 0,
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              transition: 'transform 600ms cubic-bezier(0.22, 1, 0.36, 1)',
-            }}
-          />
-        ) : (
-          <Box
-            sx={{
-              position: 'absolute',
-              inset: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: `radial-gradient(circle at 30% 20%, ${alpha(brandColors.forest, 0.85)}, ${brandColors.deepForest})`,
-            }}
-          >
-            <Typography
-              sx={{
-                fontSize: '3.75rem',
-                fontWeight: 850,
-                letterSpacing: 2,
-                color: alpha(brandColors.gold, 0.9),
-              }}
-            >
-              {memberInitials(member.name)}
-            </Typography>
-          </Box>
-        )}
-        {socials.length > 0 && (
-          <Stack
-            direction="row"
-            spacing={0.75}
-            sx={{ position: 'absolute', right: 12, bottom: 12 }}
-          >
-            {socials.map(({ field, label, Icon, href }) => (
-              <IconButton
-                key={field}
-                component="a"
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={`${member.name} on ${label}`}
-                size="small"
-                sx={{
-                  bgcolor: alpha(brandColors.white, 0.92),
-                  color: brandColors.forest,
-                  transition:
-                    'background-color 200ms ease, color 200ms ease, transform 200ms ease',
-                  '&:hover': {
-                    bgcolor: brandColors.gold,
-                    color: brandColors.charcoalBlack,
-                    transform: 'translateY(-2px)',
-                  },
-                }}
-              >
-                <Icon fontSize="small" />
-              </IconButton>
-            ))}
-          </Stack>
-        )}
-      </Box>
-      <CardContent
-        sx={{ p: { xs: 2.5, md: 3 }, display: 'flex', flexDirection: 'column', flexGrow: 1 }}
-      >
-        <Box
-          className="team-card-bar"
-          sx={{
-            height: 3,
-            width: 44,
-            mb: 2,
-            borderRadius: 2,
-            bgcolor: brandColors.gold,
-            transform: 'scaleX(0.45)',
-            transformOrigin: 'left',
-            transition: 'transform 320ms ease',
-          }}
-        />
-        <Typography variant="h6" sx={{ lineHeight: 1.2 }}>
-          {member.name}
+      />
+      <Box
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          background:
+            'linear-gradient(180deg, transparent 35%, rgba(4,21,16,.3) 55%, rgba(4,21,16,.96) 100%)',
+          pointerEvents: 'none',
+        }}
+      />
+      <Box sx={{ position: 'absolute', inset: 'auto 0 0', p: 2.5 }}>
+        <Typography
+          component="h3"
+          aria-label={member.name}
+          sx={{ fontSize: '1.65rem', fontWeight: 600, lineHeight: 1.2 }}
+        >
+          {member.name.trim().split(/\s+/)[0]}
         </Typography>
         <Typography
-          sx={{ mt: 0.5, color: brandColors.forest, fontSize: '0.9rem', fontWeight: 750 }}
+          sx={{ mt: 0.75, color: 'rgba(255,255,255,.86)', fontSize: '.9rem', lineHeight: 1.5 }}
         >
           {member.role}
         </Typography>
-        {member.bio && (
-          <Typography
-            color="text.secondary"
-            sx={{
-              mt: 1.5,
-              fontSize: '0.95rem',
-              lineHeight: 1.7,
-              display: '-webkit-box',
-              WebkitBoxOrient: 'vertical',
-              WebkitLineClamp: 3,
-              overflow: 'hidden',
-            }}
-          >
-            {member.bio}
-          </Typography>
-        )}
-
-        <Box sx={{ flexGrow: 1 }} />
         <Button
+          className="team-bio-link"
           onClick={() => setProfileOpen(true)}
-          endIcon={<EastIcon sx={{ fontSize: 16 }} />}
+          aria-label={`Read full bio of ${member.name}`}
+          endIcon={<EastIcon />}
           sx={{
-            alignSelf: 'flex-start',
             mt: 1.5,
             px: 0,
-            color: brandColors.forest,
-            fontSize: '0.86rem',
-            fontWeight: 750,
-            '&:hover': { bgcolor: 'transparent', color: brandColors.deepForest },
+            color: brandColors.mint,
+            opacity: 0,
+            transform: 'translateY(8px)',
+            transition: 'opacity 220ms ease, transform 220ms ease',
+            '&:hover': { color: brandColors.white, bgcolor: 'transparent' },
+            '&:focus-visible': { outline: `2px solid ${brandColors.gold}`, outlineOffset: 3 },
           }}
         >
           Read full bio
         </Button>
-      </CardContent>
-
+      </Box>
       <TeamMemberDialog
         member={member}
         socials={socials}
@@ -1060,7 +957,7 @@ const TeamSection = (): JSX.Element => {
               </Typography>
               <Grid container spacing={3}>
                 {group.map((member, index) => (
-                  <Grid key={member.id} size={{ xs: 12, sm: 6, lg: 4 }} sx={{ display: 'flex' }}>
+                  <Grid key={member.id} size={{ xs: 12, sm: 6, lg: 3 }} sx={{ display: 'flex' }}>
                     <SectionReveal delay={index * 0.05} fillHeight>
                       <TeamMemberCard member={member} />
                     </SectionReveal>
