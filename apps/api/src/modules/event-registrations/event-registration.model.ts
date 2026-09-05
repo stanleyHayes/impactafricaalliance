@@ -9,10 +9,13 @@ export interface EventRegistrationDocument {
   fullName: string;
   email: string;
   phone?: string;
-  dateOfBirth?: string;
-  occupation?: string;
-  organisation?: string;
   country?: string;
+  city?: string;
+  ageRange?: string;
+  gender?: string;
+  describesYou?: string;
+  educationLevel?: string;
+  field?: string;
   answers: EventAnswer[];
   consent: boolean;
   consentedAt?: Date;
@@ -35,10 +38,13 @@ const eventRegistrationSchema = new Schema<EventRegistrationDocument>(
     fullName: { type: String, required: true, trim: true },
     email: { type: String, required: true, lowercase: true, trim: true },
     phone: { type: String },
-    dateOfBirth: { type: String },
-    occupation: { type: String },
-    organisation: { type: String },
     country: { type: String },
+    city: { type: String },
+    ageRange: { type: String },
+    gender: { type: String },
+    describesYou: { type: String },
+    educationLevel: { type: String },
+    field: { type: String },
     answers: { type: [answerSubSchema], default: [] },
     consent: { type: Boolean, required: true },
     consentedAt: { type: Date },

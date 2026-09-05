@@ -32,7 +32,9 @@ const mockOffices = (items: Office[]): void => {
 };
 
 const now = '2026-09-04T00:00:00.000Z';
-const office = (over: Partial<Office> & Pick<Office, 'label' | 'addressLine1' | 'country'>): Office => ({
+const office = (
+  over: Partial<Office> & Pick<Office, 'label' | 'addressLine1' | 'country'>,
+): Office => ({
   id: over.label.toLowerCase().replace(/\s+/g, '-'),
   isPrimary: false,
   order: 0,
@@ -136,6 +138,8 @@ describe('Contact page offices', () => {
         city: 'Accra',
         country: 'Ghana',
         isPrimary: true,
+        phone: '+233 30 000 0000',
+        mapUrl: 'https://maps.google.com/?q=Atlantic+Tower+Accra',
       }),
       office({
         label: 'Nigeria Office',
@@ -151,6 +155,14 @@ describe('Contact page offices', () => {
     expect(screen.getByText('Nigeria Office')).toBeInTheDocument();
     expect(screen.getByText(/Atlantic Tower, Airport City, Accra, Ghana/)).toBeInTheDocument();
     expect(screen.getByText(/Royal Anchor Estate, Kucigoro, Abuja, Nigeria/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '+233 30 000 0000' })).toHaveAttribute(
+      'href',
+      'tel:+233300000000',
+    );
+    expect(screen.getByRole('link', { name: 'Get directions to Head Office' })).toHaveAttribute(
+      'href',
+      'https://maps.google.com/?q=Atlantic+Tower+Accra',
+    );
   });
 
   it('falls back to the site-settings address when no offices exist yet', () => {

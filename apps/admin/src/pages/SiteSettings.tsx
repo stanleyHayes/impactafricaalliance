@@ -5,257 +5,83 @@ import {
   type SiteSettingUpdate,
   type SiteSettingUpdateInput,
 } from '@iaa/shared';
+import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import PublicIcon from '@mui/icons-material/Public';
+import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import FormControlLabel from '@mui/material/FormControlLabel';
-import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
-import Skeleton from '@mui/material/Skeleton';
 import Snackbar from '@mui/material/Snackbar';
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import { useEffect, useState } from 'react';
-import { Controller, FormProvider, useForm, useFormContext } from 'react-hook-form';
+import { useEffect, useRef, useState } from 'react';
+import {
+  Controller,
+  FormProvider,
+  useForm,
+  useFormContext,
+  type FieldErrors,
+} from 'react-hook-form';
 
+import { FormStepNavigation } from '../components/forms/FormStepNavigation';
 import { PageHeader } from '../components/PageHeader';
+import { PageSkeleton } from '../components/PageSkeleton';
 import { useSiteSettings, useUpdateSiteSettings } from '../lib/admin-hooks';
+import {
+  firstInvalidSettingStep,
+  getSettingPath,
+  SITE_SETTING_STEPS,
+  type SiteSettingField,
+} from '../lib/site-settings-form';
 
-const Section = ({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}): JSX.Element => (
-  <Paper elevation={0} sx={{ p: { xs: 2.5, sm: 3 }, border: 1, borderColor: 'divider', borderRadius: 2 }}>
-    <Typography variant="h6" sx={{ mb: 2.5 }}>
-      {title}
-    </Typography>
-    <Stack spacing={2}>{children}</Stack>
-  </Paper>
-);
+const SettingField = ({ field }: { field: SiteSettingField }): JSX.Element => {
+  const { register, control, formState } = useFormContext<SiteSettingUpdateInput>();
+  const error = getSettingPath(formState.errors, field.name) as { message?: string } | undefined;
 
-const getPath = (object: unknown, path: string): unknown =>
-  path.split('.').reduce<unknown>((current, key) => {
-    if (current && typeof current === 'object') {
-      return (current as Record<string, unknown>)[key];
-    }
-    return undefined;
-  }, object);
-
-interface FormTextFieldProps {
-  name:
-    | keyof SiteSettingUpdateInput
-    | `socials.${keyof NonNullable<SiteSettingUpdateInput['socials']>}`
-    | `announcement.${keyof NonNullable<SiteSettingUpdateInput['announcement']>}`
-    | `popup.${keyof NonNullable<SiteSettingUpdateInput['popup']>}`
-    | `liveChat.${keyof NonNullable<SiteSettingUpdateInput['liveChat']>}`;
-  label: string;
-  type?: string;
-  helperText?: string;
-}
-
-const FormTextField = ({ name, label, type = 'text', helperText }: FormTextFieldProps): JSX.Element => {
-  const { register, formState } = useFormContext<SiteSettingUpdateInput>();
-  const error = getPath(formState.errors, name) as { message?: string } | undefined;
+  if (field.type === 'switch') {
+    return (
+      <Controller
+        control={control}
+        name={field.name}
+        render={({ field: controller }) => (
+          <FormControlLabel
+            label={field.label}
+            control={
+              <Switch
+                checked={Boolean(controller.value)}
+                onChange={(event) => controller.onChange(event.target.checked)}
+                slotProps={{ input: { ref: controller.ref } }}
+              />
+            }
+          />
+        )}
+      />
+    );
+  }
 
   return (
     <TextField
-      label={label}
-      type={type}
+      label={field.label}
+      type={field.type ?? 'text'}
+      multiline={field.multiline}
+      minRows={field.multiline ? 3 : undefined}
       fullWidth
-      {...register(name as keyof SiteSettingUpdateInput)}
+      {...register(
+        field.name,
+        field.type === 'number'
+          ? { setValueAs: (value: string) => (value === '' ? undefined : Number(value)) }
+          : {},
+      )}
       error={Boolean(error)}
-      helperText={error?.message ?? helperText}
+      helperText={error?.message ?? field.helperText}
     />
   );
 };
-
-const OrganisationSection = (): JSX.Element => (
-  <Section title="Organisation">
-    <FormTextField name="siteName" label="Site name" />
-    <FormTextField name="tagline" label="Tagline" />
-  </Section>
-);
-
-const ContactSection = (): JSX.Element => (
-  <Section title="Contact">
-    <FormTextField name="contactEmail" label="Contact email" type="email" />
-    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-      <FormTextField name="contactPhone" label="Phone" />
-      <FormTextField
-        name="whatsappPhone"
-        label="WhatsApp"
-        helperText="Leave blank to reuse the phone number above."
-      />
-    </Stack>
-    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-      <FormTextField
-        name="alternatePhone"
-        label="Alternate phone"
-        helperText="Second office line, e.g. the Nigeria number."
-      />
-      <FormTextField
-        name="alternatePhoneLabel"
-        label="Alternate phone label"
-        helperText='Shown as the heading, e.g. "Nigeria".'
-      />
-    </Stack>
-  </Section>
-);
-
-const LocationSection = (): JSX.Element => (
-  <Section title="Location">
-    <FormTextField name="addressLine1" label="Address line 1" />
-    <FormTextField name="addressLine2" label="Address line 2" />
-    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-      <FormTextField name="city" label="City" />
-      <FormTextField name="region" label="Region / state" />
-    </Stack>
-    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-      <FormTextField name="postalCode" label="Postal code" />
-      <FormTextField name="country" label="Country" />
-    </Stack>
-    <FormTextField
-      name="regionalPresence"
-      label="Regional presence"
-      helperText="Comma-separated countries shown as chips on the Contact page, e.g. Nigeria, Sierra Leone"
-    />
-    <FormTextField
-      name="mapUrl"
-      label="Map URL"
-      type="url"
-      helperText="Link to Google Maps or another map service"
-    />
-  </Section>
-);
-
-const AnnouncementSection = (): JSX.Element => {
-  const { control } = useFormContext<SiteSettingUpdateInput>();
-
-  return (
-    <Section title="Announcement banner">
-      <Controller
-        control={control}
-        name="announcement.enabled"
-        render={({ field }) => (
-          <FormControlLabel
-            control={
-              <Switch
-                checked={Boolean(field.value)}
-                onChange={(event) => field.onChange(event.target.checked)}
-              />
-            }
-            label="Show the banner on the public site"
-          />
-        )}
-      />
-      <FormTextField
-        name="announcement.message"
-        label="Message"
-        helperText="Shown across the top of every page, above the header."
-      />
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-        <FormTextField name="announcement.linkUrl" label="Link URL" type="url" />
-        <FormTextField
-          name="announcement.linkLabel"
-          label="Link label"
-          helperText='e.g. "Register"'
-        />
-      </Stack>
-    </Section>
-  );
-};
-
-const PopupSection = (): JSX.Element => {
-  const { control } = useFormContext<SiteSettingUpdateInput>();
-
-  return (
-    <Section title="Welcome popup">
-      <Controller
-        control={control}
-        name="popup.enabled"
-        render={({ field }) => (
-          <FormControlLabel
-            control={
-              <Switch
-                checked={Boolean(field.value)}
-                onChange={(event) => field.onChange(event.target.checked)}
-              />
-            }
-            label="Show a popup to first-time visitors"
-          />
-        )}
-      />
-      <FormTextField name="popup.title" label="Title" />
-      <FormTextField
-        name="popup.message"
-        label="Message"
-        helperText="Shown once per visit. Visitors can turn it off permanently."
-      />
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-        <FormTextField name="popup.ctaLabel" label="Button label" />
-        <FormTextField name="popup.ctaUrl" label="Button link" type="url" />
-      </Stack>
-      <FormTextField name="popup.imageUrl" label="Image URL (optional)" type="url" />
-      <FormTextField
-        name="popup.delaySeconds"
-        label="Delay (seconds)"
-        type="number"
-        helperText="How long to wait after the page loads before showing."
-      />
-    </Section>
-  );
-};
-
-const LiveChatSection = (): JSX.Element => {
-  const { control } = useFormContext<SiteSettingUpdateInput>();
-
-  return (
-    <Section title="Live chat">
-      <Controller
-        control={control}
-        name="liveChat.enabled"
-        render={({ field }) => (
-          <FormControlLabel
-            control={
-              <Switch
-                checked={Boolean(field.value)}
-                onChange={(event) => field.onChange(event.target.checked)}
-              />
-            }
-            label="Show a WhatsApp chat button on every page"
-          />
-        )}
-      />
-      <FormTextField
-        name="liveChat.label"
-        label="Button label"
-        helperText='Defaults to "Chat with us".'
-      />
-      <FormTextField
-        name="liveChat.greeting"
-        label="Pre-filled message"
-        helperText="What the visitor's message starts with when WhatsApp opens."
-      />
-    </Section>
-  );
-};
-
-const SocialSection = (): JSX.Element => (
-  <Section title="Social media">
-    <FormTextField name="socials.facebook" label="Facebook" type="url" />
-    <FormTextField name="socials.x" label="X (Twitter)" type="url" />
-    <FormTextField name="socials.instagram" label="Instagram" type="url" />
-    <FormTextField name="socials.linkedin" label="LinkedIn" type="url" />
-    <FormTextField name="socials.youtube" label="YouTube" type="url" />
-    <FormTextField name="socials.tiktok" label="TikTok" type="url" />
-  </Section>
-);
 
 const SOCIAL_KEYS = ['facebook', 'x', 'instagram', 'linkedin', 'youtube', 'tiktok'] as const;
 
@@ -301,12 +127,17 @@ const toFormValues = (data: SiteSetting): SiteSettingUpdateInput => ({
 });
 
 const SiteSettings = (): JSX.Element => {
-  const { data, isLoading } = useSiteSettings();
+  const settings = useSiteSettings();
   const update = useUpdateSiteSettings();
   const [success, setSuccess] = useState(false);
+  const [activeStep, setActiveStep] = useState(0);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const lastStep = SITE_SETTING_STEPS.length - 1;
+  const step = SITE_SETTING_STEPS[activeStep]!;
 
   const form = useForm<SiteSettingUpdateInput, unknown, SiteSettingUpdate>({
     resolver: zodResolver(siteSettingUpdateSchema),
+    shouldUnregister: false,
     defaultValues: {
       siteName: '',
       tagline: '',
@@ -321,6 +152,7 @@ const SiteSettings = (): JSX.Element => {
       region: '',
       postalCode: '',
       country: '',
+      regionalPresence: '',
       mapUrl: '',
       announcement: { enabled: false, message: '', linkUrl: '', linkLabel: '' },
       liveChat: { enabled: false, label: '', greeting: '' },
@@ -343,31 +175,66 @@ const SiteSettings = (): JSX.Element => {
       },
     },
   });
+  const { isDirty } = form.formState;
+  const reset = form.reset;
+  const initialized = useRef(false);
+  const lastReceived = useRef<SiteSetting | undefined>(undefined);
 
   useEffect(() => {
-    if (data) {
-      form.reset(toFormValues(data));
+    // Background refetches must not erase edits made on another step.
+    if (settings.data && settings.data !== lastReceived.current) {
+      lastReceived.current = settings.data;
+      if (!initialized.current || !isDirty) {
+        reset(toFormValues(settings.data));
+        initialized.current = true;
+      }
     }
-  }, [data, form]);
+  }, [settings.data, isDirty, reset]);
+
+  const showStep = (next: number): void => {
+    setActiveStep(next);
+    requestAnimationFrame(() => headingRef.current?.focus());
+  };
+
+  const changeStep = async (next: number): Promise<void> => {
+    if (update.isPending || next === activeStep) return;
+    if (next > activeStep) {
+      const valid = await form.trigger(
+        step.fields.map((field) => field.name),
+        { shouldFocus: true },
+      );
+      if (!valid) return;
+    }
+    showStep(next);
+  };
 
   const onSubmit = async (values: SiteSettingUpdate): Promise<void> => {
     try {
-      await update.mutateAsync(values);
+      const saved = await update.mutateAsync(values);
+      reset(toFormValues(saved));
       setSuccess(true);
     } catch {
-      // Error is surfaced via update.error
+      // The persistent error below keeps the current step and all edited values.
     }
   };
 
-  if (isLoading) {
+  const onInvalid = (errors: FieldErrors<SiteSettingUpdateInput>): void => {
+    const invalidStep = firstInvalidSettingStep(errors);
+    if (invalidStep >= 0) showStep(invalidStep);
+  };
+
+  if (settings.isLoading) return <PageSkeleton />;
+
+  if (settings.isError) {
     return (
       <>
-        <PageHeader
-          title="Site settings"
-          description="Manage contact details, location, and social media links."
-          icon={<PublicIcon />}
-        />
-        <Skeleton variant="rectangular" height={500} sx={{ borderRadius: 2 }} />
+        <PageHeader title="Site settings" icon={<PublicIcon />} />
+        <Alert
+          severity="error"
+          action={<Button onClick={() => void settings.refetch()}>Retry</Button>}
+        >
+          Could not load site settings. Please try again before making changes.
+        </Alert>
       </>
     );
   }
@@ -376,18 +243,16 @@ const SiteSettings = (): JSX.Element => {
     <FormProvider {...form}>
       <PageHeader
         title="Site settings"
-        description="Manage contact details, location, and social media links."
+        description="Update your public information in focused steps. Save all changes when you are ready."
         icon={<PublicIcon />}
-        action={
-          <Button
-            type="submit"
-            form="site-settings-form"
-            variant="contained"
-            disabled={!form.formState.isDirty || update.isPending}
-          >
-            {update.isPending ? 'Saving…' : 'Save changes'}
-          </Button>
-        }
+      />
+
+      <FormStepNavigation
+        steps={SITE_SETTING_STEPS.map((item) => item.label)}
+        activeStep={activeStep}
+        maxStep={lastStep}
+        onStepChange={(next) => void changeStep(next)}
+        disabled={update.isPending}
       />
 
       {update.error && (
@@ -410,24 +275,85 @@ const SiteSettings = (): JSX.Element => {
         </Alert>
       </Snackbar>
 
-      <Box component="form" id="site-settings-form" onSubmit={form.handleSubmit(onSubmit)}>
-        <Grid container spacing={3}>
-          <Grid size={{ xs: 12, lg: 7 }}>
-            <Stack spacing={3}>
-              <OrganisationSection />
-              <ContactSection />
-              <LocationSection />
-            </Stack>
-          </Grid>
-          <Grid size={{ xs: 12, lg: 5 }}>
-            <Stack spacing={3}>
-              <AnnouncementSection />
-              <PopupSection />
-              <LiveChatSection />
-              <SocialSection />
-            </Stack>
-          </Grid>
-        </Grid>
+      <Box
+        component="form"
+        id="site-settings-form"
+        noValidate
+        onSubmit={(event) => {
+          if (activeStep < lastStep) {
+            event.preventDefault();
+            void changeStep(activeStep + 1);
+          } else {
+            void form.handleSubmit(onSubmit, onInvalid)(event);
+          }
+        }}
+      >
+        <Paper variant="outlined" sx={{ p: { xs: 2.5, sm: 4 }, borderRadius: 3, minHeight: 350 }}>
+          <Box sx={{ mb: 3, maxWidth: 700 }}>
+            <Typography
+              ref={headingRef}
+              component="h2"
+              variant="h5"
+              tabIndex={-1}
+              sx={{ outline: 'none' }}
+            >
+              {step.title}
+            </Typography>
+            <Typography color="text.secondary" variant="body2" sx={{ mt: 0.75 }}>
+              {step.description}
+            </Typography>
+          </Box>
+
+          <Box
+            component="fieldset"
+            disabled={update.isPending}
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 2.5,
+              border: 0,
+              p: 0,
+              m: 0,
+              minWidth: 0,
+              maxWidth: 760,
+            }}
+          >
+            {step.fields.map((field) => (
+              <SettingField key={field.name} field={field} />
+            ))}
+          </Box>
+        </Paper>
+
+        <Stack
+          direction="row"
+          spacing={2}
+          alignItems="center"
+          justifyContent="space-between"
+          sx={{ mt: 3 }}
+        >
+          <Button
+            type="button"
+            startIcon={<ArrowBackRoundedIcon />}
+            onClick={() => void changeStep(activeStep - 1)}
+            disabled={activeStep === 0 || update.isPending}
+          >
+            Back
+          </Button>
+          {activeStep === lastStep ? (
+            <Button
+              type="submit"
+              variant="contained"
+              startIcon={<SaveRoundedIcon />}
+              disabled={!isDirty || update.isPending}
+            >
+              {update.isPending ? 'Saving…' : 'Save changes'}
+            </Button>
+          ) : (
+            <Button type="submit" variant="contained" endIcon={<ArrowForwardRoundedIcon />}>
+              Continue
+            </Button>
+          )}
+        </Stack>
       </Box>
     </FormProvider>
   );

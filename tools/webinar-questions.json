@@ -1,0 +1,581 @@
+{
+  "Leveraging AI": [
+    {
+      "id": "stage",
+      "label": "Which stage best describes where you are right now?",
+      "type": "single-choice",
+      "required": false,
+      "options": [
+        "Exploring my career options",
+        "Studying",
+        "Looking for my first job",
+        "Looking for a better job",
+        "Building my career",
+        "Starting a business",
+        "Scaling an existing business",
+        "Looking for funding/investment",
+        "Looking for scholarships/fellowships",
+        "Building skills for the future",
+        "Leading a youth/women-focused initiative",
+        "Other"
+      ],
+      "helpText": null
+    },
+    {
+      "id": "challenges",
+      "label": "What are the biggest challenges you face right now?",
+      "type": "multi-choice",
+      "required": false,
+      "helpText": "Pick up to three.",
+      "options": [
+        "Finding employment",
+        "Building relevant skills",
+        "Using AI effectively",
+        "Building my CV/portfolio",
+        "Passing interviews",
+        "Finding clients",
+        "Growing my business",
+        "Accessing funding",
+        "Finding investors",
+        "Building professional networks",
+        "Finding scholarships",
+        "Finding fellowships/global opportunities",
+        "Lack of mentorship",
+        "Lack of confidence",
+        "Lack of access to opportunities",
+        "Balancing career and personal responsibilities",
+        "Other"
+      ]
+    },
+    {
+      "id": "ai-knowledge",
+      "label": "How would you rate your current knowledge of AI?",
+      "type": "single-choice",
+      "required": false,
+      "options": [
+        "Beginner — I know very little",
+        "Basic — I understand the fundamentals",
+        "Intermediate — I use AI occasionally",
+        "Advanced — I use AI regularly",
+        "Expert — I work professionally with AI"
+      ],
+      "helpText": null
+    },
+    {
+      "id": "ai-usage",
+      "label": "How are you using AI today?",
+      "type": "multi-choice",
+      "required": false,
+      "options": [
+        "I don't currently use AI",
+        "Research/learning",
+        "Writing/content creation",
+        "CV/job applications",
+        "Business development",
+        "Marketing",
+        "Data analysis",
+        "Coding/technology",
+        "Productivity",
+        "Education",
+        "Creative work",
+        "Other"
+      ],
+      "helpText": null
+    },
+    {
+      "id": "ai-learn",
+      "label": "What would you most like to learn about AI?",
+      "type": "single-choice",
+      "required": false,
+      "options": [
+        "AI tools for career growth",
+        "AI for job searching",
+        "AI for productivity",
+        "AI for business",
+        "AI for entrepreneurship",
+        "AI for content creation",
+        "AI for education",
+        "AI and future jobs",
+        "AI ethics",
+        "Building AI-powered businesses",
+        "Other"
+      ],
+      "helpText": null
+    },
+    {
+      "id": "your-question",
+      "label": "What one question would you like answered during the session?",
+      "type": "long-text",
+      "required": false,
+      "options": [],
+      "helpText": null
+    },
+    {
+      "id": "community",
+      "label": "Would you like updates about future programmes and opportunities?",
+      "type": "single-choice",
+      "required": false,
+      "options": [
+        "Yes",
+        "No"
+      ],
+      "helpText": null
+    },
+    {
+      "id": "heard-via",
+      "label": "How did you hear about this webinar?",
+      "type": "single-choice",
+      "required": false,
+      "options": [
+        "LinkedIn",
+        "Instagram",
+        "WhatsApp",
+        "Facebook",
+        "X",
+        "Friend/colleague",
+        "School/university",
+        "Organization/community",
+        "Email",
+        "Other"
+      ],
+      "helpText": null
+    }
+  ],
+  "Scholarships": [
+    {
+      "id": "stage",
+      "label": "Which stage best describes where you are right now?",
+      "type": "single-choice",
+      "required": false,
+      "options": [
+        "Exploring my career options",
+        "Studying",
+        "Looking for my first job",
+        "Looking for a better job",
+        "Building my career",
+        "Starting a business",
+        "Scaling an existing business",
+        "Looking for funding/investment",
+        "Looking for scholarships/fellowships",
+        "Building skills for the future",
+        "Leading a youth/women-focused initiative",
+        "Other"
+      ],
+      "helpText": null
+    },
+    {
+      "id": "challenges",
+      "label": "What are the biggest challenges you face right now?",
+      "type": "multi-choice",
+      "required": false,
+      "helpText": "Pick up to three.",
+      "options": [
+        "Finding employment",
+        "Building relevant skills",
+        "Using AI effectively",
+        "Building my CV/portfolio",
+        "Passing interviews",
+        "Finding clients",
+        "Growing my business",
+        "Accessing funding",
+        "Finding investors",
+        "Building professional networks",
+        "Finding scholarships",
+        "Finding fellowships/global opportunities",
+        "Lack of mentorship",
+        "Lack of confidence",
+        "Lack of access to opportunities",
+        "Balancing career and personal responsibilities",
+        "Other"
+      ]
+    },
+    {
+      "id": "opp-types",
+      "label": "Which opportunities are you interested in?",
+      "type": "multi-choice",
+      "required": false,
+      "options": [
+        "Scholarships",
+        "Fellowships",
+        "Internships",
+        "Grants",
+        "Youth programs",
+        "Leadership programs",
+        "Conferences",
+        "Exchange programs",
+        "Research opportunities",
+        "Entrepreneurship programs",
+        "International jobs",
+        "Volunteering",
+        "Mentorship programs"
+      ],
+      "helpText": null
+    },
+    {
+      "id": "opp-challenge",
+      "label": "What is your biggest challenge accessing global opportunities?",
+      "type": "single-choice",
+      "required": false,
+      "options": [
+        "I don't know where to find them",
+        "I find them but struggle to qualify",
+        "The application process is difficult",
+        "Writing applications/personal statements",
+        "Lack of funding",
+        "Lack of information",
+        "Lack of mentorship",
+        "Lack of confidence",
+        "Other"
+      ],
+      "helpText": null
+    },
+    {
+      "id": "opp-wanted",
+      "label": "What type of opportunity would you most like us to share with you?",
+      "type": "short-text",
+      "required": false,
+      "options": [],
+      "helpText": null
+    },
+    {
+      "id": "your-question",
+      "label": "What one question would you like answered during the session?",
+      "type": "long-text",
+      "required": false,
+      "options": [],
+      "helpText": null
+    },
+    {
+      "id": "community",
+      "label": "Would you like updates about future programmes and opportunities?",
+      "type": "single-choice",
+      "required": false,
+      "options": [
+        "Yes",
+        "No"
+      ],
+      "helpText": null
+    },
+    {
+      "id": "heard-via",
+      "label": "How did you hear about this webinar?",
+      "type": "single-choice",
+      "required": false,
+      "options": [
+        "LinkedIn",
+        "Instagram",
+        "WhatsApp",
+        "Facebook",
+        "X",
+        "Friend/colleague",
+        "School/university",
+        "Organization/community",
+        "Email",
+        "Other"
+      ],
+      "helpText": null
+    }
+  ],
+  "Ready for Work": [
+    {
+      "id": "stage",
+      "label": "Which stage best describes where you are right now?",
+      "type": "single-choice",
+      "required": false,
+      "options": [
+        "Exploring my career options",
+        "Studying",
+        "Looking for my first job",
+        "Looking for a better job",
+        "Building my career",
+        "Starting a business",
+        "Scaling an existing business",
+        "Looking for funding/investment",
+        "Looking for scholarships/fellowships",
+        "Building skills for the future",
+        "Leading a youth/women-focused initiative",
+        "Other"
+      ],
+      "helpText": null
+    },
+    {
+      "id": "challenges",
+      "label": "What are the biggest challenges you face right now?",
+      "type": "multi-choice",
+      "required": false,
+      "helpText": "Pick up to three.",
+      "options": [
+        "Finding employment",
+        "Building relevant skills",
+        "Using AI effectively",
+        "Building my CV/portfolio",
+        "Passing interviews",
+        "Finding clients",
+        "Growing my business",
+        "Accessing funding",
+        "Finding investors",
+        "Building professional networks",
+        "Finding scholarships",
+        "Finding fellowships/global opportunities",
+        "Lack of mentorship",
+        "Lack of confidence",
+        "Lack of access to opportunities",
+        "Balancing career and personal responsibilities",
+        "Other"
+      ]
+    },
+    {
+      "id": "job-seeking",
+      "label": "Are you currently looking for employment?",
+      "type": "single-choice",
+      "required": false,
+      "options": [
+        "Yes, actively",
+        "Yes, but not urgently",
+        "No, but open to opportunities",
+        "No"
+      ],
+      "helpText": null
+    },
+    {
+      "id": "job-type",
+      "label": "What type of opportunity are you looking for?",
+      "type": "single-choice",
+      "required": false,
+      "options": [
+        "Internship",
+        "Graduate/entry-level job",
+        "Mid-level job",
+        "Senior-level position",
+        "Remote job",
+        "Freelance opportunity",
+        "Contract work",
+        "Apprenticeship",
+        "Volunteer opportunity"
+      ],
+      "helpText": null
+    },
+    {
+      "id": "job-challenge",
+      "label": "What is your biggest challenge in getting a job?",
+      "type": "single-choice",
+      "required": false,
+      "options": [
+        "Finding opportunities",
+        "CV/resume",
+        "LinkedIn profile",
+        "Personal branding",
+        "Networking",
+        "Interviews",
+        "Lack of experience",
+        "Lack of skills",
+        "Knowing where to apply",
+        "Confidence",
+        "Other"
+      ],
+      "helpText": null
+    },
+    {
+      "id": "ready-meaning",
+      "label": "What would make you feel \"ready for work\"?",
+      "type": "long-text",
+      "required": false,
+      "options": [],
+      "helpText": null
+    },
+    {
+      "id": "your-question",
+      "label": "What one question would you like answered during the session?",
+      "type": "long-text",
+      "required": false,
+      "options": [],
+      "helpText": null
+    },
+    {
+      "id": "community",
+      "label": "Would you like updates about future programmes and opportunities?",
+      "type": "single-choice",
+      "required": false,
+      "options": [
+        "Yes",
+        "No"
+      ],
+      "helpText": null
+    },
+    {
+      "id": "heard-via",
+      "label": "How did you hear about this webinar?",
+      "type": "single-choice",
+      "required": false,
+      "options": [
+        "LinkedIn",
+        "Instagram",
+        "WhatsApp",
+        "Facebook",
+        "X",
+        "Friend/colleague",
+        "School/university",
+        "Organization/community",
+        "Email",
+        "Other"
+      ],
+      "helpText": null
+    }
+  ],
+  "Scaling Your Business": [
+    {
+      "id": "stage",
+      "label": "Which stage best describes where you are right now?",
+      "type": "single-choice",
+      "required": false,
+      "options": [
+        "Exploring my career options",
+        "Studying",
+        "Looking for my first job",
+        "Looking for a better job",
+        "Building my career",
+        "Starting a business",
+        "Scaling an existing business",
+        "Looking for funding/investment",
+        "Looking for scholarships/fellowships",
+        "Building skills for the future",
+        "Leading a youth/women-focused initiative",
+        "Other"
+      ],
+      "helpText": null
+    },
+    {
+      "id": "challenges",
+      "label": "What are the biggest challenges you face right now?",
+      "type": "multi-choice",
+      "required": false,
+      "helpText": "Pick up to three.",
+      "options": [
+        "Finding employment",
+        "Building relevant skills",
+        "Using AI effectively",
+        "Building my CV/portfolio",
+        "Passing interviews",
+        "Finding clients",
+        "Growing my business",
+        "Accessing funding",
+        "Finding investors",
+        "Building professional networks",
+        "Finding scholarships",
+        "Finding fellowships/global opportunities",
+        "Lack of mentorship",
+        "Lack of confidence",
+        "Lack of access to opportunities",
+        "Balancing career and personal responsibilities",
+        "Other"
+      ]
+    },
+    {
+      "id": "has-business",
+      "label": "Are you currently running a business?",
+      "type": "single-choice",
+      "required": false,
+      "options": [
+        "Yes",
+        "No",
+        "I am planning to start one",
+        "I have an idea but haven't started",
+        "I previously ran a business"
+      ],
+      "helpText": null
+    },
+    {
+      "id": "business-stage",
+      "label": "What stage is your business at?",
+      "type": "single-choice",
+      "required": false,
+      "options": [
+        "Idea stage",
+        "Pre-revenue",
+        "Early revenue",
+        "Growing",
+        "Scaling",
+        "Established"
+      ],
+      "helpText": null
+    },
+    {
+      "id": "business-challenge",
+      "label": "What is your biggest business challenge right now?",
+      "type": "single-choice",
+      "required": false,
+      "options": [
+        "Funding",
+        "Customers",
+        "Marketing",
+        "Sales",
+        "Technology",
+        "Team",
+        "Operations",
+        "Business strategy",
+        "Investor readiness",
+        "Networking",
+        "Expansion into new markets",
+        "Other"
+      ],
+      "helpText": null
+    },
+    {
+      "id": "investment-learn",
+      "label": "What would you most like to learn about raising investment?",
+      "type": "single-choice",
+      "required": false,
+      "options": [
+        "Finding investors",
+        "Preparing a pitch deck",
+        "Understanding what investors want",
+        "Valuation",
+        "Business model",
+        "Financial projections",
+        "Building traction",
+        "Due diligence",
+        "Grants vs investment",
+        "Scaling across West Africa"
+      ],
+      "helpText": null
+    },
+    {
+      "id": "your-question",
+      "label": "What one question would you like answered during the session?",
+      "type": "long-text",
+      "required": false,
+      "options": [],
+      "helpText": null
+    },
+    {
+      "id": "community",
+      "label": "Would you like updates about future programmes and opportunities?",
+      "type": "single-choice",
+      "required": false,
+      "options": [
+        "Yes",
+        "No"
+      ],
+      "helpText": null
+    },
+    {
+      "id": "heard-via",
+      "label": "How did you hear about this webinar?",
+      "type": "single-choice",
+      "required": false,
+      "options": [
+        "LinkedIn",
+        "Instagram",
+        "WhatsApp",
+        "Facebook",
+        "X",
+        "Friend/colleague",
+        "School/university",
+        "Organization/community",
+        "Email",
+        "Other"
+      ],
+      "helpText": null
+    }
+  ]
+}

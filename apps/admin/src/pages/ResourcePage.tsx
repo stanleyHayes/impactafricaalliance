@@ -3,8 +3,8 @@ import AddIcon from '@mui/icons-material/Add';
 import InboxOutlinedIcon from '@mui/icons-material/InboxOutlined';
 import Button from '@mui/material/Button';
 import type { GridColDef } from '@mui/x-data-grid';
-import { useMemo, useState } from 'react';
-import { Navigate, useParams } from 'react-router-dom';
+import { useCallback, useMemo, useState } from 'react';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 
 import { useAuth } from '../auth/AuthContext';
 import { ResourceCard, ResourceRowActions } from '../components/crud/ResourceCard';
@@ -16,6 +16,7 @@ import { ViewToggle } from '../components/data/ViewToggle';
 import { EmptyState } from '../components/EmptyState';
 import { PageHeader } from '../components/PageHeader';
 import { resourceGuide } from '../lib/page-guides';
+import { usesResourceFormPage } from '../resources/form-steps';
 import { useDeleteResource, useResourceList } from '../resources/hooks';
 import { findResource } from '../resources/registry';
 import type { ResourceConfig, ResourceRow } from '../resources/types';
@@ -68,6 +69,7 @@ const ResourcePage = (): JSX.Element => {
   const canEdit = user?.role === UserRole.Admin || user?.role === UserRole.Editor;
 
   const { resource: key = '' } = useParams();
+  const navigate = useNavigate();
   const resource = findResource(key);
   const list = useResourceList(key);
   const remove = useDeleteResource(key);
@@ -76,17 +78,31 @@ const ResourcePage = (): JSX.Element => {
   const [viewing, setViewing] = useState<ResourceRow | null>(null);
   const [view, setView] = useViewMode(`resource-${key}`);
 
-  const filters = useMemo<DataTableFilter[]>(() => (resource ? deriveFilters(resource) : []), [resource]);
+  const filters = useMemo<DataTableFilter[]>(
+    () => (resource ? deriveFilters(resource) : []),
+    [resource],
+  );
 
   const openCreate = (): void => {
+    if (resource && usesResourceFormPage(resource)) {
+      void navigate(`/content/${key}/new`);
+      return;
+    }
     setEditing(null);
     setDialogOpen(true);
   };
 
-  const openEdit = (row: ResourceRow): void => {
-    setEditing(row);
-    setDialogOpen(true);
-  };
+  const openEdit = useCallback(
+    (row: ResourceRow): void => {
+      if (resource && usesResourceFormPage(resource)) {
+        void navigate(`/content/${key}/${row.id}/edit`);
+        return;
+      }
+      setEditing(row);
+      setDialogOpen(true);
+    },
+    [resource, key, navigate],
+  );
 
   const columns = useMemo<GridColDef[]>(() => {
     if (!resource) {
@@ -111,7 +127,7 @@ const ResourcePage = (): JSX.Element => {
       ),
     };
     return [...resource.columns, actions];
-  }, [resource, remove, canEdit]);
+  }, [resource, remove, canEdit, openEdit]);
 
   if (!resource) {
     return <Navigate to="/" replace />;
@@ -184,12 +200,11 @@ const ResourcePage = (): JSX.Element => {
         onEdit={() => {
           const row = viewing;
           setViewing(null);
-          setEditing(row);
-          setDialogOpen(true);
+          if (row) openEdit(row);
         }}
       />
 
-      {canEdit && (
+      {canEdit && !usesResourceFormPage(resource) && (
         <ResourceFormDialog
           resource={resource}
           open={dialogOpen}

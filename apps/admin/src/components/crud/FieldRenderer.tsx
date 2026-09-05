@@ -1,7 +1,9 @@
 /* eslint-disable react/display-name -- the values below are render helpers
    (field, rhf, error) => JSX, dispatched by field type, not React components. */
 import type { EventQuestion, MediaAsset } from '@iaa/shared';
+import Box from '@mui/material/Box';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import FormHelperText from '@mui/material/FormHelperText';
 import InputAdornment from '@mui/material/InputAdornment';
 import MenuItem from '@mui/material/MenuItem';
 import Switch from '@mui/material/Switch';
@@ -23,10 +25,16 @@ interface FieldRendererProps {
   field: FieldConfig;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   control: Control<any>;
+  onUploadingChange?: (fieldName: string, uploading: boolean) => void;
 }
 
 type Rhf = ControllerRenderProps<FieldValues, string>;
-type Renderer = (field: FieldConfig, rhf: Rhf, error: string | undefined) => JSX.Element;
+type Renderer = (
+  field: FieldConfig,
+  rhf: Rhf,
+  error: string | undefined,
+  onUploadingChange?: FieldRendererProps['onUploadingChange'],
+) => JSX.Element;
 
 const toLocalInput = (iso: unknown): string => {
   if (typeof iso !== 'string' || iso.length === 0) {
@@ -110,14 +118,18 @@ const datetimeRenderer: Renderer = (field, rhf, error) => (
 
 const mediaRenderer =
   (accept: string, preview: boolean): Renderer =>
-  (field, rhf) => (
-    <MediaUploadField
-      label={field.label}
-      accept={accept}
-      preview={preview}
-      value={rhf.value as MediaAsset | undefined}
-      onChange={rhf.onChange}
-    />
+  (field, rhf, error, onUploadingChange) => (
+    <Box>
+      <MediaUploadField
+        label={field.label}
+        accept={accept}
+        preview={preview}
+        value={rhf.value as MediaAsset | undefined}
+        onChange={rhf.onChange}
+        onUploadingChange={(uploading) => onUploadingChange?.(field.name, uploading)}
+      />
+      {error && <FormHelperText error>{error}</FormHelperText>}
+    </Box>
   );
 
 const textRenderer =
@@ -191,12 +203,16 @@ const RENDERERS: Record<FieldType, Renderer> = {
 };
 
 /** Renders a single configured field bound to react-hook-form. */
-export const FieldRenderer = ({ field, control }: FieldRendererProps): JSX.Element => (
+export const FieldRenderer = ({
+  field,
+  control,
+  onUploadingChange,
+}: FieldRendererProps): JSX.Element => (
   <Controller
     name={field.name}
     control={control}
     render={({ field: rhf, fieldState }) =>
-      RENDERERS[field.type](field, rhf, fieldState.error?.message)
+      RENDERERS[field.type](field, rhf, fieldState.error?.message, onUploadingChange)
     }
   />
 );

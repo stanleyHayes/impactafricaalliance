@@ -1,6 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 
-
 import { RequireAuth } from '../auth/RequireAuth';
 import { RequireRole } from '../auth/RequireRole';
 import { AppShell } from '../components/layout/AppShell';
@@ -15,15 +14,18 @@ import UpdatePassword from '../pages/account/UpdatePassword';
 import UserGuide from '../pages/account/UserGuide';
 import Dashboard from '../pages/Dashboard';
 import Donations from '../pages/Donations';
+import EventEditor from '../pages/EventEditor';
 import Events from '../pages/Events';
 import Login from '../pages/Login';
 import PrivacyRequests from '../pages/PrivacyRequests';
 import ResetPassword from '../pages/ResetPassword';
+import ResourceFormPage from '../pages/ResourceFormPage';
 import ResourcePage from '../pages/ResourcePage';
 import SiteSettings from '../pages/SiteSettings';
 import SocialConnections from '../pages/SocialConnections';
 import Submissions from '../pages/Submissions';
 import Subscribers from '../pages/Subscribers';
+import UserAccessEditor from '../pages/UserAccessEditor';
 import Users from '../pages/Users';
 
 /** Admin route table: a public login and an authenticated console shell. */
@@ -41,6 +43,22 @@ export const App = (): JSX.Element => (
     >
       <Route index element={<Dashboard />} />
       <Route path="content/:resource" element={<ResourcePage />} />
+      <Route
+        path="content/:resource/new"
+        element={
+          <RequireRole roles={['admin', 'editor']}>
+            <ResourceFormPage />
+          </RequireRole>
+        }
+      />
+      <Route
+        path="content/:resource/:id/edit"
+        element={
+          <RequireRole roles={['admin', 'editor']}>
+            <ResourceFormPage />
+          </RequireRole>
+        }
+      />
       <Route path="submissions" element={<Submissions />} />
       <Route path="submissions/:inbox" element={<Submissions />} />
       <Route path="subscribers" element={<Subscribers />} />
@@ -56,6 +74,38 @@ export const App = (): JSX.Element => (
         }
       />
       <Route path="events" element={<Events />} />
+      <Route
+        path="events/new"
+        element={
+          <RequireRole roles={['admin', 'editor']}>
+            <EventEditor />
+          </RequireRole>
+        }
+      />
+      <Route
+        path="events/:eventId/edit"
+        element={
+          <RequireRole roles={['admin', 'editor']}>
+            <EventEditor />
+          </RequireRole>
+        }
+      />
+      <Route
+        path="users/invite"
+        element={
+          <RequireRole roles={['admin']}>
+            <UserAccessEditor />
+          </RequireRole>
+        }
+      />
+      <Route
+        path="users/:userId/permissions"
+        element={
+          <RequireRole roles={['admin']}>
+            <UserAccessEditor />
+          </RequireRole>
+        }
+      />
       <Route
         path="users"
         element={

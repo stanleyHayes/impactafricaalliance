@@ -1,0 +1,82 @@
+import type { Event } from '@iaa/shared';
+import dayjs from 'dayjs';
+import { describe, expect, it } from 'vitest';
+
+import {
+  emptyEventForm,
+  eventPatch,
+  eventStepError,
+  eventToForm,
+  parseEventForm,
+  scheduleErrors,
+} from './event-form';
+
+const event: Event = {
+  id: 'event-1',
+  title: 'Youth skills workshop',
+  description: 'A practical workshop for emerging community leaders.',
+  type: 'community-event',
+  status: 'published',
+  startAt: '2026-09-18T22:35:24.123Z',
+  endAt: '2026-09-19T01:15:37.456Z',
+  registrationClosesAt: '2026-09-17T15:42:13.789Z',
+  location: 'Accra',
+  registrationEnabled: true,
+  capacity: 25,
+  questions: [],
+  createdAt: '2026-09-01T00:00:00.000Z',
+  updatedAt: '2026-09-01T00:00:00.000Z',
+};
+
+describe('event form scheduling', () => {
+  it('starts a calendar-created event at 09:00 on the selected local day', () => {
+    const form = emptyEventForm('2026-09-18');
+    expect(form.startAt?.format('YYYY-MM-DD HH:mm:ss.SSS')).toBe('2026-09-18 09:00:00.000');
+    expect(form.endAt).toBeNull();
+    expect(form.registrationClosesAt).toBeNull();
+  });
+
+  it('retains exact stored instants and produces explicit removals for cleared optional dates', () => {
+    const form = eventToForm(event);
+    const unchanged = parseEventForm(form);
+    expect(unchanged.success).toBe(true);
+    if (!unchanged.success) throw unchanged.error;
+    expect(unchanged.data).toMatchObject({
+      startAt: event.startAt,
+      endAt: event.endAt,
+      registrationClosesAt: event.registrationClosesAt,
+      registrationEnabled: true,
+      status: 'published',
+    });
+
+    const cleared = parseEventForm({ ...form, endAt: null, registrationClosesAt: null });
+    expect(cleared.success).toBe(true);
+    if (!cleared.success) throw cleared.error;
+    expect(eventPatch(cleared.data, event)).toMatchObject({
+      startAt: event.startAt,
+      endAt: null,
+      registrationClosesAt: null,
+      registrationEnabled: true,
+      capacity: 25,
+    });
+    expect(eventPatch(cleared.data).endAt).toBeUndefined();
+    expect(eventPatch(cleared.data).registrationClosesAt).toBeUndefined();
+  });
+
+  it('blocks incomplete or incorrectly ordered dates on their own step without blocking unrelated steps', () => {
+    const valid = eventToForm(event);
+    const incompleteEnd = { ...valid, endAt: dayjs('not-a-date') };
+    expect(eventStepError(incompleteEnd, 0)).toBeUndefined();
+    expect(eventStepError(incompleteEnd, 1)).toBe(
+      'Enter a complete end date and time, or clear it.',
+    );
+    expect(scheduleErrors({ ...valid, startAt: null }).startAt).toBe(
+      'Choose a valid start date and time.',
+    );
+    expect(eventStepError({ ...valid, endAt: valid.startAt }, 1)).toBe('End must be after start.');
+    expect(eventStepError({ ...valid, registrationClosesAt: valid.endAt }, 1)).toBeUndefined();
+    expect(eventStepError({ ...valid, registrationClosesAt: valid.endAt }, 2)).toBe(
+      'Registration must close by the start of the event.',
+    );
+  });
+});

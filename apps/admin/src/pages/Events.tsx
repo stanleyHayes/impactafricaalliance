@@ -1,26 +1,12 @@
-import { CONTENT_STATUSES, EVENT_TYPES, eventInputSchema } from '@iaa/shared';
-import type {
-  ContentStatus,
-  EventType,
-  Event,
-  EventQuestion,
-  EventUpdate,
-  EventInput,
-  MediaAsset,
-} from '@iaa/shared';
+import type { ContentStatus, EventType, Event } from '@iaa/shared';
 import AddIcon from '@mui/icons-material/Add';
 import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
-import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
-import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
-import LocalOfferOutlinedIcon from '@mui/icons-material/LocalOfferOutlined';
 import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
-import PersonOutlinedIcon from '@mui/icons-material/PersonOutlined';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
-import TitleIcon from '@mui/icons-material/Title';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -28,35 +14,24 @@ import Card from '@mui/material/Card';
 import Chip from '@mui/material/Chip';
 import Dialog from '@mui/material/Dialog';
 import DialogContent from '@mui/material/DialogContent';
-import Divider from '@mui/material/Divider';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import IconButton from '@mui/material/IconButton';
-import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
 import { alpha, useTheme } from '@mui/material/styles';
-import Switch from '@mui/material/Switch';
-import TextField from '@mui/material/TextField';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Typography from '@mui/material/Typography';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-import {
-  DialogFooter,
-  DialogHeader,
-  dialogPaperSx,
-  dialogSectionSx,
-} from '../components/dialogs/DialogShell';
+import { DialogFooter, DialogHeader, dialogPaperSx } from '../components/dialogs/DialogShell';
 import { EmptyState } from '../components/EmptyState';
 import { CalendarGrid } from '../components/events/CalendarGrid';
 import { EventDetailDialog } from '../components/events/EventDetailDialog';
 import { EventImage } from '../components/events/EventImage';
 import { EventQrDialog } from '../components/events/EventQrDialog';
-import { MediaUploadField } from '../components/fields/MediaUploadField';
-import { QuestionBuilder } from '../components/fields/QuestionBuilder';
 import { PageHeader } from '../components/PageHeader';
 import { PageSkeleton } from '../components/PageSkeleton';
-import { useDeleteEvent, useEvents, useSaveEvent } from '../lib/admin-hooks';
+import { useDeleteEvent, useEvents } from '../lib/admin-hooks';
 
 const STATUS_TONE: Record<
   ContentStatus,
@@ -83,28 +58,6 @@ const TYPE_LABEL: Record<EventType, string> = {
   'partner-forum': 'Partner Forum',
   'community-event': 'Community Event',
   other: 'Other',
-};
-
-const toDatetimeLocal = (date: Date): string => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
-};
-
-const localToIso = (value: string): string | null => {
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return null;
-  return parsed.toISOString();
-};
-
-const isoToDatetimeLocal = (iso?: string): string => {
-  if (!iso) return '';
-  const parsed = new Date(iso);
-  if (Number.isNaN(parsed.getTime())) return '';
-  return toDatetimeLocal(parsed);
 };
 
 const formatEventRange = (startIso: string, endIso?: string): string => {
@@ -137,454 +90,6 @@ const formatEventRange = (startIso: string, endIso?: string): string => {
   }
 
   return `${start.toLocaleString('en-GB', options)} – ${end.toLocaleString('en-GB', options)}`;
-};
-
-interface EventDialogProps {
-  open: boolean;
-  event?: Event | null;
-  initialStart?: string;
-  onClose: () => void;
-}
-
-const emptyForm = (): EventFormState => ({
-  title: '',
-  description: '',
-  startAt: toDatetimeLocal(new Date(new Date().setHours(9, 0, 0, 0))),
-  endAt: '',
-  location: '',
-  type: 'other' as EventType,
-  status: 'draft' as ContentStatus,
-  host: '',
-  hostTitle: '',
-  admission: '',
-  registrationEnabled: false,
-  capacity: '',
-  registrationClosesAt: '',
-  questions: [] as EventQuestion[],
-});
-
-interface EventFormState {
-  image?: MediaAsset;
-  title: string;
-  description: string;
-  startAt: string;
-  endAt: string;
-  location: string;
-  type: EventType;
-  status: ContentStatus;
-  host: string;
-  hostTitle: string;
-  admission: string;
-  registrationEnabled: boolean;
-  capacity: string;
-  registrationClosesAt: string;
-  questions: EventQuestion[];
-}
-
-const parseEventForm = (form: EventFormState): ReturnType<typeof eventInputSchema.safeParse> => {
-  return eventInputSchema.safeParse({
-    title: form.title.trim(),
-    description: form.description.trim(),
-    startAt: localToIso(form.startAt),
-    endAt: localToIso(form.endAt) || undefined,
-    image: form.image,
-    location: form.location.trim(),
-    type: form.type,
-    status: form.status,
-    host: form.host.trim() || undefined,
-    hostTitle: form.hostTitle.trim() || undefined,
-    admission: form.admission.trim() || undefined,
-    capacity: form.capacity.trim() ? Number(form.capacity) : undefined,
-    registrationClosesAt: localToIso(form.registrationClosesAt) || undefined,
-    registrationEnabled: form.registrationEnabled,
-    questions: form.questions.filter((question) => question.label.trim().length > 0),
-  });
-};
-
-const eventPatch = (data: EventInput, event?: Event | null): EventUpdate => {
-  const body: EventUpdate = { ...data };
-  if (event) {
-    for (const key of [
-      'image',
-      'endAt',
-      'host',
-      'hostTitle',
-      'admission',
-      'capacity',
-      'registrationClosesAt',
-    ] as const) {
-      if (body[key] === undefined && event[key] !== undefined) Object.assign(body, { [key]: null });
-    }
-  }
-  return body;
-};
-
-const EventDialog = ({ open, event, initialStart, onClose }: EventDialogProps): JSX.Element => {
-  const save = useSaveEvent();
-  const [uploading, setUploading] = useState(false);
-  const [validationError, setValidationError] = useState('');
-  const resetSave = save.reset;
-  const [form, setForm] = useState<EventFormState>(emptyForm());
-
-  useEffect(() => {
-    if (!open) return;
-    resetSave();
-    setValidationError('');
-    if (event) {
-      setForm({
-        image: event.image,
-        title: event.title,
-        description: event.description,
-        startAt: isoToDatetimeLocal(event.startAt),
-        endAt: isoToDatetimeLocal(event.endAt),
-        location: event.location,
-        type: event.type,
-        status: event.status,
-        host: event.host ?? '',
-        hostTitle: event.hostTitle ?? '',
-        admission: event.admission ?? '',
-        registrationEnabled: event.registrationEnabled ?? false,
-        capacity: event.capacity ? String(event.capacity) : '',
-        registrationClosesAt: isoToDatetimeLocal(event.registrationClosesAt),
-        questions: event.questions ?? [],
-      });
-    } else {
-      const defaults = emptyForm();
-      if (initialStart) {
-        defaults.startAt = initialStart;
-      }
-      setForm(defaults);
-    }
-  }, [open, event, initialStart, resetSave]);
-
-  const handleChange = (field: keyof EventFormState, value: string): void => {
-    setForm((previous) => ({ ...previous, [field]: value }));
-  };
-
-  const setField = <K extends keyof EventFormState>(field: K, value: EventFormState[K]): void => {
-    setForm((previous) => ({ ...previous, [field]: value }));
-  };
-
-  const handleSubmit = (eventSubmit: React.FormEvent): void => {
-    eventSubmit.preventDefault();
-    const startAt = localToIso(form.startAt);
-    if (!startAt) return;
-
-    const endAtLocal = form.endAt.trim() ? localToIso(form.endAt.trim()) : undefined;
-    const closesAtIso = form.registrationClosesAt.trim()
-      ? localToIso(form.registrationClosesAt.trim())
-      : undefined;
-    if (uploading || save.isPending) return;
-    if (endAtLocal && Date.parse(endAtLocal) <= Date.parse(startAt)) {
-      setValidationError('End must be after start.');
-      return;
-    }
-    if (closesAtIso && Date.parse(closesAtIso) > Date.parse(startAt)) {
-      setValidationError('Registration must close by the start of the event.');
-      return;
-    }
-    const parsed = parseEventForm(form);
-    if (!parsed.success) {
-      setValidationError(
-        parsed.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`).join(' · '),
-      );
-      return;
-    }
-    const body = eventPatch(parsed.data, event);
-    setValidationError('');
-
-    save.mutate({ id: event?.id, body }, { onSuccess: () => onClose() });
-  };
-
-  const submitLabel = ((): string => {
-    if (save.isPending) return 'Saving…';
-    return event ? 'Update' : 'Create';
-  })();
-
-  return (
-    <Dialog
-      open={open}
-      aria-label={event ? 'Edit event' : 'Create event'}
-      onClose={uploading || save.isPending ? undefined : onClose}
-      maxWidth="md"
-      fullWidth
-      slotProps={{ paper: { sx: dialogPaperSx } }}
-    >
-      <DialogHeader
-        icon={<CalendarTodayIcon />}
-        eyebrow="Events"
-        title={event ? 'Edit event' : 'Create event'}
-        description={
-          event
-            ? 'Update the details of this event.'
-            : 'Schedule a new event for the community calendar.'
-        }
-        onClose={() => {
-          if (!uploading && !save.isPending) onClose();
-        }}
-      />
-      <Box
-        component="form"
-        id="event-form"
-        onSubmit={handleSubmit}
-        sx={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}
-      >
-        <DialogContent sx={{ bgcolor: 'background.default', py: 3 }}>
-          <Stack spacing={2} sx={dialogSectionSx}>
-            <Typography variant="subtitle1" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <ImageOutlinedIcon /> Event artwork
-            </Typography>
-            <MediaUploadField
-              label="Event image"
-              accept="image/jpeg,image/png,image/gif,image/webp"
-              preview
-              value={form.image}
-              onChange={(image) => setField('image', image)}
-              maxSizeMB={5}
-              onUploadingChange={setUploading}
-            />
-            <Typography variant="caption" color="text.secondary">
-              The uploaded image appears on the website. Without an image, Alliance artwork is
-              shown.
-            </Typography>
-            <Divider />
-            <TextField
-              label={
-                <Box
-                  component="span"
-                  sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75 }}
-                >
-                  <TitleIcon sx={{ fontSize: 17 }} />
-                  Title
-                </Box>
-              }
-              required
-              value={form.title}
-              onChange={(eventChange) => handleChange('title', eventChange.target.value)}
-            />
-            <TextField
-              label={
-                <Box
-                  component="span"
-                  sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75 }}
-                >
-                  <DescriptionOutlinedIcon sx={{ fontSize: 17 }} />
-                  Description
-                </Box>
-              }
-              required
-              multiline
-              rows={4}
-              value={form.description}
-              onChange={(eventChange) => handleChange('description', eventChange.target.value)}
-            />
-            <TextField
-              label={
-                <Box
-                  component="span"
-                  sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75 }}
-                >
-                  <CalendarTodayIcon sx={{ fontSize: 17 }} />
-                  Start
-                </Box>
-              }
-              type="datetime-local"
-              helperText={`Times use ${Intl.DateTimeFormat().resolvedOptions().timeZone}`}
-              required
-              value={form.startAt}
-              onChange={(eventChange) => handleChange('startAt', eventChange.target.value)}
-              slotProps={{ inputLabel: { shrink: true } }}
-            />
-            <TextField
-              label={
-                <Box
-                  component="span"
-                  sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75 }}
-                >
-                  <CalendarTodayIcon sx={{ fontSize: 17 }} />
-                  End (optional)
-                </Box>
-              }
-              type="datetime-local"
-              value={form.endAt}
-              onChange={(eventChange) => handleChange('endAt', eventChange.target.value)}
-              slotProps={{ inputLabel: { shrink: true } }}
-            />
-            <TextField
-              label={
-                <Box
-                  component="span"
-                  sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75 }}
-                >
-                  <LocationOnOutlinedIcon sx={{ fontSize: 17 }} />
-                  Location
-                </Box>
-              }
-              required
-              value={form.location}
-              onChange={(eventChange) => handleChange('location', eventChange.target.value)}
-            />
-            <TextField
-              select
-              label={
-                <Box
-                  component="span"
-                  sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75 }}
-                >
-                  <LocalOfferOutlinedIcon sx={{ fontSize: 17 }} />
-                  Type
-                </Box>
-              }
-              required
-              value={form.type}
-              onChange={(eventChange) => handleChange('type', eventChange.target.value)}
-            >
-              {EVENT_TYPES.map((type) => (
-                <MenuItem key={type} value={type}>
-                  {TYPE_LABEL[type]}
-                </MenuItem>
-              ))}
-            </TextField>
-            <TextField
-              select
-              label={
-                <Box
-                  component="span"
-                  sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75 }}
-                >
-                  <LocalOfferOutlinedIcon sx={{ fontSize: 17 }} />
-                  Status
-                </Box>
-              }
-              required
-              value={form.status}
-              onChange={(eventChange) => handleChange('status', eventChange.target.value)}
-            >
-              {CONTENT_STATUSES.map((status) => (
-                <MenuItem key={status} value={status} sx={{ textTransform: 'capitalize' }}>
-                  {status}
-                </MenuItem>
-              ))}
-            </TextField>
-            <TextField
-              label={
-                <Box
-                  component="span"
-                  sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75 }}
-                >
-                  <PersonOutlinedIcon sx={{ fontSize: 17 }} />
-                  Host / speaker (optional)
-                </Box>
-              }
-              value={form.host}
-              onChange={(eventChange) => handleChange('host', eventChange.target.value)}
-            />
-            <TextField
-              label={
-                <Box
-                  component="span"
-                  sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75 }}
-                >
-                  <PersonOutlinedIcon sx={{ fontSize: 17 }} />
-                  Host title (optional)
-                </Box>
-              }
-              value={form.hostTitle}
-              onChange={(eventChange) => handleChange('hostTitle', eventChange.target.value)}
-            />
-            <TextField
-              label={
-                <Box
-                  component="span"
-                  sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75 }}
-                >
-                  <LocalOfferOutlinedIcon sx={{ fontSize: 17 }} />
-                  Admission (optional)
-                </Box>
-              }
-              placeholder="FREE"
-              value={form.admission}
-              onChange={(eventChange) => handleChange('admission', eventChange.target.value)}
-            />
-
-            <Divider sx={{ pt: 1 }} />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={form.registrationEnabled}
-                  onChange={(_e, checked) => setField('registrationEnabled', checked)}
-                />
-              }
-              label="Allow people to register on the website"
-            />
-            {form.registrationEnabled && (
-              <>
-                <TextField
-                  label={
-                    <Box
-                      component="span"
-                      sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75 }}
-                    >
-                      <PersonOutlinedIcon sx={{ fontSize: 17 }} />
-                      Capacity (optional)
-                    </Box>
-                  }
-                  type="number"
-                  value={form.capacity}
-                  onChange={(eventChange) => handleChange('capacity', eventChange.target.value)}
-                  helperText="Leave blank for unlimited places."
-                />
-                <TextField
-                  label={
-                    <Box
-                      component="span"
-                      sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75 }}
-                    >
-                      <CalendarTodayIcon sx={{ fontSize: 17 }} />
-                      Registration closes (optional)
-                    </Box>
-                  }
-                  type="datetime-local"
-                  value={form.registrationClosesAt}
-                  onChange={(eventChange) =>
-                    handleChange('registrationClosesAt', eventChange.target.value)
-                  }
-                  slotProps={{ inputLabel: { shrink: true } }}
-                  helperText="Defaults to the event start time."
-                />
-                <QuestionBuilder
-                  label="Extra questions for this event"
-                  helperText="Everyone is asked the core audience questions. Add anything specific to this event here."
-                  value={form.questions}
-                  onChange={(questions) => setField('questions', questions)}
-                />
-              </>
-            )}
-
-            {validationError && <Alert severity="error">{validationError}</Alert>}
-            {save.isError && (
-              <Typography variant="body2" color="error">
-                {save.error?.message ?? 'Could not save the event. Please try again.'}
-              </Typography>
-            )}
-          </Stack>
-        </DialogContent>
-        <DialogFooter>
-          <Button onClick={onClose} disabled={uploading || save.isPending}>
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            form="event-form"
-            variant="contained"
-            disabled={save.isPending || uploading}
-          >
-            {submitLabel}
-          </Button>
-        </DialogFooter>
-      </Box>
-    </Dialog>
-  );
 };
 
 interface DeleteConfirmDialogProps {
@@ -776,14 +281,12 @@ const EventCard = ({ event, onView, onEdit, onDelete, onShowQr }: EventCardProps
 };
 
 const Events = (): JSX.Element => {
+  const navigate = useNavigate();
   const { data, isLoading, isError, refetch } = useEvents();
   const [viewingEvent, setViewingEvent] = useState<Event | null>(null);
   const events = useMemo(() => data?.items ?? [], [data]);
   const [view, setView] = useState<'calendar' | 'card'>('calendar');
   const [month, setMonth] = useState(new Date());
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingEvent, setEditingEvent] = useState<Event | null>(null);
-  const [initialStart, setInitialStart] = useState<string | undefined>();
   const [deletingEvent, setDeletingEvent] = useState<Event | null>(null);
   const [qrEvent, setQrEvent] = useState<Event | null>(null);
 
@@ -793,32 +296,16 @@ const Events = (): JSX.Element => {
   );
 
   const openCreate = (): void => {
-    const start = new Date();
-    start.setHours(9, 0, 0, 0);
-    setEditingEvent(null);
-    setInitialStart(toDatetimeLocal(start));
-    setDialogOpen(true);
+    navigate('/events/new');
   };
 
   const openCreateForDay = (date: Date): void => {
-    const start = new Date(date);
-    start.setHours(9, 0, 0, 0);
-    setEditingEvent(null);
-    setInitialStart(toDatetimeLocal(start));
-    setDialogOpen(true);
+    const day = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    navigate(`/events/new?date=${day}`);
   };
 
   const openEdit = (event: Event): void => {
-    setViewingEvent(null);
-    setEditingEvent(event);
-    setInitialStart(undefined);
-    setDialogOpen(true);
-  };
-
-  const closeDialog = (): void => {
-    setDialogOpen(false);
-    setEditingEvent(null);
-    setInitialStart(undefined);
+    navigate(`/events/${event.id}/edit`);
   };
 
   if (isLoading) {
@@ -904,12 +391,6 @@ const Events = (): JSX.Element => {
         event={viewingEvent}
         onClose={() => setViewingEvent(null)}
         onEdit={openEdit}
-      />
-      <EventDialog
-        open={dialogOpen}
-        event={editingEvent}
-        initialStart={initialStart}
-        onClose={closeDialog}
       />
       <DeleteConfirmDialog
         open={Boolean(deletingEvent)}

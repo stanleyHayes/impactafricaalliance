@@ -28,7 +28,9 @@ const slugify = (value: string): string =>
 
 /** Shows a scannable code for an event and lets an editor save it for print. */
 export const EventQrDialog = ({ event, open, onClose }: EventQrDialogProps): JSX.Element => {
-  const { data, isLoading, isError } = useEventQr(open && event ? event.id : undefined);
+  const { data, isFetching, isError, refetch } = useEventQr(open && event ? event.id : undefined);
+  const qrCode = !isFetching && !isError ? data : undefined;
+  const eventTitle = event?.title ?? 'event';
 
   return (
     <Dialog
@@ -47,21 +49,25 @@ export const EventQrDialog = ({ event, open, onClose }: EventQrDialogProps): JSX
       />
       <DialogContent sx={{ bgcolor: 'background.default', py: 3 }}>
         <Stack spacing={2} alignItems="center">
-          {isLoading && <Skeleton variant="rounded" width={240} height={240} />}
-          {isError && <Alert severity="error">Could not generate the QR code.</Alert>}
-          {data && (
+          {isFetching && <Skeleton variant="rounded" width={240} height={240} />}
+          {isError && !isFetching && (
+            <Alert severity="error" action={<Button onClick={() => void refetch()}>Retry</Button>}>
+              Could not generate the QR code.
+            </Alert>
+          )}
+          {qrCode && (
             <>
               <Box
                 component="img"
-                src={data.dataUrl}
-                alt={`QR code for ${event?.title ?? 'event'}`}
+                src={qrCode.dataUrl}
+                alt={`QR code for ${eventTitle}`}
                 sx={{ width: 240, height: 240, borderRadius: 2, bgcolor: '#fff' }}
               />
               <Typography
                 variant="caption"
                 sx={{ color: 'text.secondary', wordBreak: 'break-all', textAlign: 'center' }}
               >
-                {data.targetUrl}
+                {qrCode.targetUrl}
               </Typography>
             </>
           )}
@@ -69,11 +75,11 @@ export const EventQrDialog = ({ event, open, onClose }: EventQrDialogProps): JSX
       </DialogContent>
       <DialogFooter>
         <Button onClick={onClose}>Close</Button>
-        {data && (
+        {qrCode && (
           <Button
             component="a"
-            href={data.dataUrl}
-            download={`iaa-${slugify(event?.title ?? 'event')}-qr.png`}
+            href={qrCode.dataUrl}
+            download={`iaa-${slugify(eventTitle)}-qr.png`}
             variant="contained"
             startIcon={<DownloadRoundedIcon />}
           >

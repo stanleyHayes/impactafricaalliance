@@ -6,6 +6,9 @@ content-management admin console, and the API that powers both.
 See [`docs/agent_plan.md`](docs/agent_plan.md) for the full architecture and [`docs/`](docs/) for the
 converted brand/content specifications.
 
+Interface contributors should follow the [form rules](AGENTS.md) and
+[admin form design guidance](docs/design/forms.md): forms over five fields use dedicated stepwise pages.
+
 ## Workspaces
 
 | Package | Description | Deploys to |

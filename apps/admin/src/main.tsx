@@ -1,6 +1,9 @@
 import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { QueryClientProvider } from '@tanstack/react-query';
+import 'dayjs/locale/en-gb';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
@@ -20,15 +23,17 @@ const ThemedApp = (): JSX.Element => {
   return (
     <MuiThemeProvider theme={theme}>
       <CssBaseline />
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <AuthProvider>
-            <PreferencesProvider>
-              <App />
-            </PreferencesProvider>
-          </AuthProvider>
-        </BrowserRouter>
-      </QueryClientProvider>
+      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="en-gb">
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <AuthProvider>
+              <PreferencesProvider>
+                <App />
+              </PreferencesProvider>
+            </AuthProvider>
+          </BrowserRouter>
+        </QueryClientProvider>
+      </LocalizationProvider>
     </MuiThemeProvider>
   );
 };

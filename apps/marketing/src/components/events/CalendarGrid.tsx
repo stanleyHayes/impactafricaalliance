@@ -1,6 +1,9 @@
 import type { Event } from '@iaa/shared';
+import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
 import { Box, Button, IconButton, Typography } from '@mui/material';
 import Stack from '@mui/material/Stack';
 import { useState } from 'react';
@@ -125,8 +128,15 @@ export const CalendarGrid = ({ events }: { events: Event[] }): JSX.Element => {
                   <Box key={event.id} sx={{ borderLeft: '2px solid #F5B800', pl: 0.75, mb: 1 }}>
                     <Typography
                       component="span"
-                      sx={{ display: 'block', fontSize: 11, color: 'text.secondary' }}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 0.5,
+                        fontSize: 11,
+                        color: 'text.secondary',
+                      }}
                     >
+                      <AccessTimeRoundedIcon sx={{ fontSize: 13, flexShrink: 0 }} />
                       {formatEventTime(event.startAt)}
                     </Typography>
                     <Typography
@@ -213,16 +223,45 @@ export const CalendarGrid = ({ events }: { events: Event[] }): JSX.Element => {
               }}
             />
             <Box sx={{ minWidth: 0 }}>
-              <Typography variant="caption" color="text.secondary">
-                {formatEventType(event.type)} · {formatEventDate(event.startAt)} ·{' '}
-                {formatEventTime(event.startAt)} GMT
-              </Typography>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  columnGap: 1.5,
+                  rowGap: 0.5,
+                  color: 'text.secondary',
+                }}
+              >
+                <Typography variant="caption">{formatEventType(event.type)}</Typography>
+                <Typography
+                  variant="caption"
+                  sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}
+                >
+                  <CalendarTodayIcon sx={{ fontSize: 14, flexShrink: 0 }} />
+                  {formatEventDate(event.startAt)}
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}
+                >
+                  <AccessTimeRoundedIcon sx={{ fontSize: 14, flexShrink: 0 }} />
+                  {formatEventTime(event.startAt)} GMT
+                </Typography>
+              </Box>
               <Typography variant="h6" sx={{ my: 0.5, lineHeight: 1.3 }}>
                 {event.title}
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {event.location}
-              </Typography>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 0.5,
+                  color: 'text.secondary',
+                }}
+              >
+                <LocationOnOutlinedIcon sx={{ fontSize: 18, mt: 0.2, flexShrink: 0 }} />
+                <Typography variant="body2">{event.location}</Typography>
+              </Box>
             </Box>
             <Box
               aria-hidden="true"

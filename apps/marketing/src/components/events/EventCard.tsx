@@ -1,5 +1,10 @@
 import { isRegistrationOpen, type Event } from '@iaa/shared';
+import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
+import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
+import PersonOutlinedIcon from '@mui/icons-material/PersonOutlined';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
@@ -65,9 +70,31 @@ export const EventCard = ({ event }: { event: Event }): JSX.Element => {
           justifyContent: 'center',
         }}
       >
-        <Typography variant="caption" color="text.secondary" sx={{ mb: 1, fontWeight: 650 }}>
-          {formatEventDate(event.startAt)} · {formatEventTime(event.startAt)} GMT
-        </Typography>
+        <Box
+          sx={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            columnGap: 2,
+            rowGap: 0.5,
+            mb: 1,
+            color: 'text.secondary',
+          }}
+        >
+          <Typography
+            variant="caption"
+            sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, fontWeight: 650 }}
+          >
+            <CalendarTodayIcon sx={{ fontSize: 16, flexShrink: 0 }} />
+            {formatEventDate(event.startAt)}
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, fontWeight: 650 }}
+          >
+            <AccessTimeRoundedIcon sx={{ fontSize: 16, flexShrink: 0 }} />
+            {formatEventTime(event.startAt)} GMT
+          </Typography>
+        </Box>
         <Typography
           component="h3"
           variant="h5"
@@ -85,31 +112,56 @@ export const EventCard = ({ event }: { event: Event }): JSX.Element => {
             {event.title}
           </Box>
         </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: { xs: 0, md: 1.5 } }}>
-          {event.location}
-        </Typography>
-        <Typography
-          variant="body2"
-          color="text.secondary"
+        <Box
           sx={{
-            display: { xs: 'none', md: '-webkit-box' },
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-            lineHeight: 1.6,
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 0.75,
+            color: 'text.secondary',
+            mb: { xs: 0, md: 1.5 },
           }}
         >
-          {event.description}
-        </Typography>
-        {event.host && (
+          <LocationOnOutlinedIcon sx={{ fontSize: 18, mt: 0.2, flexShrink: 0 }} />
+          <Typography variant="body2">{event.location}</Typography>
+        </Box>
+        <Box
+          sx={{
+            display: { xs: 'none', md: 'flex' },
+            alignItems: 'flex-start',
+            gap: 0.75,
+            color: 'text.secondary',
+          }}
+        >
+          <DescriptionOutlinedIcon sx={{ fontSize: 18, mt: 0.25, flexShrink: 0 }} />
           <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{ display: { xs: 'none', md: 'block' }, mt: 1 }}
+            variant="body2"
+            sx={{
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+              lineHeight: 1.6,
+            }}
           >
-            {event.host}
-            {event.hostTitle ? ` · ${event.hostTitle}` : ''}
+            {event.description}
           </Typography>
+        </Box>
+        {event.host && (
+          <Box
+            sx={{
+              display: { xs: 'none', md: 'flex' },
+              alignItems: 'flex-start',
+              gap: 0.75,
+              color: 'text.secondary',
+              mt: 1,
+            }}
+          >
+            <PersonOutlinedIcon sx={{ fontSize: 18, mt: 0.1, flexShrink: 0 }} />
+            <Typography variant="caption">
+              {event.host}
+              {event.hostTitle ? ` · ${event.hostTitle}` : ''}
+            </Typography>
+          </Box>
         )}
         <Stack
           direction="row"

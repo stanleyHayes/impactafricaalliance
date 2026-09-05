@@ -131,6 +131,9 @@ Each module owns `*.routes.ts`, `*.controller.ts`, `*.service.ts`, `*.repository
 - **API client**: a thin typed `fetch` wrapper; one `useXQuery`/`useXMutation` per resource via TanStack Query. Loading → **`Skeleton`** placeholders sized to final content (no layout shift, no spinners).
 - **Error boundaries** + a friendly branded error/empty state.
 - **Accessibility**: semantic landmarks, focus management on route change, labelled controls, ≥4.5:1 contrast (brand palette already compliant for body text), keyboard-navigable nav/menus, `prefers-reduced-motion` respected by all framer-motion animations.
+- **Admin forms**: more than five logical inputs require a dedicated create/edit page with named
+  steps, preserved values, scoped validation, and a final submit action. Complex permission matrices
+  follow the same rule. See [AGENTS.md](../AGENTS.md) and [form guidance](design/forms.md).
 
 ### Marketing site pages (content from `docs/website-content.md`)
 `/` Home · `/about` · `/our-work` + 4 initiative routes · `/impact` · `/get-involved` (Partner/Volunteer/Donate/Careers tabs) · `/contact` · `/news` + `/news/:slug` · `404`.
@@ -380,4 +383,56 @@ Source: `Impact Africa Alliance Website Updates.pdf`
 - Live check: admin preview reached sign-in after correcting an unavailable icon import. User agreed
   to sign in; authenticated edit/upload verification remains pending. No live content or media was
   created or modified. API clearing/PATCH fixes require deployment alongside the updated admin.
-- Changed-file lint and diff checks passed. Admin/API type checks are still running under sustained machine load.
+- Changed-file lint and diff checks passed. Follow-up verification completed: admin and API type
+  checks passed, including the final event editor/calendar fixes.
+
+## 19. Contact layout, public event icons, and QR downloads (5 September 2026)
+
+- Replaced the tall contact-details card with a full-width direct-contact strip for email,
+  WhatsApp, and the alternate phone. The form and compact enquiry routes sit alongside one another
+  on desktop and use consistent visual/keyboard ordering when stacked on mobile.
+- Offices now occupy a separate responsive section with addresses, phone links, directions,
+  regional presence, and a social/website footer. Published offices and site-setting fallbacks are
+  preserved; a single office fills the available row. Retained the brand palette and SVG watermark.
+- Public event cards and calendar agenda entries now use matching date, time, venue, description,
+  and host icons. Desktop split cards and the reduced mobile content remain intact.
+- Confirmed the API QR generator encodes `/events/<id>` into its downloadable 720px PNG.
+  Replaced the permanent admin QR cache with a fresh request on opening and a separate cache key
+  from legacy hash URLs. Refresh uses a skeleton; errors hide stale downloads and offer Retry.
+- Verification: 11 focused tests passed (five contact/CMS-link checks, one calendar interaction,
+  three QR generator checks, two QR dialog/download checks). Marketing/admin production builds,
+  marketing/admin/API type checks, changed-file lint, and diff checks passed.
+- Browser visual and authenticated upload verification remain unavailable: the browser runtime
+  reported no connected browser. No live content was changed and no deployment was performed.
+  Existing downloaded or printed QR images must be regenerated after deploying current API/admin
+  versions; those files cannot be changed by refreshing the dashboard.
+
+## 20. Dedicated admin form pages and MUI scheduling (5 September 2026)
+
+- Replaced event create/edit dialogs with `/events/new` and `/events/:eventId/edit` pages using
+  Details, Schedule, Registration, and Review steps. Calendar day selection initializes 09:00 on
+  that day; list and detail Edit actions open the dedicated editor. Existing records load directly
+  with skeleton/error/retry states. Final review retains image/artwork and publication settings.
+- Added MUI X DateTimePicker and Day.js for event start/end and registration closing time, including
+  24-hour entry, local timezone display, desktop calendar/clock popovers and narrow/touch dialogs.
+  Preserved UTC timestamps (including existing seconds/milliseconds), optional null PATCH clearing,
+  historical-event editing, and date-order validation. Invalid optional dates cannot silently clear
+  saved values. Uploads block step changes and final save.
+- Nine long CMS forms now use `/content/:resource/new` and `/content/:resource/:id/edit` with named
+  field groups and Review: articles, stories, team, offices, reports, jobs, gallery, stats, and page
+  settings. Preserved image/file uploads, AI assistance, Markdown editors, previews, and roles.
+  The field-count threshold automatically routes future forms with more than five fields.
+- Site settings now uses nine focused steps, preserves changes across steps/refetches, and returns
+  to hidden invalid fields on final validation. Corrected numeric popup delay input.
+- Invitations and permission editing now use `/users/invite` and `/users/:userId/permissions` with
+  Identity, Permissions, and Review. Preserved permission payloads, role behavior, and self-edit
+  auth refresh. Short partner/pillar-image/direct-user forms remain dialogs.
+- Recorded the standing admin form rule in root `AGENTS.md`, `docs/design/forms.md`, and README.
+- Verification: 16 focused tests passed across event forms, CMS resource forms, site settings, and
+  access forms. Event/settings tests also passed with `TZ=America/New_York`. Admin typecheck and
+  changed-file lint passed; admin and marketing production builds passed after the MUI dependency
+  addition. Diff checks passed.
+- Browser verified calendar-to-create navigation, all four event steps, selected date/time reaching
+  review, existing-event edit loading, desktop MUI calendar/time selection, and mobile calendar/time
+  views with no horizontal page overflow at 390px. Restored viewport. No live forms were submitted,
+  no records/media/permissions were changed, and no invitations were sent. No deployment performed.

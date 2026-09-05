@@ -25,19 +25,29 @@ import Typography from '@mui/material/Typography';
 import type { GridColDef } from '@mui/x-data-grid';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 
-import { InviteUserDialog } from '../components/auth/InviteUserDialog';
-import { UserPermissionsDialog } from '../components/auth/UserPermissionsDialog';
 import { DataTable, type DataTableFilter } from '../components/data/DataTable';
 import { useViewMode } from '../components/data/useViewMode';
 import { ViewToggle } from '../components/data/ViewToggle';
-import { DialogFooter, DialogHeader, dialogPaperSx, dialogSectionSx } from '../components/dialogs/DialogShell';
+import {
+  DialogFooter,
+  DialogHeader,
+  dialogPaperSx,
+  dialogSectionSx,
+} from '../components/dialogs/DialogShell';
 import { EmptyState } from '../components/EmptyState';
 import { PageHeader } from '../components/PageHeader';
 import { useDeleteUser, useSaveUser, useUsers } from '../lib/admin-hooks';
 import { pageGuides } from '../lib/page-guides';
 
-const CreateUserDialog = ({ open, onClose }: { open: boolean; onClose: () => void }): JSX.Element => {
+const CreateUserDialog = ({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}): JSX.Element => {
   const save = useSaveUser();
   const {
     register,
@@ -62,7 +72,13 @@ const CreateUserDialog = ({ open, onClose }: { open: boolean; onClose: () => voi
   );
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth slotProps={{ paper: { sx: dialogPaperSx } }}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      slotProps={{ paper: { sx: dialogPaperSx } }}
+    >
       <DialogHeader
         icon={<PersonAddRoundedIcon />}
         eyebrow="Team"
@@ -72,7 +88,12 @@ const CreateUserDialog = ({ open, onClose }: { open: boolean; onClose: () => voi
       />
       <DialogContent sx={{ bgcolor: 'background.default', py: 3 }}>
         <Stack component="form" id="user-form" spacing={2} onSubmit={onSubmit} sx={dialogSectionSx}>
-          <TextField label="Name" error={Boolean(errors.name)} helperText={errors.name?.message} {...register('name')} />
+          <TextField
+            label="Name"
+            error={Boolean(errors.name)}
+            helperText={errors.name?.message}
+            {...register('name')}
+          />
           <TextField
             label="Email"
             type="email"
@@ -129,7 +150,11 @@ const permissionSummary = (user: PublicUser): string => {
 };
 
 const filters: DataTableFilter[] = [
-  { field: 'role', label: 'Role', options: USER_ROLES.map((role) => ({ value: role, label: role })) },
+  {
+    field: 'role',
+    label: 'Role',
+    options: USER_ROLES.map((role) => ({ value: role, label: role })),
+  },
   {
     field: 'isActive',
     label: 'Status',
@@ -177,14 +202,23 @@ const UserCard = ({ user, onManage, onDelete }: UserCardProps): JSX.Element => {
             {user.name.charAt(0).toUpperCase()}
           </Avatar>
           <Box sx={{ minWidth: 0, flexGrow: 1 }}>
-            <Typography variant="subtitle1" noWrap title={user.name} sx={{ fontWeight: 700, lineHeight: 1.3 }}>
+            <Typography
+              variant="subtitle1"
+              noWrap
+              title={user.name}
+              sx={{ fontWeight: 700, lineHeight: 1.3 }}
+            >
               {user.name}
             </Typography>
             <Typography variant="body2" color="text.secondary" noWrap title={user.email}>
               {user.email}
             </Typography>
             <Stack direction="row" sx={{ mt: 0.75, flexWrap: 'wrap', gap: 0.5 }}>
-              <Chip size="small" label={user.role} sx={{ height: 22, textTransform: 'capitalize' }} />
+              <Chip
+                size="small"
+                label={user.role}
+                sx={{ height: 22, textTransform: 'capitalize' }}
+              />
               <Chip
                 size="small"
                 variant="outlined"
@@ -233,12 +267,14 @@ const UserCard = ({ user, onManage, onDelete }: UserCardProps): JSX.Element => {
 };
 
 const Users = (): JSX.Element => {
+  const navigate = useNavigate();
   const { data: users, isLoading } = useUsers();
   const remove = useDeleteUser();
-  const [inviteOpen, setInviteOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<PublicUser | null>(null);
   const [view, setView] = useViewMode('users');
+  const manageUser = (user: PublicUser): void => {
+    navigate(`/users/${user.id}/permissions`);
+  };
 
   const columns: GridColDef[] = [
     { field: 'name', headerName: 'Name', flex: 1, minWidth: 160 },
@@ -256,7 +292,11 @@ const Users = (): JSX.Element => {
       headerName: 'Permissions',
       width: 140,
       sortable: false,
-      renderCell: (params) => <Box sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>{permissionSummary(params.row)}</Box>,
+      renderCell: (params) => (
+        <Box sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+          {permissionSummary(params.row)}
+        </Box>
+      ),
     },
     {
       field: 'isActive',
@@ -283,7 +323,7 @@ const Users = (): JSX.Element => {
             <IconButton
               size="small"
               aria-label="Manage permissions"
-              onClick={() => setSelectedUser(params.row as PublicUser)}
+              onClick={() => manageUser(params.row as PublicUser)}
             >
               <EditIcon fontSize="small" />
             </IconButton>
@@ -332,7 +372,8 @@ const Users = (): JSX.Element => {
             <Button
               variant="contained"
               startIcon={<MailOutlineIcon />}
-              onClick={() => setInviteOpen(true)}
+              component={RouterLink}
+              to="/users/invite"
               sx={{ borderRadius: 2.5, px: 2.5 }}
             >
               Invite
@@ -355,7 +396,7 @@ const Users = (): JSX.Element => {
         renderCard={(row) => (
           <UserCard
             user={row as PublicUser}
-            onManage={setSelectedUser}
+            onManage={manageUser}
             onDelete={(id) => remove.mutate(id)}
           />
         )}
@@ -364,17 +405,15 @@ const Users = (): JSX.Element => {
             icon={<GroupsIcon />}
             title="No users yet"
             description="Invite teammates to help manage content and review activity."
-            primaryAction={{ label: 'Invite user', onClick: () => setInviteOpen(true), icon: <MailOutlineIcon /> }}
+            primaryAction={{
+              label: 'Invite user',
+              onClick: () => navigate('/users/invite'),
+              icon: <MailOutlineIcon />,
+            }}
           />
         }
       />
-      <InviteUserDialog open={inviteOpen} onClose={() => setInviteOpen(false)} />
       <CreateUserDialog open={createOpen} onClose={() => setCreateOpen(false)} />
-      <UserPermissionsDialog
-        user={selectedUser}
-        open={Boolean(selectedUser)}
-        onClose={() => setSelectedUser(null)}
-      />
     </>
   );
 };

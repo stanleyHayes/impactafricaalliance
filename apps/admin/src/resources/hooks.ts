@@ -7,7 +7,7 @@ import {
   type UseQueryResult,
 } from '@tanstack/react-query';
 
-import { api } from '../lib/api-client';
+import { api, ApiError } from '../lib/api-client';
 
 import type { ResourceRow } from './types';
 
@@ -17,6 +17,17 @@ export const useResourceList = (key: string): UseQueryResult<Paginated<ResourceR
   useQuery({
     queryKey: ['resource', key],
     queryFn: () => api.get<Paginated<ResourceRow>>(`${adminPath(key)}?pageSize=100`),
+  });
+
+export const useResourceDetail = (
+  key: string,
+  id: string | undefined,
+): UseQueryResult<ResourceRow> =>
+  useQuery({
+    queryKey: ['resource', key, id],
+    queryFn: () => api.get<ResourceRow>(`${adminPath(key)}/${id}`),
+    enabled: Boolean(id),
+    retry: (count, error) => !(error instanceof ApiError && error.status === 404) && count < 2,
   });
 
 export const useSaveResource = (
