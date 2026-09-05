@@ -10,10 +10,12 @@
  * Static routes come from the shared PILLARS constant, so a pillar rename can
  * no longer leave a dead URL behind. Dynamic routes are fetched from the API.
  *
- * A failed fetch is NOT fatal: the static sitemap is still written, because a
- * deploy should not break when the API is briefly unreachable.
+ * A failed fetch does not stop the file being written — a deploy should not
+ * break when the API is briefly unreachable — but it DOES exit non-zero. The
+ * quiet version of this cost us a sitemap once: one slow API call and the file
+ * was silently rewritten without a single event or team page in it.
  *
- * Usage: node tools/generate-sitemap.mjs [--api <url>] [--site <url>]
+ * Usage: node tools/generate-sitemap.mjs [--api <url>] [--site <url>] [--timeout <ms>]
  */
 import { writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -30,6 +32,10 @@ const flag = (name, fallback) => {
 
 const API = (flag('api', process.env.VITE_API_URL ?? 'https://iaa-api.onrender.com/api')).replace(/\/$/, '');
 const SITE = (flag('site', 'https://www.impactafricaalliance.org')).replace(/\/$/, '');
+// The API sleeps when idle, so a cold start can outlast a short timeout.
+const TIMEOUT_MS = Number(flag('timeout', '45000'));
+/** Resources whose rows could not be fetched, so the caller can react. */
+const incomplete = [];
 // Resolved from this file, not the working directory, so the script behaves
 // the same whether npm runs it from the repo root or from apps/marketing.
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -58,7 +64,7 @@ const fetchList = async (resource) => {
   try {
     for (let page = 1; page <= 20; page += 1) {
       const response = await fetch(`${API}/${resource}?pageSize=100&page=${page}`, {
-        signal: AbortSignal.timeout(20_000),
+        signal: AbortSignal.timeout(TIMEOUT_MS),
       });
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
@@ -73,6 +79,7 @@ const fetchList = async (resource) => {
     return items;
   } catch (error) {
     console.warn(`  ${resource}: could not fetch (${error.message}) — omitted`);
+    incomplete.push(resource);
     return items;
   }
 };
@@ -133,6 +140,15 @@ const run = async () => {
     `  ${STATIC_ROUTES.length} static, ${events.length} events, ${articles.length} articles, ${team.length} team`,
   );
   console.log(`  wrote ${OUT} (${entries.length} URLs)`);
+
+  if (incomplete.length > 0) {
+    // Written, but short. Surfaced as a failure so nobody commits a sitemap
+    // that quietly dropped every event and profile page.
+    console.error(
+      `\nINCOMPLETE: ${incomplete.join(', ')} could not be read. The file was written without them — do not commit it. Retry, or raise --timeout.`,
+    );
+    process.exitCode = 1;
+  }
 };
 
 run().catch((error) => {
