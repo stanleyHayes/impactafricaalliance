@@ -23,6 +23,9 @@ export const teamMemberInputSchema = z.object({
   photo: mediaAssetSchema.optional(),
   linkedInUrl: optionalUrl,
   xUrl: optionalUrl,
+  /** Personal portfolio or company site. */
+  websiteUrl: optionalUrl,
+  githubUrl: optionalUrl,
   facebookUrl: optionalUrl,
   instagramUrl: optionalUrl,
   tiktokUrl: optionalUrl,
@@ -42,6 +45,8 @@ export interface TeamMember extends Timestamped {
   photo?: MediaAsset;
   linkedInUrl?: string;
   xUrl?: string;
+  websiteUrl?: string;
+  githubUrl?: string;
   facebookUrl?: string;
   instagramUrl?: string;
   tiktokUrl?: string;

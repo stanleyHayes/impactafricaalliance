@@ -11,6 +11,8 @@ export interface TeamMemberDocument {
   photo?: MediaAsset;
   linkedInUrl?: string;
   xUrl?: string;
+  websiteUrl?: string;
+  githubUrl?: string;
   facebookUrl?: string;
   instagramUrl?: string;
   tiktokUrl?: string;
@@ -29,6 +31,8 @@ const teamSchema = new Schema<TeamMemberDocument>(
     photo: { type: mediaSubSchema, required: false },
     linkedInUrl: { type: String },
     xUrl: { type: String },
+    websiteUrl: { type: String },
+    githubUrl: { type: String },
     facebookUrl: { type: String },
     instagramUrl: { type: String },
     tiktokUrl: { type: String },

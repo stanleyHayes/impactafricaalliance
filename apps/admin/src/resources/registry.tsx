@@ -27,7 +27,7 @@ import InsightsIcon from '@mui/icons-material/Insights';
 import NewspaperIcon from '@mui/icons-material/Newspaper';
 import PlaceIcon from '@mui/icons-material/Place';
 import WorkOutlineIcon from '@mui/icons-material/WorkOutlineOutlined';
-import Box from '@mui/material/Box';
+import Avatar from '@mui/material/Avatar';
 import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import type { GridColDef } from '@mui/x-data-grid';
@@ -74,31 +74,44 @@ const mediaColumn = (
 ): GridColDef => ({
   field,
   headerName: '',
-  width: 64,
+  // Leave room for the thumbnail and the table's 16px padding on each side.
+  width: 80,
+  minWidth: 80,
+  resizable: false,
+  align: 'center',
   sortable: false,
   filterable: false,
   renderCell: (params) => {
     const url = (params.value as MediaAsset | undefined)?.url;
     const radius = opts?.circle ? '50%' : 1.5;
-    if (!url) {
-      return <Box sx={{ width: 40, height: 40, borderRadius: radius, bgcolor: 'action.hover' }} />;
-    }
+    const initials = String(params.row.name ?? '')
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((name) => name.charAt(0))
+      .join('')
+      .toUpperCase();
     return (
-      <Box
-        component="img"
+      <Avatar
         src={url}
         alt=""
-        loading="lazy"
+        aria-hidden="true"
+        slotProps={{ img: { loading: 'lazy', sx: { objectFit: opts?.fit ?? 'cover' } } }}
         sx={{
           width: 40,
           height: 40,
+          flexShrink: 0,
           borderRadius: radius,
-          objectFit: opts?.fit ?? 'cover',
-          bgcolor: 'background.default',
+          bgcolor: 'action.hover',
+          color: 'text.secondary',
+          fontSize: 14,
+          fontWeight: 700,
           border: '1px solid',
           borderColor: 'divider',
         }}
-      />
+      >
+        {opts?.circle && initials ? initials : <ImageIcon fontSize="small" />}
+      </Avatar>
     );
   },
 });
@@ -202,7 +215,9 @@ export const RESOURCES: readonly ResourceConfig[] = [
       { name: 'photo', label: 'Photo', type: 'image', wide: true },
       // Every profile link is optional — blanks are dropped, and the public
       // card only renders an icon for the ones actually filled in.
+      { name: 'websiteUrl', label: 'Personal website (optional)', type: 'text', wide: true },
       { name: 'linkedInUrl', label: 'LinkedIn URL (optional)', type: 'text', wide: true },
+      { name: 'githubUrl', label: 'GitHub URL (optional)', type: 'text', wide: true },
       { name: 'xUrl', label: 'X URL (optional)', type: 'text', wide: true },
       { name: 'instagramUrl', label: 'Instagram URL (optional)', type: 'text', wide: true },
       { name: 'facebookUrl', label: 'Facebook URL (optional)', type: 'text', wide: true },
