@@ -12,6 +12,7 @@ import { alpha } from '@mui/material/styles';
 import { useState } from 'react';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 
+import { LinkifiedText } from '../components/LinkifiedText';
 import { SectionReveal } from '../components/SectionReveal';
 import { Seo } from '../components/Seo';
 import { PageSkeleton } from '../components/skeletons';
@@ -214,7 +215,7 @@ export const TeamProfileContent = ({ member }: { member: TeamMember }): JSX.Elem
                         '&:first-of-type': { fontSize: '1.13rem', lineHeight: 1.8 },
                       }}
                     >
-                      {paragraph}
+                      <LinkifiedText text={paragraph} />
                     </Typography>
                   ))
                 ) : (

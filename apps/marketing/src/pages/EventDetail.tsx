@@ -18,6 +18,7 @@ import { useState } from 'react';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 
 import { EventArtwork } from '../components/events/EventArtwork';
+import { EventSchema } from '../components/EventSchema';
 import { Seo } from '../components/Seo';
 import { PageSkeleton } from '../components/skeletons';
 import { IMAGES } from '../content/images';
@@ -72,6 +73,7 @@ const EventBody = ({ event }: { event: Event }): JSX.Element => {
         image={event.image?.url ?? IMAGES.teamArtwork}
         type="article"
       />
+      <EventSchema event={event} />
 
       <Box
         component="header"
