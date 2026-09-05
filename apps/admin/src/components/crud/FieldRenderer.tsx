@@ -19,6 +19,7 @@ import type { FieldConfig, FieldType } from '../../resources/types';
 import { AiAssistButton } from '../ai/AiAssistButton';
 import { MediaUploadField } from '../fields/MediaUploadField';
 import { QuestionBuilder } from '../fields/QuestionBuilder';
+import { TagsField } from '../fields/TagsField';
 import { MarkdownEditor } from '../markdown/MarkdownEditor';
 
 interface FieldRendererProps {
@@ -84,20 +85,12 @@ const numberRenderer: Renderer = (field, rhf, error) => (
 );
 
 const tagsRenderer: Renderer = (field, rhf, error) => (
-  <TextField
-    fullWidth
+  <TagsField
     label={field.label}
-    value={Array.isArray(rhf.value) ? rhf.value.join(', ') : ''}
-    onChange={(e) =>
-      rhf.onChange(
-        e.target.value
-          .split(',')
-          .map((t) => t.trim())
-          .filter(Boolean),
-      )
-    }
-    error={Boolean(error)}
-    helperText={error ?? field.helperText}
+    value={(rhf.value ?? []) as string[]}
+    onChange={rhf.onChange}
+    error={error}
+    helperText={field.helperText}
   />
 );
 

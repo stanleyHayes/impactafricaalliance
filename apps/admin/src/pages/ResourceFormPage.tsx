@@ -2,25 +2,24 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { UserRole } from '@iaa/shared';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm, type Resolver } from 'react-hook-form';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 
 import { useAuth } from '../auth/AuthContext';
 import { FieldRenderer } from '../components/crud/FieldRenderer';
 import { FormStepNavigation } from '../components/forms/FormStepNavigation';
-import { Markdown } from '../components/markdown/Markdown';
+import { ResourceReview } from '../components/forms/ResourceReview';
 import { PageHeader } from '../components/PageHeader';
 import { PageSkeleton } from '../components/PageSkeleton';
 import { ApiError } from '../lib/api-client';
+import { slugify } from '../lib/slug';
 import {
   resourceErrorStep,
   resourceFormSteps,
@@ -28,55 +27,13 @@ import {
 } from '../resources/form-steps';
 import { useResourceDetail, useSaveResource } from '../resources/hooks';
 import { findResource } from '../resources/registry';
-import type { FieldConfig, ResourceConfig, ResourceRow } from '../resources/types';
-
-const reviewText = (field: FieldConfig, value: unknown): string => {
-  if (field.type === 'switch') return value ? 'Yes' : 'No';
-  if (field.type === 'datetime') {
-    const date = new Date(String(value));
-    return Number.isNaN(date.getTime()) ? 'Invalid date' : date.toLocaleString('en-GB');
-  }
-  if (field.type === 'select')
-    return field.options?.find((option) => option.value === value)?.label ?? String(value);
-  return Array.isArray(value) ? value.join(', ') : String(value);
-};
+import type { ResourceConfig, ResourceRow } from '../resources/types';
 
 const saveButtonLabel = (saving: boolean, activeStep: number, count: number): string => {
   if (saving) return 'Saving…';
   if (activeStep === count - 1) return 'Save';
   if (activeStep === count - 2) return 'Review';
   return 'Continue';
-};
-
-const ReviewValue = ({ field, value }: { field: FieldConfig; value: unknown }): JSX.Element => {
-  if (value === undefined || value === null || value === '') {
-    return <Typography color="text.secondary">Not set</Typography>;
-  }
-  if (
-    (field.type === 'image' || field.type === 'file') &&
-    typeof value === 'object' &&
-    'url' in value
-  ) {
-    const url = String(value.url);
-    return field.type === 'image' ? (
-      <Box
-        component="img"
-        src={url}
-        alt={field.label}
-        sx={{ maxWidth: '100%', height: 180, objectFit: 'contain', borderRadius: 2 }}
-      />
-    ) : (
-      <Link href={url} target="_blank" rel="noopener noreferrer">
-        Open uploaded file
-      </Link>
-    );
-  }
-  if (field.type === 'richtext') return <Markdown>{String(value)}</Markdown>;
-  return (
-    <Typography sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
-      {reviewText(field, value) || 'Not set'}
-    </Typography>
-  );
 };
 
 interface ResourceEditorProps {
@@ -97,6 +54,7 @@ const ResourceEditor = ({ resource, initial }: ResourceEditorProps): JSX.Element
   const {
     control,
     handleSubmit,
+    setValue,
     trigger,
     getFieldState,
     watch,
@@ -107,6 +65,22 @@ const ResourceEditor = ({ resource, initial }: ResourceEditorProps): JSX.Element
     shouldUnregister: false,
   });
   const values = watch();
+
+  // Derive the slug from the title while creating, so a new article gets a
+  // sensible URL without anyone hand-typing one. It stops the moment the field
+  // is edited directly, and never touches an existing record, whose slug is
+  // already published and must not move.
+  const slugSource = (values.title ?? values.name) as string | undefined;
+  const slugTouched = getFieldState('slug').isDirty;
+  useEffect(() => {
+    if (initial || slugTouched || !slugSource) {
+      return;
+    }
+    const derived = slugify(slugSource);
+    if (derived && derived !== values.slug) {
+      setValue('slug', derived, { shouldValidate: false, shouldDirty: false });
+    }
+  }, [initial, slugSource, slugTouched, values.slug, setValue]);
   const isReview = activeStep === steps.length - 1;
   const busy = save.isPending || validating || Object.values(uploading).some(Boolean);
   const goBack = (): void => {
@@ -232,74 +206,13 @@ const ResourceEditor = ({ resource, initial }: ResourceEditorProps): JSX.Element
           ))}
         </Box>
         {isReview && (
-          <Stack spacing={3}>
-            <Box>
-              <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                Review your {resource.singular.toLowerCase()}
-              </Typography>
-              <Typography color="text.secondary" sx={{ mt: 1 }}>
-                Check the details below. You can return to any section to make changes.
-              </Typography>
-            </Box>
-            {resource.renderPreview && (
-              <Box
-                sx={{
-                  p: { xs: 2.5, md: 4 },
-                  border: 1,
-                  borderColor: 'divider',
-                  borderRadius: 3,
-                  bgcolor: 'background.paper',
-                }}
-              >
-                <Typography variant="h6" sx={{ mb: 2 }}>
-                  Preview
-                </Typography>
-                {resource.renderPreview(values)}
-              </Box>
-            )}
-            {steps.slice(0, -1).map((step, index) => (
-              <Box
-                key={step.label}
-                sx={{
-                  p: { xs: 2.5, md: 4 },
-                  border: 1,
-                  borderColor: 'divider',
-                  borderRadius: 3,
-                  bgcolor: 'background.paper',
-                }}
-              >
-                <Stack
-                  direction="row"
-                  justifyContent="space-between"
-                  alignItems="center"
-                  sx={{ mb: 2 }}
-                >
-                  <Typography variant="h6">{step.label}</Typography>
-                  <Button
-                    disabled={busy}
-                    startIcon={<EditOutlinedIcon />}
-                    onClick={() => void moveToStep(index)}
-                  >
-                    Edit {step.label.toLowerCase()}
-                  </Button>
-                </Stack>
-                <Stack spacing={2.5}>
-                  {step.fields.map((field) => (
-                    <Box key={field.name}>
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        sx={{ display: 'block', mb: 0.75, fontWeight: 700 }}
-                      >
-                        {field.label}
-                      </Typography>
-                      <ReviewValue field={field} value={values[field.name]} />
-                    </Box>
-                  ))}
-                </Stack>
-              </Box>
-            ))}
-          </Stack>
+          <ResourceReview
+            resource={resource}
+            steps={steps.slice(0, -1)}
+            values={values}
+            busy={busy}
+            onEdit={(index) => void moveToStep(index)}
+          />
         )}
         {notice && (
           <Alert severity="error" sx={{ mt: 2 }}>
