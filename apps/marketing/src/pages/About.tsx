@@ -854,19 +854,27 @@ const TeamMemberCard = ({ member }: { member: TeamMember }): JSX.Element => {
         },
       }}
     >
+      {/*
+        The member's own portrait when the dashboard has one, and the alliance
+        artwork only as a fallback. The artwork is decorative, so it carries an
+        empty alt; a real portrait is named for screen readers.
+      */}
       <Box
         className="team-artwork"
         component="img"
-        src={IMAGES.teamArtwork}
-        alt=""
+        src={member.photo?.url ?? IMAGES.teamArtwork}
+        alt={member.photo?.url ? (member.photo.alt ?? member.name) : ''}
         loading="lazy"
         sx={{
           position: 'absolute',
           inset: 0,
           width: '100%',
           height: '100%',
+          // Portraits are framed 4:5 with the face high, so bias the crop
+          // upward rather than centring it in this 3:4 card.
           objectFit: 'cover',
-          transition: 'transform 500ms ease',
+          objectPosition: member.photo?.url ? 'center 22%' : 'center',
+          transition: 'transform 500ms cubic-bezier(0.22, 1, 0.36, 1)',
         }}
       />
       <Box
@@ -881,10 +889,9 @@ const TeamMemberCard = ({ member }: { member: TeamMember }): JSX.Element => {
       <Box sx={{ position: 'absolute', inset: 'auto 0 0', p: 2.5 }}>
         <Typography
           component="h3"
-          aria-label={member.name}
-          sx={{ fontSize: '1.65rem', fontWeight: 600, lineHeight: 1.2 }}
+          sx={{ fontSize: { xs: '1.35rem', md: '1.5rem' }, fontWeight: 600, lineHeight: 1.2 }}
         >
-          {member.name.trim().split(/\s+/)[0]}
+          {member.name}
         </Typography>
         <Typography
           sx={{ mt: 0.75, color: 'rgba(255,255,255,.86)', fontSize: '.9rem', lineHeight: 1.5 }}

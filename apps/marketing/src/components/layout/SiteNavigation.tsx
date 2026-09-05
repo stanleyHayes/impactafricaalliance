@@ -252,14 +252,36 @@ export const DesktopNavigation = (): JSX.Element => (
       borderRadius: 99,
       bgcolor: 'background.paper',
       '& > a, & > button': {
+        position: 'relative',
         minHeight: 40,
         px: 1.75,
         color: 'text.primary',
         fontSize: '.88rem',
         fontWeight: 600,
         whiteSpace: 'nowrap',
+        transition: 'color 180ms cubic-bezier(0.4, 0, 0.2, 1)',
+        // A rule sweeps out from the centre on hover. The active item already
+        // carries the gold pill, so it opts out rather than wearing both.
+        '&::after': {
+          position: 'absolute',
+          left: '50%',
+          right: '50%',
+          bottom: 5,
+          height: 2,
+          borderRadius: 2,
+          bgcolor: 'primary.main',
+          transition:
+            'left 240ms cubic-bezier(0.22, 1, 0.36, 1), right 240ms cubic-bezier(0.22, 1, 0.36, 1)',
+          content: '""',
+          pointerEvents: 'none',
+        },
+        '&:hover::after': { left: 14, right: 14 },
         '&.active, &.nav-active': { bgcolor: 'secondary.main', color: 'common.black' },
+        '&.active::after, &.nav-active::after': { left: '50%', right: '50%' },
         '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 },
+        '@media (prefers-reduced-motion: reduce)': {
+          '&::after': { transition: 'none' },
+        },
       },
     }}
   >

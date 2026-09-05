@@ -38,9 +38,27 @@ export const PillarCard = ({ pillar }: { pillar: PillarDefinition }): JSX.Elemen
         width: '100%',
         height: '100%',
         overflow: 'hidden',
-        transition: 'transform .25s, box-shadow .25s',
+        position: 'relative',
+        transition: 'transform 260ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 260ms ease',
         '&:hover': { transform: 'translateY(-6px)', boxShadow: 6 },
         '&:hover .pillar-img': { transform: 'scale(1.06)' },
+        // A gold rule draws across the top on hover — the same "arriving"
+        // gesture as the reveals, at interaction scale.
+        '&::after': {
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          height: 3,
+          width: '100%',
+          bgcolor: 'secondary.main',
+          transform: 'scaleX(0)',
+          transformOrigin: 'left',
+          transition: 'transform 320ms cubic-bezier(0.22, 1, 0.36, 1)',
+          content: '""',
+          pointerEvents: 'none',
+          zIndex: 2,
+        },
+        '&:hover::after, &:focus-within::after': { transform: 'scaleX(1)' },
       }}
     >
       <CardActionArea

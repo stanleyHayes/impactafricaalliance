@@ -1,12 +1,14 @@
 import { brandColors } from '@iaa/shared';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
-import Stack from '@mui/material/Stack';
 import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
+import { m, useReducedMotion } from 'framer-motion';
 
 import { IMAGES } from '../content/images';
+import { rise, transitions } from '../theme/motion';
 
+import { AnimatedHeading } from './AnimatedHeading';
 import { Watermark, type WatermarkVariant } from './Watermark';
 
 interface PageHeroProps {
@@ -24,7 +26,10 @@ export const PageHero = ({
   eyebrow,
   image = IMAGES.community,
   watermark,
-}: PageHeroProps): JSX.Element => (
+}: PageHeroProps): JSX.Element => {
+  const reduceMotion = useReducedMotion();
+
+  return (
   <Box
     component="header"
     sx={{
@@ -86,29 +91,45 @@ export const PageHero = ({
     >
       <Box sx={{ maxWidth: 880 }}>
         {eyebrow && (
-          <Stack direction="row" spacing={1.25} alignItems="center">
-            <Box sx={{ width: 38, height: 2, bgcolor: 'secondary.main' }} />
+          <Box
+            component={m.div}
+            initial={reduceMotion ? undefined : { opacity: 0, y: rise.sm }}
+            animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+            transition={{ ...transitions.enter, delay: 0.05 }}
+            sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}
+          >
+            <Box
+              component={m.div}
+              sx={{ height: 2, bgcolor: 'secondary.main' }}
+              initial={reduceMotion ? { width: 38 } : { width: 0 }}
+              animate={{ width: 38 }}
+              transition={{ ...transitions.enter, delay: 0.24 }}
+            />
             <Typography
               variant="overline"
               sx={{ color: 'secondary.light', fontWeight: 750, letterSpacing: 2 }}
             >
               {eyebrow}
             </Typography>
-          </Stack>
+          </Box>
         )}
-        <Typography
+        <AnimatedHeading
           variant="h1"
+          text={title}
+          delay={0.12}
           sx={{
             mt: eyebrow ? 2 : 0,
             maxWidth: 820,
             color: 'common.white',
             fontSize: { xs: '2.6rem', sm: '3.15rem', md: '4rem' },
           }}
-        >
-          {title}
-        </Typography>
+        />
         {subtitle && (
           <Typography
+            component={m.p}
+            initial={reduceMotion ? undefined : { opacity: 0, y: rise.sm }}
+            animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+            transition={{ ...transitions.enter, delay: 0.34 }}
             sx={{
               mt: 2.5,
               maxWidth: 680,
@@ -135,4 +156,5 @@ export const PageHero = ({
       }}
     />
   </Box>
-);
+  );
+};

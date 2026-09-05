@@ -2,6 +2,7 @@ import Box from '@mui/material/Box';
 import { useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 
+import { PageTransition } from '../PageTransition';
 import { SchemaOrg } from '../SchemaOrg';
 
 import { AnnouncementBanner } from './AnnouncementBanner';
@@ -28,7 +29,9 @@ export const Layout = (): JSX.Element => {
       <AnnouncementBanner />
       <Header />
       <Box component="main" sx={{ flex: 1 }}>
-        <Outlet />
+        <PageTransition>
+          <Outlet />
+        </PageTransition>
       </Box>
       <NewsletterBanner />
       <Footer />

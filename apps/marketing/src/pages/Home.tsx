@@ -27,6 +27,7 @@ import { Section } from '../components/Section';
 import { SectionReveal } from '../components/SectionReveal';
 import { Seo } from '../components/Seo';
 import { CardGridSkeleton } from '../components/skeletons';
+import { StaggerGrid, StaggerItem } from '../components/StaggerGrid';
 import { Watermark } from '../components/Watermark';
 import { IMAGES } from '../content/images';
 import { useArticles, useImpactStats, usePageCopy, useStories, type PageCopyDefaults } from '../lib/content-hooks';
@@ -1029,15 +1030,17 @@ const Home = (): JSX.Element => {
         textAlign="center"
         bgcolor="background.default"
       >
-        <Grid container spacing={3}>
-          {PILLARS.map((pillar) => (
-            <Grid key={pillar.key} size={{ xs: 12, sm: 6, md: 3 }} sx={{ display: 'flex' }}>
-              <SectionReveal fillHeight>
-                <PillarCard pillar={pillar} />
-              </SectionReveal>
-            </Grid>
-          ))}
-        </Grid>
+        <StaggerGrid>
+          <Grid container spacing={3}>
+            {PILLARS.map((pillar) => (
+              <Grid key={pillar.key} size={{ xs: 12, sm: 6, md: 3 }} sx={{ display: 'flex' }}>
+                <StaggerItem sx={{ display: 'flex', width: '100%' }}>
+                  <PillarCard pillar={pillar} />
+                </StaggerItem>
+              </Grid>
+            ))}
+          </Grid>
+        </StaggerGrid>
       </Section>
       <ParallaxShowcase
         eyebrow="On the ground"
