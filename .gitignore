@@ -44,3 +44,6 @@ tools/.mongo-uri
 .raven/.model-session.json
 .raven/audit/
 .raven/state/
+
+# Temporary live-proxy dev configs (point a local app at the production API)
+apps/*/vite.live.config.ts
