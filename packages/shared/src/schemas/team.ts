@@ -16,7 +16,10 @@ export const teamMemberInputSchema = z.object({
   name: z.string().min(2).max(120).trim(),
   role: z.string().min(2).max(120).trim(),
   tier: tierEnum.default('executive'),
-  bio: z.string().max(600).trim().optional(),
+  // Real biographies run well past 600 characters — several supplied ones are
+  // over 1,700 — and the old cap meant those members could not be saved from
+  // the dashboard at all.
+  bio: z.string().max(5000).trim().optional(),
   photo: mediaAssetSchema.optional(),
   linkedInUrl: optionalUrl,
   xUrl: optionalUrl,
