@@ -52,6 +52,17 @@ const stats: ImpactStat[] = [
     createdAt: now,
     updatedAt: now,
   },
+  {
+    id: '4',
+    key: 'active-partners',
+    label: 'Active partners',
+    value: 18,
+    suffix: '+',
+    order: 4,
+    isActive: true,
+    createdAt: now,
+    updatedAt: now,
+  },
 ];
 
 const paginated = (items: ImpactStat[]): Paginated<ImpactStat> => ({
@@ -94,23 +105,22 @@ describe('HomeImpactSection', () => {
     expect(
       screen.getByRole('region', { name: 'Progress you can see. Change people can feel.' }),
     ).toBeInTheDocument();
-    expect(screen.getAllByRole('article')).toHaveLength(3);
-    expect(screen.getByText('1,200+')).toBeInTheDocument();
+    expect(screen.getAllByRole('article')).toHaveLength(4);
+    expect(screen.getByText('1.2K+')).toBeInTheDocument();
     expect(screen.getByText('Community projects')).toBeInTheDocument();
+    expect(screen.getByText('Active partners')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Explore our full impact' })).toHaveAttribute(
       'href',
       '/impact',
     );
   });
 
-  it('renders placeholder impact metrics when no CMS data is published', () => {
+  it('shows an honest empty state when no CMS data is published', () => {
     mockImpactStats([]);
 
     renderWithProviders(<HomeImpactSection />);
 
-    expect(screen.getByText('West African Countries Active')).toBeInTheDocument();
-    expect(screen.getByText('Youth Reached')).toBeInTheDocument();
-    expect(screen.getByText('Flagship Programs')).toBeInTheDocument();
-    expect(screen.getByText('Women Empowered')).toBeInTheDocument();
+    expect(screen.getByText('Impact updates are on the way.')).toBeInTheDocument();
+    expect(screen.queryByRole('article')).not.toBeInTheDocument();
   });
 });

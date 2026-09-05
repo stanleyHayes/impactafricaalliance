@@ -121,20 +121,19 @@ describe('ImpactNumbersSection', () => {
 
     expect(screen.getByRole('heading', { name: 'By the Numbers' })).toBeInTheDocument();
     expect(screen.getAllByRole('article')).toHaveLength(3);
-    expect(screen.getByText('1,200+')).toBeInTheDocument();
+    expect(screen.getByText('1.2K+')).toBeInTheDocument();
     expect(screen.getByText('Young people trained')).toBeInTheDocument();
     expect(screen.getByText('Community projects')).toBeInTheDocument();
   });
 
-  it('renders fallback impact stats when no CMS metrics exist', () => {
+  it('shows an honest empty state when no CMS metrics exist', () => {
     mockImpactStats([]);
 
     renderWithProviders(<ImpactNumbersSection />);
 
     expect(screen.getByRole('heading', { name: 'By the Numbers' })).toBeInTheDocument();
-    expect(screen.getAllByRole('article')).toHaveLength(5);
-    expect(screen.getByText('Young people trained')).toBeInTheDocument();
-    expect(screen.getByText('African countries reached')).toBeInTheDocument();
+    expect(screen.getByText('Impact updates are on the way.')).toBeInTheDocument();
+    expect(screen.queryByRole('article')).not.toBeInTheDocument();
   });
 });
 

@@ -15,6 +15,6 @@ describe('AnimatedCounter', () => {
 
     renderWithProviders(<AnimatedCounter value={1000} suffix="+" />);
 
-    expect(screen.getByText('1,000+')).toBeInTheDocument();
+    expect(screen.getByText('1K+')).toBeInTheDocument();
   });
 });

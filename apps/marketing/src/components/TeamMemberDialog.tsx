@@ -61,11 +61,23 @@ export const TeamMemberDialog = ({
       slots={{ transition: Grow }}
       transitionDuration={reduceMotion ? 0 : { enter: 360, exit: 180 }}
       fullWidth
-      scroll="body"
+      scroll="paper"
       aria-labelledby="team-member-name"
-      slotProps={{ paper: { sx: { borderRadius: 4, overflow: 'hidden' } } }}
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: 4,
+            overflow: 'hidden',
+            // Fixed frame: bios run to five paragraphs for some members, and
+            // letting the dialog grow with the text pushed it past the viewport.
+            // The text pane scrolls instead.
+            height: { xs: '92vh', sm: 'min(84vh, 660px)' },
+            maxHeight: { xs: '92vh', sm: 'min(84vh, 660px)' },
+          },
+        },
+      }}
     >
-      <Box sx={{ position: 'relative' }}>
+      <Box sx={{ position: 'relative', height: '100%', minHeight: 0 }}>
         <IconButton
           aria-label="Close profile"
           onClick={onClose}
@@ -82,17 +94,31 @@ export const TeamMemberDialog = ({
           <CloseRoundedIcon />
         </IconButton>
 
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={0}>
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={0}
+          sx={{ height: '100%', minHeight: 0 }}
+        >
+          {/*
+            With a photo, it fills the panel edge to edge — a portrait framed as
+            a small card floating on decorative artwork read as a placeholder,
+            not a person. The artwork appears only when there is no photo.
+          */}
           <Box
             sx={{
               position: 'relative',
               flexShrink: 0,
-              width: { xs: '100%', sm: '42%' },
-              minHeight: { xs: 300, sm: 480 },
-              backgroundImage: `url(${IMAGES.teamArtwork})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
+              overflow: 'hidden',
+              width: { xs: '100%', sm: '40%' },
+              height: { xs: 240, sm: '100%' },
               bgcolor: brandColors.deepForest,
+              ...(member.photo?.url
+                ? {}
+                : {
+                    backgroundImage: `url(${IMAGES.teamArtwork})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                  }),
             }}
           >
             {member.photo?.url ? (
@@ -100,19 +126,14 @@ export const TeamMemberDialog = ({
                 component="img"
                 src={member.photo.url}
                 alt={member.name}
-                onError={(event) => {
-                  if (!event.currentTarget.src.endsWith(IMAGES.teamArtwork))
-                    event.currentTarget.src = IMAGES.teamArtwork;
-                }}
                 sx={{
-                  position: 'absolute',
-                  bottom: 24,
-                  left: '10%',
-                  width: '80%',
-                  height: '66%',
+                  width: '100%',
+                  height: '100%',
                   objectFit: 'cover',
-                  borderRadius: 3,
-                  boxShadow: '0 12px 32px #0005',
+                  // Portraits are framed with the face high, so bias the crop
+                  // upward rather than centring it in this taller panel.
+                  objectPosition: 'center 20%',
+                  display: 'block',
                 }}
               />
             ) : (
@@ -140,9 +161,13 @@ export const TeamMemberDialog = ({
             sx={{
               position: 'relative',
               isolation: 'isolate',
-              overflow: 'hidden',
+              // The one scrolling region. `minHeight: 0` is what lets a flex
+              // child actually scroll instead of stretching its parent.
+              overflowY: 'auto',
+              overscrollBehavior: 'contain',
               p: { xs: 3, sm: 4 },
               minWidth: 0,
+              minHeight: 0,
               flex: 1,
             }}
           >

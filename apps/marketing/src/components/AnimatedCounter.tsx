@@ -1,3 +1,4 @@
+import { formatStatValue } from '@iaa/shared';
 import Typography from '@mui/material/Typography';
 import { useEffect, useRef } from 'react';
 import { useInView } from 'react-intersection-observer';
@@ -43,7 +44,7 @@ export const AnimatedCounter = ({
 
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReduced) {
-      node.textContent = `${value.toLocaleString()}${suffix}`;
+      node.textContent = formatStatValue(value, suffix);
       return undefined;
     }
 
@@ -52,7 +53,7 @@ export const AnimatedCounter = ({
       start ??= timestamp;
       const progress = Math.min((timestamp - start) / durationMs, 1);
       const current = Math.round(easeOutQuad(progress) * value);
-      node.textContent = `${current.toLocaleString()}${suffix}`;
+      node.textContent = formatStatValue(current, suffix);
       if (progress < 1) {
         frame.current = requestAnimationFrame(step);
       }
@@ -83,7 +84,7 @@ export const AnimatedCounter = ({
         fontVariantNumeric: 'tabular-nums',
       }}
     >
-      <span ref={nodeRef}>{`0${suffix}`}</span>
+      <span ref={nodeRef}>{formatStatValue(0, suffix)}</span>
     </Typography>
   );
 };
