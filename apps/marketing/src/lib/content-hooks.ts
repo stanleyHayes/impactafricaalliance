@@ -33,6 +33,13 @@ export const useStories = (): UseQueryResult<Paginated<Story>> =>
 export const useTeam = (): UseQueryResult<Paginated<TeamMember>> =>
   useQuery({ queryKey: ['team'], queryFn: () => page<TeamMember>('team', '?pageSize=100') });
 
+export const useTeamMember = (memberId: string): UseQueryResult<TeamMember> =>
+  useQuery({
+    queryKey: ['team', memberId],
+    queryFn: () => apiGet<TeamMember>('/team/' + encodeURIComponent(memberId)),
+    enabled: Boolean(memberId),
+  });
+
 export const usePillarImages = (): UseQueryResult<Paginated<PillarImage>> =>
   useQuery({
     queryKey: ['pillar-images'],
@@ -77,7 +84,18 @@ export const useEvents = (): UseQueryResult<Paginated<Event>> =>
   });
 
 export const useImpactStats = (): UseQueryResult<Paginated<ImpactStat>> =>
-  useQuery({ queryKey: ['stats'], queryFn: () => page<ImpactStat>('stats', '?pageSize=20') });
+  useQuery({
+    queryKey: ['stats'],
+    queryFn: async () => {
+      const first = await page<ImpactStat>('stats', '?pageSize=20');
+      const items = [...first.items];
+      for (let current = 2; current <= first.totalPages; current += 1) {
+        const next = await page<ImpactStat>('stats', `?pageSize=20&page=${current}`);
+        items.push(...next.items);
+      }
+      return { ...first, items };
+    },
+  });
 
 /** Published programme photography, newest programmes first. */
 export const useGallery = (): UseQueryResult<Paginated<GalleryItem>> =>

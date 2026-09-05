@@ -1,4 +1,4 @@
-import { SDG_GOALS, brandColors, brandFonts, type ImpactStat, type Report, type SdgGoal } from '@iaa/shared';
+import { SDG_GOALS, brandColors, brandFonts, type Report, type SdgGoal } from '@iaa/shared';
 import type { SvgIconComponent } from '@mui/icons-material';
 import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
@@ -23,11 +23,11 @@ import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid';
 import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
-import { alpha } from '@mui/material/styles';
+import { alpha, getContrastRatio } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import { Link as RouterLink } from 'react-router-dom';
 
-import { AnimatedCounter } from '../components/AnimatedCounter';
+import { ImpactMetrics } from '../components/ImpactMetrics';
 import { MintSurface } from '../components/MintSurface';
 import { PageCta } from '../components/PageCta';
 import { PageHero } from '../components/PageHero';
@@ -37,8 +37,7 @@ import { SectionReveal } from '../components/SectionReveal';
 import { Seo } from '../components/Seo';
 import { Watermark } from '../components/Watermark';
 import { IMAGES } from '../content/images';
-import { useImpactStats, usePageCopy, useReports } from '../lib/content-hooks';
-import { getStatIcon } from '../lib/stat-icons';
+import { usePageCopy, useReports } from '../lib/content-hooks';
 
 /** Official UN SDG brand colours, used to make the goal grid recognisable. */
 const SDG_COLORS: Record<number, string> = {
@@ -63,65 +62,6 @@ const SDG_ICONS: Record<number, SvgIconComponent> = {
   17: HandshakeRoundedIcon,
 };
 
-/** Default impact stats so the "By the Numbers" section always renders, even before CMS content is added. */
-const FALLBACK_STATS: ImpactStat[] = [
-  {
-    id: 'youth-trained',
-    key: 'youth-trained',
-    label: 'Young people trained',
-    value: 1200,
-    suffix: '+',
-    order: 0,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'countries',
-    key: 'countries',
-    label: 'African countries reached',
-    value: 5,
-    suffix: '+',
-    order: 1,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'programs',
-    key: 'programs',
-    label: 'Flagship programmes',
-    value: 4,
-    suffix: '',
-    order: 2,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'partners',
-    key: 'partners',
-    label: 'Partners & allies',
-    value: 30,
-    suffix: '+',
-    order: 3,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'women',
-    key: 'women',
-    label: 'Women participants',
-    value: 60,
-    suffix: '%',
-    order: 4,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-];
-
 const ASPIRATIONS = [
   { n: '01', text: 'A prosperous Africa, based on inclusive growth and sustainable development.' },
   { n: '02', text: 'An integrated continent, politically united on the ideals of Pan-Africanism.' },
@@ -131,198 +71,7 @@ const ASPIRATIONS = [
   },
 ];
 
-interface ImpactMetricProps {
-  stat: ImpactStat;
-  index: number;
-  featured?: boolean;
-}
-
-const METRIC_STYLES = {
-  featured: {
-    minHeight: { xs: 310, md: 430 },
-    padding: { xs: 3.5, md: 5 },
-    borderColor: alpha(brandColors.gold, 0.42),
-    borderRadius: 5,
-    background:
-      `linear-gradient(145deg, ${alpha(brandColors.gold, 0.2)} 0%, rgba(14,42,34,0.08) 52%, rgba(14,42,34,0.04) 100%)`,
-    decoration: {
-      position: 'absolute',
-      right: -110,
-      bottom: -150,
-      width: 330,
-      height: 330,
-      border: `1px solid ${alpha(brandColors.gold, 0.2)}`,
-      borderRadius: '50%',
-      boxShadow: `0 0 0 38px ${alpha(brandColors.gold, 0.035)}, 0 0 0 76px ${alpha(brandColors.gold, 0.025)}`,
-      content: '""',
-    },
-    hoverBorderColor: alpha(brandColors.gold, 0.7),
-    hoverBackground: undefined,
-    iconBoxSize: 58,
-    iconBorderColor: alpha(brandColors.gold, 0.42),
-    iconBorderRadius: 2.5,
-    iconBackground: alpha(brandColors.gold, 0.12),
-    iconColor: 'secondary.light',
-    iconSize: 29,
-    indexColor: alpha(brandColors.gold, 0.52),
-    indexSize: '1rem',
-    contentMarginTop: 7,
-    counterColor: 'secondary.light',
-    counterSize: 'display',
-    labelMaxWidth: 310,
-    labelMarginTop: 1.5,
-    labelColor: 'common.white',
-    labelSize: { xs: '1rem', md: '1.15rem' },
-    labelWeight: 650,
-  },
-  supporting: {
-    minHeight: 204,
-    padding: { xs: 3, md: 3.5 },
-    borderColor: 'rgba(14,42,34,0.14)',
-    borderRadius: 3,
-    background: 'rgba(14,42,34,0.055)',
-    decoration: undefined,
-    hoverBorderColor: 'rgba(14,42,34,0.3)',
-    hoverBackground: 'rgba(14,42,34,0.085)',
-    iconBoxSize: 46,
-    iconBorderColor: 'rgba(14,42,34,0.15)',
-    iconBorderRadius: 2,
-    iconBackground: 'rgba(14,42,34,0.08)',
-    iconColor: 'common.black',
-    iconSize: 23,
-    indexColor: 'rgba(14,42,34,0.22)',
-    indexSize: '0.75rem',
-    contentMarginTop: 4,
-    counterColor: 'common.black',
-    counterSize: 'standard',
-    labelMaxWidth: 220,
-    labelMarginTop: 1,
-    labelColor: 'rgba(14,42,34,0.76)',
-    labelSize: '0.88rem',
-    labelWeight: 550,
-  },
-} as const;
-
-const ImpactMetric = ({ stat, index, featured = false }: ImpactMetricProps): JSX.Element => {
-  const Icon = getStatIcon(stat.key, stat.label);
-  const styles = METRIC_STYLES[featured ? 'featured' : 'supporting'];
-
-  return (
-    <Box
-      component="article"
-      sx={{
-        position: 'relative',
-        display: 'flex',
-        minHeight: styles.minHeight,
-        height: '100%',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-        overflow: 'hidden',
-        p: styles.padding,
-        border: 1,
-        borderColor: styles.borderColor,
-        borderRadius: styles.borderRadius,
-        background: styles.background,
-        backdropFilter: 'blur(8px)',
-        transition: 'transform 220ms ease, border-color 220ms ease, background-color 220ms ease',
-        '&::after': styles.decoration,
-        '&:hover': {
-          borderColor: styles.hoverBorderColor,
-          bgcolor: styles.hoverBackground,
-          transform: 'translateY(-4px)',
-        },
-      }}
-    >
-      <Stack
-        direction="row"
-        alignItems="center"
-        justifyContent="space-between"
-        sx={{ position: 'relative', zIndex: 1 }}
-      >
-        <Box
-          sx={{
-            display: 'grid',
-            width: styles.iconBoxSize,
-            height: styles.iconBoxSize,
-            flexShrink: 0,
-            placeItems: 'center',
-            border: 1,
-            borderColor: styles.iconBorderColor,
-            borderRadius: styles.iconBorderRadius,
-            bgcolor: styles.iconBackground,
-            color: styles.iconColor,
-          }}
-        >
-          <Icon sx={{ fontSize: styles.iconSize }} aria-hidden />
-        </Box>
-        <Typography
-          aria-hidden="true"
-          sx={{
-            color: styles.indexColor,
-            fontFamily: "'Montserrat', sans-serif",
-            fontSize: styles.indexSize,
-            fontWeight: 700,
-            letterSpacing: 2,
-          }}
-        >
-          {String(index + 1).padStart(2, '0')}
-        </Typography>
-      </Stack>
-
-      <Box sx={{ position: 'relative', zIndex: 1, mt: styles.contentMarginTop }}>
-        <AnimatedCounter
-          value={stat.value}
-          suffix={stat.suffix}
-          color={styles.counterColor}
-          size={styles.counterSize}
-        />
-        <Typography
-          sx={{
-            maxWidth: styles.labelMaxWidth,
-            mt: styles.labelMarginTop,
-            color: styles.labelColor,
-            fontSize: styles.labelSize,
-            fontWeight: styles.labelWeight,
-            lineHeight: 1.45,
-          }}
-        >
-          {stat.label}
-        </Typography>
-      </Box>
-    </Box>
-  );
-};
-
-const ImpactNumbersSkeleton = (): JSX.Element => (
-  <Grid container spacing={3}>
-    <Grid size={{ xs: 12, md: 5 }}>
-      <Skeleton
-        variant="rounded"
-        height={430}
-        sx={{ borderRadius: 5, bgcolor: 'rgba(14,42,34,0.09)' }}
-      />
-    </Grid>
-    <Grid size={{ xs: 12, md: 7 }}>
-      <Grid container spacing={2.5}>
-        {Array.from({ length: 4 }, (_, index) => (
-          <Grid key={index} size={{ xs: 12, sm: 6 }}>
-            <Skeleton
-              variant="rounded"
-              height={204}
-              sx={{ borderRadius: 3, bgcolor: 'rgba(14,42,34,0.09)' }}
-            />
-          </Grid>
-        ))}
-      </Grid>
-    </Grid>
-  </Grid>
-);
-
 export const ImpactNumbersSection = (): JSX.Element => {
-  const { data, isLoading } = useImpactStats();
-  const stats = data?.items?.length ? data.items : FALLBACK_STATS;
-  const [featuredStat, ...supportingStats] = stats;
-
   return (
     <Box
       component="section"
@@ -330,14 +79,14 @@ export const ImpactNumbersSection = (): JSX.Element => {
       sx={{
         position: 'relative',
         overflow: 'hidden',
-        bgcolor: '#E8F5EE',
-        color: brandColors.forestGreen,
+        bgcolor: (theme) =>
+          theme.palette.mode === 'dark' ? theme.palette.background.default : '#E8F5EE',
+        color: 'text.primary',
         py: { xs: 8, md: 12 },
         '&::before': {
           position: 'absolute',
           inset: 0,
-          background:
-            `radial-gradient(circle at 82% 16%, ${alpha(brandColors.gold, 0.12)}, transparent 24%), radial-gradient(circle at 8% 88%, rgba(46,125,79,0.12), transparent 32%)`,
+          background: `radial-gradient(circle at 82% 16%, ${alpha(brandColors.gold, 0.12)}, transparent 24%), radial-gradient(circle at 8% 88%, rgba(46,125,79,0.12), transparent 32%)`,
           content: '""',
         },
         '&::after': {
@@ -361,7 +110,7 @@ export const ImpactNumbersSection = (): JSX.Element => {
               <Box sx={{ width: 36, height: 2, bgcolor: 'secondary.main' }} />
               <Typography
                 variant="overline"
-                sx={{ color: brandColors.forestGreen, fontWeight: 700, letterSpacing: 2 }}
+                sx={{ color: 'text.primary', fontWeight: 700, letterSpacing: 2 }}
               >
                 Measured progress
               </Typography>
@@ -372,7 +121,7 @@ export const ImpactNumbersSection = (): JSX.Element => {
               sx={{
                 mt: 1.5,
                 maxWidth: 760,
-                color: brandColors.forestGreen,
+                color: 'text.primary',
                 fontSize: { xs: '2.25rem', md: '3.5rem' },
                 lineHeight: 1.08,
               }}
@@ -383,7 +132,7 @@ export const ImpactNumbersSection = (): JSX.Element => {
               sx={{
                 maxWidth: 670,
                 mt: 2,
-                color: alpha(brandColors.forestGreen, 0.72),
+                color: 'text.secondary',
                 fontSize: { xs: '1rem', md: '1.08rem' },
               }}
             >
@@ -400,9 +149,9 @@ export const ImpactNumbersSection = (): JSX.Element => {
                 ml: { md: 'auto' },
                 p: 2,
                 border: 1,
-                borderColor: 'rgba(14,42,34,0.12)',
+                borderColor: 'divider',
                 borderRadius: 2.5,
-                bgcolor: 'rgba(14,42,34,0.045)',
+                bgcolor: 'background.paper',
               }}
             >
               <Box
@@ -414,7 +163,7 @@ export const ImpactNumbersSection = (): JSX.Element => {
                   placeItems: 'center',
                   borderRadius: '50%',
                   bgcolor: alpha(brandColors.gold, 0.14),
-                  color: brandColors.forestGreen,
+                  color: 'text.primary',
                 }}
               >
                 <InsightsRoundedIcon fontSize="small" />
@@ -423,7 +172,7 @@ export const ImpactNumbersSection = (): JSX.Element => {
                 <Typography sx={{ fontSize: '0.78rem', fontWeight: 700, letterSpacing: 0.8 }}>
                   IMPACT SNAPSHOT
                 </Typography>
-                <Typography sx={{ mt: 0.25, color: alpha(brandColors.forestGreen, 0.62), fontSize: '0.78rem' }}>
+                <Typography sx={{ mt: 0.25, color: 'text.secondary', fontSize: '0.78rem' }}>
                   Current programme reach
                 </Typography>
               </Box>
@@ -431,38 +180,13 @@ export const ImpactNumbersSection = (): JSX.Element => {
           </Grid>
         </Grid>
 
-        {isLoading ? (
-          <ImpactNumbersSkeleton />
-        ) : (
-          <Grid container spacing={3} sx={{ alignItems: 'stretch' }}>
-            {featuredStat && (
-              <Grid size={{ xs: 12, md: supportingStats.length > 0 ? 5 : 12 }}>
-                <SectionReveal fillHeight>
-                  <ImpactMetric stat={featuredStat} index={0} featured />
-                </SectionReveal>
-              </Grid>
-            )}
-            {supportingStats.length > 0 && (
-              <Grid size={{ xs: 12, md: 7 }}>
-                <Grid container spacing={2.5} sx={{ height: '100%' }}>
-                  {supportingStats.map((stat, index) => (
-                    <Grid key={stat.key} size={{ xs: 12, sm: 6 }} sx={{ display: 'flex' }}>
-                      <SectionReveal delay={index * 0.06} fillHeight>
-                        <ImpactMetric stat={stat} index={index + 1} />
-                      </SectionReveal>
-                    </Grid>
-                  ))}
-                </Grid>
-              </Grid>
-            )}
-          </Grid>
-        )}
+        <ImpactMetrics />
 
         <Stack
           direction={{ xs: 'column', sm: 'row' }}
           alignItems={{ xs: 'flex-start', sm: 'center' }}
           spacing={1.25}
-          sx={{ mt: 4.5, color: alpha(brandColors.forestGreen, 0.62) }}
+          sx={{ mt: 4.5, color: 'text.secondary' }}
         >
           <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: 'secondary.main' }} />
           <Typography variant="caption" sx={{ letterSpacing: 0.2 }}>
@@ -477,7 +201,10 @@ export const ImpactNumbersSection = (): JSX.Element => {
 const SdgGoalCard = ({ goal, index }: { goal: SdgGoal; index: number }): JSX.Element => {
   const color = SDG_COLORS[goal.number] ?? brandColors.forestGreen;
   const Icon = SDG_ICONS[goal.number] ?? PublicRoundedIcon;
-  const foreground = goal.number === 7 ? brandColors.charcoalBlack : brandColors.white;
+  const foreground =
+    getContrastRatio(color, brandColors.white) >= 4.5
+      ? brandColors.white
+      : brandColors.charcoalBlack;
 
   return (
     <Box
@@ -493,6 +220,7 @@ const SdgGoalCard = ({ goal, index }: { goal: SdgGoal; index: number }): JSX.Ele
         borderColor: alpha(color, 0.22),
         borderRadius: 4,
         bgcolor: 'background.paper',
+        color: 'text.primary',
         boxShadow: '0 24px 52px -46px rgba(18,66,42,0.85)',
         transition: 'transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease',
         '&:hover': {
@@ -501,7 +229,6 @@ const SdgGoalCard = ({ goal, index }: { goal: SdgGoal; index: number }): JSX.Ele
           transform: 'translateY(-5px)',
         },
         '&:hover .sdg-symbol': {
-          opacity: 0.28,
           transform: 'rotate(-4deg) scale(1.08)',
         },
       }}
@@ -525,7 +252,8 @@ const SdgGoalCard = ({ goal, index }: { goal: SdgGoal; index: number }): JSX.Ele
             bottom: -18,
             color: foreground,
             fontSize: 118,
-            opacity: 0.16,
+            opacity: 0.08,
+            maskImage: 'linear-gradient(to right, transparent, black)',
             transition: 'opacity 220ms ease, transform 220ms ease',
           }}
         />
@@ -542,7 +270,6 @@ const SdgGoalCard = ({ goal, index }: { goal: SdgGoal; index: number }): JSX.Ele
                 fontSize: '0.68rem',
                 fontWeight: 800,
                 letterSpacing: 1.7,
-                opacity: 0.8,
               }}
             >
               GLOBAL GOAL
@@ -598,7 +325,12 @@ const SdgGoalCard = ({ goal, index }: { goal: SdgGoal; index: number }): JSX.Ele
           <Box sx={{ width: 24, height: 2, borderRadius: 99, bgcolor: color }} />
           <Typography
             variant="overline"
-            sx={{ color, fontSize: '0.65rem', fontWeight: 800, letterSpacing: 1.25 }}
+            sx={{
+              color: 'text.primary',
+              fontSize: '0.65rem',
+              fontWeight: 800,
+              letterSpacing: 1.25,
+            }}
           >
             IAA contribution
           </Typography>
@@ -611,7 +343,7 @@ const SdgGoalCard = ({ goal, index }: { goal: SdgGoal; index: number }): JSX.Ele
         </Typography>
         <Typography
           variant="caption"
-          sx={{ mt: 2.5, color: alpha(color, 0.8), fontWeight: 750, letterSpacing: 0.4 }}
+          sx={{ mt: 2.5, color: 'text.secondary', fontWeight: 750, letterSpacing: 0.4 }}
         >
           {String(index + 1).padStart(2, '0')} / {String(SDG_GOALS.length).padStart(2, '0')}
         </Typography>
@@ -627,8 +359,9 @@ export const SdgSection = (): JSX.Element => (
     sx={{
       position: 'relative',
       overflow: 'hidden',
-      bgcolor: '#EDF3EC',
-      color: 'common.black',
+      bgcolor: (theme) =>
+        theme.palette.mode === 'dark' ? theme.palette.background.default : '#EDF3EC',
+      color: 'text.primary',
       py: { xs: 8, md: 12 },
       '&::before': {
         position: 'absolute',
@@ -663,7 +396,12 @@ export const SdgSection = (): JSX.Element => (
           <Typography
             id="sdg-section-title"
             variant="h2"
-            sx={{ maxWidth: 720, mt: 1.5, fontSize: { xs: '2.1rem', md: '3.2rem' }, color: 'common.black' }}
+            sx={{
+              maxWidth: 720,
+              mt: 1.5,
+              fontSize: { xs: '2.1rem', md: '3.2rem' },
+              color: 'text.primary',
+            }}
           >
             UN Sustainable Development Goals
           </Typography>
@@ -671,8 +409,7 @@ export const SdgSection = (): JSX.Element => (
             sx={{
               maxWidth: 690,
               mt: 2.25,
-              color: 'common.black',
-              opacity: 0.78,
+              color: 'text.secondary',
               fontSize: { xs: '1rem', md: '1.08rem' },
               lineHeight: 1.8,
             }}
@@ -818,7 +555,10 @@ const AgendaSection = (): JSX.Element => (
               >
                 {aspiration.n}
               </Typography>
-              <Typography variant="overline" sx={{ color: 'primary.contrastText', opacity: 0.7, letterSpacing: 1.5 }}>
+              <Typography
+                variant="overline"
+                sx={{ color: 'primary.contrastText', letterSpacing: 1.5 }}
+              >
                 Aspiration
               </Typography>
               <Typography
@@ -909,9 +649,10 @@ const ReportCard = ({ report, index }: { report: Report; index: number }): JSX.E
       overflow: 'hidden',
       p: 3,
       border: 1,
-      borderColor: 'rgba(0,30,20,0.14)',
+      borderColor: 'divider',
       borderRadius: 4,
       bgcolor: 'background.paper',
+      color: 'text.primary',
       boxShadow: '0 24px 52px -46px rgba(18,66,42,0.85)',
       transition: 'transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease',
       '&::after': {
@@ -925,7 +666,7 @@ const ReportCard = ({ report, index }: { report: Report; index: number }): JSX.E
         content: '""',
       },
       '&:hover': {
-        borderColor: 'rgba(0,30,20,0.34)',
+        borderColor: 'text.secondary',
         boxShadow: '0 28px 58px -42px rgba(18,66,42,0.72)',
         transform: 'translateY(-5px)',
       },
@@ -939,8 +680,8 @@ const ReportCard = ({ report, index }: { report: Report; index: number }): JSX.E
           height: 54,
           placeItems: 'center',
           borderRadius: 2.5,
-          bgcolor: 'rgba(197,25,45,0.09)',
-          color: '#C5192D',
+          bgcolor: 'action.hover',
+          color: (theme) => (theme.palette.mode === 'dark' ? '#FF8A97' : '#C5192D'),
         }}
       >
         <PictureAsPdfRoundedIcon sx={{ fontSize: 28 }} />
@@ -948,7 +689,7 @@ const ReportCard = ({ report, index }: { report: Report; index: number }): JSX.E
       <Typography
         aria-hidden
         sx={{
-          color: 'rgba(0,30,20,0.18)',
+          color: 'text.secondary',
           fontSize: '0.72rem',
           fontWeight: 800,
           letterSpacing: 1.5,
@@ -958,7 +699,12 @@ const ReportCard = ({ report, index }: { report: Report; index: number }): JSX.E
       </Typography>
     </Stack>
 
-    <Stack direction="row" alignItems="center" spacing={0.75} sx={{ mt: 3, color: 'text.secondary' }}>
+    <Stack
+      direction="row"
+      alignItems="center"
+      spacing={0.75}
+      sx={{ mt: 3, color: 'text.secondary' }}
+    >
       <CalendarMonthRoundedIcon sx={{ fontSize: 17 }} />
       <Typography variant="caption" sx={{ fontWeight: 750, letterSpacing: 0.5 }}>
         {report.year} REPORT
@@ -980,7 +726,16 @@ const ReportCard = ({ report, index }: { report: Report; index: number }): JSX.E
       rel="noopener noreferrer"
       variant="outlined"
       startIcon={<DownloadRoundedIcon />}
-      sx={{ position: 'relative', zIndex: 1, mt: 3, alignSelf: 'flex-start', fontWeight: 700 }}
+      sx={{
+        position: 'relative',
+        zIndex: 1,
+        mt: 3,
+        alignSelf: 'flex-start',
+        fontWeight: 700,
+        color: 'text.primary',
+        borderColor: 'text.secondary',
+        '&:hover': { color: 'text.primary', borderColor: 'text.primary', bgcolor: 'action.hover' },
+      }}
     >
       Download report
     </Button>
@@ -992,9 +747,9 @@ const ReportsEmptyState = (): JSX.Element => (
     sx={{
       overflow: 'hidden',
       border: 1,
-      borderColor: 'rgba(14,42,34,0.12)',
+      borderColor: 'divider',
       borderRadius: 4,
-      bgcolor: brandColors.white,
+      bgcolor: 'background.paper',
       boxShadow: '0 30px 70px -58px rgba(18,66,42,0.85)',
     }}
   >
@@ -1046,7 +801,7 @@ const ReportsEmptyState = (): JSX.Element => (
           </Box>
           <Typography
             sx={{
-              color: 'rgba(255,255,255,0.55)',
+              color: 'rgba(255,255,255,0.78)',
               fontSize: '0.7rem',
               fontWeight: 750,
               letterSpacing: 1.5,
@@ -1078,20 +833,20 @@ const ReportsEmptyState = (): JSX.Element => (
           flexDirection: 'column',
           justifyContent: 'center',
           p: { xs: 3.5, md: 5.5 },
-          color: brandColors.charcoalBlack,
+          color: 'text.primary',
         }}
       >
         <Typography variant="h5" sx={{ color: 'inherit' }}>
           Reports coming soon
         </Typography>
-        <Typography sx={{ maxWidth: 610, mt: 1.5, color: brandColors.slate, lineHeight: 1.8 }}>
+        <Typography sx={{ maxWidth: 610, mt: 1.5, color: 'text.secondary', lineHeight: 1.8 }}>
           We are building an evidence base that documents what we promised, what we delivered, what
           changed, and what we learned along the way.
         </Typography>
 
         <Typography
           variant="overline"
-          sx={{ mt: 4, color: brandColors.charcoalBlack, fontWeight: 750, letterSpacing: 1.4 }}
+          sx={{ mt: 4, color: 'text.primary', fontWeight: 750, letterSpacing: 1.4 }}
         >
           What each report will cover
         </Typography>
@@ -1106,13 +861,13 @@ const ReportsEmptyState = (): JSX.Element => (
                   flexShrink: 0,
                   placeItems: 'center',
                   borderRadius: '50%',
-                  bgcolor: alpha(brandColors.forestGreen, 0.08),
-                  color: brandColors.forestGreen,
+                  bgcolor: 'action.hover',
+                  color: 'text.primary',
                 }}
               >
                 <CheckCircleRoundedIcon sx={{ fontSize: 17 }} />
               </Box>
-              <Typography variant="body2" sx={{ fontWeight: 650, color: brandColors.charcoalBlack }}>
+              <Typography variant="body2" sx={{ fontWeight: 650, color: 'text.primary' }}>
                 {promise}
               </Typography>
             </Stack>
@@ -1151,7 +906,13 @@ export const ReportsSection = (): JSX.Element => {
     <Box
       component="section"
       aria-labelledby="reports-section-title"
-      sx={{ position: 'relative', overflow: 'hidden', bgcolor: '#F7F7F2', color: 'common.black', py: { xs: 8, md: 12 } }}
+      sx={{
+        position: 'relative',
+        overflow: 'hidden',
+        bgcolor: 'background.default',
+        color: 'text.primary',
+        py: { xs: 8, md: 12 },
+      }}
     >
       <Watermark
         variant="contours"
@@ -1182,14 +943,14 @@ export const ReportsSection = (): JSX.Element => {
             <Typography
               id="reports-section-title"
               variant="h2"
-              sx={{ mt: 1.5, fontSize: { xs: '2.1rem', md: '3.2rem' }, color: 'common.black' }}
+              sx={{ mt: 1.5, fontSize: { xs: '2.1rem', md: '3.2rem' }, color: 'text.primary' }}
             >
               Reports &amp; Resources
             </Typography>
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
             <Typography
-              sx={{ maxWidth: 440, ml: { md: 'auto' }, color: 'common.black', opacity: 0.78, lineHeight: 1.75 }}
+              sx={{ maxWidth: 440, ml: { md: 'auto' }, color: 'text.secondary', lineHeight: 1.75 }}
             >
               Clear evidence, honest learning, and accessible records of how the Alliance turns
               commitments into results.
@@ -1205,7 +966,8 @@ export const ReportsSection = (): JSX.Element => {
 const Impact = (): JSX.Element => {
   const copy = usePageCopy('impact', {
     seoTitle: 'Our Impact — Transforming Lives Across West Africa',
-    seoDescription: "How Impact Africa Alliance contributes to the UN Sustainable Development Goals and the African Union's Agenda 2063.",
+    seoDescription:
+      "How Impact Africa Alliance contributes to the UN Sustainable Development Goals and the African Union's Agenda 2063.",
     heroEyebrow: 'Our Reach',
     heroTitle: 'Our Impact',
     heroSubtitle: 'Numbers tell part of the story. People tell the rest.',
@@ -1219,14 +981,14 @@ const Impact = (): JSX.Element => {
         subtitle={copy.heroSubtitle}
         image={copy.heroImageUrl ?? IMAGES.programs['women-empowerment']}
       />
-    <ImpactNumbersSection />
-    <ProgrammeGallery />
-    <SdgSection />
-    <AgendaSection />
-    <VoicesBand />
-    <ReportsSection />
-    <PageCta copy={copy} />
-  </>
+      <ImpactNumbersSection />
+      <ProgrammeGallery />
+      <SdgSection />
+      <AgendaSection />
+      <VoicesBand />
+      <ReportsSection />
+      <PageCta copy={copy} />
+    </>
   );
 };
 

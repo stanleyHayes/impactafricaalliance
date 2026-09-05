@@ -16,6 +16,28 @@ import { useSubscribe } from '../../lib/mutations';
 import { ConsentCheckbox } from '../ConsentCheckbox';
 import { SocialLinks } from '../SocialLinks';
 
+// This panel stays dark in both page themes, so its fields use a matching green surface.
+const newsletterFieldSx = {
+  '& .MuiOutlinedInput-root': {
+    bgcolor: '#284239',
+    color: '#F2F0EA',
+    '&:not(.Mui-focused):not(.Mui-error) .MuiOutlinedInput-notchedOutline': {
+      borderColor: 'rgba(242,240,234,0.24)',
+    },
+    '&:hover:not(.Mui-focused):not(.Mui-error) .MuiOutlinedInput-notchedOutline': {
+      borderColor: 'rgba(242,240,234,0.42)',
+    },
+  },
+  '& input::placeholder': { color: '#BAC8C1', opacity: 1 },
+  '& input:-webkit-autofill': {
+    WebkitBoxShadow: '0 0 0 100px #284239 inset',
+    WebkitTextFillColor: '#F2F0EA',
+    caretColor: '#F2F0EA',
+    borderRadius: 'inherit',
+  },
+  '& .MuiFormHelperText-root': { mx: 0 },
+};
+
 /** Faint "alliance" constellation — connected nodes echoing the network-of-people brand idea. */
 const NODES: ReadonlyArray<{ x: number; y: number; gold?: boolean }> = [
   { x: 40, y: 64 },
@@ -193,11 +215,7 @@ export const NewsletterBanner = (): JSX.Element => {
                       autoComplete="name"
                       error={Boolean(errors.name)}
                       helperText={errors.name?.message}
-                      sx={{
-                        bgcolor: 'background.default',
-                        borderRadius: 1,
-                        '& .MuiFormHelperText-root': { bgcolor: 'transparent', mx: 0 },
-                      }}
+                      sx={newsletterFieldSx}
                       {...register('name')}
                     />
                     <TextField
@@ -207,11 +225,7 @@ export const NewsletterBanner = (): JSX.Element => {
                       autoComplete="email"
                       error={Boolean(errors.email)}
                       helperText={errors.email?.message}
-                      sx={{
-                        bgcolor: 'background.default',
-                        borderRadius: 1,
-                        '& .MuiFormHelperText-root': { bgcolor: 'transparent', mx: 0 },
-                      }}
+                      sx={newsletterFieldSx}
                       {...register('email')}
                     />
                     <ConsentCheckbox

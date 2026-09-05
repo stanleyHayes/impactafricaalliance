@@ -25,7 +25,7 @@ export const FormStepNavigation = ({
     <Typography variant="body2" sx={{ mb: 1.5, color: 'text.secondary' }} aria-live="polite">
       Step {activeStep + 1} of {steps.length} · {steps[activeStep]}
     </Typography>
-    <Box sx={{ overflowX: 'auto', py: 1, px: 0.5 }}>
+    <Box sx={{ overflowX: 'auto', overflowY: 'hidden', py: 1, px: 0.5 }}>
       <Stepper
         nonLinear
         activeStep={activeStep}
@@ -38,6 +38,18 @@ export const FormStepNavigation = ({
               onClick={() => onStepChange(index)}
               disabled={disabled || index > maxStep}
               aria-current={index === activeStep ? 'step' : undefined}
+              sx={{
+                // Contain MUI's expanded hit area within the horizontal scroll track.
+                m: 0,
+                p: 0,
+                boxSizing: 'border-box',
+                borderRadius: 1,
+                '&.Mui-focusVisible': {
+                  outline: '2px solid',
+                  outlineColor: 'primary.main',
+                  outlineOffset: 3,
+                },
+              }}
             >
               {label}
             </StepButton>

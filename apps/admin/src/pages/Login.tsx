@@ -31,6 +31,7 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 
 import { useAuth } from '../auth/AuthContext';
+import { AllianceArtwork } from '../components/auth/AllianceArtwork';
 import { ThemeToggle } from '../components/layout/ThemeToggle';
 import { useForgotPassword } from '../lib/admin-hooks';
 
@@ -40,127 +41,82 @@ interface LocationState {
 
 const fadeUp = keyframes`from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; }`;
 
-const IMPACT_CHIPS = ['5+ countries', '1,000+ youth', '4 flagship programs'];
-
-export const BrandPanel = (): JSX.Element => {
-  const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
-  return (
+export const BrandPanel = (): JSX.Element => (
   <Box
     sx={{
-      display: { xs: 'none', md: 'flex' },
       position: 'relative',
       overflow: 'hidden',
+      display: 'flex',
       flexDirection: 'column',
       justifyContent: 'space-between',
-      p: { md: 6, lg: 8 },
-      color: brandColors.white,
-      bgcolor: isDark ? brandColors.deepForest : brandColors.forestGreen,
-      '&::before': {
-        content: '""',
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: 3,
-        background: `linear-gradient(90deg, ${brandColors.gold}, transparent 72%)`,
-      },
+      gap: 3,
+      p: { xs: 3, md: 4, lg: 5 },
+      bgcolor: '#183E33',
+      color: '#F3F1E8',
+      borderRadius: { xs: 3, md: 4 },
     }}
   >
-    <Box
-      aria-hidden
-      sx={{
-        position: 'absolute',
-        left: { md: -60, lg: -20 },
-        bottom: { md: -60, lg: -20 },
-        width: { md: 360, lg: 440 },
-        height: { md: 360, lg: 440 },
-        background: `url(/patterns/africa-rings.svg) no-repeat center / contain`,
-        opacity: 0.12,
-        pointerEvents: 'none',
-      }}
-    />
-
     <Box
       component="img"
       src="/brand/logo-white.png"
       alt={ORG.name}
-      sx={{ height: 40, width: 'auto', alignSelf: 'flex-start', position: 'relative', animation: `${fadeUp} 0.7s ease both` }}
+      sx={{ height: 42, width: 'auto', alignSelf: 'flex-start' }}
     />
-
-    <Box sx={{ position: 'relative', maxWidth: 460 }}>
-      <Typography
-        sx={{
-          fontFamily: brandFonts.body,
-          fontStyle: 'italic',
-          fontSize: { md: '1.25rem', lg: '1.4rem' },
-          color: 'rgba(255,255,255,0.72)',
-          mb: 2,
-          animation: `${fadeUp} 0.7s ease 0.1s both`,
-        }}
-      >
-        Empowering Africa, together.
+    <Box sx={{ maxWidth: 520, mx: 'auto', width: '100%' }}>
+      <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+        <AllianceArtwork />
+      </Box>
+      <Typography variant="overline" sx={{ color: '#B4CABD', letterSpacing: 2 }}>
+        People. Ideas. Possibility.
       </Typography>
       <Typography
         variant="h2"
         sx={{
-          fontWeight: 700,
-          fontSize: { md: '2.6rem', lg: '3.1rem' },
+          mt: 1,
+          fontFamily: brandFonts.heading,
+          color: '#F3F1E8',
+          fontSize: { xs: '2rem', md: '2.8rem', lg: '3.3rem' },
           lineHeight: 1.08,
-          color: brandColors.white,
-          animation: `${fadeUp} 0.7s ease 0.2s both`,
         }}
       >
-        Welcome back to
+        Good work starts
         <br />
-        the work.
+        with you.
       </Typography>
       <Typography
         sx={{
-          mt: 3,
-          color: 'rgba(255,255,255,0.72)',
-          fontSize: '1.05rem',
-          lineHeight: 1.7,
-          animation: `${fadeUp} 0.7s ease 0.3s both`,
+          mt: 2,
+          maxWidth: 410,
+          color: '#B4CABD',
+          lineHeight: 1.75,
+          display: { xs: 'none', sm: 'block' },
         }}
       >
-        Sign in to steward the stories, programs, and people powering Impact Africa Alliance.
+        Behind every programme is someone making it happen. This is your space to keep the Alliance
+        moving.
       </Typography>
-      <Stack direction="row" spacing={1.25} sx={{ mt: 4, flexWrap: 'wrap', gap: 1.25, animation: `${fadeUp} 0.7s ease 0.4s both` }}>
-        {IMPACT_CHIPS.map((chip) => (
-          <Box
-            key={chip}
-            sx={{
-              px: 1.75,
-              py: 0.75,
-              borderRadius: 999,
-              fontSize: '0.8rem',
-              fontWeight: 600,
-              color: brandColors.forestGreen,
-              border: `1px solid ${brandColors.borderSubtle}`,
-              bgcolor: brandColors.white,
-            }}
-          >
-            {chip}
-          </Box>
-        ))}
-      </Stack>
     </Box>
-
-    <Typography
-      variant="body2"
-      sx={{ position: 'relative', color: 'rgba(255,255,255,0.62)', animation: `${fadeUp} 0.7s ease 0.5s both` }}
+    <Stack
+      direction="row"
+      spacing={2}
+      sx={{
+        pt: 2,
+        borderTop: '1px solid #3B5A4D',
+        color: '#B4CABD',
+        display: { xs: 'none', md: 'flex' },
+        fontSize: '.75rem',
+      }}
     >
-      Aligned with AU Agenda 2063 &amp; the UN Sustainable Development Goals.
-    </Typography>
+      <Typography variant="caption">Rooted in community.</Typography>
+      <Typography variant="caption">Connected by purpose.</Typography>
+    </Stack>
   </Box>
 );
-};
 
 export const fieldSx = (theme: Theme) => ({
   '& .MuiOutlinedInput-root': {
     borderRadius: 2.5,
-    backgroundColor: theme.palette.background.paper,
+    backgroundColor: alpha(theme.palette.text.secondary, 0.045),
     transition: 'box-shadow .2s, border-color .2s',
     '& fieldset': { borderColor: theme.palette.divider },
     '&:hover fieldset': { borderColor: theme.palette.primary.main },
@@ -188,7 +144,12 @@ interface CredentialsFormProps {
   isSubmitting: boolean;
 }
 
-const CredentialsForm = ({ onSubmit, onForgotPassword, error, isSubmitting }: CredentialsFormProps): JSX.Element => {
+const CredentialsForm = ({
+  onSubmit,
+  onForgotPassword,
+  error,
+  isSubmitting,
+}: CredentialsFormProps): JSX.Element => {
   const theme = useTheme();
   const [showPassword, setShowPassword] = useState(false);
   const {
@@ -214,12 +175,17 @@ const CredentialsForm = ({ onSubmit, onForgotPassword, error, isSubmitting }: Cr
           input: {
             startAdornment: (
               <InputAdornment position="start">
-                <MailOutlineRoundedIcon sx={{ color: theme.palette.text.secondary, fontSize: 20 }} />
+                <MailOutlineRoundedIcon
+                  sx={{ color: theme.palette.text.secondary, fontSize: 20 }}
+                />
               </InputAdornment>
             ),
           },
           inputLabel: {
-            sx: { color: theme.palette.text.secondary, '&.Mui-focused': { color: theme.palette.text.primary } },
+            sx: {
+              color: theme.palette.text.secondary,
+              '&.Mui-focused': { color: theme.palette.text.primary },
+            },
           },
         }}
         inputRef={emailRef}
@@ -260,14 +226,21 @@ const CredentialsForm = ({ onSubmit, onForgotPassword, error, isSubmitting }: Cr
             ),
           },
           inputLabel: {
-            sx: { color: theme.palette.text.secondary, '&.Mui-focused': { color: theme.palette.text.primary } },
+            sx: {
+              color: theme.palette.text.secondary,
+              '&.Mui-focused': { color: theme.palette.text.primary },
+            },
           },
         }}
         inputRef={passwordRef}
         {...passwordRest}
       />
 
-      {error && <Alert severity="error" sx={{ borderRadius: 2 }}>{error}</Alert>}
+      {error && (
+        <Alert severity="error" sx={{ borderRadius: 2 }}>
+          {error}
+        </Alert>
+      )}
 
       <Button
         type="submit"
@@ -344,7 +317,11 @@ const MfaForm = ({ onSubmit, onBack, error, isSubmitting }: MfaFormProps): JSX.E
         {...register('totpCode')}
       />
 
-      {error && <Alert severity="error" sx={{ borderRadius: 2 }}>{error}</Alert>}
+      {error && (
+        <Alert severity="error" sx={{ borderRadius: 2 }}>
+          {error}
+        </Alert>
+      )}
 
       <Button
         type="submit"
@@ -407,7 +384,12 @@ const ForgotPasswordForm = ({ onBack }: ForgotPasswordFormProps): JSX.Element =>
         <Alert severity="success" sx={{ borderRadius: 2 }}>
           If an account exists for that email, you will receive a password-reset link shortly.
         </Alert>
-        <Button variant="text" size="small" onClick={onBack} sx={{ color: theme.palette.text.secondary }}>
+        <Button
+          variant="text"
+          size="small"
+          onClick={onBack}
+          sx={{ color: theme.palette.text.secondary }}
+        >
           Back to sign in
         </Button>
       </Stack>
@@ -429,12 +411,17 @@ const ForgotPasswordForm = ({ onBack }: ForgotPasswordFormProps): JSX.Element =>
           input: {
             startAdornment: (
               <InputAdornment position="start">
-                <MailOutlineRoundedIcon sx={{ color: theme.palette.text.secondary, fontSize: 20 }} />
+                <MailOutlineRoundedIcon
+                  sx={{ color: theme.palette.text.secondary, fontSize: 20 }}
+                />
               </InputAdornment>
             ),
           },
           inputLabel: {
-            sx: { color: theme.palette.text.secondary, '&.Mui-focused': { color: theme.palette.text.primary } },
+            sx: {
+              color: theme.palette.text.secondary,
+              '&.Mui-focused': { color: theme.palette.text.primary },
+            },
           },
         }}
         {...register('email')}
@@ -452,7 +439,11 @@ const ForgotPasswordForm = ({ onBack }: ForgotPasswordFormProps): JSX.Element =>
         size="large"
         disabled={forgot.isPending}
         endIcon={
-          forgot.isPending ? <CircularProgress size={20} color="inherit" /> : <ArrowForwardRoundedIcon />
+          forgot.isPending ? (
+            <CircularProgress size={20} color="inherit" />
+          ) : (
+            <ArrowForwardRoundedIcon />
+          )
         }
         sx={{
           mt: 0.5,
@@ -463,7 +454,12 @@ const ForgotPasswordForm = ({ onBack }: ForgotPasswordFormProps): JSX.Element =>
       >
         {forgot.isPending ? 'Sending…' : 'Send reset link'}
       </Button>
-      <Button variant="text" size="small" onClick={onBack} sx={{ color: theme.palette.text.secondary }}>
+      <Button
+        variant="text"
+        size="small"
+        onClick={onBack}
+        sx={{ color: theme.palette.text.secondary }}
+      >
         Back to sign in
       </Button>
     </Stack>
@@ -527,7 +523,14 @@ const Login = (): JSX.Element => {
   const renderForm = (): JSX.Element => {
     switch (step) {
       case 'mfa':
-        return <MfaForm onSubmit={handleMfa} onBack={handleBack} error={error} isSubmitting={isSubmitting} />;
+        return (
+          <MfaForm
+            onSubmit={handleMfa}
+            onBack={handleBack}
+            error={error}
+            isSubmitting={isSubmitting}
+          />
+        );
       case 'forgot':
         return <ForgotPasswordForm onBack={handleBack} />;
       default:
@@ -543,18 +546,30 @@ const Login = (): JSX.Element => {
   };
 
   const titleMap: Record<typeof step, string> = {
-    credentials: 'Sign in',
+    credentials: 'Welcome back.',
     mfa: 'Two-factor authentication',
     forgot: 'Reset your password',
   };
   const subtitleMap: Record<typeof step, string> = {
-    credentials: 'Manage Impact Africa Alliance content and activity.',
+    credentials: 'Sign in to manage your people, programmes, and stories.',
     mfa: 'Enter the 6-digit code from your authenticator app, or a recovery code.',
     forgot: 'Enter your email and we will send you a secure reset link.',
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1.08fr 0.92fr' }, bgcolor: theme.palette.background.default }}>
+    <Box
+      sx={{
+        minHeight: '100dvh',
+        display: 'grid',
+        gap: { xs: 0, md: 3 },
+        gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+        p: { xs: 1.5, md: 3 },
+        bgcolor: 'background.default',
+        '@media (prefers-reduced-motion: reduce)': {
+          '& *': { animation: 'none !important', transition: 'none !important' },
+        },
+      }}
+    >
       <BrandPanel />
 
       <Box
@@ -563,36 +578,46 @@ const Login = (): JSX.Element => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          p: { xs: 3, sm: 5 },
+          p: { xs: 2, sm: 4, lg: 6 },
+          minWidth: 0,
         }}
       >
-        <Box sx={{ position: 'absolute', top: { xs: 16, sm: 24 }, right: { xs: 16, sm: 24 }, zIndex: 1 }}>
+        <Box
+          sx={{
+            position: { xs: 'fixed', md: 'absolute' },
+            top: { xs: 16, md: 12 },
+            right: { xs: 16, md: 12 },
+            zIndex: 1,
+          }}
+        >
           <ThemeToggle />
         </Box>
 
         <Box
           sx={{
             width: '100%',
-            maxWidth: 430,
-            p: { xs: 3.5, sm: 5 },
-            border: `1px solid ${theme.palette.divider}`,
-            borderRadius: 4,
-            bgcolor: theme.palette.background.paper,
-            boxShadow: '0 32px 80px -40px rgba(0,0,0,0.10)',
+            maxWidth: 440,
+            py: { xs: 3, md: 5 },
+
             animation: `${fadeUp} 0.6s ease 0.15s both`,
           }}
         >
-          <Box
-            component="img"
-            src="/brand/logo-primary.png"
-            alt={ORG.name}
-            sx={{ height: 40, mb: 4, display: { xs: 'block', md: 'none' } }}
-          />
-
-          <Typography variant="overline" sx={{ color: theme.palette.primary.main, fontWeight: 700, letterSpacing: 2 }}>
+          <Typography
+            variant="overline"
+            sx={{ color: theme.palette.text.secondary, fontWeight: 700, letterSpacing: 2 }}
+          >
             Admin Console
           </Typography>
-          <Typography variant="h4" sx={{ fontWeight: 700, mt: 0.5, color: theme.palette.text.primary }}>
+          <Typography
+            variant="h3"
+            component="h1"
+            sx={{
+              fontWeight: 700,
+              mt: 1,
+              fontSize: { xs: '2.1rem', md: '2.8rem' },
+              color: theme.palette.text.primary,
+            }}
+          >
             {titleMap[step]}
           </Typography>
           <Typography sx={{ mt: 1, mb: 4, color: theme.palette.text.secondary }}>
@@ -602,8 +627,17 @@ const Login = (): JSX.Element => {
           {renderForm()}
 
           <Typography variant="body2" sx={{ mt: 4, color: theme.palette.text.secondary }}>
-            Trouble signing in? Contact an administrator at{' '}
-            <Box component="a" href={`mailto:${ORG.email}`} sx={{ color: theme.palette.primary.main, fontWeight: 600 }}>
+            Need a hand?{' '}
+            <Box
+              component="a"
+              href={`mailto:${ORG.email}`}
+              sx={{
+                color: theme.palette.text.secondary,
+                fontWeight: 600,
+                overflowWrap: 'anywhere',
+                textUnderlineOffset: 3,
+              }}
+            >
               {ORG.email}
             </Box>
             .

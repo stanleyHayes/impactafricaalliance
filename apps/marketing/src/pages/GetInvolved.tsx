@@ -1,4 +1,4 @@
-import { ORG, brandColors, brandFonts, type Job } from '@iaa/shared';
+import { brandColors, brandFonts, type Job } from '@iaa/shared';
 import type { SvgIconComponent } from '@mui/icons-material';
 import BusinessCenterRoundedIcon from '@mui/icons-material/BusinessCenterRounded';
 import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
@@ -10,7 +10,6 @@ import ButtonBase from '@mui/material/ButtonBase';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Chip from '@mui/material/Chip';
-import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import { alpha } from '@mui/material/styles';
@@ -18,7 +17,7 @@ import Typography from '@mui/material/Typography';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 
-import { MintSurface } from '../components/MintSurface';
+import { CareersEmptyState } from '../components/CareersEmptyState';
 import { PageCta } from '../components/PageCta';
 import { PageHero } from '../components/PageHero';
 import { ParallaxShowcase } from '../components/ParallaxShowcase';
@@ -183,10 +182,11 @@ const JobRow = ({ job }: { job: Job }): JSX.Element => (
   <Card
     variant="outlined"
     sx={{
-      borderColor: 'rgba(0,30,20,0.14)',
+      borderColor: 'divider',
+      bgcolor: (theme) => alpha(theme.palette.text.secondary, 0.045),
       transition: 'transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease',
       '&:hover': {
-        borderColor: 'rgba(0,30,20,0.34)',
+        borderColor: 'text.secondary',
         boxShadow: '0 18px 38px -30px rgba(18,66,42,0.7)',
         transform: 'translateY(-2px)',
       },
@@ -225,21 +225,7 @@ const CareersTab = (): JSX.Element => {
     return <CardGridSkeleton count={3} columns={1} />;
   }
   if (jobs.length === 0) {
-    return (
-      <Typography color="text.secondary">
-        No open positions at this time. We are always keen to connect with talented individuals —
-        send your CV and a brief motivation letter to{' '}
-        <Link
-          href={`mailto:${ORG.careersEmail}`}
-          color="secondary.main"
-          underline="hover"
-          sx={{ fontWeight: 600 }}
-        >
-          {ORG.careersEmail}
-        </Link>{' '}
-        and we will be in touch when a suitable opportunity arises.
-      </Typography>
-    );
+    return <CareersEmptyState />;
   }
   return (
     <Stack spacing={2}>
@@ -263,7 +249,8 @@ const GetInvolved = (): JSX.Element => {
 
   const copy = usePageCopy('get-involved', {
     seoTitle: 'Get Involved — Partner, Volunteer, or Donate',
-    seoDescription: "There are many ways to be part of Africa's transformation. Partner with us, volunteer, donate, or join our team.",
+    seoDescription:
+      "There are many ways to be part of Africa's transformation. Partner with us, volunteer, donate, or join our team.",
     heroEyebrow: 'Take Action',
     heroTitle: 'Get Involved',
     heroSubtitle: "There are many ways to be part of Africa's transformation. Find yours.",
@@ -310,7 +297,7 @@ const GetInvolved = (): JSX.Element => {
           sx={{
             overflow: 'hidden',
             border: 1,
-            borderColor: 'rgba(0,30,20,0.12)',
+            borderColor: 'divider',
             borderRadius: 4,
             bgcolor: 'background.paper',
             boxShadow: '0 28px 70px -58px rgba(18,66,42,0.85)',
@@ -329,12 +316,16 @@ const GetInvolved = (): JSX.Element => {
             }))}
           />
 
-          <MintSurface
+          <Box
             sx={{
               position: 'relative',
               overflow: 'hidden',
               px: { xs: 3, sm: 4, md: 5 },
-              py: { xs: 4, md: 5 },
+              py: { xs: 3, md: 3.5 },
+              bgcolor: 'background.default',
+              color: 'text.primary',
+              borderBottom: 1,
+              borderColor: 'divider',
               '&::after': {
                 position: 'absolute',
                 right: -90,
@@ -365,8 +356,8 @@ const GetInvolved = (): JSX.Element => {
                       flexShrink: 0,
                       placeItems: 'center',
                       borderRadius: 2.5,
-                      bgcolor: 'secondary.main',
-                      color: 'secondary.contrastText',
+                      bgcolor: 'action.hover',
+                      color: 'text.secondary',
                     }}
                   >
                     <Icon sx={{ fontSize: 30 }} />
@@ -374,7 +365,7 @@ const GetInvolved = (): JSX.Element => {
                   <Box>
                     <Typography
                       variant="overline"
-                      sx={{ color: 'rgba(14,42,34,0.58)', fontWeight: 750, letterSpacing: 1.6 }}
+                      sx={{ color: 'text.secondary', fontWeight: 750, letterSpacing: 1.6 }}
                     >
                       {details.eyebrow}
                     </Typography>
@@ -391,7 +382,7 @@ const GetInvolved = (): JSX.Element => {
                       sx={{
                         maxWidth: 800,
                         mt: 1.25,
-                        color: 'rgba(14,42,34,0.72)',
+                        color: 'text.secondary',
                         lineHeight: 1.7,
                       }}
                     >
@@ -401,9 +392,17 @@ const GetInvolved = (): JSX.Element => {
                 </Stack>
               );
             })()}
-          </MintSurface>
+          </Box>
 
-          <Box sx={{ p: { xs: 3, sm: 4, md: 5 } }}>
+          <Box
+            sx={{
+              p: { xs: 2, sm: 3, md: 4 },
+              bgcolor: 'background.default',
+              '& .MuiOutlinedInput-root': {
+                bgcolor: (theme) => alpha(theme.palette.text.secondary, 0.035),
+              },
+            }}
+          >
             <Box hidden={tab !== 'partner'}>{tab === 'partner' && <PartnerForm />}</Box>
             <Box hidden={tab !== 'volunteer'}>{tab === 'volunteer' && <VolunteerForm />}</Box>
             <Box hidden={tab !== 'donate'}>{tab === 'donate' && <DonateForm />}</Box>

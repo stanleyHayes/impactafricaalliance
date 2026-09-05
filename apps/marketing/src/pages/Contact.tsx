@@ -7,12 +7,10 @@ import HandshakeRoundedIcon from '@mui/icons-material/HandshakeRounded';
 import LanguageRoundedIcon from '@mui/icons-material/LanguageRounded';
 import MarkEmailReadRoundedIcon from '@mui/icons-material/MarkEmailReadRounded';
 import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded';
-import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
 import PublicRoundedIcon from '@mui/icons-material/PublicRounded';
 import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import Box from '@mui/material/Box';
-import Chip from '@mui/material/Chip';
 import Container from '@mui/material/Container';
 import Divider from '@mui/material/Divider';
 import Grid from '@mui/material/Grid';
@@ -23,11 +21,11 @@ import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
+import { ContactOfficeDirectory, officeDirectoryTones } from '../components/ContactOfficeDirectory';
 import { MintSurface } from '../components/MintSurface';
 import { PageCta } from '../components/PageCta';
 import { Seo } from '../components/Seo';
 import { SocialLinks } from '../components/SocialLinks';
-import { Watermark } from '../components/Watermark';
 import { IMAGES } from '../content/images';
 import { ContactForm } from '../features/forms/ContactForm';
 import {
@@ -303,6 +301,7 @@ const ContactLocations = (): JSX.Element => {
         id: office.id,
         label: office.label,
         country: office.country,
+        city: office.city,
         address: formatOfficeAddress(office),
         phone: office.phone,
         mapUrl: office.mapUrl,
@@ -312,6 +311,7 @@ const ContactLocations = (): JSX.Element => {
           id: 'head-office',
           label: 'Head office',
           country: site?.country ?? 'Ghana',
+          city: site?.city,
           address: headOffice,
           phone: undefined,
           mapUrl: site?.mapUrl,
@@ -322,168 +322,39 @@ const ContactLocations = (): JSX.Element => {
     <Box
       component="section"
       aria-labelledby="contact-locations-title"
-      sx={{
-        position: 'relative',
-        overflow: 'hidden',
-        bgcolor: 'background.paper',
-        py: { xs: 5, md: 7 },
+      sx={(theme) => {
+        const tones = officeDirectoryTones[theme.palette.mode];
+        return {
+          '--office-panel': tones.panel,
+          '--office-text': tones.text,
+          '--office-muted': tones.muted,
+          '--office-accent': tones.accent,
+          '--office-line': tones.line,
+          position: 'relative',
+          overflow: 'hidden',
+          bgcolor: tones.canvas,
+          color: tones.text,
+          py: { xs: 6, md: 9 },
+        };
       }}
     >
-      <Watermark
-        variant="radar"
-        position="top-right"
-        size={{ xs: 220, md: 360 }}
-        opacity={0.045}
-        sx={{ color: 'primary.main' }}
-      />
-      <Container sx={{ position: 'relative' }}>
-        <Stack
-          direction={{ xs: 'column', md: 'row' }}
-          justifyContent="space-between"
-          spacing={3}
-          sx={{ mb: 4 }}
-        >
-          <Box>
-            <Typography
-              variant="overline"
-              sx={{ fontWeight: 700, letterSpacing: 1.6, color: 'text.secondary' }}
-            >
-              Find us
-            </Typography>
-            <Typography
-              id="contact-locations-title"
-              component="h2"
-              variant="h3"
-              sx={{ mt: 1, fontSize: { xs: '2rem', md: '2.65rem' } }}
-            >
-              Closer to your community.
-            </Typography>
-          </Box>
-          <Box sx={{ alignSelf: { md: 'flex-end' } }}>
-            <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1.25 }}>
-              <PublicRoundedIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
-              <Typography variant="caption" sx={{ fontWeight: 650 }}>
-                Regional presence
-              </Typography>
-            </Stack>
-            <Stack direction="row" useFlexGap flexWrap="wrap" gap={1}>
-              {regions.map((region) => (
-                <Chip key={region} label={region} size="small" variant="outlined" />
-              ))}
-            </Stack>
-          </Box>
-        </Stack>
-
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: {
-              xs: '1fr',
-              sm: `repeat(${Math.min(locations.length, 2)}, minmax(0, 1fr))`,
-              lg: `repeat(${Math.min(locations.length, 3)}, minmax(0, 1fr))`,
-            },
-            gap: 2.5,
-          }}
-        >
-          {locations.map((location) => (
-            <Box
-              key={location.id}
-              component="article"
-              aria-label={location.label}
-              sx={{
-                position: 'relative',
-                display: 'flex',
-                flexDirection: 'column',
-                minWidth: 0,
-                p: { xs: 2.5, md: 3.5 },
-                border: 1,
-                borderColor: 'divider',
-                borderRadius: 3,
-                bgcolor: 'background.default',
-              }}
-            >
-              <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
-                <Typography
-                  variant="overline"
-                  sx={{ color: 'text.secondary', fontWeight: 700, letterSpacing: 1.4 }}
-                >
-                  {location.country}
-                </Typography>
-                <PlaceRoundedIcon sx={{ color: 'primary.main', fontSize: 28 }} />
-              </Stack>
-              <Typography component="h3" variant="h5" sx={{ mt: 2, mb: 1 }}>
-                {location.label}
-              </Typography>
-              <Typography
-                component="address"
-                sx={{
-                  color: 'text.secondary',
-                  fontStyle: 'normal',
-                  lineHeight: 1.7,
-                  maxWidth: 480,
-                  flexGrow: 1,
-                  overflowWrap: 'anywhere',
-                }}
-              >
-                {location.address}
-              </Typography>
-              {(location.phone || location.mapUrl) && (
-                <Stack
-                  direction="row"
-                  useFlexGap
-                  flexWrap="wrap"
-                  gap={2.5}
-                  sx={{ mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}
-                >
-                  {location.phone && (
-                    <Link
-                      href={`tel:${location.phone.replace(/\s/g, '')}`}
-                      sx={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 1,
-                        fontSize: '0.9rem',
-                        color: 'text.primary',
-                      }}
-                    >
-                      <PhoneRoundedIcon sx={{ fontSize: 17 }} />
-                      {location.phone}
-                    </Link>
-                  )}
-                  {location.mapUrl && (
-                    <Link
-                      href={location.mapUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label={`Get directions to ${location.label}`}
-                      sx={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 1,
-                        fontSize: '0.9rem',
-                        fontWeight: 650,
-                        color: 'text.primary',
-                      }}
-                    >
-                      Get directions
-                      <ArrowForwardRoundedIcon sx={{ fontSize: 17 }} />
-                    </Link>
-                  )}
-                </Stack>
-              )}
-            </Box>
-          ))}
-        </Box>
+      <Container>
+        <ContactOfficeDirectory locations={locations} regions={regions} />
 
         <Stack
           direction={{ xs: 'column', sm: 'row' }}
           alignItems={{ xs: 'flex-start', sm: 'center' }}
           justifyContent="space-between"
           spacing={2.5}
-          sx={{ mt: 4, pt: 3, borderTop: 1, borderColor: 'divider' }}
+          sx={{
+            mt: { xs: 4, md: 5 },
+            pt: 2.5,
+            borderTop: '1px solid var(--office-line)',
+            color: 'var(--office-muted)',
+          }}
         >
           <Stack direction="row" alignItems="center" useFlexGap flexWrap="wrap" gap={2}>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{ color: 'var(--office-muted)' }}>
               Follow the journey
             </Typography>
             <SocialLinks color="inherit" />
@@ -497,7 +368,7 @@ const ContactLocations = (): JSX.Element => {
               alignItems: 'center',
               gap: 1,
               fontSize: '0.85rem',
-              color: 'text.secondary',
+              color: 'var(--office-muted)',
               overflowWrap: 'anywhere',
             }}
           >

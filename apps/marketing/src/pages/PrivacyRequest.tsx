@@ -5,20 +5,26 @@ import {
   type PrivacyRequestInput,
   type PrivacyRequestType,
 } from '@iaa/shared';
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
+import MailOutlineRoundedIcon from '@mui/icons-material/MailOutlineRounded';
+import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Container from '@mui/material/Container';
 import FormControl from '@mui/material/FormControl';
+import FormHelperText from '@mui/material/FormHelperText';
+import InputAdornment from '@mui/material/InputAdornment';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
+import { alpha } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 
+import { LegalLayout } from '../components/legal/LegalLayout';
 import { Seo } from '../components/Seo';
 import { apiPost } from '../lib/api-client';
 import { usePageCopy } from '../lib/content-hooks';
@@ -57,30 +63,21 @@ const PrivacyRequest = (): JSX.Element => {
 
   return (
     <>
-      <Seo
-        title={copy.seoTitle}
-        description={copy.seoDescription}
-      />
-      <Box
-        component="header"
-        sx={{ bgcolor: 'common.black', color: 'common.white', py: { xs: 7, md: 10 } }}
-      >
-        <Container>
-          <Typography
-            variant="h1"
-            sx={{ fontSize: { xs: '2.4rem', md: '3.25rem' }, lineHeight: 1.08 }}
-          >
-            {copy.heroTitle}
-          </Typography>
-          <Typography sx={{ mt: 2, color: 'rgba(255,255,255,0.72)' }}>
-            {copy.heroSubtitle}
-          </Typography>
-        </Container>
-      </Box>
-
-      <Container sx={{ py: { xs: 6, md: 8 } }}>
+      <Seo title={copy.seoTitle} description={copy.seoDescription} />
+      <LegalLayout title={copy.heroTitle} subtitle={copy.heroSubtitle}>
         {mutation.isSuccess ? (
-          <Stack spacing={2} alignItems="flex-start">
+          <Stack
+            spacing={2}
+            alignItems="flex-start"
+            sx={{
+              p: { xs: 3, md: 4 },
+              border: 1,
+              borderColor: 'divider',
+              borderRadius: 4,
+              bgcolor: (theme) => alpha(theme.palette.text.secondary, 0.045),
+            }}
+            role="status"
+          >
             <CheckCircleRoundedIcon sx={{ fontSize: 48, color: 'success.main' }} />
             <Typography variant="h5">Request received</Typography>
             <Typography color="text.secondary">
@@ -91,7 +88,10 @@ const PrivacyRequest = (): JSX.Element => {
               component="pre"
               sx={{
                 p: 2,
-                bgcolor: 'rgba(0,30,20,0.04)',
+                bgcolor: 'action.hover',
+                whiteSpace: 'pre-wrap',
+                overflowWrap: 'anywhere',
+                maxWidth: '100%',
                 borderRadius: 2,
                 fontFamily: 'ui-monospace, monospace',
               }}
@@ -100,19 +100,51 @@ const PrivacyRequest = (): JSX.Element => {
             </Box>
           </Stack>
         ) : (
-          <Stack component="form" spacing={3} onSubmit={onSubmit} sx={{ maxWidth: 600 }}>
-            <Typography color="text.secondary">
-              {copy.introBody}
-            </Typography>
+          <Stack
+            component="form"
+            spacing={3}
+            onSubmit={onSubmit}
+            noValidate
+            sx={{
+              p: { xs: 2.5, md: 4 },
+              border: 1,
+              borderColor: 'divider',
+              borderRadius: 4,
+              bgcolor: (theme) => alpha(theme.palette.text.secondary, 0.045),
+              '& .MuiOutlinedInput-root': {
+                bgcolor: (theme) => alpha(theme.palette.text.secondary, 0.035),
+              },
+            }}
+          >
+            <Box>
+              <Typography variant="overline" color="text.secondary">
+                Your information. Your choices.
+              </Typography>
+              <Typography component="h2" variant="h5" sx={{ mt: 1, mb: 1.5 }}>
+                How can we help?
+              </Typography>
+              <Typography color="text.secondary">{copy.introBody}</Typography>
+            </Box>
             <TextField
               label="Email address"
               type="email"
+              autoComplete="email"
+              disabled={mutation.isPending}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <MailOutlineRoundedIcon sx={{ fontSize: 20 }} />
+                    </InputAdornment>
+                  ),
+                },
+              }}
               fullWidth
               error={Boolean(errors.email)}
               helperText={errors.email?.message}
               {...register('email')}
             />
-            <FormControl fullWidth error={Boolean(errors.type)}>
+            <FormControl fullWidth disabled={mutation.isPending} error={Boolean(errors.type)}>
               <InputLabel id="request-type-label">Request type</InputLabel>
               <Select
                 labelId="request-type-label"
@@ -126,9 +158,11 @@ const PrivacyRequest = (): JSX.Element => {
                   </MenuItem>
                 ))}
               </Select>
+              {errors.type && <FormHelperText>{errors.type.message}</FormHelperText>}
             </FormControl>
             <TextField
               label="Details (optional)"
+              disabled={mutation.isPending}
               fullWidth
               multiline
               minRows={4}
@@ -136,7 +170,13 @@ const PrivacyRequest = (): JSX.Element => {
               helperText={errors.details?.message}
               {...register('details')}
             />
+            {mutation.isError && (
+              <Alert severity="error" role="alert">
+                We couldn’t send your request. Please try again. Your details are still here.
+              </Alert>
+            )}
             <Button
+              endIcon={<ArrowForwardRoundedIcon />}
               type="submit"
               variant="contained"
               size="large"
@@ -147,7 +187,7 @@ const PrivacyRequest = (): JSX.Element => {
             </Button>
           </Stack>
         )}
-      </Container>
+      </LegalLayout>
     </>
   );
 };

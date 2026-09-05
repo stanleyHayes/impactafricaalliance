@@ -33,21 +33,60 @@ const initials = (name: string): string =>
 
 interface NavItem {
   label: string;
+  description: string;
   to: string;
   icon: JSX.Element;
 }
 
 const NAV_ITEMS: readonly NavItem[] = [
-  { label: 'Profile', to: '/account/profile', icon: <PersonOutlineIcon fontSize="small" /> },
-  { label: 'Edit Profile', to: '/account/edit', icon: <ManageAccountsIcon fontSize="small" /> },
-  { label: 'Update Password', to: '/account/password', icon: <LockResetIcon fontSize="small" /> },
-  { label: 'Settings', to: '/account/settings', icon: <SettingsIcon fontSize="small" /> },
+  {
+    label: 'Profile',
+    description: 'View your account details.',
+    to: '/account/profile',
+    icon: <PersonOutlineIcon fontSize="small" />,
+  },
+  {
+    label: 'Edit Profile',
+    description: 'Update your personal details.',
+    to: '/account/edit',
+    icon: <ManageAccountsIcon fontSize="small" />,
+  },
+  {
+    label: 'Update Password',
+    description: 'Choose a new password.',
+    to: '/account/password',
+    icon: <LockResetIcon fontSize="small" />,
+  },
+  {
+    label: 'Settings',
+    description: 'Manage your preferences.',
+    to: '/account/settings',
+    icon: <SettingsIcon fontSize="small" />,
+  },
 ];
 
 const HELPER_ITEMS: readonly NavItem[] = [
-  { label: 'Show me around', to: '#tour', icon: <ExploreOutlinedIcon fontSize="small" /> },
-  { label: 'User guide', to: '/account/user-guide', icon: <HelpOutlineOutlinedIcon fontSize="small" /> },
+  {
+    label: 'Show me around',
+    description: 'Take a quick dashboard tour.',
+    to: '#tour',
+    icon: <ExploreOutlinedIcon fontSize="small" />,
+  },
+  {
+    label: 'User guide',
+    description: 'Learn how the dashboard works.',
+    to: '/account/user-guide',
+    icon: <HelpOutlineOutlinedIcon fontSize="small" />,
+  },
 ];
+
+const menuTextSlotProps = {
+  primary: { sx: { fontSize: '0.875rem', fontWeight: 500 } },
+  secondary: {
+    noWrap: true,
+    sx: { mt: 0.25, fontSize: '0.75rem', lineHeight: 1.4, color: 'text.secondary' },
+  },
+};
 
 /** Account pill (avatar + name + role + chevron) with a refined account dropdown. */
 export const UserMenu = (): JSX.Element => {
@@ -159,11 +198,13 @@ export const UserMenu = (): JSX.Element => {
             elevation: 0,
             sx: {
               mt: 1.25,
-              minWidth: 270,
+              width: 320,
+              maxWidth: 'calc(100vw - 32px)',
               borderRadius: 2.5,
               border: 1,
               borderColor: 'divider',
-              overflow: 'hidden',
+              overflowX: 'hidden',
+              overflowY: 'auto',
               boxShadow: '0 12px 32px rgba(26, 92, 56, 0.14)',
             },
           },
@@ -226,11 +267,20 @@ export const UserMenu = (): JSX.Element => {
 
         <Box sx={{ py: 0.5 }}>
           {NAV_ITEMS.map((item) => (
-            <MenuItem key={item.to} onClick={() => go(item.to)} sx={{ py: 0.9, mx: 0.75, borderRadius: 1.5 }}>
-              <ListItemIcon sx={{ color: 'text.secondary', minWidth: 34 }}>{item.icon}</ListItemIcon>
-              <ListItemText slotProps={{ primary: { sx: { fontSize: '0.875rem', fontWeight: 500 } } }}>
-                {item.label}
-              </ListItemText>
+            <MenuItem
+              key={item.to}
+              onClick={() => go(item.to)}
+              sx={{ py: 0.9, mx: 0.75, borderRadius: 1.5 }}
+            >
+              <ListItemIcon sx={{ color: 'text.secondary', minWidth: 34 }}>
+                {item.icon}
+              </ListItemIcon>
+              <ListItemText
+                primary={item.label}
+                secondary={item.description}
+                slotProps={menuTextSlotProps}
+                sx={{ minWidth: 0 }}
+              />
             </MenuItem>
           ))}
         </Box>
@@ -251,10 +301,15 @@ export const UserMenu = (): JSX.Element => {
               }}
               sx={{ py: 0.9, mx: 0.75, borderRadius: 1.5 }}
             >
-              <ListItemIcon sx={{ color: 'text.secondary', minWidth: 34 }}>{item.icon}</ListItemIcon>
-              <ListItemText slotProps={{ primary: { sx: { fontSize: '0.875rem', fontWeight: 500 } } }}>
-                {item.label}
-              </ListItemText>
+              <ListItemIcon sx={{ color: 'text.secondary', minWidth: 34 }}>
+                {item.icon}
+              </ListItemIcon>
+              <ListItemText
+                primary={item.label}
+                secondary={item.description}
+                slotProps={menuTextSlotProps}
+                sx={{ minWidth: 0 }}
+              />
             </MenuItem>
           ))}
         </Box>
@@ -278,9 +333,15 @@ export const UserMenu = (): JSX.Element => {
             <ListItemIcon sx={{ color: 'error.main', minWidth: 34 }}>
               <LogoutIcon fontSize="small" />
             </ListItemIcon>
-            <ListItemText slotProps={{ primary: { sx: { fontSize: '0.875rem', fontWeight: 700 } } }}>
-              Log out
-            </ListItemText>
+            <ListItemText
+              primary="Log out"
+              secondary="Sign out of your account."
+              slotProps={{
+                ...menuTextSlotProps,
+                primary: { sx: { fontSize: '0.875rem', fontWeight: 700 } },
+              }}
+              sx={{ minWidth: 0 }}
+            />
           </MenuItem>
         </Box>
       </Menu>

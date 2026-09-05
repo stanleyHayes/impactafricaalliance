@@ -20,6 +20,11 @@ Use the shared `FormStepNavigation` component. Let the form own validation and s
 state across steps; preserve image uploads, AI assistance, Markdown editors, previews and permission
 rules. Review/save errors must keep the user's work. Show skeletons when loading an existing record.
 
+CMS review screens use `ResourceReview`: one connected summary with section edit controls and a
+responsive grid of labelled values. Keep short values together; reserve full rows for descriptions,
+rich text, and long content. Summary widths follow the content rather than the input's editor width.
+Images, uploaded file links, custom previews, and all configured fields remain available for review.
+
 Event scheduling uses [MUI X DateTimePicker](https://mui.com/x/react-date-pickers/date-time-picker/)
 with the Day.js adapter, British date formatting and 24-hour time. Mouse devices get a calendar/time
 popover and touch devices get a MUI dialog. Dates display in the browser timezone and serialize to UTC.

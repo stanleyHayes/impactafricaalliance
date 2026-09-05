@@ -1,11 +1,8 @@
-import { ORG, PILLARS, brandColors, brandFonts, type ImpactStat, type Story } from '@iaa/shared';
+import { ORG, PILLARS, brandColors, brandFonts, type Story } from '@iaa/shared';
 import AutoStoriesRoundedIcon from '@mui/icons-material/AutoStoriesRounded';
 import EastIcon from '@mui/icons-material/East';
 import FormatQuoteRoundedIcon from '@mui/icons-material/FormatQuoteRounded';
-import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
-import HandshakeRoundedIcon from '@mui/icons-material/HandshakeRounded';
 import InsightsRoundedIcon from '@mui/icons-material/InsightsRounded';
-import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -15,12 +12,14 @@ import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
 import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
-import { m } from 'framer-motion';
+import { m, useReducedMotion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
-import { AnimatedCounter } from '../components/AnimatedCounter';
 import { ArticleCard, PillarCard } from '../components/cards';
+import { HeroHeadline } from '../components/HeroHeadline';
+import { HeroImpactModel } from '../components/HeroImpactModel';
+import { ImpactMetrics } from '../components/ImpactMetrics';
 import { PageCta } from '../components/PageCta';
 import { ParallaxShowcase } from '../components/ParallaxShowcase';
 import { Section } from '../components/Section';
@@ -30,26 +29,7 @@ import { CardGridSkeleton } from '../components/skeletons';
 import { StaggerGrid, StaggerItem } from '../components/StaggerGrid';
 import { Watermark } from '../components/Watermark';
 import { IMAGES } from '../content/images';
-import { useArticles, useImpactStats, usePageCopy, useStories, type PageCopyDefaults } from '../lib/content-hooks';
-import { getStatIcon } from '../lib/stat-icons';
-
-const HERO_MODEL = [
-  {
-    title: 'Skills',
-    text: 'Practical learning that moves with people.',
-    icon: <SchoolRoundedIcon />,
-  },
-  {
-    title: 'Community',
-    text: 'Programmes shaped around local needs.',
-    icon: <GroupsRoundedIcon />,
-  },
-  {
-    title: 'Partnership',
-    text: 'Shared delivery with trusted allies.',
-    icon: <HandshakeRoundedIcon />,
-  },
-] as const;
+import { useArticles, usePageCopy, useStories, type PageCopyDefaults } from '../lib/content-hooks';
 
 const HERO_STORY = [
   { image: IMAGES.hero, position: 'center', label: 'Youth building practical digital skills' },
@@ -61,6 +41,7 @@ const HERO_STORY = [
 
 const Hero = ({ copy, heroImage }: { copy: PageCopyDefaults; heroImage: string }): JSX.Element => {
   const [activeSlide, setActiveSlide] = useState(0);
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -143,9 +124,9 @@ const Hero = ({ copy, heroImage }: { copy: PageCopyDefaults; heroImage: string }
         <Grid size={{ xs: 12, md: 7 }}>
           <Box
             component={m.div}
-            initial={{ opacity: 0, y: 20 }}
+            initial={reduceMotion ? false : { opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7 }}
+            transition={{ duration: reduceMotion ? 0 : 0.45 }}
           >
             <Stack direction="row" spacing={1.25} alignItems="center" sx={{ mb: 2.5 }}>
               <Box sx={{ width: 38, height: 2, bgcolor: 'secondary.main' }} />
@@ -156,17 +137,7 @@ const Hero = ({ copy, heroImage }: { copy: PageCopyDefaults; heroImage: string }
                 {copy.heroEyebrow}
               </Typography>
             </Stack>
-            <Typography
-              variant="h1"
-              sx={{
-                maxWidth: 760,
-                color: 'common.white',
-                fontSize: { xs: '2.8rem', sm: '3.5rem', md: '4.65rem' },
-                lineHeight: 1.02,
-              }}
-            >
-              {copy.heroTitle}
-            </Typography>
+            <HeroHeadline key={copy.heroTitle} text={copy.heroTitle} />
             <Typography
               sx={{
                 maxWidth: 650,
@@ -233,61 +204,7 @@ const Hero = ({ copy, heroImage }: { copy: PageCopyDefaults; heroImage: string }
         </Grid>
 
         <Grid size={{ xs: 12, md: 5 }} sx={{ display: { xs: 'none', md: 'block' } }}>
-          <Box
-            sx={{
-              ml: 'auto',
-              maxWidth: 390,
-              p: 2,
-              border: '1px solid rgba(255,255,255,0.16)',
-              borderRadius: 4,
-              bgcolor: 'rgba(255,255,255,0.08)',
-              backdropFilter: 'blur(14px)',
-            }}
-          >
-            <Box
-              sx={{
-                p: 3,
-                borderRadius: 3,
-                bgcolor: 'rgba(255,255,255,0.92)',
-                color: brandColors.charcoalBlack,
-              }}
-            >
-              <Typography
-                variant="overline"
-                sx={{ color: brandColors.forestGreen, fontWeight: 750, letterSpacing: 1.5 }}
-              >
-                Our impact model
-              </Typography>
-              <Stack spacing={1.5} sx={{ mt: 2 }}>
-                {HERO_MODEL.map((item) => (
-                  <Stack key={item.title} direction="row" spacing={1.5} alignItems="center">
-                    <Box
-                      sx={{
-                        display: 'grid',
-                        width: 44,
-                        height: 44,
-                        flexShrink: 0,
-                        placeItems: 'center',
-                        borderRadius: 2,
-                        bgcolor: 'rgba(0,30,20,0.08)',
-                        color: brandColors.forestGreen,
-                      }}
-                    >
-                      {item.icon}
-                    </Box>
-                    <Box>
-                      <Typography sx={{ fontWeight: 750, lineHeight: 1.2, color: brandColors.charcoalBlack }}>
-                        {item.title}
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: brandColors.slate }}>
-                        {item.text}
-                      </Typography>
-                    </Box>
-                  </Stack>
-                ))}
-              </Stack>
-            </Box>
-          </Box>
+          <HeroImpactModel />
         </Grid>
       </Grid>
     </Container>
@@ -350,309 +267,56 @@ const MissionStrip = (): JSX.Element => (
   </Box>
 );
 
-const HomeImpactMetric = ({ stat, index }: { stat: ImpactStat; index: number }): JSX.Element => {
-  const Icon = getStatIcon(stat.key, stat.label);
-  const featured = index === 0;
-
-  return (
-    <Box
-      component="article"
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-        minHeight: { xs: 180, sm: 200 },
-        height: '100%',
-        minWidth: 0,
-        p: { xs: 3, md: 3.5 },
-        border: 1,
-        borderColor: featured ? 'transparent' : 'divider',
-        borderRadius: 4,
-        bgcolor: featured ? 'primary.main' : 'background.paper',
-        color: featured ? 'primary.contrastText' : 'text.primary',
-      }}
-    >
-      <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={2}>
-        <Typography
-          component="h3"
-          sx={{
-            maxWidth: 220,
-            fontSize: { xs: '1rem', md: '1.1rem' },
-            fontWeight: 600,
-            lineHeight: 1.4,
-          }}
-        >
-          {stat.label}
-        </Typography>
-        <Box
-          sx={{
-            display: 'grid',
-            flexShrink: 0,
-            width: 40,
-            height: 40,
-            placeItems: 'center',
-            borderRadius: '50%',
-            bgcolor: featured ? alpha(brandColors.deepForest, 0.09) : alpha(brandColors.mint, 0.1),
-            color: featured
-              ? 'primary.contrastText'
-              : (theme) =>
-                  theme.palette.mode === 'dark' ? 'primary.main' : brandColors.deepForest,
-          }}
-        >
-          <Icon sx={{ fontSize: 22 }} aria-hidden />
-        </Box>
+export const HomeImpactSection = (): JSX.Element => (
+  <Box
+    component="section"
+    aria-labelledby="home-impact-title"
+    sx={{ bgcolor: 'background.default', py: { xs: 6, md: 8 } }}
+  >
+    <Container>
+      <Grid container spacing={{ xs: 2.5, md: 5 }} sx={{ alignItems: 'end', mb: { xs: 3, md: 4 } }}>
+        <Grid size={{ xs: 12, md: 7 }}>
+          <Stack direction="row" spacing={1.2} alignItems="center">
+            <Box sx={{ width: 34, height: 2, bgcolor: 'secondary.main' }} />
+            <Typography
+              variant="overline"
+              sx={{ color: 'text.primary', fontWeight: 750, letterSpacing: 1.7 }}
+            >
+              Our Impact at a Glance
+            </Typography>
+          </Stack>
+          <Typography
+            id="home-impact-title"
+            variant="h2"
+            sx={{ mt: 1.5, maxWidth: 640, fontSize: { xs: '2rem', md: '2.8rem' }, lineHeight: 1.12 }}
+          >
+            Progress you can see. Change people can feel.
+          </Typography>
+        </Grid>
+        <Grid size={{ xs: 12, md: 5 }}>
+          <Typography sx={{ color: 'text.secondary', lineHeight: 1.75 }}>
+            Our programmes turn skills, partnerships, and local leadership into measurable
+            opportunity across African communities.
+          </Typography>
+          <Button
+            component={RouterLink}
+            to="/impact"
+            variant="text"
+            endIcon={<EastIcon />}
+            sx={{ mt: 1, px: 0, fontWeight: 750 }}
+          >
+            Explore our full impact
+          </Button>
+        </Grid>
+      </Grid>
+      <ImpactMetrics />
+      <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 2, color: 'text.secondary' }}>
+        <InsightsRoundedIcon sx={{ fontSize: 18 }} aria-hidden />
+        <Typography variant="caption">Current programme reach</Typography>
       </Stack>
-      <Box
-        sx={{
-          mt: { xs: 3, sm: 4 },
-          pt: 2.5,
-          borderTop: 1,
-          borderColor: featured ? alpha(brandColors.deepForest, 0.18) : 'divider',
-          '& > span': {
-            fontFamily: brandFonts.body,
-            fontSize: featured
-              ? { xs: '3.75rem', sm: '4.5rem', lg: '5.5rem' }
-              : { xs: '3rem', sm: '3.5rem' },
-            fontWeight: 600,
-            letterSpacing: '-0.055em',
-            lineHeight: 1,
-          },
-        }}
-      >
-        <AnimatedCounter value={stat.value} suffix={stat.suffix} color="inherit" />
-      </Box>
-    </Box>
-  );
-};
-
-const HomeImpactSkeleton = (): JSX.Element => (
-  <Grid container spacing={4} sx={{ alignItems: 'stretch' }}>
-    <Grid size={{ xs: 12, md: 4 }}>
-      <Stack spacing={2}>
-        <Skeleton width={150} />
-        <Skeleton height={52} />
-        <Skeleton height={52} width="84%" />
-        <Skeleton height={72} />
-        <Skeleton variant="rounded" width={180} height={46} sx={{ borderRadius: 999 }} />
-      </Stack>
-    </Grid>
-    <Grid size={{ xs: 12, md: 8 }}>
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' },
-          gap: { xs: 1.5, sm: 2 },
-        }}
-      >
-        {Array.from({ length: 4 }, (_, index) => (
-          <Skeleton key={index} variant="rounded" height={200} sx={{ borderRadius: 4 }} />
-        ))}
-      </Box>
-    </Grid>
-  </Grid>
+    </Container>
+  </Box>
 );
-
-const PLACEHOLDER_STATS: ImpactStat[] = [
-  {
-    id: 'countries-placeholder',
-    key: 'countries',
-    value: 5,
-    suffix: '+',
-    label: 'West African Countries Active',
-    order: 1,
-    isActive: true,
-    createdAt: '',
-    updatedAt: '',
-  },
-  {
-    id: 'youth-placeholder',
-    key: 'youth',
-    value: 1000,
-    suffix: '+',
-    label: 'Youth Reached',
-    order: 2,
-    isActive: true,
-    createdAt: '',
-    updatedAt: '',
-  },
-  {
-    id: 'programs-placeholder',
-    key: 'programs',
-    value: 4,
-    suffix: '',
-    label: 'Flagship Programs',
-    order: 3,
-    isActive: true,
-    createdAt: '',
-    updatedAt: '',
-  },
-  {
-    id: 'women-placeholder',
-    key: 'women',
-    value: 500,
-    suffix: '+',
-    label: 'Women Empowered',
-    order: 4,
-    isActive: true,
-    createdAt: '',
-    updatedAt: '',
-  },
-];
-
-export const HomeImpactSection = (): JSX.Element => {
-  const { data, isLoading } = useImpactStats();
-  const stats = data?.items.length ? data.items : PLACEHOLDER_STATS;
-
-  return (
-    <Box
-      component="section"
-      aria-labelledby="home-impact-title"
-      sx={{
-        position: 'relative',
-        overflow: 'hidden',
-        bgcolor: 'background.default',
-        py: { xs: 8, md: 12 },
-        '&::before': {
-          position: 'absolute',
-          top: -150,
-          left: -130,
-          width: 360,
-          height: 360,
-          border: '1px solid rgba(0,30,20,0.08)',
-          borderRadius: '50%',
-          boxShadow: '0 0 0 48px rgba(0,30,20,0.02), 0 0 0 96px rgba(0,30,20,0.015)',
-          content: '""',
-        },
-      }}
-    >
-      <Container sx={{ position: 'relative' }}>
-        {isLoading ? (
-          <HomeImpactSkeleton />
-        ) : (
-          <Grid container spacing={{ xs: 5, md: 7 }} sx={{ alignItems: 'stretch' }}>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <SectionReveal fillHeight>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    height: '100%',
-                    flexDirection: 'column',
-                    alignItems: 'flex-start',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Stack direction="row" spacing={1.2} alignItems="center">
-                    <Box sx={{ width: 34, height: 2, bgcolor: 'secondary.main' }} />
-                    <Typography
-                      variant="overline"
-                      sx={{ color: 'text.primary', fontWeight: 750, letterSpacing: 1.7 }}
-                    >
-                      Our Impact at a Glance
-                    </Typography>
-                  </Stack>
-
-                  <Typography
-                    id="home-impact-title"
-                    variant="h2"
-                    sx={{
-                      mt: 2,
-                      maxWidth: 420,
-                      fontSize: { xs: '2rem', md: '2.8rem' },
-                      lineHeight: 1.12,
-                    }}
-                  >
-                    Progress you can see. Change people can feel.
-                  </Typography>
-                  <Typography
-                    sx={{
-                      maxWidth: 430,
-                      mt: 2.5,
-                      color: 'text.secondary',
-                      fontSize: '1rem',
-                      lineHeight: 1.75,
-                    }}
-                  >
-                    Our programmes turn skills, partnerships, and local leadership into measurable
-                    opportunity across African communities.
-                  </Typography>
-
-                  <Stack
-                    direction="row"
-                    spacing={1.5}
-                    alignItems="center"
-                    sx={{
-                      mt: 3.5,
-                      p: 1.5,
-                      pr: 2,
-                      border: 1,
-                      borderColor: 'rgba(0,30,20,0.1)',
-                      borderRadius: 2.5,
-                      bgcolor: 'background.paper',
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        display: 'grid',
-                        width: 40,
-                        height: 40,
-                        placeItems: 'center',
-                        borderRadius: '50%',
-                        bgcolor: 'primary.main',
-                        color: 'primary.contrastText',
-                      }}
-                    >
-                      <InsightsRoundedIcon fontSize="small" />
-                    </Box>
-                    <Box>
-                      <Typography sx={{ fontSize: '0.75rem', fontWeight: 750, letterSpacing: 0.6 }}>
-                        LIVE SNAPSHOT
-                      </Typography>
-                      <Typography sx={{ color: 'text.primary', fontSize: '0.75rem' }}>
-                        Current programme reach
-                      </Typography>
-                    </Box>
-                  </Stack>
-
-                  <Button
-                    component={RouterLink}
-                    to="/impact"
-                    variant="text"
-                    endIcon={<EastIcon />}
-                    sx={{ mt: 3, px: 0, fontWeight: 750 }}
-                  >
-                    Explore our full impact
-                  </Button>
-                </Box>
-              </SectionReveal>
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 8 }}>
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' },
-                  gap: { xs: 1.5, sm: 2 },
-                  '& > :first-of-type': {
-                    gridRow: { sm: stats.length === 3 ? 'span 2' : 'auto' },
-                  },
-                  '& > :last-of-type:nth-of-type(odd):not(:first-of-type)': {
-                    gridColumn: { sm: stats.length === 3 ? 'auto' : '1 / -1' },
-                  },
-                }}
-              >
-                {stats.map((stat, index) => (
-                  <SectionReveal key={stat.key} delay={index * 0.06} fillHeight>
-                    <HomeImpactMetric stat={stat} index={index} />
-                  </SectionReveal>
-                ))}
-              </Box>
-            </Grid>
-          </Grid>
-        )}
-      </Container>
-    </Box>
-  );
-};
 
 const StoriesSection = (): JSX.Element => {
   const { data, isLoading } = useStories();

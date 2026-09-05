@@ -5,6 +5,7 @@ import { Layout } from '../components/layout/Layout';
 import { PageSkeleton } from '../components/skeletons';
 
 const Home = lazy(() => import('../pages/Home'));
+const TeamProfile = lazy(() => import('../pages/TeamProfile'));
 const About = lazy(() => import('../pages/About'));
 const OurWork = lazy(() => import('../pages/OurWork'));
 const InitiativePage = lazy(() => import('../pages/InitiativePage'));
@@ -41,6 +42,14 @@ export const App = (): JSX.Element => (
         element={
           <Suspense fallback={<PageSkeleton />}>
             <About />
+          </Suspense>
+        }
+      />
+      <Route
+        path="about/team/:memberId"
+        element={
+          <Suspense fallback={<PageSkeleton />}>
+            <TeamProfile />
           </Suspense>
         }
       />

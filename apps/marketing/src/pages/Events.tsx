@@ -18,6 +18,7 @@ import { useState } from 'react';
 
 import { CalendarGrid } from '../components/events/CalendarGrid';
 import { EventCard } from '../components/events/EventCard';
+import { EventEmptyState } from '../components/events/EventEmptyState';
 import { PageHero } from '../components/PageHero';
 import { Section } from '../components/Section';
 import { Seo } from '../components/Seo';
@@ -43,6 +44,8 @@ const Events = (): JSX.Element => {
   const [period, setPeriod] = useState<EventPeriod>('all');
   const events = data?.items ?? [];
   const filtered = filterEvents(events, { query, type, period });
+  const hasFilters = Boolean(query || type !== 'all' || period !== 'all');
+  const isEmpty = !isLoading && !isError && filtered.length === 0;
   const reset = (): void => {
     setQuery('');
     setType('all');
@@ -58,19 +61,7 @@ const Events = (): JSX.Element => {
       );
     if (filtered.length === 0)
       return (
-        <Box sx={{ py: 8, textAlign: 'center' }}>
-          <Typography variant="h4">
-            {events.length ? 'No events match just yet.' : 'New gatherings are on their way.'}
-          </Typography>
-          <Typography color="text.secondary" sx={{ mt: 1 }}>
-            Try another topic or check back for the next Alliance event.
-          </Typography>
-          {events.length > 0 && (
-            <Button onClick={reset} sx={{ mt: 2 }}>
-              Reset filters
-            </Button>
-          )}
-        </Box>
+        <EventEmptyState hasEvents={events.length > 0} onReset={hasFilters ? reset : undefined} />
       );
     if (view === 'calendar')
       return <CalendarGrid key={`${query}:${type}:${period}`} events={filtered} />;
@@ -95,7 +86,7 @@ const Events = (): JSX.Element => {
         image={copy.heroImageUrl ?? IMAGES.teamArtwork}
       />
       <Section>
-        <Stack spacing={3} sx={{ mb: 4 }}>
+        <Stack spacing={3} sx={{ mb: isEmpty ? 2 : 4 }}>
           <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" gap={2}>
             <Box>
               <Typography variant="overline" color="text.secondary">
@@ -181,9 +172,7 @@ const Events = (): JSX.Element => {
                 : `${filtered.length} event${filtered.length === 1 ? '' : 's'}`}{' '}
               · All times GMT
             </Typography>
-            {(query || type !== 'all' || period !== 'all') && (
-              <Button onClick={reset}>Clear filters</Button>
-            )}
+            {hasFilters && !isEmpty && <Button onClick={reset}>Clear filters</Button>}
           </Stack>
         </Stack>
         {renderContent()}

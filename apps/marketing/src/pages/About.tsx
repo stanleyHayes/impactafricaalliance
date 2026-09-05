@@ -13,21 +13,16 @@ import CampaignRoundedIcon from '@mui/icons-material/CampaignRounded';
 import CodeRoundedIcon from '@mui/icons-material/CodeRounded';
 import Diversity3RoundedIcon from '@mui/icons-material/Diversity3Rounded';
 import EastIcon from '@mui/icons-material/East';
-import FacebookIcon from '@mui/icons-material/Facebook';
 import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
 import HandshakeRoundedIcon from '@mui/icons-material/HandshakeRounded';
 import HubRoundedIcon from '@mui/icons-material/HubRounded';
-import InstagramIcon from '@mui/icons-material/Instagram';
 import LightbulbRoundedIcon from '@mui/icons-material/LightbulbRounded';
-import LinkedInIcon from '@mui/icons-material/LinkedIn';
-import MusicNoteRoundedIcon from '@mui/icons-material/MusicNoteRounded';
 import PublicRoundedIcon from '@mui/icons-material/PublicRounded';
 import RecyclingRoundedIcon from '@mui/icons-material/RecyclingRounded';
 import TrackChangesRoundedIcon from '@mui/icons-material/TrackChangesRounded';
 import VerifiedRoundedIcon from '@mui/icons-material/VerifiedRounded';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import VolunteerActivismRoundedIcon from '@mui/icons-material/VolunteerActivismRounded';
-import XIcon from '@mui/icons-material/X';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
@@ -38,45 +33,19 @@ import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
-import { useState } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Link as RouterLink, useLocation } from 'react-router-dom';
 
 import { AllianceSculpture } from '../components/AllianceSculpture';
+import { ImpactMetrics } from '../components/ImpactMetrics';
 import { PageCta } from '../components/PageCta';
 import { PageHero } from '../components/PageHero';
 import { Section } from '../components/Section';
 import { SectionReveal } from '../components/SectionReveal';
 import { Seo } from '../components/Seo';
 import { CardGridSkeleton, PartnerLogosSkeleton } from '../components/skeletons';
-import { TeamMemberDialog } from '../components/TeamMemberDialog';
 import { IMAGES } from '../content/images';
-import { useImpactStats, usePageCopy, usePartners, useTeam } from '../lib/content-hooks';
-
-interface ProofPoint {
-  value: string;
-  label: string;
-  text: string;
-}
-
-/** Short descriptor shown under each proof point, matched on the stat's label. */
-const PROOF_BLURBS: readonly (readonly [RegExp, string])[] = [
-  [/\b(countr(y|ies)|nations?|regions?)\b/i, 'A growing West African footprint.'],
-  [/\b(women|woman|girls?)\b/i, 'Training, mentorship, and enterprise support.'],
-  [/\b(youth|young|students?|learners?)\b/i, 'Skills, mentorship, and pathways into work.'],
-  [/\b(programs?|programmes?|initiatives?)\b/i, 'Flagship initiatives across the alliance.'],
-  [/\b(partners?|allies)\b/i, 'Multi-sector collaboration across the continent.'],
-];
-
-const blurbFor = (label: string): string =>
-  PROOF_BLURBS.find(([pattern]) => pattern.test(label))?.[1] ??
-  'Measured progress across our programmes.';
-
-/** Shown only until the CMS impact stats load. Keep in step with the CMS values. */
-const FALLBACK_PROOF_POINTS: readonly ProofPoint[] = [
-  { value: '3+', label: 'Countries reached', text: 'A growing West African footprint.' },
-  { value: '500+', label: 'Women', text: 'Training, mentorship, and enterprise support.' },
-  { value: '200+', label: 'Youth', text: 'Skills, mentorship, and pathways into work.' },
-];
+import { usePageCopy, usePartners, useTeam } from '../lib/content-hooks';
 
 const DISCIPLINES: ReadonlyArray<{ label: string; icon: SvgIconComponent }> = [
   { label: 'Technology', icon: CodeRoundedIcon },
@@ -184,122 +153,110 @@ const STRUCTURE_LEVELS = [
   },
 ] as const;
 
-const AboutIntro = (): JSX.Element => {
-  const { data } = useImpactStats();
-  const proofPoints: readonly ProofPoint[] = data?.items.length
-    ? data.items.slice(0, 3).map((stat) => ({
-        value: `${stat.value.toLocaleString()}${stat.suffix}`,
-        label: stat.label,
-        text: blurbFor(stat.label),
-      }))
-    : FALLBACK_PROOF_POINTS;
-
+export const AboutIntro = (): JSX.Element => {
   return (
-  <Section bgcolor="background.default">
-    <Grid container spacing={{ xs: 4, md: 6 }} sx={{ alignItems: 'stretch' }}>
-      <Grid size={{ xs: 12, md: 7 }}>
-        <SectionReveal fillHeight>
-          <Box
-            sx={{
-              display: 'flex',
-              height: '100%',
-              flexDirection: 'column',
-              justifyContent: 'center',
-            }}
-          >
-            <Stack direction="row" spacing={1.25} alignItems="center">
-              <Box sx={{ width: 36, height: 2, bgcolor: 'secondary.main' }} />
+    <Section bgcolor="background.default">
+      <Grid container spacing={{ xs: 4, md: 6 }} sx={{ alignItems: 'stretch' }}>
+        <Grid size={{ xs: 12, md: 7 }}>
+          <SectionReveal fillHeight>
+            <Box
+              sx={{
+                display: 'flex',
+                height: '100%',
+                flexDirection: 'column',
+                justifyContent: 'center',
+              }}
+            >
+              <Stack direction="row" spacing={1.25} alignItems="center">
+                <Box sx={{ width: 36, height: 2, bgcolor: 'secondary.main' }} />
+                <Typography
+                  variant="overline"
+                  sx={{ color: 'text.primary', fontWeight: 750, letterSpacing: 1.8 }}
+                >
+                  Who We Are
+                </Typography>
+              </Stack>
               <Typography
-                variant="overline"
-                sx={{ color: 'text.primary', fontWeight: 750, letterSpacing: 1.8 }}
+                variant="h2"
+                sx={{
+                  mt: 2,
+                  maxWidth: 680,
+                  fontSize: { xs: '2rem', md: '3rem' },
+                  lineHeight: 1.08,
+                }}
               >
-                Who We Are
+                Architects of Africa&apos;s transformation, not observers of it.
               </Typography>
-            </Stack>
-            <Typography
-              variant="h2"
-              sx={{ mt: 2, maxWidth: 680, fontSize: { xs: '2rem', md: '3rem' }, lineHeight: 1.08 }}
-            >
-              Architects of Africa&apos;s transformation, not observers of it.
-            </Typography>
-            <Typography sx={{ mt: 2.5, maxWidth: 680, color: 'text.secondary', lineHeight: 1.8 }}>
-              Impact Africa Alliance is a purpose-driven, Pan-African organization committed to
-              sustainable development and transformative change across Africa.
-            </Typography>
-            <Typography sx={{ mt: 2, maxWidth: 700, color: 'text.secondary', lineHeight: 1.8 }}>
-              Through strategic initiatives, partnerships, and community-driven programs, we equip
-              youth, women, and marginalized communities with the skills, opportunities, and
-              resources needed to thrive in an evolving global landscape.
-            </Typography>
-          </Box>
-        </SectionReveal>
-      </Grid>
-
-      <Grid size={{ xs: 12, md: 5 }}>
-        <SectionReveal fillHeight delay={0.08}>
-          <Box
-            sx={{
-              position: 'relative',
-              minHeight: { xs: 360, md: 520 },
-              height: '100%',
-              overflow: 'hidden',
-              borderRadius: 5,
-              bgcolor: 'primary.dark',
-              boxShadow: '0 30px 70px -52px rgba(18,66,42,0.85)',
-            }}
-          >
-            <Box
-              component="img"
-              src={IMAGES.community}
-              alt="Impact Africa Alliance community gathering"
-              sx={{ width: '100%', height: '100%', minHeight: 'inherit', objectFit: 'cover' }}
-            />
-            <Box
-              sx={{
-                position: 'absolute',
-                inset: 0,
-                background:
-                  'linear-gradient(0deg, rgba(7,31,22,0.9) 0%, rgba(7,31,22,0.24) 62%, rgba(7,31,22,0.08) 100%)',
-              }}
-            />
-            <Box
-              sx={{
-                position: 'absolute',
-                right: 24,
-                bottom: 24,
-                left: 24,
-                p: 2.25,
-                border: '1px solid rgba(255,255,255,0.18)',
-                borderRadius: 3,
-                bgcolor: 'rgba(255,255,255,0.1)',
-                color: 'common.white',
-                backdropFilter: 'blur(12px)',
-              }}
-            >
-              <Typography variant="overline" sx={{ color: 'secondary.light', fontWeight: 750 }}>
-                Founded by young African leaders
+              <Typography sx={{ mt: 2.5, maxWidth: 680, color: 'text.secondary', lineHeight: 1.8 }}>
+                Impact Africa Alliance is a purpose-driven, Pan-African organization committed to
+                sustainable development and transformative change across Africa.
               </Typography>
-              <Typography sx={{ mt: 0.75, lineHeight: 1.65 }}>
-                Built around homegrown champions, trusted partnerships, and practical solutions.
+              <Typography sx={{ mt: 2, maxWidth: 700, color: 'text.secondary', lineHeight: 1.8 }}>
+                Through strategic initiatives, partnerships, and community-driven programs, we equip
+                youth, women, and marginalized communities with the skills, opportunities, and
+                resources needed to thrive in an evolving global landscape.
               </Typography>
             </Box>
-          </Box>
-        </SectionReveal>
-      </Grid>
-    </Grid>
-
-    <Box sx={{ mt: { xs: 5, md: 7 }, borderTop: 1, borderBottom: 1, borderColor: 'divider', display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0, 1fr))' } }}>
-      {proofPoints.map((item, index) => (
-        <Box key={item.label} sx={{ py: { xs: 3, md: 4 }, px: { xs: 0, md: 3 }, borderLeft: { md: index ? 1 : 0 }, borderTop: { xs: index ? 1 : 0, md: 0 }, borderColor: 'divider' }}>
-          <SectionReveal delay={index * 0.06}>
-            <Typography sx={{ fontFamily: brandFonts.heading, fontSize: { xs: '3.5rem', md: '4.5rem' }, lineHeight: 1, letterSpacing: '-.05em', color: 'text.primary' }}>{item.value}</Typography>
-            <Typography component="h3" sx={{ mt: 2, fontWeight: 700 }}>{item.label}</Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1, maxWidth: 270 }}>{item.text}</Typography>
           </SectionReveal>
-        </Box>
-      ))}
-    </Box>
-  </Section>
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 5 }}>
+          <SectionReveal fillHeight delay={0.08}>
+            <Box
+              sx={{
+                position: 'relative',
+                minHeight: { xs: 360, md: 520 },
+                height: '100%',
+                overflow: 'hidden',
+                borderRadius: 5,
+                bgcolor: 'primary.dark',
+                boxShadow: '0 30px 70px -52px rgba(18,66,42,0.85)',
+              }}
+            >
+              <Box
+                component="img"
+                src={IMAGES.community}
+                alt="Impact Africa Alliance community gathering"
+                sx={{ width: '100%', height: '100%', minHeight: 'inherit', objectFit: 'cover' }}
+              />
+              <Box
+                sx={{
+                  position: 'absolute',
+                  inset: 0,
+                  background:
+                    'linear-gradient(0deg, rgba(7,31,22,0.9) 0%, rgba(7,31,22,0.24) 62%, rgba(7,31,22,0.08) 100%)',
+                }}
+              />
+              <Box
+                sx={{
+                  position: 'absolute',
+                  right: 24,
+                  bottom: 24,
+                  left: 24,
+                  p: 2.25,
+                  border: '1px solid rgba(255,255,255,0.18)',
+                  borderRadius: 3,
+                  bgcolor: 'rgba(255,255,255,0.1)',
+                  color: 'common.white',
+                  backdropFilter: 'blur(12px)',
+                }}
+              >
+                <Typography variant="overline" sx={{ color: 'secondary.light', fontWeight: 750 }}>
+                  Founded by young African leaders
+                </Typography>
+                <Typography sx={{ mt: 0.75, lineHeight: 1.65 }}>
+                  Built around homegrown champions, trusted partnerships, and practical solutions.
+                </Typography>
+              </Box>
+            </Box>
+          </SectionReveal>
+        </Grid>
+      </Grid>
+
+      <Box sx={{ mt: { xs: 4, md: 5 } }}>
+        <ImpactMetrics />
+      </Box>
+    </Section>
   );
 };
 
@@ -690,7 +647,9 @@ const StorySection = (): JSX.Element => (
                 We are building the kind of institution Africa&apos;s future deserves.
               </Typography>
             </Box>
-            <Typography sx={{ mt: 4, color: alpha(brandColors.deepForest, 0.72), lineHeight: 1.75 }}>
+            <Typography
+              sx={{ mt: 4, color: alpha(brandColors.deepForest, 0.72), lineHeight: 1.75 }}
+            >
               The work begins with practical programs today, and scales toward a Pan-African network
               of leadership, skills, and opportunity.
             </Typography>
@@ -795,36 +754,7 @@ const TeamEmptyState = (): JSX.Element => (
   </Card>
 );
 
-type SocialField = 'linkedInUrl' | 'xUrl' | 'instagramUrl' | 'facebookUrl' | 'tiktokUrl';
-
-/** Rendered in this order, and only for the links a member actually has. */
-const MEMBER_SOCIALS: ReadonlyArray<{
-  field: SocialField;
-  label: string;
-  Icon: SvgIconComponent;
-}> = [
-  { field: 'linkedInUrl', label: 'LinkedIn', Icon: LinkedInIcon },
-  { field: 'xUrl', label: 'X', Icon: XIcon },
-  { field: 'instagramUrl', label: 'Instagram', Icon: InstagramIcon },
-  { field: 'facebookUrl', label: 'Facebook', Icon: FacebookIcon },
-  { field: 'tiktokUrl', label: 'TikTok', Icon: MusicNoteRoundedIcon },
-];
-
-const memberInitials = (name: string): string =>
-  name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part.charAt(0).toUpperCase())
-    .join('');
-
 const TeamMemberCard = ({ member }: { member: TeamMember }): JSX.Element => {
-  const [profileOpen, setProfileOpen] = useState(false);
-  const socials = MEMBER_SOCIALS.flatMap(({ field, label, Icon }) => {
-    const href = member[field];
-    return href ? [{ field, label, Icon, href }] : [];
-  });
-
   return (
     <Card
       component="article"
@@ -900,7 +830,8 @@ const TeamMemberCard = ({ member }: { member: TeamMember }): JSX.Element => {
         </Typography>
         <Button
           className="team-bio-link"
-          onClick={() => setProfileOpen(true)}
+          component={RouterLink}
+          to={'/about/team/' + member.id}
           aria-label={`Read full bio of ${member.name}`}
           endIcon={<EastIcon />}
           sx={{
@@ -917,64 +848,68 @@ const TeamMemberCard = ({ member }: { member: TeamMember }): JSX.Element => {
           Read full bio
         </Button>
       </Box>
-      <TeamMemberDialog
-        member={member}
-        socials={socials}
-        initials={memberInitials(member.name)}
-        open={profileOpen}
-        onClose={() => setProfileOpen(false)}
-      />
     </Card>
   );
 };
 
 const TeamSection = (): JSX.Element => {
   const { data, isLoading } = useTeam();
+  const { hash } = useLocation();
+  useEffect(() => {
+    if (hash !== '#team' || isLoading) return;
+    const frame = requestAnimationFrame(() =>
+      document.getElementById('team')?.scrollIntoView({ block: 'start' }),
+    );
+    return () => cancelAnimationFrame(frame);
+  }, [hash, isLoading]);
+
   const members = data?.items ?? [];
   const isEmpty = !isLoading && members.length === 0;
 
   return (
-    <Section
-      eyebrow="The People Behind IAA"
-      title="Built by practitioners, organizers, and builders."
-      subtitle="IAA brings together young African professionals with the cross-functional skills needed to move from ideas to durable institutions."
-      bgcolor="background.default"
-    >
-      {isLoading && <CardGridSkeleton count={4} columns={4} />}
-      {isEmpty && <TeamEmptyState />}
-      {!isLoading &&
-        TEAM_TIERS.map((tier) => {
-          const group = members.filter((member) => member.tier === tier);
-          if (group.length === 0) {
-            return null;
-          }
-          return (
-            <Box key={tier} sx={{ mb: 7, '&:last-of-type': { mb: 0 } }}>
-              <Typography
-                variant="overline"
-                sx={{
-                  display: 'block',
-                  mb: 2.5,
-                  color: 'text.primary',
-                  fontWeight: 800,
-                  letterSpacing: 1.8,
-                }}
-              >
-                {TEAM_TIER_LABELS[tier]}
-              </Typography>
-              <Grid container spacing={3}>
-                {group.map((member, index) => (
-                  <Grid key={member.id} size={{ xs: 12, sm: 6, lg: 3 }} sx={{ display: 'flex' }}>
-                    <SectionReveal delay={index * 0.05} fillHeight>
-                      <TeamMemberCard member={member} />
-                    </SectionReveal>
-                  </Grid>
-                ))}
-              </Grid>
-            </Box>
-          );
-        })}
-    </Section>
+    <Box id="team" sx={{ scrollMarginTop: 120 }}>
+      <Section
+        eyebrow="The People Behind IAA"
+        title="Built by practitioners, organizers, and builders."
+        subtitle="IAA brings together young African professionals with the cross-functional skills needed to move from ideas to durable institutions."
+        bgcolor="background.default"
+      >
+        {isLoading && <CardGridSkeleton count={4} columns={4} />}
+        {isEmpty && <TeamEmptyState />}
+        {!isLoading &&
+          TEAM_TIERS.map((tier) => {
+            const group = members.filter((member) => member.tier === tier);
+            if (group.length === 0) {
+              return null;
+            }
+            return (
+              <Box key={tier} sx={{ mb: 7, '&:last-of-type': { mb: 0 } }}>
+                <Typography
+                  variant="overline"
+                  sx={{
+                    display: 'block',
+                    mb: 2.5,
+                    color: 'text.primary',
+                    fontWeight: 800,
+                    letterSpacing: 1.8,
+                  }}
+                >
+                  {TEAM_TIER_LABELS[tier]}
+                </Typography>
+                <Grid container spacing={3}>
+                  {group.map((member, index) => (
+                    <Grid key={member.id} size={{ xs: 12, sm: 6, lg: 3 }} sx={{ display: 'flex' }}>
+                      <SectionReveal delay={index * 0.05} fillHeight>
+                        <TeamMemberCard member={member} />
+                      </SectionReveal>
+                    </Grid>
+                  ))}
+                </Grid>
+              </Box>
+            );
+          })}
+      </Section>
+    </Box>
   );
 };
 
@@ -1000,7 +935,9 @@ const OrgStructureSection = (): JSX.Element => (
             <Typography variant="h4" sx={{ mt: 2 }}>
               Central clarity, local ownership.
             </Typography>
-            <Typography sx={{ mt: 2, color: alpha(brandColors.deepForest, 0.75), lineHeight: 1.75 }}>
+            <Typography
+              sx={{ mt: 2, color: alpha(brandColors.deepForest, 0.75), lineHeight: 1.75 }}
+            >
               The structure supports governance, program quality, and local adaptation without
               losing the human texture of community-led work.
             </Typography>
@@ -1133,10 +1070,12 @@ const PartnersSection = (): JSX.Element => {
 const About = (): JSX.Element => {
   const copy = usePageCopy('about', {
     seoTitle: 'About Us — Our Mission, Vision & Team',
-    seoDescription: 'Impact Africa Alliance is a purpose-driven, Pan-African organization committed to sustainable development and transformative change across Africa.',
+    seoDescription:
+      'Impact Africa Alliance is a purpose-driven, Pan-African organization committed to sustainable development and transformative change across Africa.',
     heroEyebrow: 'About Impact Africa Alliance',
     heroTitle: 'Purpose-driven. Pan-African. Built to last.',
-    heroSubtitle: "We equip youth, women, and communities with the skills, partnerships, and opportunities to shape Africa's future from the inside out.",
+    heroSubtitle:
+      "We equip youth, women, and communities with the skills, partnerships, and opportunities to shape Africa's future from the inside out.",
   });
   return (
     <>

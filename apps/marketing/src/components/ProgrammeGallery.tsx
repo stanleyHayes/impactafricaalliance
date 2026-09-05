@@ -29,7 +29,7 @@ const GalleryTile = ({ item, index }: { item: GalleryItem; index: number }): JSX
           m: 0,
           overflow: 'hidden',
           borderRadius: 3,
-          bgcolor: 'rgba(0,30,20,0.06)',
+          bgcolor: 'common.black',
           '&:hover .gallery-img': { transform: 'scale(1.05)' },
         }}
       >
@@ -58,7 +58,15 @@ const GalleryTile = ({ item, index }: { item: GalleryItem; index: number }): JSX
         />
         <Box
           component="figcaption"
-          sx={{ position: 'absolute', right: 0, bottom: 0, left: 0, p: { xs: 2.25, md: 3 } }}
+          sx={{
+            position: 'absolute',
+            right: 0,
+            bottom: 0,
+            left: 0,
+            p: { xs: 2.25, md: 3 },
+            background:
+              'linear-gradient(0deg, rgba(8,31,19,0.94), rgba(8,31,19,0.82))',
+          }}
         >
           <Chip
             label={item.programme}
@@ -77,7 +85,7 @@ const GalleryTile = ({ item, index }: { item: GalleryItem; index: number }): JSX
           {item.caption && (
             <Typography
               variant="body2"
-              sx={{ mt: 0.5, color: 'rgba(255,255,255,0.74)', lineHeight: 1.55 }}
+              sx={{ mt: 0.5, color: 'common.white', lineHeight: 1.55 }}
             >
               {item.caption}
             </Typography>
@@ -85,7 +93,7 @@ const GalleryTile = ({ item, index }: { item: GalleryItem; index: number }): JSX
           {item.location && (
             <Typography
               variant="caption"
-              sx={{ display: 'block', mt: 0.75, color: 'rgba(255,255,255,0.58)' }}
+              sx={{ display: 'block', mt: 0.75, color: 'common.white' }}
             >
               {item.location}
             </Typography>
@@ -103,7 +111,7 @@ const GallerySkeleton = (): JSX.Element => (
         <Skeleton
           variant="rounded"
           height={index === 0 ? 420 : 300}
-          sx={{ borderRadius: 3, bgcolor: 'rgba(0,30,20,0.07)' }}
+          sx={{ borderRadius: 3 }}
         />
       </Grid>
     ))}

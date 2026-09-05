@@ -12,13 +12,13 @@ export const PageCta = ({ copy }: { copy: PageCopyDefaults }): JSX.Element | nul
   }
 
   return (
-    <Box component="section" sx={{ bgcolor: 'primary.dark', color: 'common.white', py: { xs: 7, md: 9 } }}>
+    <Box component="section" sx={{ bgcolor: 'primary.dark', color: 'common.black', py: { xs: 7, md: 9 } }}>
       <Container sx={{ textAlign: 'center' }}>
-        <Typography variant="h2" sx={{ mx: 'auto', maxWidth: 760, color: 'common.white' }}>
+        <Typography variant="h2" sx={{ mx: 'auto', maxWidth: 760, color: 'common.black' }}>
           {copy.ctaTitle}
         </Typography>
         {copy.ctaBody && (
-          <Typography sx={{ mx: 'auto', mt: 2, maxWidth: 660, color: 'rgba(255,255,255,0.74)', lineHeight: 1.75 }}>
+          <Typography sx={{ mx: 'auto', mt: 2, maxWidth: 660, color: 'common.black', lineHeight: 1.75 }}>
             {copy.ctaBody}
           </Typography>
         )}

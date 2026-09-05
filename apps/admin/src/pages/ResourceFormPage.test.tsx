@@ -118,7 +118,7 @@ afterEach(() => {
 });
 
 describe('resource form page', () => {
-  it('validates each step, keeps entries when returning, blocks uploads, and saves only after review', async () => {
+  it('validates steps, preserves review edits and uploads, and saves only with the final action', async () => {
     vi.mocked(api.post).mockResolvedValue({ id: 'created' });
     const client = setup('/content/widgets/new');
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
@@ -142,12 +142,39 @@ describe('resource form page', () => {
     expect(screen.getByLabelText('name')).toHaveValue('Jane');
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Review' }));
-    const save = await screen.findByRole('button', { name: 'Save' });
+    expect(await screen.findByRole('heading', { name: 'Review your widget' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'image' })).toHaveAttribute(
+      'src',
+      'https://example.com/image.jpg',
+    );
     expect(api.post).not.toHaveBeenCalled();
-    fireEvent.click(save);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit details' }));
+    expect(screen.getByLabelText('name')).toBeVisible();
+    expect(screen.getByLabelText('name')).toHaveValue('Jane');
+    expect(screen.queryByRole('button', { name: 'Start upload' })).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('note'), { target: { value: 'Updated from review' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Review' }));
+    expect(await screen.findByText('Updated from review')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit more details 2' }));
+    expect(screen.getByRole('button', { name: 'Start upload' })).toBeVisible();
+    expect(screen.getByLabelText('name')).not.toBeVisible();
+    expect(api.post).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Review' }));
+    expect(await screen.findByRole('heading', { name: 'Review your widget' })).toBeInTheDocument();
+    expect(screen.getByText('Updated from review')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'image' })).toHaveAttribute(
+      'src',
+      'https://example.com/image.jpg',
+    );
+    expect(api.post).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() =>
       expect(api.post).toHaveBeenCalledWith('/admin/widgets', {
         ...details,
+        note: 'Updated from review',
         image: { url: 'https://example.com/image.jpg' },
       }),
     );
