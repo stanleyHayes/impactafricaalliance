@@ -25,6 +25,24 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'ap
  * Upload a file directly to Cloudinary using a server-issued signature, so the
  * API secret never reaches the browser. Returns a MediaAsset for the form.
  */
+/**
+ * Cloudinary answers CORS by echoing the request Origin, but its response
+ * carries `Vary: Accept-Encoding` — with no `Origin` — alongside
+ * `Access-Control-Max-Age: 1728000` (20 days). A cached CORS result for this
+ * URL is therefore reusable across origins, and the public site and the admin
+ * console both upload to it. Whichever origin uploads first can poison the
+ * other for weeks with `Access-Control-Allow-Origin` naming the wrong host.
+ *
+ * Tagging the URL with the calling origin keeps the cache entries distinct.
+ * Cloudinary ignores unknown query parameters, so this changes nothing server
+ * side.
+ */
+const uploadUrl = (cloudName: string): string => {
+  const url = new URL(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`);
+  url.searchParams.set('_origin', globalThis.location?.origin ?? 'unknown');
+  return url.toString();
+};
+
 export const uploadToCloudinary = async (file: File): Promise<MediaAsset> => {
   if (!ALLOWED_TYPES.includes(file.type)) {
     throw new Error('Unsupported file type. Please upload JPG, PNG, GIF, WebP, or PDF.');
@@ -48,7 +66,7 @@ export const uploadToCloudinary = async (file: File): Promise<MediaAsset> => {
   form.append('max_file_size', String(signature.maxFileSize));
 
   const response = await fetch(
-    `https://api.cloudinary.com/v1_1/${signature.cloudName}/auto/upload`,
+    uploadUrl(signature.cloudName),
     { method: 'POST', body: form },
   );
   if (!response.ok) {
