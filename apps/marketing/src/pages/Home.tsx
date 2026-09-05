@@ -20,6 +20,7 @@ import { ArticleCard, PillarCard } from '../components/cards';
 import { HeroHeadline } from '../components/HeroHeadline';
 import { HeroImpactModel } from '../components/HeroImpactModel';
 import { ImpactMetrics } from '../components/ImpactMetrics';
+import { MissionStatement } from '../components/MissionStatement';
 import { PageCta } from '../components/PageCta';
 import { ParallaxShowcase } from '../components/ParallaxShowcase';
 import { Section } from '../components/Section';
@@ -211,61 +212,6 @@ const Hero = ({ copy, heroImage }: { copy: PageCopyDefaults; heroImage: string }
   </Box>
   );
 };
-
-const MissionStrip = (): JSX.Element => (
-  <Box
-    component="section"
-    sx={{
-      position: 'relative',
-      overflow: 'hidden',
-      bgcolor: 'common.black',
-      color: 'common.white',
-      py: { xs: 6, md: 8 },
-    }}
-  >
-    <Box
-      aria-hidden
-      sx={{
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        width: { xs: 360, md: 520 },
-        height: { xs: 360, md: 520 },
-        opacity: 0.08,
-        transform: 'translate(-50%, -50%)',
-        border: `1px solid ${alpha(brandColors.mint, 0.35)}`,
-        borderRadius: '50%',
-      }}
-    />
-    <Container sx={{ position: 'relative', zIndex: 1 }}>
-      <Typography
-        variant="h3"
-        sx={{
-          maxWidth: 900,
-          mx: 'auto',
-          textAlign: 'center',
-          fontSize: { xs: '1.55rem', sm: '2rem', md: '2.45rem' },
-          lineHeight: 1.25,
-          color: 'common.white',
-        }}
-      >
-        Driving sustainable impact across Africa through{' '}
-        <Box component="span" sx={{ color: 'primary.main' }}>
-          innovation
-        </Box>
-        ,{' '}
-        <Box component="span" sx={{ color: 'primary.main' }}>
-          education
-        </Box>
-        , and{' '}
-        <Box component="span" sx={{ color: 'primary.main' }}>
-          empowerment
-        </Box>
-        .
-      </Typography>
-    </Container>
-  </Box>
-);
 
 export const HomeImpactSection = (): JSX.Element => (
   <Box
@@ -685,7 +631,7 @@ const Home = (): JSX.Element => {
     <>
       <Seo title={copy.seoTitle} description={copy.seoDescription} />
       <Hero copy={copy} heroImage={copy.heroImageUrl ?? IMAGES.hero} />
-      <MissionStrip />
+      <MissionStatement />
       <HomeImpactSection />
       <Section
         eyebrow={copy.introEyebrow}

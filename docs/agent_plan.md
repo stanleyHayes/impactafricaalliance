@@ -709,3 +709,13 @@ Source: `Impact Africa Alliance Website Updates.pdf`
   updated section anchors, cookie preferences, form validation, retry, and the returned reference.
   Browser inspection repeatedly timed out; visual theme/mobile verification remains unconfirmed.
   No live privacy request was submitted.
+
+## 42. Mission statement redesign and animated typography (5 September 2026)
+
+- Replaced the centered mission strip with a balanced statement and three expressive keywords.
+  Innovation, education, and empowerment use gold, sage, and lilac accents with matching icons.
+- Added an original connected-path/arch SVG watermark, quieter themed surfaces, and a staggered
+  text reveal with settling icons. Plays once on entering the viewport; reduced motion is immediate.
+- Desktop and 390px mobile browser checks confirm readable layouts without overflow. Light-mode
+  keyword colors use darker accessible tones. Marketing lint/build/diff checks pass.
+- Full marketing typecheck was started but remained running after five minutes; its result is unconfirmed.
