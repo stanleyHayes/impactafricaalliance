@@ -47,3 +47,9 @@ tools/.mongo-uri
 
 # Temporary live-proxy dev configs (point a local app at the production API)
 apps/*/vite.live.config.ts
+
+# Raw portrait drops (originals live in Drive; processed copies go to Cloudinary)
+/*.JPG
+/*.jpg
+/*.png
+/portraits/
