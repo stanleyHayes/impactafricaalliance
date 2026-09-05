@@ -1,6 +1,7 @@
 import { brandColors } from '@iaa/shared';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
+import Badge from '@mui/material/Badge';
 import Box from '@mui/material/Box';
 import Collapse from '@mui/material/Collapse';
 import Divider from '@mui/material/Divider';
@@ -14,6 +15,7 @@ import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 
 import { useAuth } from '../../auth/AuthContext';
+import { useNewSubmissionCounts } from '../../lib/admin-hooks';
 
 import { buildNavGroups, type NavItem } from './nav-config';
 
@@ -74,10 +76,49 @@ const RailNavLink = ({
         },
       }}
     >
-      <ListItemIcon>{item.icon}</ListItemIcon>
+      <ListItemIcon>
+        <Badge
+          badgeContent={item.badge ?? 0}
+          color="error"
+          max={99}
+          overlap="circular"
+          sx={{ '& .MuiBadge-badge': { fontSize: '0.55rem', height: 15, minWidth: 15 } }}
+        >
+          {item.icon}
+        </Badge>
+      </ListItemIcon>
     </ListItemButton>
   </Tooltip>
 );
+
+/**
+ * Count pill for an expanded nav row. Sits after the label rather than on the
+ * icon, so a two-digit count cannot overlap the text.
+ */
+const NavBadge = ({ count }: { count?: number }): JSX.Element | null =>
+  count && count > 0 ? (
+    <Box
+      component="span"
+      aria-label={`${count} unread`}
+      sx={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minWidth: 20,
+        height: 20,
+        px: 0.75,
+        borderRadius: 10,
+        bgcolor: 'error.main',
+        color: 'common.white',
+        fontSize: '0.68rem',
+        fontWeight: 800,
+        // The active row is a filled pill; keep the count legible on it.
+        '.active &': { bgcolor: 'common.black', color: 'common.white' },
+      }}
+    >
+      {count > 99 ? '99+' : count}
+    </Box>
+  ) : null;
 
 /**
  * Expanded, threaded child link: hangs off the group spine via an L-shaped
@@ -156,6 +197,7 @@ const ThreadedNavLink = ({
     >
       <ListItemIcon>{item.icon}</ListItemIcon>
       <ListItemText primary={item.label} slotProps={{ primary: { variant: 'body2', noWrap: true } }} />
+      <NavBadge count={item.badge} />
     </ListItemButton>
     {/* Horizontal L-foot reaching from the spine toward the item. Rendered after
         the button so the `.active ~` sibling selector can recolour it. */}
@@ -182,7 +224,11 @@ const ThreadedNavLink = ({
 /** Grouped, collapsible sidebar navigation. Collapses to an icon rail on desktop. */
 export const SidebarNav = ({ collapsed, onNavigate }: SidebarNavProps): JSX.Element => {
   const { user } = useAuth();
-  const groups = buildNavGroups(user);
+  const { data: counts } = useNewSubmissionCounts();
+  const groups = buildNavGroups(user, {
+    submissionsTotal: counts?.total,
+    submissionsByType: counts?.byType,
+  });
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(groups.map((group) => [group.title, true])),
   );

@@ -20,7 +20,7 @@ import { useState } from 'react';
 import type { ComponentType, MouseEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { useSubmissions, useUpdateSubmissionStatus } from '../../lib/admin-hooks';
+import { useNewSubmissionCounts, useUpdateSubmissionStatus } from '../../lib/admin-hooks';
 import { formatUtcShort } from '../../lib/date';
 import { usePreferences } from '../../lib/preferences';
 
@@ -86,7 +86,9 @@ const relativeTime = (iso: string): string => {
 export const NotificationsBell = (): JSX.Element => {
   const navigate = useNavigate();
   const { prefs } = usePreferences();
-  const { data } = useSubmissions({ status: SubmissionStatus.New });
+  // One live query drives the bell, the sidebar badges and the dashboard
+  // banner, so the three can never disagree about how much is waiting.
+  const { data } = useNewSubmissionCounts();
   const markRead = useUpdateSubmissionStatus();
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const open = Boolean(anchorEl);

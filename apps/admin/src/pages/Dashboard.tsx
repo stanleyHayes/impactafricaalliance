@@ -45,7 +45,9 @@ import { Link as RouterLink } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { CardListSkeleton } from '../components/CardListSkeleton';
 import { BarChart } from '../components/charts/BarChart';
+import { DonationChartEmpty } from '../components/charts/DonationChartEmpty';
 import { DonutChart } from '../components/charts/DonutChart';
+import { NewSubmissionsBanner } from '../components/NewSubmissionsBanner';
 import { PageHeader } from '../components/PageHeader';
 import {
   useDashboardSummary,
@@ -745,7 +747,7 @@ const DonationsPanel = ({
 }): JSX.Element => (
   <Panel
     title="Donations"
-    subtitle="Succeeded gifts · last 6 months"
+    subtitle="Completed gifts · last 6 months"
     action={
       <Button
         component={RouterLink}
@@ -777,7 +779,7 @@ const DonationsPanel = ({
               {usd.format(donations.totalRaisedUsd)}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Total raised · {donations.succeededCount} succeeded
+              Total raised · {donations.succeededCount} completed
             </Typography>
           </Box>
           <Stack direction="row" spacing={1}>
@@ -791,17 +793,23 @@ const DonationsPanel = ({
           </Stack>
         </Stack>
 
-        <BarChart
-          data={donations.monthly.map((bucket) => ({
-            label: bucket.month,
-            value: bucket.amountUsd,
-            displayValue: bucket.amountUsd > 0 ? usdCompact.format(bucket.amountUsd) : undefined,
-          }))}
-          color={brandColors.gold}
-          formatLabel={monthShortLabel}
-          formatValue={(value) => usdCompact.format(value)}
-          emptyMessage="No succeeded donations yet"
-        />
+        {donations.monthly.some((bucket) => bucket.amountUsd > 0) ? (
+          <BarChart
+            data={donations.monthly.map((bucket) => ({
+              label: bucket.month,
+              value: bucket.amountUsd,
+              displayValue: bucket.amountUsd > 0 ? usdCompact.format(bucket.amountUsd) : undefined,
+            }))}
+            color={brandColors.gold}
+            formatLabel={monthShortLabel}
+            formatValue={(value) => usdCompact.format(value)}
+          />
+        ) : (
+          <DonationChartEmpty
+            hasHistory={donations.succeededCount > 0}
+            needsReview={donations.pendingCount > 0 || donations.failedCount > 0}
+          />
+        )}
 
         <Divider sx={{ my: 2 }} />
         <Stack spacing={1.25}>
@@ -1300,6 +1308,8 @@ const Dashboard = (): JSX.Element => {
         help={pageGuides.Dashboard}
         action={<HeaderActions />}
       />
+
+      <NewSubmissionsBanner />
 
       {summary.isError && (
         <Alert severity="error" sx={{ mb: 2.5 }}>

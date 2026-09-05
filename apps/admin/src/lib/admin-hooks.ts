@@ -96,6 +96,44 @@ export const useDeleteEvent = (): UseMutationResult<void, Error, string> => {
   });
 };
 
+export interface NewSubmissionCounts {
+  total: number;
+  byType: Record<string, number>;
+  latestAt?: string;
+  /** The unread submissions themselves, so the bell needs no second query. */
+  items: Submission[];
+}
+
+/**
+ * Unread submission counts, kept live.
+ *
+ * This is the one query the console must not serve stale: the badge exists to
+ * tell someone that work has arrived, and the app otherwise disables
+ * refetch-on-focus and never polls, so a submission landing while the tab was
+ * open stayed invisible until a manual reload.
+ */
+export const useNewSubmissionCounts = (): UseQueryResult<NewSubmissionCounts> =>
+  useQuery({
+    queryKey: ['submissions', 'new-counts'],
+    queryFn: async () => {
+      const page = await api.get<Paginated<Submission>>(
+        '/admin/submissions?status=new&pageSize=100',
+      );
+      const byType: Record<string, number> = {};
+      for (const submission of page.items) {
+        byType[submission.type] = (byType[submission.type] ?? 0) + 1;
+      }
+      const latestAt = page.items
+        .map((submission) => submission.createdAt)
+        .sort()
+        .at(-1);
+      return { total: page.total ?? page.items.length, byType, latestAt, items: page.items };
+    },
+    refetchInterval: 60_000,
+    refetchOnWindowFocus: true,
+    staleTime: 30_000,
+  });
+
 export const useSubmissions = (params: {
   type?: string;
   status?: string;

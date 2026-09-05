@@ -2,7 +2,7 @@ import type { LoginInput, LoginResponse, MfaLoginInput, MfaRequiredResponse, Pub
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
-import { api } from '../lib/api-client';
+import { api, setSessionExpiredHandler } from '../lib/api-client';
 import { tokenStore } from '../lib/token-store';
 
 type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated';
@@ -53,6 +53,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }): JSX.Element
     tokenStore.clear();
     setUser(null);
     setStatus('unauthenticated');
+  }, []);
+
+  // An expired session signs the user out wherever it is discovered, including
+  // from a background refetch, so they land on the login screen rather than on
+  // a page whose every action fails.
+  useEffect(() => {
+    setSessionExpiredHandler(() => {
+      setUser(null);
+      setStatus('unauthenticated');
+    });
+    return () => setSessionExpiredHandler(null);
   }, []);
 
   const updateUser = useCallback((next: PublicUser) => setUser(next), []);

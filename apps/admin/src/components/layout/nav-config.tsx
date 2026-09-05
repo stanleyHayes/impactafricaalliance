@@ -32,6 +32,8 @@ export interface NavItem {
   icon: JSX.Element;
   /** Match the route exactly (used for the index "/" Dashboard link). */
   end?: boolean;
+  /** Unread count shown as a badge. Omitted or 0 renders nothing. */
+  badge?: number;
 }
 
 export interface NavGroup {
@@ -54,13 +56,36 @@ const CONTENT_ICONS: Record<string, JSX.Element> = {
 };
 
 /** Build the grouped sidebar navigation, filtered to what the user may access. */
-export const buildNavGroups = (user: PublicUser | null): NavGroup[] => {
+export interface NavCounts {
+  /** Unread submissions, keyed by submission type. */
+  submissionsByType?: Record<string, number>;
+  submissionsTotal?: number;
+}
+
+export const buildNavGroups = (user: PublicUser | null, counts: NavCounts = {}): NavGroup[] => {
+  const byType = counts.submissionsByType ?? {};
   const operations: NavItem[] = [
     // `end` so the combined inbox does not also light up on its child routes
     // (/submissions/partners and /submissions/mentors both prefix-match it).
-    { to: '/submissions', label: 'Submissions', icon: <InboxIcon />, end: true },
-    { to: '/submissions/partners', label: 'Partner enquiries', icon: <HandshakeIcon /> },
-    { to: '/submissions/mentors', label: 'Mentor applications', icon: <VolunteerActivismIcon /> },
+    {
+      to: '/submissions',
+      label: 'Submissions',
+      icon: <InboxIcon />,
+      end: true,
+      badge: counts.submissionsTotal,
+    },
+    {
+      to: '/submissions/partners',
+      label: 'Partner enquiries',
+      icon: <HandshakeIcon />,
+      badge: byType.partner,
+    },
+    {
+      to: '/submissions/mentors',
+      label: 'Mentor applications',
+      icon: <VolunteerActivismIcon />,
+      badge: byType.volunteer,
+    },
     { to: '/subscribers', label: 'Subscribers', icon: <MailIcon /> },
     { to: '/events', label: 'Events', icon: <CalendarMonthIcon /> },
     { to: '/donations', label: 'Donations', icon: <VolunteerActivismIcon /> },

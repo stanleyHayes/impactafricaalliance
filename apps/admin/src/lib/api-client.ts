@@ -30,6 +30,20 @@ interface RequestOptions {
 
 let refreshInFlight: Promise<boolean> | null = null;
 
+type SessionExpiredHandler = () => void;
+let onSessionExpired: SessionExpiredHandler | null = null;
+
+/**
+ * Registered by AuthContext so an unrecoverable 401 can end the session.
+ *
+ * Without this the client refreshed, failed, and rethrew — leaving someone in a
+ * console that still looked signed in while every request answered
+ * "Unauthorized". Uploading a photo was the usual way to discover it.
+ */
+export const setSessionExpiredHandler = (handler: SessionExpiredHandler | null): void => {
+  onSessionExpired = handler;
+};
+
 const buildError = async (response: Response): Promise<ApiError> => {
   try {
     const body = (await response.json()) as ApiErrorBody;
@@ -97,6 +111,11 @@ export const apiRequest = async <T>(path: string, options: RequestOptions = {}):
     const refreshed = await tryRefresh();
     if (refreshed) {
       response = await sendRequest(path, options);
+    } else {
+      // The refresh token is gone or rejected: the session is genuinely over.
+      // End it rather than showing "Unauthorized" on every subsequent action.
+      tokenStore.clear();
+      onSessionExpired?.();
     }
   }
 
