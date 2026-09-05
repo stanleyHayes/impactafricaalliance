@@ -6,11 +6,20 @@ import type { AppConfig } from '../config/env.js';
 import type { AppLogger } from '../config/logger.js';
 import { TOKENS } from '../tokens.js';
 
+/** A file sent alongside the message, e.g. a calendar invitation. */
+export interface EmailAttachment {
+  filename: string;
+  content: Buffer;
+  /** MIME type; helps mail clients offer the right "add to calendar" action. */
+  contentType?: string;
+}
+
 export interface EmailMessage {
   to: string;
   subject: string;
   html: string;
   replyTo?: string;
+  attachments?: EmailAttachment[];
 }
 
 /** Abstraction over transactional email so the app never couples to a vendor. */
@@ -46,6 +55,7 @@ export class ResendEmailProvider implements EmailProvider {
       subject: message.subject,
       html: message.html,
       ...(message.replyTo ? { replyTo: message.replyTo } : {}),
+      ...(message.attachments?.length ? { attachments: message.attachments } : {}),
     });
     if (error) {
       this.logger.error({ err: error }, 'Failed to send email');

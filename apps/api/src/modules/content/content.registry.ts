@@ -145,6 +145,9 @@ export const buildContentModules = (container: DependencyContainer): MountedCont
       schemas: { create: eventInputSchema, update: eventUpdateSchema },
       serviceFactory: (repo, options) => new EventContentService(repo, options),
       defaultSort: { startAt: -1 },
+      // The joining link is the whole point of registering; publishing it on
+      // the event itself would let anyone skip the questionnaire.
+      publicOmit: ['meetingUrl'],
     },
     container,
   ),

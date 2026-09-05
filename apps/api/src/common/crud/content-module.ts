@@ -26,6 +26,8 @@ export interface ContentModuleDefinition<TDoc> {
   defaultSort?: SortSpec;
   /** Roles permitted to mutate content (default: Admin + Editor). */
   writeRoles?: Role[];
+  /** Fields stripped from public reads but kept on the admin surface. */
+  publicOmit?: (keyof TDoc & string)[];
   /** Optional factory to build a custom service (e.g. for domain hooks). */
   serviceFactory?: (
     repo: ContentRepository<TDoc>,
@@ -57,7 +59,7 @@ export const mountContentModule = <TDoc>(
   const service = def.serviceFactory
     ? def.serviceFactory(repo, serviceOptions)
     : new ContentService<TDoc>(repo, serviceOptions);
-  const controller = new ContentController<TDoc>(service, def.schemas);
+  const controller = new ContentController<TDoc>(service, def.schemas, def.publicOmit ?? []);
   const tokens = container.resolve(TokenService);
 
   const publicRouter = Router();

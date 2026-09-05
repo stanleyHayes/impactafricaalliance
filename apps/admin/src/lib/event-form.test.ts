@@ -63,6 +63,31 @@ describe('event form scheduling', () => {
     expect(eventPatch(cleared.data).registrationClosesAt).toBeUndefined();
   });
 
+  it('round-trips a meeting link and clears it explicitly when emptied', () => {
+    const online: Event = { ...event, meetingUrl: 'https://meet.example.com/iaa-webinar' };
+    const form = eventToForm(online);
+    expect(form.meetingUrl).toBe('https://meet.example.com/iaa-webinar');
+
+    const kept = parseEventForm(form);
+    expect(kept.success).toBe(true);
+    if (!kept.success) throw kept.error;
+    expect(kept.data.meetingUrl).toBe('https://meet.example.com/iaa-webinar');
+
+    const emptied = parseEventForm({ ...form, meetingUrl: '' });
+    expect(emptied.success).toBe(true);
+    if (!emptied.success) throw emptied.error;
+    expect(emptied.data.meetingUrl).toBeUndefined();
+    // An editor who clears the box means "remove it", not "leave it as it was".
+    expect(eventPatch(emptied.data, online).meetingUrl).toBeNull();
+  });
+
+  it('rejects a meeting link that is not a URL, on the registration step', () => {
+    const form = { ...eventToForm(event), meetingUrl: 'not a link' };
+    expect(parseEventForm(form).success).toBe(false);
+    expect(eventStepError(form, 2)).toBeDefined();
+    expect(eventStepError(form, 0)).toBeUndefined();
+  });
+
   it('blocks incomplete or incorrectly ordered dates on their own step without blocking unrelated steps', () => {
     const valid = eventToForm(event);
     const incompleteEnd = { ...valid, endAt: dayjs('not-a-date') };

@@ -22,6 +22,7 @@ import { EventSchema } from '../components/EventSchema';
 import { Seo } from '../components/Seo';
 import { PageSkeleton } from '../components/skeletons';
 import { IMAGES } from '../content/images';
+import { EventActions } from '../features/events/EventActions';
 import { EventRegistrationDialog } from '../features/events/EventRegistrationDialog';
 import { useEvent } from '../lib/content-hooks';
 import { formatEventDate, formatEventTime, formatEventType } from '../lib/event-utils';
@@ -193,6 +194,8 @@ const EventBody = ({ event }: { event: Event }): JSX.Element => {
                     : 'Registration is not currently open.'}
                 </Typography>
               )}
+
+              <EventActions event={event} />
             </Box>
           </Box>
         </Container>

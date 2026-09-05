@@ -27,6 +27,7 @@ export interface EventFormState {
   registrationEnabled: boolean;
   capacity: string;
   registrationClosesAt: Dayjs | null;
+  meetingUrl: string;
   questions: EventQuestion[];
 }
 
@@ -47,6 +48,7 @@ export const emptyEventForm = (date?: string | null): EventFormState => {
     registrationEnabled: false,
     capacity: '',
     registrationClosesAt: null,
+    meetingUrl: '',
     questions: [],
   };
 };
@@ -66,6 +68,7 @@ export const eventToForm = (event: Event): EventFormState => ({
   registrationEnabled: event.registrationEnabled ?? false,
   capacity: event.capacity === undefined ? '' : String(event.capacity),
   registrationClosesAt: event.registrationClosesAt ? dayjs(event.registrationClosesAt) : null,
+  meetingUrl: event.meetingUrl ?? '',
   questions: event.questions ?? [],
 });
 
@@ -110,13 +113,14 @@ export const parseEventForm = (
     registrationEnabled: form.registrationEnabled,
     capacity: form.capacity.trim() ? Number(form.capacity) : undefined,
     registrationClosesAt: toIso(form.registrationClosesAt),
+    meetingUrl: form.meetingUrl.trim() || undefined,
     questions: form.questions.filter((question) => question.label.trim().length > 0),
   });
 
 const fieldsByStep = [
   ['title', 'description', 'type', 'image'],
   ['startAt', 'endAt', 'location', 'host', 'hostTitle'],
-  ['registrationEnabled', 'capacity', 'admission', 'registrationClosesAt', 'questions'],
+  ['registrationEnabled', 'capacity', 'admission', 'registrationClosesAt', 'meetingUrl', 'questions'],
   ['status'],
 ];
 
@@ -142,6 +146,7 @@ export const eventPatch = (data: EventInput, event?: Event | null): EventUpdate 
       'admission',
       'capacity',
       'registrationClosesAt',
+      'meetingUrl',
     ] as const) {
       if (body[key] === undefined && event[key] !== undefined) Object.assign(body, { [key]: null });
     }

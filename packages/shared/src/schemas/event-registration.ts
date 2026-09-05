@@ -70,4 +70,9 @@ export interface EventRegistrationResult {
   registered: boolean;
   /** True when this email had already registered for the event. */
   alreadyRegistered: boolean;
+  /**
+   * Joining link for an online event. Returned only to someone who now holds a
+   * place, which is the one moment the link is theirs to see.
+   */
+  meetingUrl?: string;
 }

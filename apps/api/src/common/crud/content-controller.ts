@@ -1,6 +1,6 @@
 import { paginationQuerySchema } from '@iaa/shared';
 import type { Request, Response } from 'express';
-import type { AnyKeys, UpdateQuery } from 'mongoose';
+import type { AnyKeys, HydratedDocument, UpdateQuery } from 'mongoose';
 import type { ZodTypeAny } from 'zod';
 
 import { pathParam } from '../http.js';
@@ -19,15 +19,31 @@ export class ContentController<TDoc> {
   constructor(
     private readonly service: ContentService<TDoc>,
     private readonly schemas: ContentSchemas,
+    /** Fields the public API must never return, e.g. an event's joining link. */
+    private readonly publicOmit: readonly string[] = [],
   ) {}
+
+  /**
+   * Public and admin reads share one service, so a field only staff may see has
+   * to come off here. Serialising first keeps the payload identical to what
+   * res.json would have produced on its own.
+   */
+  private stripPrivate = (doc: HydratedDocument<TDoc>): Record<string, unknown> => {
+    const json = doc.toJSON() as Record<string, unknown>;
+    for (const field of this.publicOmit) {
+      delete json[field];
+    }
+    return json;
+  };
 
   listPublic = async (req: Request, res: Response): Promise<void> => {
     const { page, pageSize } = parseWith(paginationQuerySchema, req.query);
-    res.json(await this.service.listPublic(page, pageSize));
+    const result = await this.service.listPublic(page, pageSize);
+    res.json({ ...result, items: result.items.map((item) => this.stripPrivate(item)) });
   };
 
   getPublic = async (req: Request, res: Response): Promise<void> => {
-    res.json(await this.service.getPublic(pathParam(req, 'key')));
+    res.json(this.stripPrivate(await this.service.getPublic(pathParam(req, 'key'))));
   };
 
   listAdmin = async (req: Request, res: Response): Promise<void> => {

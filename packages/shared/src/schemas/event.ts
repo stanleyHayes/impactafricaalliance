@@ -23,6 +23,12 @@ const optionalText = z
   .optional()
   .transform((value) => (value === '' ? undefined : value));
 
+/** Joining links are optional; the admin form submits '' for an untouched one. */
+const optionalUrl = z
+  .union([z.literal(''), z.string().url().max(1000)])
+  .optional()
+  .transform((value) => (value === '' ? undefined : value));
+
 /**
  * One question on an event's own questionnaire. Every event inherits the core
  * audience questions; these are the extra, event-specific ones an editor adds.
@@ -61,6 +67,12 @@ export const eventInputSchema = z.object({
   /** Zero or absent means unlimited. */
   capacity: z.number().int().min(0).optional(),
   registrationClosesAt: z.string().datetime().optional(),
+  /**
+   * Joining link for an online session. Deliberately withheld from the public
+   * API and handed over only once someone has registered, so the link cannot
+   * be used to walk past the questionnaire.
+   */
+  meetingUrl: optionalUrl,
   questions: z.array(eventQuestionSchema).max(40).default([]),
 });
 export type EventInput = z.infer<typeof eventInputSchema>;
@@ -77,6 +89,7 @@ export const eventUpdateSchema = eventInputSchema.partial().extend({
   admission: optionalText.nullable(),
   capacity: z.number().int().min(0).nullable().optional(),
   registrationClosesAt: z.string().datetime().nullable().optional(),
+  meetingUrl: optionalUrl.nullable(),
 });
 export type EventUpdate = z.infer<typeof eventUpdateSchema>;
 
@@ -96,6 +109,8 @@ export interface Event extends Timestamped {
   registrationEnabled: boolean;
   capacity?: number;
   registrationClosesAt?: string;
+  /** Present only on admin reads and on a registrant's own confirmation. */
+  meetingUrl?: string;
   questions: EventQuestion[];
 }
 

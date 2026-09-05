@@ -6,6 +6,7 @@ import LocalOfferOutlinedIcon from '@mui/icons-material/LocalOfferOutlined';
 import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
 import PersonOutlinedIcon from '@mui/icons-material/PersonOutlined';
 import TitleIcon from '@mui/icons-material/Title';
+import VideocamOutlinedIcon from '@mui/icons-material/VideocamOutlined';
 import Box from '@mui/material/Box';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import MenuItem from '@mui/material/MenuItem';
@@ -173,6 +174,13 @@ export const EventRegistrationFields = ({
       maxDateTime={form.startAt?.isValid() ? form.startAt : undefined}
       helperText={`Defaults to the event start time. Times use ${timezone}.`}
     />
+    <TextField
+      label={fieldLabel(VideocamOutlinedIcon, 'Meeting link (optional)')}
+      placeholder="https://meet.google.com/abc-defg-hij"
+      value={form.meetingUrl}
+      onChange={(e) => setField('meetingUrl', e.target.value)}
+      helperText="For online sessions. Never shown on the public event page — only someone who has completed registration sees it."
+    />
     <QuestionBuilder
       label="Extra questions for this event"
       helperText="These questions and capacity settings apply when website registration is enabled."
@@ -227,6 +235,11 @@ export const EventReviewFields = ({
           {form.registrationClosesAt && (
             <Typography variant="body2" color="text.secondary">
               Registration closes {form.registrationClosesAt.format('DD MMM YYYY, HH:mm')}
+            </Typography>
+          )}
+          {form.meetingUrl && (
+            <Typography variant="body2" color="text.secondary" sx={{ overflowWrap: 'anywhere' }}>
+              Joining link shared after registration · {form.meetingUrl}
             </Typography>
           )}
           {form.questions.length > 0 && (

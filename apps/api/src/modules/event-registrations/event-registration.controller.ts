@@ -19,6 +19,18 @@ export class EventRegistrationController {
     res.status(201).json(result);
   };
 
+  /** Public calendar download; served as a file so browsers hand it to the OS. */
+  calendar = async (req: Request, res: Response): Promise<void> => {
+    const { filename, body } = await this.registrations.calendarForEvent(
+      pathParam(req, 'eventId'),
+    );
+    res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    // Details can change in the dashboard, so keep the cached copy short-lived.
+    res.setHeader('Cache-Control', 'public, max-age=300');
+    res.send(body);
+  };
+
   list = async (req: Request, res: Response): Promise<void> => {
     const { page, pageSize } = parseWith(paginationQuerySchema, req.query);
     res.json(await this.registrations.listForEvent(pathParam(req, 'eventId'), page, pageSize));

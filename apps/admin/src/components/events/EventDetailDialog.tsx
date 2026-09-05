@@ -5,11 +5,13 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import LocalOfferOutlinedIcon from '@mui/icons-material/LocalOfferOutlined';
 import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
 import PersonOutlinedIcon from '@mui/icons-material/PersonOutlined';
+import VideocamOutlinedIcon from '@mui/icons-material/VideocamOutlined';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import Dialog from '@mui/material/Dialog';
 import DialogContent from '@mui/material/DialogContent';
+import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
@@ -100,6 +102,25 @@ export const EventDetailDialog = ({
               )}
             </Box>
           </Stack>
+          {event.meetingUrl && (
+            <Stack direction="row" spacing={1.5}>
+              <VideocamOutlinedIcon color="action" />
+              <Box sx={{ minWidth: 0 }}>
+                <Typography sx={{ fontWeight: 650 }}>Joining link</Typography>
+                <Link
+                  href={event.meetingUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={{ overflowWrap: 'anywhere' }}
+                >
+                  {event.meetingUrl}
+                </Link>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                  Sent to each attendee on registration. Never shown publicly.
+                </Typography>
+              </Box>
+            </Stack>
+          )}
           <Stack direction="row" spacing={1.5}>
             <DescriptionOutlinedIcon color="action" />
             <Box sx={{ minWidth: 0 }}>

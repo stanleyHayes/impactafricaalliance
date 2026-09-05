@@ -26,6 +26,7 @@ export interface EventDocument {
   registrationEnabled: boolean;
   capacity?: number;
   registrationClosesAt?: Date;
+  meetingUrl?: string;
   questions: EventQuestion[];
   createdAt: Date;
   updatedAt: Date;
@@ -64,6 +65,7 @@ const eventSchema = new Schema<EventDocument>(
     registrationEnabled: { type: Boolean, default: false },
     capacity: { type: Number },
     registrationClosesAt: { type: Date },
+    meetingUrl: { type: String },
     questions: { type: [questionSubSchema], default: [] },
   },
   baseSchemaOptions,

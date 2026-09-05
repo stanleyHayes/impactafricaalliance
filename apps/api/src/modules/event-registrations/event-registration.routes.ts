@@ -23,6 +23,8 @@ export const createEventRegistrationRouters = (
 
   const publicRouter = Router();
   publicRouter.post('/:eventId/register', sensitiveRateLimit, asyncHandler(controller.register));
+  // Two segments, so it never collides with the content router's GET /:key.
+  publicRouter.get('/:eventId/calendar.ics', asyncHandler(controller.calendar));
 
   // Mounted on its own path rather than under /api/admin/events, whose content
   // router already claims GET /:id — "/counts" would be swallowed by it.

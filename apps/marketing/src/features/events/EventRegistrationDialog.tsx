@@ -1,8 +1,14 @@
-import type { Event, EventAnswer, EventRegistrationInput } from '@iaa/shared';
+import type {
+  Event,
+  EventAnswer,
+  EventRegistrationInput,
+  EventRegistrationResult,
+} from '@iaa/shared';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import VideocamRoundedIcon from '@mui/icons-material/VideocamRounded';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -50,25 +56,73 @@ const stepError = (step: RegistrationStep, value: AnswerValue | undefined): stri
 
 interface SuccessPanelProps {
   title: string;
-  alreadyRegistered: boolean;
+  /** The server's answer, which carries the joining link when there is one. */
+  result: EventRegistrationResult;
   onClose: () => void;
 }
 
-const SuccessPanel = ({ title, alreadyRegistered, onClose }: SuccessPanelProps): JSX.Element => (
+const SuccessPanel = ({ title, result, onClose }: SuccessPanelProps): JSX.Element => {
+  const { alreadyRegistered, meetingUrl } = result;
+  return (
   <Stack spacing={2.5} alignItems="flex-start">
     <CheckCircleRoundedIcon sx={{ color: 'success.main', fontSize: 56 }} />
     <Typography variant="h3" sx={{ fontSize: { xs: '1.9rem', md: '2.5rem' } }}>
       {alreadyRegistered ? "You're already on the list." : "You're in."}
     </Typography>
     <Typography color="text.secondary" sx={{ lineHeight: 1.75 }}>
-      We&apos;ll email the joining details for <strong>{title}</strong> before it starts. Keep an
-      eye on your inbox.
+      {meetingUrl ? (
+        <>
+          Here is your link to join <strong>{title}</strong>. We&apos;ll email it to you as well, so
+          you have it when the session starts.
+        </>
+      ) : (
+        <>
+          We&apos;ll email the joining details for <strong>{title}</strong> before it starts. Keep
+          an eye on your inbox.
+        </>
+      )}
     </Typography>
-    <Button variant="contained" onClick={onClose} sx={{ mt: 1, fontWeight: 700 }}>
-      Done
-    </Button>
-  </Stack>
-);
+    {meetingUrl && (
+      <Box
+        sx={{
+          alignSelf: 'stretch',
+          p: 2,
+          borderRadius: 2,
+          border: 1,
+          borderColor: 'divider',
+          bgcolor: 'action.hover',
+        }}
+      >
+        <Button
+          component="a"
+          href={meetingUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          variant="contained"
+          startIcon={<VideocamRoundedIcon />}
+          sx={{ fontWeight: 700 }}
+        >
+          Join the session
+        </Button>
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{ mt: 1.5, overflowWrap: 'anywhere' }}
+        >
+          {meetingUrl}
+        </Typography>
+      </Box>
+    )}
+      <Button
+        variant={meetingUrl ? 'text' : 'contained'}
+        onClick={onClose}
+        sx={{ mt: 1, fontWeight: 700 }}
+      >
+        Done
+      </Button>
+    </Stack>
+  );
+};
 
 
 interface ConsentPanelProps {
@@ -377,12 +431,8 @@ export const EventRegistrationDialog = ({
           }}
         >
           <Box sx={{ width: '100%', maxWidth: 640 }}>
-            {succeeded ? (
-              <SuccessPanel
-                title={event.title}
-                alreadyRegistered={Boolean(register.data?.alreadyRegistered)}
-                onClose={onClose}
-              />
+            {succeeded && register.data ? (
+              <SuccessPanel title={event.title} result={register.data} onClose={onClose} />
             ) : (
               <>
                 <Typography
