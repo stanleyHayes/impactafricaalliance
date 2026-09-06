@@ -17,7 +17,7 @@
  *
  * Usage: node tools/generate-sitemap.mjs [--api <url>] [--site <url>] [--timeout <ms>]
  */
-import { writeFileSync } from 'node:fs';
+import { existsSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
@@ -131,21 +131,33 @@ const run = async () => {
     )
     .join('\n');
 
+  console.log(
+    `  ${STATIC_ROUTES.length} static, ${events.length} events, ${articles.length} articles, ${team.length} team`,
+  );
+
+  // A short sitemap must never overwrite a complete one. `prebuild` runs this
+  // on every build, including each Vercel deploy, and swallows the exit code —
+  // so one cold start on the API used to be enough to publish a sitemap with
+  // no events and no profiles at all. Keeping the previous file is always the
+  // better outcome: slightly stale beats missing every content URL.
+  if (incomplete.length > 0 && existsSync(OUT)) {
+    console.error(
+      `\nINCOMPLETE: ${incomplete.join(', ')} could not be read. Kept the existing ${OUT} rather than replacing it with a shorter one. Retry, or raise --timeout.`,
+    );
+    process.exitCode = 1;
+    return;
+  }
+
   writeFileSync(
     OUT,
     `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`,
   );
-
-  console.log(
-    `  ${STATIC_ROUTES.length} static, ${events.length} events, ${articles.length} articles, ${team.length} team`,
-  );
   console.log(`  wrote ${OUT} (${entries.length} URLs)`);
 
   if (incomplete.length > 0) {
-    // Written, but short. Surfaced as a failure so nobody commits a sitemap
-    // that quietly dropped every event and profile page.
+    // Nothing to preserve, so a static-only sitemap is still better than none.
     console.error(
-      `\nINCOMPLETE: ${incomplete.join(', ')} could not be read. The file was written without them — do not commit it. Retry, or raise --timeout.`,
+      `\nINCOMPLETE: ${incomplete.join(', ')} could not be read, and there was no existing sitemap to keep. Wrote the static routes only.`,
     );
     process.exitCode = 1;
   }
