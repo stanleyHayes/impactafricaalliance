@@ -22,7 +22,6 @@ import { ArticleCard } from '../components/cards';
 import { PageHero } from '../components/PageHero';
 import { Section } from '../components/Section';
 import { Seo } from '../components/Seo';
-import { IMAGES } from '../content/images';
 import { useArticles, usePageCopy } from '../lib/content-hooks';
 
 const NewsSkeleton = (): JSX.Element => (
@@ -274,7 +273,7 @@ const News = (): JSX.Element => {
         eyebrow={copy.heroEyebrow}
         title={copy.heroTitle}
         subtitle={copy.heroSubtitle}
-        image={copy.heroImageUrl ?? IMAGES.community}
+        image={copy.heroImageUrl}
       />
       <Section watermark="radar" watermarkPosition="bottom-right">{renderArticles()}</Section>
     </>

@@ -5,7 +5,7 @@ import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import { m, useReducedMotion } from 'framer-motion';
 
-import { IMAGES } from '../content/images';
+import { useSiteImage } from '../lib/site-images';
 import { rise, transitions } from '../theme/motion';
 
 import { AnimatedHeading } from './AnimatedHeading';
@@ -24,10 +24,14 @@ export const PageHero = ({
   title,
   subtitle,
   eyebrow,
-  image = IMAGES.community,
+  image,
   watermark,
 }: PageHeroProps): JSX.Element => {
   const reduceMotion = useReducedMotion();
+  // Callers pass nothing when the page has no banner of its own, and the
+  // dashboard's default fills in.
+  const fallback = useSiteImage('community');
+  const source = image ?? fallback;
 
   return (
   <Box
@@ -44,7 +48,7 @@ export const PageHero = ({
       sx={{
         position: 'absolute',
         inset: 0,
-        backgroundImage: `url(${image})`,
+        backgroundImage: `url(${source})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         transform: 'scale(1.035)',

@@ -31,6 +31,8 @@ export const AdminResource = {
   Gallery: 'gallery',
   Offices: 'offices',
   PillarImages: 'pillar-images',
+  SiteImages: 'site-images',
+  MediaLibrary: 'media-library',
   Stats: 'stats',
   PageSettings: 'page-settings',
   Submissions: 'submissions',

@@ -10,6 +10,7 @@ import News from './News';
 vi.mock('../lib/content-hooks', () => ({
   useArticles: vi.fn(),
   usePageCopy: vi.fn((_pageKey: string, fallback: unknown) => fallback),
+  useSiteImages: () => ({ data: { items: [] } }),
 }));
 
 const mockUseArticles = vi.mocked(useArticles);

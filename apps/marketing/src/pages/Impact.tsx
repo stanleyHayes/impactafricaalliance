@@ -38,6 +38,7 @@ import { Seo } from '../components/Seo';
 import { Watermark } from '../components/Watermark';
 import { IMAGES } from '../content/images';
 import { usePageCopy, useReports } from '../lib/content-hooks';
+import { useSiteImage } from '../lib/site-images';
 
 /** Official UN SDG brand colours, used to make the goal grid recognisable. */
 const SDG_COLORS: Record<number, string> = {
@@ -964,6 +965,7 @@ export const ReportsSection = (): JSX.Element => {
 };
 
 const Impact = (): JSX.Element => {
+  const impactBanner = useSiteImage('impact-banner');
   const copy = usePageCopy('impact', {
     seoTitle: 'Our Impact — Transforming Lives Across West Africa',
     seoDescription:
@@ -979,7 +981,7 @@ const Impact = (): JSX.Element => {
         eyebrow={copy.heroEyebrow}
         title={copy.heroTitle}
         subtitle={copy.heroSubtitle}
-        image={copy.heroImageUrl ?? IMAGES.programs['women-empowerment']}
+        image={copy.heroImageUrl ?? impactBanner}
       />
       <ImpactNumbersSection />
       <ProgrammeGallery />

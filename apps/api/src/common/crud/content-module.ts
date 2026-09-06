@@ -28,6 +28,8 @@ export interface ContentModuleDefinition<TDoc> {
   writeRoles?: Role[];
   /** Fields stripped from public reads but kept on the admin surface. */
   publicOmit?: (keyof TDoc & string)[];
+  /** Internal tooling with no public surface, e.g. the media library. */
+  adminOnly?: boolean;
   /** Optional factory to build a custom service (e.g. for domain hooks). */
   serviceFactory?: (
     repo: ContentRepository<TDoc>,
@@ -37,7 +39,8 @@ export interface ContentModuleDefinition<TDoc> {
 
 export interface MountedContentModule {
   path: string;
-  publicRouter: Router;
+  /** Absent for admin-only modules, which the app then does not mount. */
+  publicRouter?: Router;
   adminRouter: Router;
 }
 
@@ -75,5 +78,5 @@ export const mountContentModule = <TDoc>(
   adminRouter.patch('/:id', asyncHandler(controller.update));
   adminRouter.delete('/:id', asyncHandler(controller.remove));
 
-  return { path: def.path, publicRouter, adminRouter };
+  return { path: def.path, ...(def.adminOnly ? {} : { publicRouter }), adminRouter };
 };

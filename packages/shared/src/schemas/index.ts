@@ -19,5 +19,7 @@ export * from './page-setting.js';
 export * from './site-setting.js';
 export * from './office.js';
 export * from './pillar-image.js';
+export * from './media-item.js';
+export * from './site-image.js';
 export * from './privacy-request.js';
 export * from './social.js';

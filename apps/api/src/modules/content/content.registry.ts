@@ -15,8 +15,12 @@ import {
   pageSettingUpdateSchema,
   partnerInputSchema,
   partnerUpdateSchema,
+  mediaItemInputSchema,
+  mediaItemUpdateSchema,
   pillarImageInputSchema,
   pillarImageUpdateSchema,
+  siteImageInputSchema,
+  siteImageUpdateSchema,
   reportInputSchema,
   reportUpdateSchema,
   storyInputSchema,
@@ -35,11 +39,13 @@ import { ArticleModel } from './models/article.model.js';
 import { EventModel } from './models/event.model.js';
 import { GalleryItemModel } from './models/gallery.model.js';
 import { JobModel } from './models/job.model.js';
+import { MediaItemModel } from './models/media-item.model.js';
 import { OfficeModel } from './models/office.model.js';
 import { PageSettingModel } from './models/page-setting.model.js';
 import { PartnerModel } from './models/partner.model.js';
 import { PillarImageModel } from './models/pillar-image.model.js';
 import { ReportModel } from './models/report.model.js';
+import { SiteImageModel } from './models/site-image.model.js';
 import { ImpactStatModel } from './models/stat.model.js';
 import { StoryModel } from './models/story.model.js';
 import { TeamMemberModel } from './models/team.model.js';
@@ -113,6 +119,31 @@ export const buildContentModules = (container: DependencyContainer): MountedCont
       schemas: { create: pillarImageInputSchema, update: pillarImageUpdateSchema },
       publicFilter: ACTIVE_ONLY,
       defaultSort: { pillarKey: 1 },
+    },
+    container,
+  ),
+  mountContentModule(
+    {
+      path: 'site-images',
+      resource: 'SiteImage',
+      model: SiteImageModel,
+      schemas: { create: siteImageInputSchema, update: siteImageUpdateSchema },
+      publicFilter: ACTIVE_ONLY,
+      defaultSort: { key: 1 },
+    },
+    container,
+  ),
+  mountContentModule(
+    {
+      // The catalogue behind every image field. Nothing on the public site
+      // reads it — pages hold their own asset references — so it has no public
+      // surface through which unused uploads could leak.
+      path: 'media-library',
+      resource: 'Media item',
+      model: MediaItemModel,
+      schemas: { create: mediaItemInputSchema, update: mediaItemUpdateSchema },
+      adminOnly: true,
+      defaultSort: { createdAt: -1 },
     },
     container,
   ),

@@ -1,6 +1,7 @@
-import { mediaAssetSchema, type MediaAsset } from '@iaa/shared';
+import { mediaAssetSchema, type MediaAsset, type MediaFolder } from '@iaa/shared';
 
 import { api } from './api-client';
+import { registerMediaItem } from './media-library';
 
 interface SignedUpload {
   timestamp: number;
@@ -17,6 +18,9 @@ interface CloudinaryUploadResponse {
   public_id: string;
   width?: number;
   height?: number;
+  bytes?: number;
+  format?: string;
+  original_filename?: string;
 }
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
@@ -43,7 +47,11 @@ const uploadUrl = (cloudName: string): string => {
   return url.toString();
 };
 
-export const uploadToCloudinary = async (file: File): Promise<MediaAsset> => {
+export const uploadToCloudinary = async (
+  file: File,
+  /** Which shelf of the media library this upload belongs on. */
+  folder: MediaFolder = 'site',
+): Promise<MediaAsset> => {
   if (!ALLOWED_TYPES.includes(file.type)) {
     throw new Error('Unsupported file type. Please upload JPG, PNG, GIF, WebP, or PDF.');
   }
@@ -65,18 +73,31 @@ export const uploadToCloudinary = async (file: File): Promise<MediaAsset> => {
   form.append('allowed_formats', signature.allowedFormats);
   form.append('max_file_size', String(signature.maxFileSize));
 
-  const response = await fetch(
-    uploadUrl(signature.cloudName),
-    { method: 'POST', body: form },
-  );
+  const response = await fetch(uploadUrl(signature.cloudName), { method: 'POST', body: form });
   if (!response.ok) {
     throw new Error('Upload failed. Please try again.');
   }
   const data = (await response.json()) as CloudinaryUploadResponse;
-  return mediaAssetSchema.parse({
+  const asset = mediaAssetSchema.parse({
     url: data.secure_url,
     publicId: data.public_id,
     ...(data.width ? { width: data.width } : {}),
     ...(data.height ? { height: data.height } : {}),
   });
+
+  // Every upload joins the library, so the next place that needs this picture
+  // can reuse it instead of uploading a second copy.
+  await registerMediaItem({
+    url: asset.url,
+    publicId: asset.publicId,
+    filename: file.name || data.original_filename || asset.publicId,
+    folder,
+    tags: [],
+    ...(data.width ? { width: data.width } : {}),
+    ...(data.height ? { height: data.height } : {}),
+    ...(data.bytes ? { bytes: data.bytes } : {}),
+    ...(data.format ? { format: data.format } : {}),
+  });
+
+  return asset;
 };

@@ -1,6 +1,7 @@
-import type { MediaAsset } from '@iaa/shared';
+import type { MediaAsset, MediaFolder } from '@iaa/shared';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
+import CollectionsOutlinedIcon from '@mui/icons-material/CollectionsOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
@@ -17,6 +18,7 @@ import Typography from '@mui/material/Typography';
 import { useRef, useState } from 'react';
 
 import { uploadToCloudinary } from '../../lib/cloudinary';
+import { MediaPickerDialog } from '../media/MediaPickerDialog';
 
 interface MediaUploadFieldProps {
   label: string;
@@ -27,6 +29,8 @@ interface MediaUploadFieldProps {
   onUploadingChange?: (uploading: boolean) => void;
   /** Max upload size in MB (defaults: 5, matching the signed upload limit). */
   maxSizeMB?: number;
+  /** Which shelf of the media library uploads land on. */
+  folder?: MediaFolder;
 }
 
 /** Human-readable list of accepted formats for the given accept string. */
@@ -59,6 +63,7 @@ export const MediaUploadField = ({
   onChange,
   maxSizeMB,
   onUploadingChange,
+  folder = 'site',
 }: MediaUploadFieldProps): JSX.Element => {
   const theme = useTheme();
   const green = theme.palette.primary.main;
@@ -69,6 +74,7 @@ export const MediaUploadField = ({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [picking, setPicking] = useState(false);
 
   const handleFile = async (file: File | undefined): Promise<void> => {
     if (!file || uploadLock.current) {
@@ -95,7 +101,7 @@ export const MediaUploadField = ({
     onUploadingChange?.(true);
     setError(null);
     try {
-      onChange(await uploadToCloudinary(file));
+      onChange(await uploadToCloudinary(file, folder));
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Upload failed. Please try again.');
     } finally {
@@ -249,25 +255,46 @@ export const MediaUploadField = ({
         </Alert>
       )}
 
-      {value && (
-        <Button
-          component="label"
-          size="small"
-          variant="text"
-          disabled={uploading}
-          sx={{ alignSelf: 'flex-start' }}
-        >
-          Choose a different file
-          <input
-            hidden
-            type="file"
-            accept={accept}
-            onChange={(event) => {
-              void handleFile(event.target.files?.[0]);
-              event.target.value = '';
-            }}
-          />
-        </Button>
+      <Stack direction="row" spacing={1} sx={{ alignSelf: 'flex-start' }}>
+        {/* Reuse comes first: uploading a second copy of a picture the site
+            already has is the mistake this is here to prevent. */}
+        {isImage && (
+          <Button
+            size="small"
+            variant="text"
+            disabled={uploading}
+            startIcon={<CollectionsOutlinedIcon fontSize="small" />}
+            onClick={() => setPicking(true)}
+          >
+            Choose from library
+          </Button>
+        )}
+        {value && (
+          <Button component="label" size="small" variant="text" disabled={uploading}>
+            Choose a different file
+            <input
+              hidden
+              type="file"
+              accept={accept}
+              onChange={(event) => {
+                void handleFile(event.target.files?.[0]);
+                event.target.value = '';
+              }}
+            />
+          </Button>
+        )}
+      </Stack>
+
+      {isImage && (
+        <MediaPickerDialog
+          open={picking}
+          folder={folder}
+          onClose={() => setPicking(false)}
+          onSelect={(asset) => {
+            setError(null);
+            onChange(asset);
+          }}
+        />
       )}
     </Stack>
   );

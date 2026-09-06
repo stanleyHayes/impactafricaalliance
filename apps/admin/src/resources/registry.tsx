@@ -9,6 +9,9 @@ import {
   jobInputSchema,
   pageSettingInputSchema,
   PILLARS,
+  SITE_IMAGE_SLOTS,
+  siteImageSlot,
+  siteImageInputSchema,
   TEAM_TIERS,
   officeInputSchema,
   pillarImageInputSchema,
@@ -34,6 +37,7 @@ import type { GridColDef } from '@mui/x-data-grid';
 
 import { ArticlePreview } from '../components/markdown/ArticlePreview';
 import { PageSettingPreview } from '../components/markdown/PageSettingPreview';
+import { ImageSlotPreview } from '../components/media/ImageSlotPreview';
 import { formatUtcDate } from '../lib/date';
 
 import type { ResourceConfig, SelectOption } from './types';
@@ -292,6 +296,74 @@ export const RESOURCES: readonly ResourceConfig[] = [
       { field: 'pillarKey', headerName: 'Pillar', flex: 1, minWidth: 200 },
       booleanColumn('isActive', 'Active'),
     ],
+    renderPreview: (values) => {
+      const pillar = PILLARS.find((entry) => entry.key === values.pillarKey);
+      return (
+        <ImageSlotPreview
+          title={pillar?.title ?? 'Pillar image'}
+          usage={
+            pillar
+              ? `The photograph on the ${pillar.title} card, and at the top of its page.`
+              : 'Choose a pillar to see where this photograph appears.'
+          }
+          aspect="16 / 10"
+          image={values.image as MediaAsset | undefined}
+          {...(pillar ? { previewPath: pillar.path } : {})}
+          isActive={values.isActive !== false}
+        />
+      );
+    },
+  },
+  {
+    key: 'site-images',
+    label: 'Site Images',
+    singular: 'Site image',
+    description: 'Banners and artwork the site uses in fixed places.',
+    icon: <ImageIcon />,
+    createSchema: siteImageInputSchema,
+    defaultValues: { isActive: true },
+    fields: [
+      {
+        name: 'key',
+        label: 'Where it appears',
+        type: 'select',
+        options: SITE_IMAGE_SLOTS.map((slot) => ({ value: slot.key, label: slot.label })),
+      },
+      { name: 'image', label: 'Image', type: 'image', wide: true },
+      {
+        name: 'alt',
+        label: 'Alt text (optional)',
+        type: 'text',
+        wide: true,
+        helperText: 'Describes the photo for screen readers.',
+      },
+      { name: 'isActive', label: 'Active', type: 'switch' },
+    ],
+    columns: [
+      mediaColumn('image', { fit: 'cover' }),
+      {
+        field: 'key',
+        headerName: 'Where it appears',
+        flex: 1,
+        minWidth: 220,
+        valueFormatter: (value) => siteImageSlot(String(value))?.label ?? String(value),
+      },
+      booleanColumn('isActive', 'Active'),
+    ],
+    renderPreview: (values) => {
+      const slot = siteImageSlot(String(values.key ?? ''));
+      return (
+        <ImageSlotPreview
+          title={slot?.label ?? 'Site image'}
+          usage={slot?.usage ?? 'Choose a slot to see where this photograph appears.'}
+          aspect={slot?.aspect ?? '16 / 9'}
+          image={values.image as MediaAsset | undefined}
+          {...(slot?.fallback ? { fallback: slot.fallback } : {})}
+          {...(slot?.previewPath ? { previewPath: slot.previewPath } : {})}
+          isActive={values.isActive !== false}
+        />
+      );
+    },
   },
   {
     key: 'partners',

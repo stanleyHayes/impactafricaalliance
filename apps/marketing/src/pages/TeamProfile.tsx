@@ -16,9 +16,9 @@ import { LinkifiedText } from '../components/LinkifiedText';
 import { SectionReveal } from '../components/SectionReveal';
 import { Seo } from '../components/Seo';
 import { PageSkeleton } from '../components/skeletons';
-import { IMAGES } from '../content/images';
 import { ApiError } from '../lib/api-client';
 import { useTeamMember } from '../lib/content-hooks';
+import { useSiteImage } from '../lib/site-images';
 import { memberInitials, memberSocials } from '../lib/team-profile';
 
 const ROLE_MARKS = [
@@ -30,13 +30,14 @@ const ROLE_MARKS = [
 
 const Portrait = ({ member }: { member: TeamMember }): JSX.Element => {
   const [failedUrl, setFailedUrl] = useState<string>();
+  const artwork = useSiteImage('team-artwork');
   const photo = member.photo?.url;
   const showPhoto = Boolean(photo && failedUrl !== photo);
   return (
     <Box sx={{ position: 'relative', overflow: 'hidden', borderRadius: 4, bgcolor: '#183E33' }}>
       <Box
         component="img"
-        src={showPhoto ? photo : IMAGES.teamArtwork}
+        src={showPhoto ? photo : artwork}
         alt={showPhoto ? member.name : ''}
         onError={() => {
           if (showPhoto) setFailedUrl(photo);

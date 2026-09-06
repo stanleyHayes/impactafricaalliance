@@ -55,7 +55,9 @@ export const createApp = (
   app.use('/api/auth', createAuthRouter(container));
 
   for (const module of buildContentModules(container)) {
-    app.use(`/api/${module.path}`, module.publicRouter);
+    if (module.publicRouter) {
+      app.use(`/api/${module.path}`, module.publicRouter);
+    }
     app.use(`/api/admin/${module.path}`, module.adminRouter);
   }
 

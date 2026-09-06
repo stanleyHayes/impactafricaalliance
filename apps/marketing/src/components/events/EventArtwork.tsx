@@ -2,15 +2,16 @@ import Box from '@mui/material/Box';
 import type { SxProps, Theme } from '@mui/material/styles';
 import { useState } from 'react';
 
-import { IMAGES } from '../../content/images';
+import { useSiteImage } from '../../lib/site-images';
 
 /** Keeps missing and failed event media on brand without broken-image placeholders. */
 export const EventArtwork = ({ src, sx }: { src?: string; sx?: SxProps<Theme> }): JSX.Element => {
   const [failed, setFailed] = useState<string>();
+  const artwork = useSiteImage('team-artwork');
   return (
     <Box
       component="img"
-      src={src && failed !== src ? src : IMAGES.teamArtwork}
+      src={src && failed !== src ? src : artwork}
       alt=""
       onError={() => setFailed(src)}
       sx={[

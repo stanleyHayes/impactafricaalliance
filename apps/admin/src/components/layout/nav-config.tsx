@@ -22,6 +22,7 @@ import PublicIcon from '@mui/icons-material/Public';
 import SettingsIcon from '@mui/icons-material/Settings';
 import ShareIcon from '@mui/icons-material/Share';
 import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
+import WallpaperIcon from '@mui/icons-material/Wallpaper';
 import WorkOutlineIcon from '@mui/icons-material/WorkOutlineOutlined';
 
 import { RESOURCES } from '../../resources/registry';
@@ -53,6 +54,7 @@ const CONTENT_ICONS: Record<string, JSX.Element> = {
   stats: <InsightsIcon />,
   offices: <PlaceIcon />,
   'pillar-images': <ImageIcon />,
+  'site-images': <WallpaperIcon />,
 };
 
 /** Build the grouped sidebar navigation, filtered to what the user may access. */
@@ -109,11 +111,16 @@ export const buildNavGroups = (user: PublicUser | null, counts: NavCounts = {}):
     },
     {
       title: 'Content',
-      items: RESOURCES.map((resource) => ({
-        to: `/content/${resource.key}`,
-        label: resource.label,
-        icon: CONTENT_ICONS[resource.key] ?? <NewspaperIcon />,
-      })),
+      items: [
+        // The library sits with content because that is where an editor looks
+        // for a picture, not under a settings heading.
+        { to: '/media', label: 'Media library', icon: <CollectionsIcon /> },
+        ...RESOURCES.map((resource) => ({
+          to: `/content/${resource.key}`,
+          label: resource.label,
+          icon: CONTENT_ICONS[resource.key] ?? <NewspaperIcon />,
+        })),
+      ],
     },
     {
       title: 'Operations',

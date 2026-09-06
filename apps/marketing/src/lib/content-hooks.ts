@@ -10,6 +10,7 @@ import type {
   Partner,
   PillarImage,
   Report,
+  SiteImage,
   SiteSetting,
   Story,
   TeamMember,
@@ -44,6 +45,13 @@ export const usePillarImages = (): UseQueryResult<Paginated<PillarImage>> =>
   useQuery({
     queryKey: ['pillar-images'],
     queryFn: () => page<PillarImage>('pillar-images', '?pageSize=50'),
+    staleTime: 5 * 60 * 1000,
+  });
+
+export const useSiteImages = (): UseQueryResult<Paginated<SiteImage>> =>
+  useQuery({
+    queryKey: ['site-images'],
+    queryFn: () => page<SiteImage>('site-images', '?pageSize=50'),
     staleTime: 5 * 60 * 1000,
   });
 

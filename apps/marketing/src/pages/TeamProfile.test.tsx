@@ -9,7 +9,10 @@ import { renderWithProviders } from '../test/test-utils';
 
 import TeamProfile from './TeamProfile';
 
-vi.mock('../lib/content-hooks', () => ({ useTeamMember: vi.fn() }));
+vi.mock('../lib/content-hooks', () => ({
+  useTeamMember: vi.fn(),
+  useSiteImages: () => ({ data: { items: [] } }),
+}));
 vi.mock('../components/SectionReveal', () => ({
   SectionReveal: ({ children }: { children: React.ReactNode }) => children,
 }));

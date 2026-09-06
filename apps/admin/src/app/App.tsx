@@ -17,6 +17,7 @@ import Donations from '../pages/Donations';
 import EventEditor from '../pages/EventEditor';
 import Events from '../pages/Events';
 import Login from '../pages/Login';
+import MediaLibrary from '../pages/MediaLibrary';
 import PrivacyRequests from '../pages/PrivacyRequests';
 import ResetPassword from '../pages/ResetPassword';
 import ResourceFormPage from '../pages/ResourceFormPage';
@@ -59,6 +60,7 @@ export const App = (): JSX.Element => (
           </RequireRole>
         }
       />
+      <Route path="media" element={<MediaLibrary />} />
       <Route path="submissions" element={<Submissions />} />
       <Route path="submissions/:inbox" element={<Submissions />} />
       <Route path="subscribers" element={<Subscribers />} />

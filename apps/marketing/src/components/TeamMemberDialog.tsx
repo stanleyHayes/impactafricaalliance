@@ -15,7 +15,7 @@ import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
 
-import { IMAGES } from '../content/images';
+import { useSiteImage } from '../lib/site-images';
 
 export interface MemberSocial {
   field: string;
@@ -44,6 +44,7 @@ export const TeamMemberDialog = ({
   onClose,
 }: TeamMemberDialogProps): JSX.Element => {
   const reduceMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
+  const artwork = useSiteImage('team-artwork');
   const role = member.role.toLowerCase();
   const marks: [RegExp, SvgIconComponent][] = [
     [/president|founder|chief/, ExploreRoundedIcon],
@@ -115,7 +116,7 @@ export const TeamMemberDialog = ({
               ...(member.photo?.url
                 ? {}
                 : {
-                    backgroundImage: `url(${IMAGES.teamArtwork})`,
+                    backgroundImage: `url(${artwork})`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                   }),

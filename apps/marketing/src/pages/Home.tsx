@@ -31,16 +31,22 @@ import { StaggerGrid, StaggerItem } from '../components/StaggerGrid';
 import { Watermark } from '../components/Watermark';
 import { IMAGES } from '../content/images';
 import { useArticles, usePageCopy, useStories, type PageCopyDefaults } from '../lib/content-hooks';
+import { usePillarImage, useSiteImage } from '../lib/site-images';
 
+/**
+ * The rotating hero. Slide one is the home hero slot; the rest are the four
+ * programme photographs, so replacing a pillar photo in the dashboard updates
+ * the carousel too rather than leaving it showing last year's picture.
+ */
 const HERO_STORY = [
-  { image: IMAGES.hero, position: 'center', label: 'Youth building practical digital skills' },
-  { image: IMAGES.programs['digital-skills'], position: 'center', label: 'Digital skills for work and enterprise' },
-  { image: IMAGES.programs['stem-learning'], position: 'center', label: 'Accessible STEM learning across communities' },
-  { image: IMAGES.programs['youth-inclusion'], position: 'center', label: 'Young people ready for work' },
-  { image: IMAGES.programs['women-empowerment'], position: 'center', label: 'Women leading economic change' },
+  { key: 'digital-skills', label: 'Digital skills for work and enterprise' },
+  { key: 'stem-learning', label: 'Accessible STEM learning across communities' },
+  { key: 'youth-inclusion', label: 'Young people ready for work' },
+  { key: 'women-empowerment', label: 'Women leading economic change' },
 ] as const;
 
 const Hero = ({ copy, heroImage }: { copy: PageCopyDefaults; heroImage: string }): JSX.Element => {
+  const pillarImage = usePillarImage();
   const [activeSlide, setActiveSlide] = useState(0);
   const reduceMotion = useReducedMotion();
 
@@ -48,14 +54,19 @@ const Hero = ({ copy, heroImage }: { copy: PageCopyDefaults; heroImage: string }
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reducedMotion) return undefined;
     const timer = window.setInterval(() => {
-      setActiveSlide((current) => (current + 1) % HERO_STORY.length);
+      setActiveSlide((current) => (current + 1) % (HERO_STORY.length + 1));
     }, 5200);
     return () => window.clearInterval(timer);
   }, []);
 
-  const story = HERO_STORY.map((slide, index) =>
-    index === 0 ? { ...slide, image: heroImage } : slide,
-  );
+  const story = [
+    { image: heroImage, position: 'center', label: 'Youth building practical digital skills' },
+    ...HERO_STORY.map((slide) => ({
+      image: pillarImage(slide.key),
+      position: 'center',
+      label: slide.label,
+    })),
+  ];
 
   return (
     <Box
@@ -90,126 +101,131 @@ const Hero = ({ copy, heroImage }: { copy: PageCopyDefaults; heroImage: string }
           }}
         />
       ))}
-    <Box
-      sx={{
-        position: 'absolute',
-        inset: 0,
-        background:
-          'linear-gradient(90deg, rgba(0,30,20,0.94) 0%, rgba(0,30,20,0.78) 50%, rgba(0,30,20,0.46) 100%), linear-gradient(0deg, rgba(0,30,20,0.66), transparent 58%)',
-      }}
-    />
-    <Box
-      aria-hidden
-      sx={{
-        position: 'absolute',
-        right: { xs: -180, md: -70 },
-        bottom: -270,
-        width: { xs: 430, md: 640 },
-        height: { xs: 430, md: 640 },
-        border: `1px solid ${alpha(brandColors.gold, 0.16)}`,
-        borderRadius: '50%',
-        boxShadow: '0 0 0 54px rgba(245,184,0,0.025), 0 0 0 108px rgba(245,184,0,0.016)',
-      }}
-    />
+      <Box
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          background:
+            'linear-gradient(90deg, rgba(0,30,20,0.94) 0%, rgba(0,30,20,0.78) 50%, rgba(0,30,20,0.46) 100%), linear-gradient(0deg, rgba(0,30,20,0.66), transparent 58%)',
+        }}
+      />
+      <Box
+        aria-hidden
+        sx={{
+          position: 'absolute',
+          right: { xs: -180, md: -70 },
+          bottom: -270,
+          width: { xs: 430, md: 640 },
+          height: { xs: 430, md: 640 },
+          border: `1px solid ${alpha(brandColors.gold, 0.16)}`,
+          borderRadius: '50%',
+          boxShadow: '0 0 0 54px rgba(245,184,0,0.025), 0 0 0 108px rgba(245,184,0,0.016)',
+        }}
+      />
 
-    <Container
-      sx={{
-        position: 'relative',
-        display: 'flex',
-        minHeight: { xs: 620, md: 720 },
-        alignItems: 'center',
-        py: { xs: 8, md: 10 },
-      }}
-    >
-      <Grid container spacing={{ xs: 5, md: 7 }} sx={{ alignItems: 'center', width: '100%' }}>
-        <Grid size={{ xs: 12, md: 7 }}>
-          <Box
-            component={m.div}
-            initial={reduceMotion ? false : { opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: reduceMotion ? 0 : 0.45 }}
-          >
-            <Stack direction="row" spacing={1.25} alignItems="center" sx={{ mb: 2.5 }}>
-              <Box sx={{ width: 38, height: 2, bgcolor: 'secondary.main' }} />
-              <Typography
-                variant="overline"
-                sx={{ color: 'secondary.light', fontWeight: 750, letterSpacing: 2 }}
-              >
-                {copy.heroEyebrow}
-              </Typography>
-            </Stack>
-            <HeroHeadline key={copy.heroTitle} text={copy.heroTitle} />
-            <Typography
-              sx={{
-                maxWidth: 650,
-                mt: 3,
-                color: 'rgba(255,255,255,0.76)',
-                fontSize: { xs: '1rem', md: '1.14rem' },
-                lineHeight: 1.75,
-              }}
+      <Container
+        sx={{
+          position: 'relative',
+          display: 'flex',
+          minHeight: { xs: 620, md: 720 },
+          alignItems: 'center',
+          py: { xs: 8, md: 10 },
+        }}
+      >
+        <Grid container spacing={{ xs: 5, md: 7 }} sx={{ alignItems: 'center', width: '100%' }}>
+          <Grid size={{ xs: 12, md: 7 }}>
+            <Box
+              component={m.div}
+              initial={reduceMotion ? false : { opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: reduceMotion ? 0 : 0.45 }}
             >
-              {copy.heroSubtitle}
-            </Typography>
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 4 }}>
-              <Button
-                component={RouterLink}
-                to="/our-work"
-                variant="contained"
-                color="secondary"
-                size="large"
-              >
-                Discover Our Work
-              </Button>
-              <Button
-                component={RouterLink}
-                to="/get-involved#partner"
-                variant="outlined"
-                size="large"
-                endIcon={<EastIcon />}
+              <Stack direction="row" spacing={1.25} alignItems="center" sx={{ mb: 2.5 }}>
+                <Box sx={{ width: 38, height: 2, bgcolor: 'secondary.main' }} />
+                <Typography
+                  variant="overline"
+                  sx={{ color: 'secondary.light', fontWeight: 750, letterSpacing: 2 }}
+                >
+                  {copy.heroEyebrow}
+                </Typography>
+              </Stack>
+              <HeroHeadline key={copy.heroTitle} text={copy.heroTitle} />
+              <Typography
                 sx={{
-                  color: 'common.white',
-                  borderColor: 'rgba(255,255,255,0.42)',
-                  '&:hover': {
-                    borderColor: 'secondary.light',
-                    bgcolor: 'rgba(255,255,255,0.08)',
-                  },
+                  maxWidth: 650,
+                  mt: 3,
+                  color: 'rgba(255,255,255,0.76)',
+                  fontSize: { xs: '1rem', md: '1.14rem' },
+                  lineHeight: 1.75,
                 }}
               >
-                Partner With Us
-              </Button>
-            </Stack>
-            <Stack direction="row" spacing={1} sx={{ mt: 4 }} aria-label="Featured impact stories">
-              {story.map((slide, index) => (
-                <Box
-                  component="button"
-                  key={slide.label}
-                  type="button"
-                  onClick={() => setActiveSlide(index)}
-                  aria-label={`Show story ${index + 1}: ${slide.label}`}
-                  aria-current={index === activeSlide ? 'true' : undefined}
+                {copy.heroSubtitle}
+              </Typography>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 4 }}>
+                <Button
+                  component={RouterLink}
+                  to="/our-work"
+                  variant="contained"
+                  color="secondary"
+                  size="large"
+                >
+                  Discover Our Work
+                </Button>
+                <Button
+                  component={RouterLink}
+                  to="/get-involved#partner"
+                  variant="outlined"
+                  size="large"
+                  endIcon={<EastIcon />}
                   sx={{
-                    width: index === activeSlide ? 34 : 9,
-                    height: 9,
-                    p: 0,
-                    border: 0,
-                    borderRadius: 99,
-                    bgcolor: index === activeSlide ? 'secondary.main' : 'rgba(255,255,255,0.48)',
-                    cursor: 'pointer',
-                    transition: 'width 240ms ease, background-color 240ms ease',
-                    '&:focus-visible': { outline: '2px solid white', outlineOffset: 3 },
+                    color: 'common.white',
+                    borderColor: 'rgba(255,255,255,0.42)',
+                    '&:hover': {
+                      borderColor: 'secondary.light',
+                      bgcolor: 'rgba(255,255,255,0.08)',
+                    },
                   }}
-                />
-              ))}
-            </Stack>
-          </Box>
-        </Grid>
+                >
+                  Partner With Us
+                </Button>
+              </Stack>
+              <Stack
+                direction="row"
+                spacing={1}
+                sx={{ mt: 4 }}
+                aria-label="Featured impact stories"
+              >
+                {story.map((slide, index) => (
+                  <Box
+                    component="button"
+                    key={slide.label}
+                    type="button"
+                    onClick={() => setActiveSlide(index)}
+                    aria-label={`Show story ${index + 1}: ${slide.label}`}
+                    aria-current={index === activeSlide ? 'true' : undefined}
+                    sx={{
+                      width: index === activeSlide ? 34 : 9,
+                      height: 9,
+                      p: 0,
+                      border: 0,
+                      borderRadius: 99,
+                      bgcolor: index === activeSlide ? 'secondary.main' : 'rgba(255,255,255,0.48)',
+                      cursor: 'pointer',
+                      transition: 'width 240ms ease, background-color 240ms ease',
+                      '&:focus-visible': { outline: '2px solid white', outlineOffset: 3 },
+                    }}
+                  />
+                ))}
+              </Stack>
+            </Box>
+          </Grid>
 
-        <Grid size={{ xs: 12, md: 5 }} sx={{ display: { xs: 'none', md: 'block' } }}>
-          <HeroImpactModel />
+          <Grid size={{ xs: 12, md: 5 }} sx={{ display: { xs: 'none', md: 'block' } }}>
+            <HeroImpactModel />
+          </Grid>
         </Grid>
-      </Grid>
-    </Container>
-  </Box>
+      </Container>
+    </Box>
   );
 };
 
@@ -234,7 +250,12 @@ export const HomeImpactSection = (): JSX.Element => (
           <Typography
             id="home-impact-title"
             variant="h2"
-            sx={{ mt: 1.5, maxWidth: 640, fontSize: { xs: '2rem', md: '2.8rem' }, lineHeight: 1.12 }}
+            sx={{
+              mt: 1.5,
+              maxWidth: 640,
+              fontSize: { xs: '2rem', md: '2.8rem' },
+              lineHeight: 1.12,
+            }}
           >
             Progress you can see. Change people can feel.
           </Typography>
@@ -256,7 +277,12 @@ export const HomeImpactSection = (): JSX.Element => (
         </Grid>
       </Grid>
       <ImpactMetrics />
-      <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 2, color: 'text.secondary' }}>
+      <Stack
+        direction="row"
+        spacing={1}
+        alignItems="center"
+        sx={{ mt: 2, color: 'text.secondary' }}
+      >
         <InsightsRoundedIcon sx={{ fontSize: 18 }} aria-hidden />
         <Typography variant="caption">Current programme reach</Typography>
       </Stack>
@@ -441,7 +467,8 @@ const StoryImpactCard = ({
       boxShadow: '0 24px 54px -46px rgba(0,0,0,0.14)',
       transition: 'transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease',
       '&:hover': {
-        borderColor: (theme) => (theme.palette.mode === 'light' ? 'rgba(0,0,0,0.22)' : 'rgba(255,255,255,0.22)'),
+        borderColor: (theme) =>
+          theme.palette.mode === 'light' ? 'rgba(0,0,0,0.22)' : 'rgba(255,255,255,0.22)',
         boxShadow: '0 30px 62px -44px rgba(0,0,0,0.18)',
         transform: 'translateY(-5px)',
       },
@@ -452,7 +479,8 @@ const StoryImpactCard = ({
         left: 0,
         right: 0,
         height: 3,
-        background: (theme) => `linear-gradient(90deg, ${theme.palette.secondary.main}, ${theme.palette.primary.main})`,
+        background: (theme) =>
+          `linear-gradient(90deg, ${theme.palette.secondary.main}, ${theme.palette.primary.main})`,
       },
       '&::after': featured
         ? {
@@ -616,12 +644,15 @@ const VisionQuote = (): JSX.Element => (
 );
 
 const Home = (): JSX.Element => {
+  const homeHero = useSiteImage('home-hero');
   const copy = usePageCopy('home', {
     seoTitle: 'Empowering Youth, Women & Communities Across Africa',
-    seoDescription: 'Impact Africa Alliance equips youth, women, and communities across Africa with the skills, tools, and opportunities to build a prosperous and equitable future.',
+    seoDescription:
+      'Impact Africa Alliance equips youth, women, and communities across Africa with the skills, tools, and opportunities to build a prosperous and equitable future.',
     heroEyebrow: 'Impact Africa Alliance',
     heroTitle: 'Empowering Africa, one community at a time.',
-    heroSubtitle: 'We equip youth, women, and communities with practical skills, trusted partnerships, and opportunities to build a prosperous and equitable future.',
+    heroSubtitle:
+      'We equip youth, women, and communities with practical skills, trusted partnerships, and opportunities to build a prosperous and equitable future.',
     introEyebrow: 'What We Do',
     introTitle: 'Four Transformative Initiatives',
     introBody: 'One mission: a prosperous, inclusive Africa.',
@@ -630,7 +661,7 @@ const Home = (): JSX.Element => {
   return (
     <>
       <Seo title={copy.seoTitle} description={copy.seoDescription} />
-      <Hero copy={copy} heroImage={copy.heroImageUrl ?? IMAGES.hero} />
+      <Hero copy={copy} heroImage={copy.heroImageUrl ?? homeHero} />
       <MissionStatement />
       <HomeImpactSection />
       <Section
