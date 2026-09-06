@@ -13,13 +13,19 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import { alpha } from '@mui/material/styles';
+import { alpha, type Theme } from '@mui/material/styles';
 import type { SvgIconProps } from '@mui/material/SvgIcon';
 import Typography from '@mui/material/Typography';
 import { useId, useState, type ComponentType } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 
 import { Watermark } from '../Watermark';
+
+const navigationWatermarkColor = (theme: Theme): string =>
+  alpha(
+    theme.palette.mode === 'light' ? '#315E4B' : theme.palette.primary.main,
+    theme.palette.mode === 'light' ? 0.24 : 0.09,
+  );
 
 interface Destination {
   label: string;
@@ -210,10 +216,10 @@ const Dropdown = ({
                 bottom: -40,
                 width: 260,
                 height: 260,
-                bgcolor: 'primary.main',
+                bgcolor: navigationWatermarkColor,
                 mask: 'url(/patterns/alliance-network.svg) center / contain no-repeat',
                 WebkitMask: 'url(/patterns/alliance-network.svg) center / contain no-repeat',
-                opacity: 0.09,
+                opacity: 1,
                 pointerEvents: 'none',
               },
             },
@@ -360,9 +366,9 @@ export const MobileNavigationLinks = ({ onClose }: { onClose: () => void }): JSX
               <Watermark
                 variant="network"
                 size={240}
-                opacity={0.09}
+                opacity={1}
                 position="bottom-right"
-                color="primary.main"
+                sx={{ color: navigationWatermarkColor }}
               />
               {item.children.map((destination) => (
                 <Box

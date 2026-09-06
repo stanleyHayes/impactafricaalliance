@@ -719,3 +719,11 @@ Source: `Impact Africa Alliance Website Updates.pdf`
 - Desktop and 390px mobile browser checks confirm readable layouts without overflow. Light-mode
   keyword colors use darker accessible tones. Marketing lint/build/diff checks pass.
 - Full marketing typecheck was started but remained running after five minutes; its result is unconfirmed.
+
+## 43. Navigation watermark contrast (5 September 2026)
+
+- Desktop dropdowns and mobile navigation now share a theme-aware watermark color.
+  Light mode uses forest green at 24% opacity; dark mode preserves its existing treatment.
+- Browser loaded light mode, but dropdown inspection timed out, so visual confirmation in a
+  real browser is still outstanding. Lint, marketing typecheck and build all pass, and the
+  change was in the tree for the full marketing suite (21 files, 114 tests, green).
