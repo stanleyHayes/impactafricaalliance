@@ -137,6 +137,7 @@ export const SITE_SETTING_STEPS: readonly SiteSettingStep[] = [
     fields: [
       { name: 'socials.youtube', label: 'YouTube', type: 'url' },
       { name: 'socials.tiktok', label: 'TikTok', type: 'url' },
+      { name: 'socials.whatsapp', label: 'WhatsApp community invite', type: 'url' },
       { name: 'liveChat.enabled', label: 'Show a WhatsApp chat button', type: 'switch' },
       {
         name: 'liveChat.label',

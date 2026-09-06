@@ -29,6 +29,8 @@ export const siteSettingSocialsSchema = z.object({
   linkedin: optionalUrl,
   youtube: optionalUrl,
   tiktok: optionalUrl,
+  /** Invite link to the WhatsApp community, not a number to message. */
+  whatsapp: optionalUrl,
 });
 
 export type SiteSettingSocials = z.infer<typeof siteSettingSocialsSchema>;
