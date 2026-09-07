@@ -13,6 +13,27 @@ const REQUEST_TIMEOUT_MS = 45_000;
 /** Safe to send twice, so a request lost to a waking server can be retried. */
 const IDEMPOTENT_METHODS = new Set(['GET', 'PATCH', 'DELETE']);
 
+/**
+ * Waits before each retry of an idempotent request.
+ *
+ * A sleeping instance takes tens of seconds to come back, and every request
+ * arriving while it does so fails *immediately* rather than hanging. Retrying
+ * without waiting therefore spent all the attempts inside a few milliseconds
+ * and reported failure while the server was still booting — which is exactly
+ * how a visibility toggle came back as "could not reach the server" when
+ * nothing was wrong with it.
+ */
+const RETRY_DELAYS_MS = [2_000, 6_000, 12_000];
+
+const wait = (ms: number): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+
+/** A timeout, as opposed to a refused or dropped connection. */
+const isTimeout = (cause: unknown): boolean =>
+  cause instanceof DOMException && cause.name === 'AbortError';
+
 const apiUrl = import.meta.env.VITE_API_URL;
 if (typeof apiUrl !== 'string' || !apiUrl) {
   throw new Error('VITE_API_URL is required. Add it to apps/admin/.env');
@@ -69,7 +90,7 @@ const networkError = (cause: unknown): ApiError => {
     : new ApiError(
         0,
         'NETWORK',
-        'Could not reach the server. Check your connection and try again.',
+        'Could not reach the server. It may be starting up after being idle — wait a moment and try again.',
       );
 };
 
@@ -111,22 +132,30 @@ const sendRequest = async (path: string, options: RequestOptions): Promise<Respo
     }
   };
 
-  try {
-    return await attempt();
-  } catch (cause) {
-    // A network-level failure means the request never reached the app, so
-    // repeating an idempotent one is safe — and usually succeeds, because the
-    // first attempt is what woke the server up. A POST is never repeated: it
-    // could have been received and would create a second record.
-    if (IDEMPOTENT_METHODS.has(method)) {
-      try {
-        return await attempt();
-      } catch (retryCause) {
-        throw networkError(retryCause);
+  // A connection that was refused or dropped never reached the app, so
+  // repeating an idempotent request is safe — and usually succeeds, because
+  // the earlier attempts are what woke the server up. A POST is never
+  // repeated: it may well have arrived, and would create a second record.
+  const delays = IDEMPOTENT_METHODS.has(method) ? RETRY_DELAYS_MS : [];
+  let lastCause: unknown;
+
+  for (let index = 0; index <= delays.length; index += 1) {
+    if (index > 0) {
+      await wait(delays[index - 1] as number);
+    }
+    try {
+      return await attempt();
+    } catch (cause) {
+      lastCause = cause;
+      // A timeout means the server is reachable and simply slow. Trying again
+      // only stacks another wait on top of the one that just elapsed.
+      if (isTimeout(cause)) {
+        break;
       }
     }
-    throw networkError(cause);
   }
+
+  throw networkError(lastCause);
 };
 
 const tryRefresh = async (): Promise<boolean> => {
