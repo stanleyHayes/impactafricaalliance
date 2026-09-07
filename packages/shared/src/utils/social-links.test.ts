@@ -92,7 +92,7 @@ describe('image variants', () => {
 
   it('has a frame for every destination', () => {
     expect(Object.keys(DESTINATION_FRAMES).sort()).toEqual(
-      ['facebook', 'instagram', 'linkedin', 'threads', 'x'].sort(),
+      ['facebook', 'instagram', 'linkedin', 'threads', 'whatsapp', 'x'].sort(),
     );
   });
 });

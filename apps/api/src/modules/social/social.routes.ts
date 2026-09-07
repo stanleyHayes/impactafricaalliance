@@ -25,6 +25,7 @@ import { TokenService } from '../auth/token.service.js';
 import { SOCIAL_PLATFORMS, type SocialPlatform } from './social-account.model.js';
 import { SocialAccountRepository } from './social-account.repository.js';
 import { OAUTH_STATE_COOKIE, SocialOAuthService } from './social-oauth.service.js';
+import { SocialPreviewService } from './social-preview.service.js';
 import { SocialPublicationService } from './social-publication.service.js';
 
 const isSocialPlatform = (value: string): value is SocialPlatform =>
@@ -66,9 +67,9 @@ export const createSocialRouters = (
     '/preview',
     asyncHandler(async (req, res) => {
       const input = parseWith(socialPreviewRequestSchema, req.body);
-      const publications = container.resolve(SocialPublicationService);
+      const previews = container.resolve(SocialPreviewService);
       res.json({
-        previews: await publications.preview(input.destinations, input.source, {
+        previews: await previews.preview(input.destinations, input.source, {
           ...(input.useAi === undefined ? {} : { useAi: input.useAi }),
           ...(input.campaign ? { campaign: input.campaign } : {}),
           ...(input.imageUrl ? { imageUrl: input.imageUrl } : {}),

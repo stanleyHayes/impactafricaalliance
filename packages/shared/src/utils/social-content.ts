@@ -104,12 +104,26 @@ const threads = (source: SocialSource): string => {
   return truncate(paragraphs(source.title, summary), capability.maxLength);
 };
 
+/**
+ * A message, not a post. Someone opted in to hear from us, so it is short,
+ * says what it is, and links out — no hashtags and no marketing voice.
+ */
+const whatsapp = (source: SocialSource): string => {
+  const summary = source.excerpt ? firstSentence(source.excerpt) : '';
+  return paragraphs(
+    source.title,
+    summary,
+    source.url ? `Read more: ${source.url}` : undefined,
+  );
+};
+
 const FORMATTERS: Record<SocialDestination, (source: SocialSource) => string> = {
   facebook,
   instagram,
   linkedin,
   x,
   threads,
+  whatsapp,
 };
 
 /**

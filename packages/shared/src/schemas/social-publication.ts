@@ -9,11 +9,18 @@ import { type Timestamped } from './common.js';
  * administrator authorises: one Meta connection carries both Facebook and
  * Instagram destinations.
  */
-export const SOCIAL_DESTINATIONS = ['facebook', 'instagram', 'linkedin', 'x', 'threads'] as const;
+export const SOCIAL_DESTINATIONS = [
+  'facebook',
+  'instagram',
+  'linkedin',
+  'x',
+  'threads',
+  'whatsapp',
+] as const;
 export type SocialDestination = (typeof SOCIAL_DESTINATIONS)[number];
 
 /** The accounts an administrator connects, which destinations are published through. */
-export const SOCIAL_CONNECTION_PLATFORMS = ['meta', 'linkedin', 'x', 'threads'] as const;
+export const SOCIAL_CONNECTION_PLATFORMS = ['meta', 'linkedin', 'x', 'threads', 'whatsapp'] as const;
 export type SocialConnectionPlatform = (typeof SOCIAL_CONNECTION_PLATFORMS)[number];
 
 /** Lifecycle of one destination's publication, tracked independently of the others. */
@@ -60,6 +67,11 @@ export interface DestinationCapabilities {
   clickableLink: boolean;
   requiresMedia: boolean;
   maxLength: number;
+  /**
+   * Sent to a list of opted-in people rather than posted to a feed. It has no
+   * public URL afterwards, and it can only go to those who asked for it.
+   */
+  broadcast?: boolean;
 }
 
 export const DESTINATION_CAPABILITIES: Record<SocialDestination, DestinationCapabilities> = {
@@ -108,6 +120,19 @@ export const DESTINATION_CAPABILITIES: Record<SocialDestination, DestinationCapa
     clickableLink: true,
     requiresMedia: false,
     maxLength: 280,
+  },
+  whatsapp: {
+    destination: 'whatsapp',
+    label: 'WhatsApp',
+    connection: 'whatsapp',
+    text: true,
+    image: false,
+    video: false,
+    clickableLink: true,
+    requiresMedia: false,
+    // The body parameter of a template message, not a post.
+    maxLength: 1_024,
+    broadcast: true,
   },
   threads: {
     destination: 'threads',

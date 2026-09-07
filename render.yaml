@@ -129,6 +129,13 @@ services:
         sync: false
       - key: WHATSAPP_ACCESS_TOKEN
         sync: false
+      # A broadcast is always outside the 24-hour service window, so it can
+      # only be sent as a template Meta has already approved. Free text is
+      # rejected. Create the template first and put its name here.
+      - key: WHATSAPP_TEMPLATE_NAME
+        sync: false
+      - key: WHATSAPP_TEMPLATE_LANGUAGE
+        value: en
 
       # Google / YouTube. Enable YouTube Data API v3 on the Cloud project.
       # Redirect URI: <SOCIAL_OAUTH_REDIRECT_BASE>/api/social/youtube/callback

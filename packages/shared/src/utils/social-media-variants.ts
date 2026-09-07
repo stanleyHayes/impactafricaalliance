@@ -23,6 +23,8 @@ export const DESTINATION_FRAMES: Record<SocialDestination, Frame> = {
   // and the profile grid.
   instagram: { width: 1080, height: 1080 },
   threads: { width: 1080, height: 1080 },
+  // A link preview thumbnail rather than a posted image.
+  whatsapp: { width: 1200, height: 630 },
 };
 
 const CLOUDINARY_UPLOAD = '/image/upload/';

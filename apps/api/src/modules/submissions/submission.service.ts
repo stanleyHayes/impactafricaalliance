@@ -42,10 +42,16 @@ export class SubmissionService {
 
   async subscribe(input: SubscribeInput): Promise<{ subscribed: true }> {
     const { consent, consentVersion, ...rest } = input;
+    const now = new Date();
     const existing = await this.repo.findSubscriberByEmail(input.email);
     if (existing) {
       if (existing.unsubscribedAt) {
-        await this.repo.reactivateSubscriber(existing.id, consentVersion ?? CONSENT_VERSION, new Date());
+        await this.repo.reactivateSubscriber(existing.id, consentVersion ?? CONSENT_VERSION, now);
+      }
+      // Somebody who already subscribes by email can add WhatsApp later, and
+      // that is a new consent in its own right — dated when it was given.
+      if (rest.whatsappOptIn && rest.whatsappPhone && !existing.whatsappOptIn) {
+        await this.repo.setWhatsappOptIn(existing.id, rest.whatsappPhone, now);
       }
       return { subscribed: true };
     }
@@ -53,7 +59,8 @@ export class SubmissionService {
       ...rest,
       consent,
       consentVersion: consentVersion ?? CONSENT_VERSION,
-      consentedAt: new Date(),
+      consentedAt: now,
+      ...(rest.whatsappOptIn && rest.whatsappPhone ? { whatsappOptInAt: now } : {}),
     });
     return { subscribed: true };
   }

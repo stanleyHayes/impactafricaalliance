@@ -3,22 +3,18 @@ import { createHash } from 'node:crypto';
 import {
   DESTINATION_CAPABILITIES,
   destinationRejection,
-  formatForDestination,
   needsReconnect,
-  taggedLinkFor,
-  toCampaignSlug,
-  variantFor,
-  type SocialDestination,
   type SocialPublicationInput,
   type SocialPublishRequest,
-  type SocialSource,
 } from '@iaa/shared';
 import { inject, injectable } from 'tsyringe';
 
 import { NotFoundError, ValidationError } from '../../common/errors.js';
-import type { AppConfig } from '../../config/env.js';
 import type { AppLogger } from '../../config/logger.js';
-import { adapterFor } from '../../providers/social/destination-adapter.js';
+import {
+  adapterFor,
+  type AdapterCredentials,
+} from '../../providers/social/destination-adapter.js';
 import { TOKENS } from '../../tokens.js';
 
 import { PublicationAttemptModel } from './publication-attempt.model.js';
@@ -30,24 +26,12 @@ import {
   sanitizeProviderError,
 } from './publication-retry.js';
 import { SocialAccountRepository } from './social-account.repository.js';
-import { SocialCopywriter } from './social-copywriter.js';
 import { SocialOAuthService } from './social-oauth.service.js';
 import {
   SocialPublicationModel,
   type SocialPublicationDocument,
 } from './social-publication.model.js';
-
-export interface DestinationPreview {
-  destination: SocialDestination;
-  caption: string;
-  /** Whether the assistant wrote this or the template did. */
-  origin: 'ai' | 'template';
-  campaign: string;
-  linkUrl?: string;
-  imageUrl?: string;
-  /** Why this destination cannot accept the draft as it stands. */
-  rejection?: string;
-}
+import { WhatsappAudience } from './whatsapp-audience.js';
 
 /**
  * Creating, queueing and running one publication per destination.
@@ -59,16 +43,12 @@ export interface DestinationPreview {
  */
 @injectable()
 export class SocialPublicationService {
-  private readonly copywriter: SocialCopywriter;
-
   constructor(
     @inject(SocialAccountRepository) private readonly accounts: SocialAccountRepository,
     @inject(SocialOAuthService) private readonly oauth: SocialOAuthService,
     @inject(TOKENS.Logger) private readonly logger: AppLogger,
-    @inject(TOKENS.Config) config: AppConfig,
-  ) {
-    this.copywriter = new SocialCopywriter(config.anthropic.apiKey, logger);
-  }
+    @inject(WhatsappAudience) private readonly whatsapp: WhatsappAudience,
+  ) {}
 
   /**
    * The same publication asked for twice must not post twice. Keyed on what
@@ -92,56 +72,6 @@ export class SocialPublicationService {
         ].join('|'),
       )
       .digest('hex');
-  }
-
-  /**
-   * Draft copy for each destination, for the editor to review and change.
-   *
-   * Each destination gets its own tagged link and its own crop of the image,
-   * because the whole point is that a post should look like it was written for
-   * the network it lands on.
-   */
-  async preview(
-    destinations: readonly SocialDestination[],
-    source: SocialSource,
-    options: { useAi?: boolean; campaign?: string; imageUrl?: string } = {},
-  ): Promise<DestinationPreview[]> {
-    const campaign = options.campaign?.trim() || toCampaignSlug(source.title);
-
-    return Promise.all(
-      destinations.map(async (destination) => {
-        // Tag before drafting, so the link the copy carries is the tagged one.
-        const linkUrl = source.url ? taggedLinkFor(source.url, destination, campaign) : undefined;
-        const perDestination: SocialSource = {
-          ...source,
-          ...(linkUrl ? { url: linkUrl } : {}),
-        };
-
-        const drafted =
-          options.useAi && this.copywriter.available
-            ? await this.copywriter.draft(destination, perDestination)
-            : { caption: formatForDestination(destination, perDestination), origin: 'template' as const };
-
-        const imageUrl = options.imageUrl
-          ? variantFor(options.imageUrl, destination)
-          : undefined;
-
-        const rejection = destinationRejection(destination, {
-          caption: drafted.caption,
-          ...(imageUrl ? { imageUrl } : {}),
-        });
-
-        return {
-          destination,
-          caption: drafted.caption,
-          origin: drafted.origin,
-          campaign,
-          ...(linkUrl ? { linkUrl } : {}),
-          ...(imageUrl ? { imageUrl } : {}),
-          ...(rejection ? { rejection } : {}),
-        };
-      }),
-    );
   }
 
   /**
@@ -250,30 +180,25 @@ export class SocialPublicationService {
       return;
     }
 
-    const connection = await this.accounts.findById(publication.connectionId);
-    if (!connection) {
-      await this.finishPermanently(id, 'NO_CONNECTION', 'The social connection no longer exists.');
-      return;
-    }
-
-    const credentials = await this.oauth.getValidAccessToken(connection.platform);
+    const credentials = await this.credentialsFor(id, publication.connectionId);
     if (!credentials) {
-      await this.markConnection(publication.connectionId, 'reauth_required');
-      await this.finishPermanently(id, 'REAUTH_REQUIRED', 'Reconnect this account to publish.');
       return;
     }
 
+    // A broadcast goes to people, not to a feed, so the list is fetched here
+    // rather than inside the adapter — adapters never touch the database.
+    const recipients =
+      DESTINATION_CAPABILITIES[publication.destination].broadcast === true
+        ? await this.whatsapp.recipients()
+        : undefined;
     const outcome = await adapter.publish(
       {
         caption: publication.caption,
         ...(publication.imageUrl ? { imageUrl: publication.imageUrl } : {}),
         ...(publication.canonicalUrl ? { canonicalUrl: publication.canonicalUrl } : {}),
+        ...(recipients ? { recipients } : {}),
       },
-      {
-        accessToken: credentials.accessToken,
-        accountId: credentials.account.accountId,
-        ...(credentials.account.metadata ? { metadata: credentials.account.metadata } : {}),
-      },
+      credentials,
     );
 
     if (outcome.ok) {
@@ -335,6 +260,36 @@ export class SocialPublicationService {
       { publicationId: id, destination: publication.destination, kind, attemptNumber },
       'Social publication failed',
     );
+  }
+
+  /**
+   * Resolve what this publication needs to authenticate with, marking it
+   * failed and returning undefined when it cannot — so the caller has one
+   * thing to check rather than three.
+   */
+  private async credentialsFor(
+    id: string,
+    connectionId: string,
+  ): Promise<AdapterCredentials | undefined> {
+    const connection = await this.accounts.findById(connectionId);
+    if (!connection) {
+      await this.finishPermanently(id, 'NO_CONNECTION', 'The social connection no longer exists.');
+      return undefined;
+    }
+
+    const credentials = await this.oauth.getValidAccessToken(connection.platform);
+    if (!credentials) {
+      await this.markConnection(connectionId, 'reauth_required');
+      await this.finishPermanently(id, 'REAUTH_REQUIRED', 'Reconnect this account to publish.');
+      return undefined;
+    }
+
+    return {
+      accessToken: credentials.accessToken,
+      accountId: credentials.account.accountId,
+      ...(credentials.account.metadata ? { metadata: credentials.account.metadata } : {}),
+      ...this.whatsapp.template,
+    };
   }
 
   /** Put a failed publication back in the queue, without touching its siblings. */

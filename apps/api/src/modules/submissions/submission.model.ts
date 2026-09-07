@@ -45,6 +45,10 @@ export interface SubscriberDocument {
   consent?: boolean;
   consentVersion?: string;
   consentedAt?: Date;
+  /** E.164, and only present alongside an explicit WhatsApp opt-in. */
+  whatsappPhone?: string;
+  whatsappOptIn?: boolean;
+  whatsappOptInAt?: Date;
   unsubscribedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -58,6 +62,10 @@ const subscriberSchema = new Schema<SubscriberDocument>(
     consent: { type: Boolean },
     consentVersion: { type: String },
     consentedAt: { type: Date },
+    whatsappPhone: { type: String },
+    // Indexed because the only query that matters is "who may we message".
+    whatsappOptIn: { type: Boolean, index: true },
+    whatsappOptInAt: { type: Date },
     unsubscribedAt: { type: Date },
   },
   baseSchemaOptions,

@@ -14,12 +14,21 @@ export interface PublishRequest {
   caption: string;
   imageUrl?: string;
   canonicalUrl?: string;
+  /**
+   * Who to message, for a broadcast destination. Supplied by the service from
+   * the opted-in subscriber list — an adapter never reads the database, and a
+   * broadcast with an empty list must not be sent to anybody.
+   */
+  recipients?: Array<{ phone: string; name?: string }>;
 }
 
 export interface AdapterCredentials {
   accessToken: string;
   accountId: string;
   metadata?: Record<string, unknown>;
+  /** Approved template to send under, for WhatsApp. */
+  templateName?: string;
+  templateLanguage?: string;
 }
 
 export interface PublishSuccess {
@@ -252,6 +261,74 @@ export const threadsAdapter: DestinationAdapter = {
 };
 
 /**
+ * WhatsApp Business messaging.
+ *
+ * This is messaging, not publishing: it reaches the people who explicitly
+ * asked to hear from us and nobody else. A broadcast is always outside the
+ * 24-hour service window, so it can only go as a template Meta has already
+ * approved — free text is rejected, and pretending otherwise would fail at
+ * send time with an error nobody could act on.
+ */
+export const whatsappAdapter: DestinationAdapter = {
+  destination: 'whatsapp',
+  publish: async (request, credentials) => {
+    if (!credentials.templateName) {
+      return {
+        ok: false,
+        status: 400,
+        message:
+          'Set WHATSAPP_TEMPLATE_NAME to an approved template before sending WhatsApp updates.',
+      };
+    }
+    const recipients = request.recipients ?? [];
+    if (recipients.length === 0) {
+      return {
+        ok: false,
+        status: 400,
+        message: 'Nobody has opted in to WhatsApp updates yet.',
+      };
+    }
+
+    let sent = 0;
+    const failures: string[] = [];
+    for (const recipient of recipients) {
+      try {
+        await axios.post(
+          `https://graph.facebook.com/${GRAPH_VERSION}/${credentials.accountId}/messages`,
+          {
+            messaging_product: 'whatsapp',
+            to: recipient.phone,
+            type: 'template',
+            template: {
+              name: credentials.templateName,
+              language: { code: credentials.templateLanguage ?? 'en' },
+              components: [
+                { type: 'body', parameters: [{ type: 'text', text: request.caption }] },
+              ],
+            },
+          },
+          { headers: { Authorization: `Bearer ${credentials.accessToken}` } },
+        );
+        sent += 1;
+      } catch (error) {
+        // One unreachable number must not stop the rest of the list.
+        const failure = toFailure(error, 'WhatsApp send failed');
+        failures.push(failure.message);
+      }
+    }
+
+    if (sent === 0) {
+      return {
+        ok: false,
+        message: `No messages were delivered. ${failures[0] ?? ''}`.trim(),
+      };
+    }
+    // A broadcast has no post to link to, so the count is the result.
+    return { ok: true, externalPostId: `sent:${sent}/${recipients.length}` };
+  },
+};
+
+/**
  * Only the destinations that are actually implemented appear here. A
  * destination with no adapter is reported as unsupported rather than silently
  * queued and never sent.
@@ -262,6 +339,7 @@ export const DESTINATION_ADAPTERS: Partial<Record<SocialDestination, Destination
   linkedin: linkedInAdapter,
   x: xAdapter,
   threads: threadsAdapter,
+  whatsapp: whatsappAdapter,
 };
 
 export const adapterFor = (destination: SocialDestination): DestinationAdapter | undefined =>

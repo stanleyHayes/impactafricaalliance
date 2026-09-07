@@ -66,6 +66,29 @@ export class SubmissionRepository {
     ).exec();
   }
 
+  /**
+   * Record a WhatsApp opt-in on someone who already subscribes by email.
+   * A separate consent, captured and dated separately.
+   */
+  setWhatsappOptIn(id: string, whatsappPhone: string, whatsappOptInAt: Date) {
+    return SubscriberModel.findByIdAndUpdate(
+      id,
+      { $set: { whatsappPhone, whatsappOptIn: true, whatsappOptInAt } },
+      { new: true },
+    ).exec();
+  }
+
+  /** Everyone who may lawfully be messaged on WhatsApp right now. */
+  listWhatsappRecipients() {
+    return SubscriberModel.find({
+      whatsappOptIn: true,
+      whatsappPhone: { $exists: true, $ne: null },
+      unsubscribedAt: { $exists: false },
+    })
+      .select('whatsappPhone name')
+      .exec();
+  }
+
   unsubscribeSubscriber(email: string) {
     return SubscriberModel.findOneAndUpdate(
       { email: email.toLowerCase() },

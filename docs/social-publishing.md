@@ -135,14 +135,38 @@ publish — articles and events carry images. The credentials are in
 uploading a video that does not exist is not something to fake. They become
 straightforward once a video pipeline exists.
 
-**WhatsApp Business messaging.** The API is real and the credentials are in
-place, but sending to subscribers lawfully needs per-subscriber WhatsApp opt-in
-that this database does not yet record — subscribers are email-only. Collecting
-that consent has to come first; the adapter is small once it does.
+**WhatsApp Channel publishing** remains impossible — see above. WhatsApp
+Business *messaging* is implemented; see below.
 
 **Engagement analytics and best-time suggestions.** Both need engagement data
 nothing currently collects, and the provider access to collect it. There is no
 honest way to suggest a best time from an empty table.
+
+## WhatsApp Business messaging
+
+Messaging, not publishing: it reaches the people who explicitly asked to hear
+from us and nobody else.
+
+Subscribers now carry a WhatsApp number and an opt-in recorded and dated
+separately from their email consent. Consent to email is not consent to be
+messaged on WhatsApp, so the two are captured apart and a number supplied
+without the opt-in is rejected rather than quietly stored. Numbers are held in
+E.164 — anything else simply fails to deliver.
+
+A broadcast is always outside WhatsApp's 24-hour service window, so it can only
+be sent as a template Meta has already approved. Set `WHATSAPP_TEMPLATE_NAME`
+to that template; without it the destination refuses to send rather than
+failing at the provider with an error nobody could act on. The caption becomes
+the template's body parameter.
+
+One unreachable number does not stop the rest of the list, and a send that
+reached nobody is reported as a failure. There is no post to link to
+afterwards, so the result records how many of the list were reached.
+
+Its connection is derived from configuration rather than a Connect click —
+WhatsApp authenticates with a long-lived system token, not an OAuth handshake —
+but it lives in the same table so the dashboard and the pipeline need no
+special case for it.
 
 ## Single tenant
 

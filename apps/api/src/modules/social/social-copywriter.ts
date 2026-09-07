@@ -28,6 +28,8 @@ const VOICE: Record<SocialDestination, string> = {
     'Vivid and human, written for a caption under a photograph. Keep the hashtags that are already there. Do not tell people to follow a link — a caption link is not clickable.',
   x: 'One sharp sentence that earns the click. Keep the link exactly as it appears.',
   threads: 'Conversational, like talking to a colleague. One short paragraph.',
+  whatsapp:
+    'A short message to someone who asked to hear from us, not an advert. Say what it is in one or two sentences and end with the link. No hashtags, no marketing voice.',
 };
 
 export class SocialCopywriter {

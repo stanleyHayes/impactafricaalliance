@@ -3,6 +3,7 @@ import type { DependencyContainer } from 'tsyringe';
 import type { AppLogger } from '../../config/logger.js';
 
 import { SocialPublicationService } from './social-publication.service.js';
+import { WhatsappAudience } from './whatsapp-audience.js';
 
 /**
  * Drains the publication queue.
@@ -53,7 +54,18 @@ export const startSocialPublicationWorker = (
     }
   };
 
-  const initial = setTimeout(() => void run(), FIRST_RUN_DELAY_MS);
+  // WhatsApp authenticates from configuration rather than a Connect click, so
+  // its connection row is established here rather than waiting for someone to
+  // authorise something that has no authorisation step.
+  const initial = setTimeout(() => {
+    void container
+      .resolve(WhatsappAudience)
+      .syncConnection()
+      .catch((error: unknown) => {
+        logger.error({ err: error }, 'Could not establish the WhatsApp connection');
+      })
+      .finally(() => void run());
+  }, FIRST_RUN_DELAY_MS);
   const interval = setInterval(() => void run(), TICK_MS);
 
   return () => {

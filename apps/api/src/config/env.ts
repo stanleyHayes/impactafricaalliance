@@ -106,6 +106,8 @@ const envSchema = z.object({
   WHATSAPP_BUSINESS_ACCOUNT_ID: z.string().optional(),
   WHATSAPP_PHONE_NUMBER_ID: z.string().optional(),
   WHATSAPP_ACCESS_TOKEN: z.string().optional(),
+  WHATSAPP_TEMPLATE_NAME: z.string().optional(),
+  WHATSAPP_TEMPLATE_LANGUAGE: z.string().optional(),
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
   TIKTOK_CLIENT_KEY: z.string().optional(),
@@ -159,7 +161,14 @@ export interface AppConfig {
     meta: { appId?: string; appSecret?: string };
     x: { clientId?: string; clientSecret?: string };
     threads: { appId?: string; appSecret?: string };
-    whatsapp: { businessAccountId?: string; phoneNumberId?: string; accessToken?: string };
+    whatsapp: {
+      businessAccountId?: string;
+      phoneNumberId?: string;
+      accessToken?: string;
+      /** An approved template is the only way to open a conversation. */
+      templateName?: string;
+      templateLanguage: string;
+    };
     google: { clientId?: string; clientSecret?: string };
     tiktok: { clientKey?: string; clientSecret?: string };
     /** Allow-list of destinations; empty means every one that has credentials. */
@@ -206,6 +215,8 @@ const deriveSocialConfig = (raw: RawEnv): AppConfig['social'] => {
       businessAccountId: raw.WHATSAPP_BUSINESS_ACCOUNT_ID,
       phoneNumberId: raw.WHATSAPP_PHONE_NUMBER_ID,
       accessToken: raw.WHATSAPP_ACCESS_TOKEN,
+      templateName: raw.WHATSAPP_TEMPLATE_NAME,
+      templateLanguage: raw.WHATSAPP_TEMPLATE_LANGUAGE ?? 'en',
     },
     google: {
       clientId: raw.GOOGLE_CLIENT_ID,

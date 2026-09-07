@@ -91,11 +91,37 @@ export interface Submission extends Timestamped {
 }
 
 /** Newsletter subscribe (footer + homepage banner). */
-export const subscribeSchema = z.object({
-  email,
-  name: shortText.optional(),
-  source: z.string().max(60).optional(),
-}).merge(consentSchema);
+/**
+ * E.164, because that is what the WhatsApp Cloud API addresses people by and
+ * a locally-formatted number simply fails to deliver.
+ */
+export const E164 = /^\+[1-9]\d{7,14}$/;
+
+export const subscribeSchema = z
+  .object({
+    email,
+    name: shortText.optional(),
+    source: z.string().max(60).optional(),
+    /** Only stored when they have actually asked for WhatsApp updates. */
+    whatsappPhone: z
+      .string()
+      .trim()
+      .regex(E164, 'Enter the number in international format, e.g. +233201234567')
+      .optional(),
+    whatsappOptIn: z.boolean().optional(),
+  })
+  .merge(consentSchema)
+  // A separate, explicit opt-in. Consent to email is not consent to be
+  // messaged on WhatsApp, and a number captured without it must never be
+  // treated as a subscription.
+  .refine((value) => !value.whatsappOptIn || Boolean(value.whatsappPhone), {
+    path: ['whatsappPhone'],
+    message: 'Add the WhatsApp number to receive updates there.',
+  })
+  .refine((value) => !value.whatsappPhone || value.whatsappOptIn === true, {
+    path: ['whatsappOptIn'],
+    message: 'Tick the box to confirm you want WhatsApp updates.',
+  });
 export type SubscribeInput = z.infer<typeof subscribeSchema>;
 
 export const unsubscribeSchema = z.object({
@@ -107,6 +133,9 @@ export interface Subscriber extends Timestamped {
   email: string;
   name?: string;
   source?: string;
+  whatsappPhone?: string;
+  whatsappOptIn?: boolean;
+  whatsappOptInAt?: string;
   consentVersion?: string;
   consentedAt?: string;
   unsubscribedAt?: string;
