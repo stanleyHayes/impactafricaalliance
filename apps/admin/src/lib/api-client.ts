@@ -2,7 +2,16 @@ import type { ApiErrorBody, LoginResponse } from '@iaa/shared';
 
 import { tokenStore } from './token-store';
 
-const REQUEST_TIMEOUT_MS = 15_000;
+/**
+ * Long enough to cover a cold start. The API sleeps when idle on its current
+ * plan, and the first request after that waits for the instance to come back.
+ * At fifteen seconds that wait was being cut short and reported as a bare
+ * "Failed to fetch" in the console, with nothing shown in the console UI.
+ */
+const REQUEST_TIMEOUT_MS = 45_000;
+
+/** Safe to send twice, so a request lost to a waking server can be retried. */
+const IDEMPOTENT_METHODS = new Set(['GET', 'PATCH', 'DELETE']);
 
 const apiUrl = import.meta.env.VITE_API_URL;
 if (typeof apiUrl !== 'string' || !apiUrl) {
@@ -44,6 +53,30 @@ export const setSessionExpiredHandler = (handler: SessionExpiredHandler | null):
   onSessionExpired = handler;
 };
 
+/**
+ * A failure that never produced an HTTP response — the server was unreachable,
+ * or took longer than the timeout. Status 0 marks it as such, so callers can
+ * tell "we could not ask" apart from "the answer was no".
+ */
+const networkError = (cause: unknown): ApiError => {
+  const timedOut = cause instanceof DOMException && cause.name === 'AbortError';
+  return timedOut
+    ? new ApiError(
+        0,
+        'TIMEOUT',
+        'The server took too long to respond. It may be starting up — please try again in a moment.',
+      )
+    : new ApiError(
+        0,
+        'NETWORK',
+        'Could not reach the server. Check your connection and try again.',
+      );
+};
+
+/** True when the request never got an answer, as opposed to a rejected one. */
+export const isNetworkError = (error: unknown): boolean =>
+  error instanceof ApiError && error.status === 0;
+
 const buildError = async (response: Response): Promise<ApiError> => {
   try {
     const body = (await response.json()) as ApiErrorBody;
@@ -62,18 +95,37 @@ const sendRequest = async (path: string, options: RequestOptions): Promise<Respo
     headers.Authorization = `Bearer ${tokenStore.access}`;
   }
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const method = options.method ?? 'GET';
+  const attempt = async (): Promise<Response> => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    try {
+      return await fetch(`${BASE_URL}${path}`, {
+        method,
+        headers,
+        body: options.body ? JSON.stringify(options.body) : undefined,
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
+  };
 
   try {
-    return await fetch(`${BASE_URL}${path}`, {
-      method: options.method ?? 'GET',
-      headers,
-      body: options.body ? JSON.stringify(options.body) : undefined,
-      signal: controller.signal,
-    });
-  } finally {
-    clearTimeout(timeout);
+    return await attempt();
+  } catch (cause) {
+    // A network-level failure means the request never reached the app, so
+    // repeating an idempotent one is safe — and usually succeeds, because the
+    // first attempt is what woke the server up. A POST is never repeated: it
+    // could have been received and would create a second record.
+    if (IDEMPOTENT_METHODS.has(method)) {
+      try {
+        return await attempt();
+      } catch (retryCause) {
+        throw networkError(retryCause);
+      }
+    }
+    throw networkError(cause);
   }
 };
 
@@ -130,10 +182,16 @@ export const apiRequest = async <T>(path: string, options: RequestOptions = {}):
 
 export const api = {
   get: <T>(path: string): Promise<T> => apiRequest<T>(path),
-  post: <T>(path: string, body: unknown, options?: Omit<RequestOptions, 'method' | 'body'>): Promise<T> =>
-    apiRequest<T>(path, { method: 'POST', body, ...options }),
-  patch: <T>(path: string, body: unknown, options?: Omit<RequestOptions, 'method' | 'body'>): Promise<T> =>
-    apiRequest<T>(path, { method: 'PATCH', body, ...options }),
+  post: <T>(
+    path: string,
+    body: unknown,
+    options?: Omit<RequestOptions, 'method' | 'body'>,
+  ): Promise<T> => apiRequest<T>(path, { method: 'POST', body, ...options }),
+  patch: <T>(
+    path: string,
+    body: unknown,
+    options?: Omit<RequestOptions, 'method' | 'body'>,
+  ): Promise<T> => apiRequest<T>(path, { method: 'PATCH', body, ...options }),
   delete: <T>(path: string, options?: Omit<RequestOptions, 'method'>): Promise<T> =>
     apiRequest<T>(path, { method: 'DELETE', ...options }),
 };

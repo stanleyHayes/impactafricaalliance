@@ -128,7 +128,10 @@ export const ResourceFormDialog = ({
           </Box>
           {save.isError && (
             <Alert severity="error" sx={{ mt: 2 }}>
-              Could not save. Please review the fields and try again.
+              {/* The server's own words when it has any: telling someone to
+                  check their fields is wrong, and misleading, when what
+                  actually happened is that the server could not be reached. */}
+              {save.error.message || 'Could not save. Please review the fields and try again.'}
             </Alert>
           )}
         </Box>
