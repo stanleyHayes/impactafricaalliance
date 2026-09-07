@@ -26,6 +26,10 @@ export type SocialConnectionPlatform = (typeof SOCIAL_CONNECTION_PLATFORMS)[numb
 /** Lifecycle of one destination's publication, tracked independently of the others. */
 export const SOCIAL_PUBLICATION_STATUSES = [
   'draft',
+  // Submitted, but waiting on an administrator. Deliberately distinct from
+  // 'queued': the worker claims only 'queued', so a publication waiting for
+  // approval cannot be picked up by anything, ever.
+  'pending_approval',
   'queued',
   'processing',
   'published',
@@ -227,4 +231,20 @@ export interface SocialPublication extends Timestamped {
   errorMessage?: string;
   retryCount: number;
   idempotencyKey: string;
+  /** Who submitted it, so an approver knows whose work they are reviewing. */
+  createdBy?: string;
+  approvedBy?: string;
+  approvedAt?: string;
+  rejectedBy?: string;
+  rejectedAt?: string;
+  rejectionReason?: string;
 }
+
+/** Waiting on a person, rather than on a provider or a retry timer. */
+export const awaitingApproval = (status: SocialPublicationStatus): boolean =>
+  status === 'pending_approval';
+
+export const socialRejectionSchema = z.object({
+  reason: z.string().min(1).max(500).trim(),
+});
+export type SocialRejection = z.infer<typeof socialRejectionSchema>;

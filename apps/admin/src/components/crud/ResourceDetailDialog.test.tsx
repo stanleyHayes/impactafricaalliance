@@ -7,6 +7,10 @@ import { RESOURCES } from '../../resources/registry';
 import type { ResourceConfig, ResourceRow } from '../../resources/types';
 import { theme } from '../../theme/theme';
 
+// The article dialog now lists this article's social publications, which asks
+// who is viewing so it knows whether to offer Approve.
+vi.mock('../../auth/AuthContext', () => ({ useAuth: () => ({ user: { role: 'admin' } }) }));
+
 import { ResourceDetailDialog } from './ResourceDetailDialog';
 
 const articleResource = RESOURCES.find((resource) => resource.key === 'articles') as ResourceConfig;

@@ -4,6 +4,7 @@ import {
   needsReconnect,
   socialPostInputSchema,
   socialPreviewRequestSchema,
+  socialRejectionSchema,
   socialPublishRequestSchema,
   UserRole,
   type SocialConnectionPlatform,
@@ -42,10 +43,14 @@ export const createSocialRouters = (
   const oauth = container.resolve(SocialOAuthService);
 
   const adminRouter = Router();
-  adminRouter.use(requireAuth(tokens), requireRole(UserRole.Admin));
+  // Editors prepare and submit; administrators approve and hold the
+  // credentials. Anything that manages a connection stays admin-only below.
+  adminRouter.use(requireAuth(tokens), requireRole(UserRole.Admin, UserRole.Editor));
+  const adminOnly = requireRole(UserRole.Admin);
 
   adminRouter.post(
     '/posts',
+    adminOnly,
     asyncHandler(async (req, res) => {
       const input = parseWith(socialPostInputSchema, req.body);
       const publisher = container.resolve(SocialPublisher);
@@ -89,11 +94,16 @@ export const createSocialRouters = (
       const input = parseWith(socialPublishRequestSchema, req.body);
       const publications = container.resolve(SocialPublicationService);
       const articleId = typeof req.body?.articleId === 'string' ? req.body.articleId : undefined;
+      // An administrator approving their own post is not a review, so they
+      // publish directly regardless of the setting.
+      const requiresApproval =
+        config.social.requireApproval && req.user?.role !== UserRole.Admin;
       const queued = await publications.queue(input, {
         ...(articleId ? { articleId } : {}),
         ...(req.user?.sub ? { userId: req.user.sub } : {}),
+        requiresApproval,
       });
-      res.status(202).json({ publications: queued });
+      res.status(202).json({ publications: queued, requiresApproval });
     }),
   );
 
@@ -107,6 +117,25 @@ export const createSocialRouters = (
           ? await publications.listForArticle(articleId)
           : await publications.list(),
       });
+    }),
+  );
+
+  adminRouter.post(
+    '/publications/:id/approve',
+    adminOnly,
+    asyncHandler(async (req, res) => {
+      const publications = container.resolve(SocialPublicationService);
+      res.json(await publications.approve(pathParam(req, 'id'), req.user!.sub));
+    }),
+  );
+
+  adminRouter.post(
+    '/publications/:id/reject',
+    adminOnly,
+    asyncHandler(async (req, res) => {
+      const input = parseWith(socialRejectionSchema, req.body);
+      const publications = container.resolve(SocialPublicationService);
+      res.json(await publications.reject(pathParam(req, 'id'), req.user!.sub, input.reason));
     }),
   );
 
@@ -157,6 +186,7 @@ export const createSocialRouters = (
 
   adminRouter.get(
     '/:platform/connect',
+    adminOnly,
     asyncHandler(async (req, res) => {
       const platform = pathParam(req, 'platform');
       if (!isSocialPlatform(platform)) {
@@ -170,6 +200,7 @@ export const createSocialRouters = (
 
   adminRouter.post(
     '/:platform/disconnect',
+    adminOnly,
     asyncHandler(async (req, res) => {
       const platform = pathParam(req, 'platform');
       if (!isSocialPlatform(platform)) {

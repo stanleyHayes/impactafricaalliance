@@ -113,6 +113,7 @@ const envSchema = z.object({
   TIKTOK_CLIENT_KEY: z.string().optional(),
   TIKTOK_CLIENT_SECRET: z.string().optional(),
   SOCIAL_ENABLED_DESTINATIONS: z.string().optional(),
+  SOCIAL_REQUIRE_APPROVAL: z.string().optional(),
 });
 
 export type RawEnv = z.infer<typeof envSchema>;
@@ -173,6 +174,8 @@ export interface AppConfig {
     tiktok: { clientKey?: string; clientSecret?: string };
     /** Allow-list of destinations; empty means every one that has credentials. */
     enabledDestinations: string[];
+    /** When on, an editor's publication waits for an administrator. */
+    requireApproval: boolean;
   };
 }
 
@@ -229,6 +232,9 @@ const deriveSocialConfig = (raw: RawEnv): AppConfig['social'] => {
     // Empty means "whatever has credentials". An explicit list is the switch
     // that keeps a half-finished provider away from production.
     enabledDestinations: csv(raw.SOCIAL_ENABLED_DESTINATIONS ?? ''),
+    // Off by default. A team of two does not need a second pair of eyes on
+    // every post, and imposing one would only teach people to route around it.
+    requireApproval: raw.SOCIAL_REQUIRE_APPROVAL === 'true',
   };
 };
 

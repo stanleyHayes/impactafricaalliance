@@ -47,14 +47,20 @@ export const usePreviewSocialPost = (): UseMutationResult<
     mutationFn: (body) => api.post<{ previews: DestinationPreview[] }>(`${PATH}/preview`, body),
   });
 
+export interface PublishOutcome {
+  publications: SocialPublication[];
+  /** True when this went to an administrator rather than to the queue. */
+  requiresApproval: boolean;
+}
+
 export const usePublishSocial = (): UseMutationResult<
-  { publications: SocialPublication[] },
+  PublishOutcome,
   Error,
   SocialPublishRequest & { articleId?: string }
 > => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (body) => api.post<{ publications: SocialPublication[] }>(`${PATH}/publish`, body),
+    mutationFn: (body) => api.post<PublishOutcome>(`${PATH}/publish`, body),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: PUBLICATIONS_KEY }),
   });
 };
@@ -71,6 +77,27 @@ export const useSocialPublications = (articleId?: string): UseQueryResult<Social
     // without anything they do. Poll while the page is open.
     refetchInterval: 15_000,
   });
+
+export const useApprovePublication = (): UseMutationResult<SocialPublication, Error, string> => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id) => api.post<SocialPublication>(`${PATH}/publications/${id}/approve`, {}),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: PUBLICATIONS_KEY }),
+  });
+};
+
+export const useRejectPublication = (): UseMutationResult<
+  SocialPublication,
+  Error,
+  { id: string; reason: string }
+> => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, reason }) =>
+      api.post<SocialPublication>(`${PATH}/publications/${id}/reject`, { reason }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: PUBLICATIONS_KEY }),
+  });
+};
 
 export const useRetryPublication = (): UseMutationResult<SocialPublication, Error, string> => {
   const queryClient = useQueryClient();

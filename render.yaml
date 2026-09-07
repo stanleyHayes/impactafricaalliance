@@ -158,6 +158,13 @@ services:
       - key: SOCIAL_ENABLED_DESTINATIONS
         sync: false
 
+      # Set to "true" to make an editor's social posts wait for an
+      # administrator before they are queued. Off by default: a small team
+      # does not need a second pair of eyes on every post. Administrators
+      # publish directly either way — self-approval is not a review.
+      - key: SOCIAL_REQUIRE_APPROVAL
+        value: "false"
+
       # ── Data retention (days) ─────────────────────────────────────────
       - key: SUBMISSION_RETENTION_DAYS
         value: "1095"

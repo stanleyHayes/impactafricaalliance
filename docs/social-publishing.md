@@ -168,6 +168,34 @@ WhatsApp authenticates with a long-lived system token, not an OAuth handshake â€
 but it lives in the same table so the dashboard and the pipeline need no
 special case for it.
 
+## Editorial approval
+
+Off by default. A team of two does not need a second pair of eyes on every
+post, and imposing one only teaches people to route around it. Set
+`SOCIAL_REQUIRE_APPROVAL=true` to turn it on.
+
+With it on, an editor's publication is created as `pending_approval` rather
+than `queued`. That is the whole mechanism: the worker's claim is a positive
+match on `queued`, so a publication waiting for approval is not something the
+worker declines to take â€” it is something the worker cannot see. Retry is
+blocked on a held row for the same reason, since it would otherwise be a way
+around the approval.
+
+Administrators publish directly regardless of the setting. Approving your own
+post is not a review, and pretending otherwise would add a step without adding
+oversight.
+
+Approval is per destination, consistent with everything else here: an
+administrator can release the LinkedIn post and decline the Instagram one.
+Approving something scheduled for Friday queues it for Friday, not for the
+moment of approval.
+
+Declining is not deleting. The row stays, carrying who declined it and why, so
+the person who wrote it can see what to change.
+
+Editors can now reach the publishing routes; managing connections and
+approving stay with administrators.
+
 ## Single tenant
 
 The build spec describes `organization_id` on every table. This deployment

@@ -160,6 +160,54 @@ const DestinationRow = ({
   );
 };
 
+/**
+ * The one forward action, which differs by step: preview first, then send.
+ * Nothing to press once a submission is waiting on somebody else.
+ */
+const PrimaryAction = ({
+  reviewing,
+  submitted,
+  busy,
+  blocked,
+  when,
+  scheduledFor,
+  selectedCount,
+  onReview,
+  onSend,
+}: {
+  reviewing: boolean;
+  submitted: boolean;
+  busy: boolean;
+  blocked: boolean;
+  when: 'now' | 'schedule';
+  scheduledFor: string;
+  selectedCount: number;
+  onReview: () => void;
+  onSend: () => void;
+}): JSX.Element | null => {
+  if (submitted) {
+    return null;
+  }
+  if (!reviewing) {
+    return (
+      <Button variant="contained" disabled={busy || selectedCount === 0} onClick={onReview}>
+        Preview social posts
+      </Button>
+    );
+  }
+  const waitingOnATime = when === 'schedule' && !scheduledFor;
+  return (
+    <Button
+      variant="contained"
+      startIcon={<SendRoundedIcon />}
+      disabled={busy || blocked || waitingOnATime}
+      onClick={onSend}
+    >
+      {when === 'schedule' ? 'Schedule' : 'Publish everywhere'}
+    </Button>
+  );
+};
+
 /** Where this is going, and whether the assistant should draft it. */
 const ChooseStep = ({
   accounts,
@@ -299,6 +347,7 @@ export const SocialPublishDialog = ({
   const [captions, setCaptions] = useState<Captions>({});
   const [previews, setPreviews] = useState<DestinationPreview[]>([]);
   const [useAi, setUseAi] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [when, setWhen] = useState<'now' | 'schedule'>('now');
   const [scheduledFor, setScheduledFor] = useState('');
@@ -341,13 +390,18 @@ export const SocialPublishDialog = ({
       source,
       previews,
     });
-    await publish.mutateAsync({
+    const outcome = await publish.mutateAsync({
       destinations,
       ...(when === 'schedule' && scheduledFor
         ? { scheduledFor: localToIso(scheduledFor) as string, timezone }
         : {}),
       ...(articleId ? { articleId } : {}),
     });
+    // Closing silently would leave an editor believing it had gone out.
+    if (outcome.requiresApproval) {
+      setSubmitted(true);
+      return;
+    }
     onClose();
   };
 
@@ -398,32 +452,31 @@ export const SocialPublishDialog = ({
             />
           )}
 
+          {submitted && (
+            <Alert severity="info">
+              Sent to an administrator for approval. Nothing is published until they release it,
+              and you can follow it under Recent publications.
+            </Alert>
+          )}
           {publish.isError && <Alert severity="error">{publish.error.message}</Alert>}
           {preview.isError && <Alert severity="error">{preview.error.message}</Alert>}
         </Stack>
       </DialogContent>
       <DialogFooter>
         <Button onClick={onClose} disabled={busy}>
-          Cancel
+          {submitted ? 'Done' : 'Cancel'}
         </Button>
-        {reviewing ? (
-          <Button
-            variant="contained"
-            startIcon={<SendRoundedIcon />}
-            disabled={busy || blockers.length > 0 || (when === 'schedule' && !scheduledFor)}
-            onClick={() => void send()}
-          >
-            {when === 'schedule' ? 'Schedule' : 'Publish everywhere'}
-          </Button>
-        ) : (
-          <Button
-            variant="contained"
-            disabled={busy || selected.length === 0}
-            onClick={() => void startReview()}
-          >
-            Preview social posts
-          </Button>
-        )}
+        <PrimaryAction
+          reviewing={reviewing}
+          submitted={submitted}
+          busy={busy}
+          blocked={blockers.length > 0}
+          when={when}
+          scheduledFor={scheduledFor}
+          selectedCount={selected.length}
+          onReview={() => void startReview()}
+          onSend={() => void send()}
+        />
       </DialogFooter>
     </Dialog>
   );

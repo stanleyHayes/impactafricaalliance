@@ -40,6 +40,12 @@ export interface SocialPublicationDocument {
    */
   idempotencyKey: string;
   createdBy?: string;
+  /** Who released it to the queue, and when. Kept for audit. */
+  approvedBy?: string;
+  approvedAt?: Date;
+  rejectedBy?: string;
+  rejectedAt?: Date;
+  rejectionReason?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -70,6 +76,11 @@ const socialPublicationSchema = new Schema<SocialPublicationDocument>(
     lockedAt: { type: Date },
     idempotencyKey: { type: String, required: true, unique: true, index: true },
     createdBy: { type: String },
+    approvedBy: { type: String },
+    approvedAt: { type: Date },
+    rejectedBy: { type: String },
+    rejectedAt: { type: Date },
+    rejectionReason: { type: String },
   },
   baseSchemaOptions,
 );

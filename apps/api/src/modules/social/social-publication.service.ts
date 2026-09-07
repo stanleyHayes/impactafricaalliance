@@ -82,7 +82,7 @@ export class SocialPublicationService {
    */
   async queue(
     request: SocialPublishRequest,
-    options: { articleId?: string; userId?: string },
+    options: { articleId?: string; userId?: string; requiresApproval?: boolean },
   ): Promise<SocialPublicationDocument[]> {
     const scheduledFor = request.scheduledFor ? new Date(request.scheduledFor) : undefined;
     const created: SocialPublicationDocument[] = [];
@@ -111,8 +111,13 @@ export class SocialPublicationService {
             ...(target.imageUrl ? { imageUrl: target.imageUrl } : {}),
             ...(target.canonicalUrl ? { canonicalUrl: target.canonicalUrl } : {}),
             ...(scheduledFor ? { scheduledFor } : {}),
-            status: 'queued',
-            nextAttemptAt: scheduledFor ?? new Date(),
+            // Held rather than queued when it needs an administrator. The
+            // worker claims only 'queued', so this is what actually stops an
+            // unapproved publication going out — not a check it could skip.
+            status: options.requiresApproval ? 'pending_approval' : 'queued',
+            ...(options.requiresApproval
+              ? {}
+              : { nextAttemptAt: scheduledFor ?? new Date() }),
             retryCount: 0,
             ...(options.userId ? { createdBy: options.userId } : {}),
           },
@@ -292,6 +297,68 @@ export class SocialPublicationService {
     };
   }
 
+  /**
+   * Release a held publication to the queue.
+   *
+   * Its schedule is honoured on release: approving something scheduled for
+   * Friday queues it for Friday, not for the moment of approval.
+   */
+  async approve(id: string, approvedBy: string): Promise<SocialPublicationDocument> {
+    const publication = await SocialPublicationModel.findById(id).exec();
+    if (!publication) {
+      throw new NotFoundError('Publication');
+    }
+    if (publication.status !== 'pending_approval') {
+      throw new ValidationError('This publication is not waiting for approval.');
+    }
+    const updated = await SocialPublicationModel.findByIdAndUpdate(
+      id,
+      {
+        $set: {
+          status: 'queued',
+          approvedBy,
+          approvedAt: new Date(),
+          nextAttemptAt: publication.scheduledFor ?? new Date(),
+        },
+        $unset: { rejectedBy: 1, rejectedAt: 1, rejectionReason: 1 },
+      },
+      { new: true },
+    ).exec();
+    this.logger.info({ publicationId: id, approvedBy }, 'Social publication approved');
+    return updated as SocialPublicationDocument;
+  }
+
+  /**
+   * Turn one down, with a reason.
+   *
+   * Rejection is not deletion: the row stays, carrying who declined it and
+   * why, so the person who submitted it can see what to change.
+   */
+  async reject(id: string, rejectedBy: string, reason: string): Promise<SocialPublicationDocument> {
+    const publication = await SocialPublicationModel.findById(id).exec();
+    if (!publication) {
+      throw new NotFoundError('Publication');
+    }
+    if (publication.status !== 'pending_approval') {
+      throw new ValidationError('This publication is not waiting for approval.');
+    }
+    const updated = await SocialPublicationModel.findByIdAndUpdate(
+      id,
+      {
+        $set: {
+          status: 'cancelled',
+          rejectedBy,
+          rejectedAt: new Date(),
+          rejectionReason: reason,
+        },
+        $unset: { nextAttemptAt: 1 },
+      },
+      { new: true },
+    ).exec();
+    this.logger.info({ publicationId: id, rejectedBy }, 'Social publication rejected');
+    return updated as SocialPublicationDocument;
+  }
+
   /** Put a failed publication back in the queue, without touching its siblings. */
   async retry(id: string): Promise<SocialPublicationDocument> {
     const publication = await SocialPublicationModel.findById(id).exec();
@@ -301,6 +368,10 @@ export class SocialPublicationService {
     if (publication.status === 'published') {
       // Retrying a success is how duplicates happen.
       throw new ValidationError('This destination has already been published.');
+    }
+    if (publication.status === 'pending_approval') {
+      // Otherwise Retry would be a way around the approval it is waiting for.
+      throw new ValidationError('This publication is still waiting for approval.');
     }
     const updated = await SocialPublicationModel.findByIdAndUpdate(
       id,
