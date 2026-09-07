@@ -91,7 +91,9 @@ const DetailsDialog = ({
             <Typography variant="caption">
               {item.width && item.height ? `${item.width} × ${item.height}` : 'Size unknown'}
             </Typography>
-            {item.bytes ? <Typography variant="caption">{formatBytes(item.bytes)}</Typography> : null}
+            {item.bytes ? (
+              <Typography variant="caption">{formatBytes(item.bytes)}</Typography>
+            ) : null}
             <Link
               href={item.url}
               target="_blank"
@@ -239,7 +241,11 @@ const MediaLibraryPage = (): JSX.Element => {
       />
 
       {isError && (
-        <Alert severity="error" sx={{ mb: 2 }} action={<Button onClick={() => void refetch()}>Retry</Button>}>
+        <Alert
+          severity="error"
+          sx={{ mb: 2 }}
+          action={<Button onClick={() => void refetch()}>Retry</Button>}
+        >
           The media library could not be loaded.
         </Alert>
       )}
@@ -267,7 +273,12 @@ const MediaLibraryPage = (): JSX.Element => {
         />
       </Box>
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mb: 2 }} alignItems="center">
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        spacing={1.5}
+        sx={{ mb: 2 }}
+        alignItems="center"
+      >
         <TextField
           size="small"
           fullWidth
@@ -341,6 +352,10 @@ const MediaLibraryPage = (): JSX.Element => {
                 borderRadius: 2.5,
                 overflow: 'hidden',
                 bgcolor: 'background.paper',
+                // A native button does not inherit the page's colour — the
+                // browser applies its own `buttontext`, which is black — so
+                // every Typography inside rendered black on the dark card.
+                color: 'text.primary',
                 cursor: 'pointer',
                 textAlign: 'left',
                 transition: (theme) => theme.transitions.create(['border-color', 'transform']),

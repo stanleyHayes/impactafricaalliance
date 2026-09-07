@@ -173,6 +173,9 @@ export const MediaPickerDialog = ({
                     borderRadius: 2,
                     overflow: 'hidden',
                     bgcolor: 'background.paper',
+                    // See MediaLibrary: a native button defaults to the
+                    // browser's black `buttontext` rather than inheriting.
+                    color: 'text.primary',
                     cursor: 'pointer',
                     textAlign: 'left',
                     transition: (theme) => theme.transitions.create(['border-color', 'transform']),
