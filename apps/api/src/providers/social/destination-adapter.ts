@@ -216,15 +216,52 @@ export const xAdapter: DestinationAdapter = {
 };
 
 /**
+ * Threads publishes in two steps like Instagram, but on its own host and with
+ * an explicit media type. Unlike Instagram it will post text alone, so the
+ * image is optional.
+ */
+export const threadsAdapter: DestinationAdapter = {
+  destination: 'threads',
+  publish: async (request, credentials) => {
+    const base = `https://graph.threads.net/v1.0/${credentials.accountId}`;
+    try {
+      const container = await axios.post(`${base}/threads`, {
+        media_type: request.imageUrl ? 'IMAGE' : 'TEXT',
+        ...(request.imageUrl ? { image_url: request.imageUrl } : {}),
+        text: request.caption,
+        access_token: credentials.accessToken,
+      });
+      const creationId = (container.data as { id?: string }).id;
+      if (!creationId) {
+        return { ok: false, message: 'Threads did not return a container.' };
+      }
+      const published = await axios.post(`${base}/threads_publish`, {
+        creation_id: creationId,
+        access_token: credentials.accessToken,
+      });
+      const id = (published.data as { id?: string }).id;
+      const outcome: PublishSuccess = { ok: true };
+      if (id) {
+        outcome.externalPostId = id;
+      }
+      return outcome;
+    } catch (error) {
+      return toFailure(error, 'Threads publish failed');
+    }
+  },
+};
+
+/**
  * Only the destinations that are actually implemented appear here. A
  * destination with no adapter is reported as unsupported rather than silently
- * queued and never sent — Threads sits outside until its adapter is written.
+ * queued and never sent.
  */
 export const DESTINATION_ADAPTERS: Partial<Record<SocialDestination, DestinationAdapter>> = {
   facebook: facebookAdapter,
   instagram: instagramAdapter,
   linkedin: linkedInAdapter,
   x: xAdapter,
+  threads: threadsAdapter,
 };
 
 export const adapterFor = (destination: SocialDestination): DestinationAdapter | undefined =>

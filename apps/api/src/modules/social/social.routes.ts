@@ -67,7 +67,13 @@ export const createSocialRouters = (
     asyncHandler(async (req, res) => {
       const input = parseWith(socialPreviewRequestSchema, req.body);
       const publications = container.resolve(SocialPublicationService);
-      res.json({ previews: publications.preview(input.destinations, input.source) });
+      res.json({
+        previews: await publications.preview(input.destinations, input.source, {
+          ...(input.useAi === undefined ? {} : { useAi: input.useAi }),
+          ...(input.campaign ? { campaign: input.campaign } : {}),
+          ...(input.imageUrl ? { imageUrl: input.imageUrl } : {}),
+        }),
+      });
     }),
   );
 

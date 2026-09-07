@@ -6,6 +6,7 @@ import {
   facebookAdapter,
   instagramAdapter,
   linkedInAdapter,
+  threadsAdapter,
   toFailure,
   xAdapter,
 } from './destination-adapter.js';
@@ -127,9 +128,39 @@ describe('the adapter registry', () => {
     expect(adapterFor('x')).toBeDefined();
   });
 
-  it('reports Threads as unimplemented rather than pretending', () => {
-    // Queueing a destination with no adapter would leave a row nothing ever sends.
-    expect(adapterFor('threads')).toBeUndefined();
+  it('offers Threads now that its adapter exists', () => {
+    expect(adapterFor('threads')).toBeDefined();
+  });
+});
+
+describe('Threads', () => {
+  it('creates a container then publishes it, on its own host', async () => {
+    post
+      .mockResolvedValueOnce({ data: { id: 'th-container' } })
+      .mockResolvedValueOnce({ data: { id: 'th-post' } });
+
+    const outcome = await threadsAdapter.publish({ caption: 'Hello' }, credentials);
+
+    expect(outcome).toMatchObject({ ok: true, externalPostId: 'th-post' });
+    expect(post.mock.calls[0][0]).toContain('graph.threads.net');
+    // Text alone is a valid Threads post, unlike Instagram.
+    expect(post.mock.calls[0][1]).toMatchObject({ media_type: 'TEXT' });
+  });
+
+  it('switches to an image post when one is supplied', async () => {
+    post
+      .mockResolvedValueOnce({ data: { id: 'th-container' } })
+      .mockResolvedValueOnce({ data: { id: 'th-post' } });
+
+    await threadsAdapter.publish(
+      { caption: 'Hello', imageUrl: 'https://cdn.test/a.jpg' },
+      credentials,
+    );
+
+    expect(post.mock.calls[0][1]).toMatchObject({
+      media_type: 'IMAGE',
+      image_url: 'https://cdn.test/a.jpg',
+    });
   });
 });
 

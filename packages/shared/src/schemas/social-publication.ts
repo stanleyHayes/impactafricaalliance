@@ -172,6 +172,16 @@ export const socialSourceSchema = z.object({
 export const socialPreviewRequestSchema = z.object({
   destinations: z.array(z.enum(SOCIAL_DESTINATIONS)).min(1),
   source: socialSourceSchema,
+  /**
+   * Ask the writing assistant to improve on the templates. Optional by design:
+   * publishing never depends on a model being reachable, and an unavailable
+   * one silently yields the template instead.
+   */
+  useAi: z.boolean().optional(),
+  /** Campaign name for the UTM tags; derived from the headline when absent. */
+  campaign: z.string().max(60).optional(),
+  /** Cropped per destination when it is a Cloudinary URL. */
+  imageUrl: z.string().url().optional(),
 });
 export type SocialPreviewRequest = z.infer<typeof socialPreviewRequestSchema>;
 

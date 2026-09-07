@@ -101,6 +101,16 @@ const envSchema = z.object({
   META_APP_SECRET: z.string().optional(),
   X_CLIENT_ID: z.string().optional(),
   X_CLIENT_SECRET: z.string().optional(),
+  THREADS_APP_ID: z.string().optional(),
+  THREADS_APP_SECRET: z.string().optional(),
+  WHATSAPP_BUSINESS_ACCOUNT_ID: z.string().optional(),
+  WHATSAPP_PHONE_NUMBER_ID: z.string().optional(),
+  WHATSAPP_ACCESS_TOKEN: z.string().optional(),
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+  TIKTOK_CLIENT_KEY: z.string().optional(),
+  TIKTOK_CLIENT_SECRET: z.string().optional(),
+  SOCIAL_ENABLED_DESTINATIONS: z.string().optional(),
 });
 
 export type RawEnv = z.infer<typeof envSchema>;
@@ -148,6 +158,12 @@ export interface AppConfig {
     linkedin: { clientId?: string; clientSecret?: string };
     meta: { appId?: string; appSecret?: string };
     x: { clientId?: string; clientSecret?: string };
+    threads: { appId?: string; appSecret?: string };
+    whatsapp: { businessAccountId?: string; phoneNumberId?: string; accessToken?: string };
+    google: { clientId?: string; clientSecret?: string };
+    tiktok: { clientKey?: string; clientSecret?: string };
+    /** Allow-list of destinations; empty means every one that has credentials. */
+    enabledDestinations: string[];
   };
 }
 
@@ -182,6 +198,26 @@ const deriveSocialConfig = (raw: RawEnv): AppConfig['social'] => {
       clientId: raw.X_CLIENT_ID,
       clientSecret: raw.X_CLIENT_SECRET,
     },
+    threads: {
+      appId: raw.THREADS_APP_ID,
+      appSecret: raw.THREADS_APP_SECRET,
+    },
+    whatsapp: {
+      businessAccountId: raw.WHATSAPP_BUSINESS_ACCOUNT_ID,
+      phoneNumberId: raw.WHATSAPP_PHONE_NUMBER_ID,
+      accessToken: raw.WHATSAPP_ACCESS_TOKEN,
+    },
+    google: {
+      clientId: raw.GOOGLE_CLIENT_ID,
+      clientSecret: raw.GOOGLE_CLIENT_SECRET,
+    },
+    tiktok: {
+      clientKey: raw.TIKTOK_CLIENT_KEY,
+      clientSecret: raw.TIKTOK_CLIENT_SECRET,
+    },
+    // Empty means "whatever has credentials". An explicit list is the switch
+    // that keeps a half-finished provider away from production.
+    enabledDestinations: csv(raw.SOCIAL_ENABLED_DESTINATIONS ?? ''),
   };
 };
 

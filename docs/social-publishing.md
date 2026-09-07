@@ -77,6 +77,7 @@ redirect URI registered there must match exactly.
 
 | Provider | Console | Redirect URI |
 | --- | --- | --- |
+| Threads | https://developers.facebook.com/ | `<SOCIAL_OAUTH_REDIRECT_BASE>/api/social/threads/callback` |
 | Meta | https://developers.facebook.com/ | `<SOCIAL_OAUTH_REDIRECT_BASE>/api/social/meta/callback` |
 | LinkedIn | https://www.linkedin.com/developers/ | `<SOCIAL_OAUTH_REDIRECT_BASE>/api/social/linkedin/callback` |
 | X | https://developer.x.com/ | `<SOCIAL_OAUTH_REDIRECT_BASE>/api/social/x/callback` |
@@ -97,6 +98,30 @@ Notes that cost time if missed:
 Verify each provider's current documentation before going live; their
 permissions and review requirements change.
 
+## Campaign tagging and image variants
+
+Every destination gets its own tagged link — `utm_source` is the network
+itself, not a generic "social", which is what separates LinkedIn's traffic from
+Facebook's in analytics. A tag somebody set by hand is never overwritten.
+
+Images are re-cropped per network from the same upload: 1200x630 for Facebook
+and LinkedIn, 1200x675 for X, square for Instagram and Threads. Cloudinary's
+`g_auto` picks the crop, which keeps faces in shot far more reliably than a
+centre crop. An image hosted elsewhere is passed through untouched.
+
+## AI-assisted copy
+
+Optional. With `ANTHROPIC_API_KEY` set, the preview step can ask the writing
+assistant to improve on the templates, and the result is editable like any
+other draft. Each destination carries its own voice — LinkedIn leads with why
+it matters, X gets one sharp sentence, Instagram is told not to point at a link
+because a caption link is not clickable.
+
+The fallback is absolute. No key, a refusal, a timeout, an empty answer, or an
+answer that overran the network's limit all yield the deterministic template
+instead, and the response says which produced it. Publishing never becomes
+unavailable because a model is.
+
 ## Not supported
 
 **WhatsApp Channel publishing.** There is no official API for it. The dashboard
@@ -104,8 +129,20 @@ does not offer it, and it must not be simulated with browser automation. The
 WhatsApp Business Platform is for opted-in subscriber messaging, which is a
 different thing.
 
-**Threads.** Modelled as its own destination and connection, but no adapter is
-written, so it is reported as not enabled rather than silently queued.
+**YouTube and TikTok.** Both publish video, and this CMS has no video asset to
+publish — articles and events carry images. The credentials are in
+`render.yaml` and the destinations are reserved, but no adapter is written:
+uploading a video that does not exist is not something to fake. They become
+straightforward once a video pipeline exists.
+
+**WhatsApp Business messaging.** The API is real and the credentials are in
+place, but sending to subscribers lawfully needs per-subscriber WhatsApp opt-in
+that this database does not yet record — subscribers are email-only. Collecting
+that consent has to come first; the adapter is small once it does.
+
+**Engagement analytics and best-time suggestions.** Both need engagement data
+nothing currently collects, and the provider access to collect it. There is no
+honest way to suggest a best time from an empty table.
 
 ## Single tenant
 

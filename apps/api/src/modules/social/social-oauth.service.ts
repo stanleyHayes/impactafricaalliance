@@ -83,6 +83,9 @@ export class SocialOAuthService {
       creds = { clientId: social.linkedin.clientId, clientSecret: social.linkedin.clientSecret };
     } else if (platform === 'meta') {
       creds = { clientId: social.meta.appId, clientSecret: social.meta.appSecret };
+    } else if (platform === 'threads') {
+      // Its own app even though Meta owns it, so its own credentials.
+      creds = { clientId: social.threads.appId, clientSecret: social.threads.appSecret };
     } else {
       creds = { clientId: social.x.clientId, clientSecret: social.x.clientSecret };
     }
@@ -139,6 +142,15 @@ export class SocialOAuthService {
         scope: 'pages_manage_posts,pages_read_engagement,instagram_basic,instagram_content_publish',
       });
       authorizeUrl = `https://www.facebook.com/${GRAPH_VERSION}/dialog/oauth?${params.toString()}`;
+    } else if (platform === 'threads') {
+      const params = new URLSearchParams({
+        client_id: clientId,
+        redirect_uri: redirectUri,
+        state,
+        response_type: 'code',
+        scope: 'threads_basic,threads_content_publish',
+      });
+      authorizeUrl = `https://threads.net/oauth/authorize?${params.toString()}`;
     } else {
       const challenge = pkceChallenge(verifier!);
       const params = new URLSearchParams({
@@ -200,6 +212,8 @@ export class SocialOAuthService {
       account = await this.handleLinkedInCallback(code, redirectUri, payload.userId);
     } else if (platform === 'meta') {
       account = await this.handleMetaCallback(code, redirectUri, payload.userId);
+    } else if (platform === 'threads') {
+      account = await this.handleThreadsCallback(code, redirectUri, payload.userId);
     } else {
       if (!payload.verifier) {
         throw new UnauthorizedError('Missing PKCE verifier');
@@ -334,6 +348,61 @@ export class SocialOAuthService {
       accountName: userInfo.data.name,
       accountHandle: userInfo.data.email,
       metadata: { email: userInfo.data.email, sub: userInfo.data.sub },
+      connectedBy: userId,
+    });
+  }
+
+  /**
+   * Threads issues a short-lived token first, which has to be exchanged for a
+   * long-lived one before it is worth storing — the short one expires in about
+   * an hour and would leave the connection broken by the next publish.
+   */
+  private async handleThreadsCallback(
+    code: string,
+    redirectUri: string,
+    userId: string,
+  ): Promise<SocialAccountDocument> {
+    const { clientId, clientSecret } = this.getCredentials('threads');
+
+    const shortLived = await axios.post<{ access_token: string; user_id: string }>(
+      'https://graph.threads.net/oauth/access_token',
+      new URLSearchParams({
+        client_id: clientId,
+        client_secret: clientSecret,
+        grant_type: 'authorization_code',
+        redirect_uri: redirectUri,
+        code,
+      }),
+      { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } },
+    );
+
+    const longLived = await axios.get<{ access_token: string; expires_in?: number }>(
+      'https://graph.threads.net/access_token',
+      {
+        params: {
+          grant_type: 'th_exchange_token',
+          client_secret: clientSecret,
+          access_token: shortLived.data.access_token,
+        },
+      },
+    );
+
+    const accessToken = longLived.data.access_token;
+    const profile = await axios.get<{ id: string; username?: string }>(
+      'https://graph.threads.net/v1.0/me',
+      { params: { fields: 'id,username', access_token: accessToken } },
+    );
+
+    return this.repository.upsert('threads', {
+      accessToken: this.crypto.encrypt(accessToken),
+      tokenExpiry: longLived.data.expires_in
+        ? new Date(Date.now() + longLived.data.expires_in * 1000)
+        : undefined,
+      accountId: profile.data.id,
+      accountName: profile.data.username,
+      accountHandle: profile.data.username,
+      scopes: ['threads_basic', 'threads_content_publish'],
+      status: 'active',
       connectedBy: userId,
     });
   }

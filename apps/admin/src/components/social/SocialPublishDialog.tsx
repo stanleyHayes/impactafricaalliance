@@ -21,7 +21,11 @@ import Typography from '@mui/material/Typography';
 import { useMemo, useState } from 'react';
 
 import { useSocialAccounts, type SocialAccount } from '../../lib/admin-hooks';
-import { usePreviewSocialPost, usePublishSocial } from '../../lib/social-publishing';
+import {
+  usePreviewSocialPost,
+  usePublishSocial,
+  type DestinationPreview,
+} from '../../lib/social-publishing';
 import { DialogFooter, DialogHeader, dialogPaperSx } from '../dialogs/DialogShell';
 
 export interface SocialPublishSource {
@@ -74,25 +78,37 @@ const blockersFor = (
     );
 
 /** Pair each chosen destination with the connection that will carry it. */
-const buildDestinations = (
-  selected: SocialDestination[],
-  accounts: SocialAccount[],
-  captions: Captions,
-  source: SocialPublishSource,
-): SocialPublicationInput[] =>
+const buildDestinations = ({
+  selected,
+  accounts,
+  captions,
+  source,
+  previews,
+}: {
+  selected: SocialDestination[];
+  accounts: SocialAccount[];
+  captions: Captions;
+  source: SocialPublishSource;
+  previews: DestinationPreview[];
+}): SocialPublicationInput[] =>
   selected.flatMap((destination) => {
     const account = connectionFor(accounts, destination);
     const caption = captions[destination];
     if (!account || !caption) {
       return [];
     }
+    // The preview already worked out this destination's tagged link and its
+    // own crop; publishing with the untagged original would throw both away.
+    const drafted = previews.find((item) => item.destination === destination);
+    const imageUrl = drafted?.imageUrl ?? source.imageUrl;
+    const canonicalUrl = drafted?.linkUrl ?? source.url;
     return [
       {
         destination,
         connectionId: account.id,
         caption,
-        ...(source.imageUrl ? { imageUrl: source.imageUrl } : {}),
-        ...(source.url ? { canonicalUrl: source.url } : {}),
+        ...(imageUrl ? { imageUrl } : {}),
+        ...(canonicalUrl ? { canonicalUrl } : {}),
       },
     ];
   });
@@ -143,6 +159,57 @@ const DestinationRow = ({
     </Stack>
   );
 };
+
+/** Where this is going, and whether the assistant should draft it. */
+const ChooseStep = ({
+  accounts,
+  selected,
+  locked,
+  onToggle,
+  useAi,
+  onUseAi,
+}: {
+  accounts: SocialAccount[];
+  selected: SocialDestination[];
+  locked: boolean;
+  onToggle: (destination: SocialDestination) => void;
+  useAi: boolean;
+  onUseAi: (value: boolean) => void;
+}): JSX.Element => (
+  <>
+    <Typography variant="overline" color="text.secondary">
+      Distribute to
+    </Typography>
+
+    <Stack spacing={1}>
+      {Object.values(DESTINATION_CAPABILITIES).map((capability) => (
+        <DestinationRow
+          key={capability.destination}
+          capability={capability}
+          account={connectionFor(accounts, capability.destination)}
+          checked={selected.includes(capability.destination)}
+          locked={locked}
+          onToggle={() => onToggle(capability.destination)}
+        />
+      ))}
+    </Stack>
+
+    {!locked && (
+      <FormControlLabel
+        control={<Checkbox checked={useAi} onChange={(_event, value) => onUseAi(value)} />}
+        label={
+          <Stack>
+            <Typography variant="body2">Let the writing assistant draft these</Typography>
+            <Typography variant="caption" color="text.secondary">
+              You can edit whatever it produces. If the assistant is unavailable the standard
+              templates are used instead.
+            </Typography>
+          </Stack>
+        }
+      />
+    )}
+  </>
+);
 
 /**
  * The editable copy for each chosen destination, and when it should go.
@@ -230,6 +297,8 @@ export const SocialPublishDialog = ({
 
   const [selected, setSelected] = useState<SocialDestination[]>([]);
   const [captions, setCaptions] = useState<Captions>({});
+  const [previews, setPreviews] = useState<DestinationPreview[]>([]);
+  const [useAi, setUseAi] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [when, setWhen] = useState<'now' | 'schedule'>('now');
   const [scheduledFor, setScheduledFor] = useState('');
@@ -248,13 +317,16 @@ export const SocialPublishDialog = ({
   const startReview = async (): Promise<void> => {
     const result = await preview.mutateAsync({
       destinations: selected,
+      useAi,
       source: {
         title: source.title,
         ...(source.excerpt ? { excerpt: source.excerpt } : {}),
         ...(source.url ? { url: source.url } : {}),
         ...(source.tags ? { tags: source.tags } : {}),
       },
+      ...(source.imageUrl ? { imageUrl: source.imageUrl } : {}),
     });
+    setPreviews(result.previews);
     setCaptions(
       Object.fromEntries(result.previews.map((item) => [item.destination, item.caption])),
     );
@@ -262,7 +334,13 @@ export const SocialPublishDialog = ({
   };
 
   const send = async (): Promise<void> => {
-    const destinations = buildDestinations(selected, connected, captions, source);
+    const destinations = buildDestinations({
+      selected,
+      accounts: connected,
+      captions,
+      source,
+      previews,
+    });
     await publish.mutateAsync({
       destinations,
       ...(when === 'schedule' && scheduledFor
@@ -288,22 +366,14 @@ export const SocialPublishDialog = ({
       />
       <DialogContent dividers>
         <Stack spacing={2.5}>
-          <Typography variant="overline" color="text.secondary">
-            Distribute to
-          </Typography>
-
-          <Stack spacing={1}>
-            {Object.values(DESTINATION_CAPABILITIES).map((capability) => (
-              <DestinationRow
-                key={capability.destination}
-                capability={capability}
-                account={connectionFor(connected, capability.destination)}
-                checked={selected.includes(capability.destination)}
-                locked={reviewing}
-                onToggle={() => toggle(capability.destination)}
-              />
-            ))}
-          </Stack>
+          <ChooseStep
+            accounts={connected}
+            selected={selected}
+            locked={reviewing}
+            onToggle={toggle}
+            useAi={useAi}
+            onUseAi={setUseAi}
+          />
 
           {blockers.length > 0 && (
             <Alert severity="warning">

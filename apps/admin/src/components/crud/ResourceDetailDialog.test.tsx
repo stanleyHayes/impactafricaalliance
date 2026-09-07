@@ -1,4 +1,5 @@
 import { ThemeProvider } from '@mui/material/styles';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -27,16 +28,22 @@ describe('ResourceDetailDialog', () => {
     const onClose = vi.fn();
     const onEdit = vi.fn();
 
+    // The dialog now shows this article's social publications, which is a
+    // live query, so it needs a client the way the app gives it one.
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
     render(
       <ThemeProvider theme={theme}>
-        <ResourceDetailDialog
-          resource={articleResource}
-          open
-          row={article}
-          onClose={onClose}
-          onEdit={onEdit}
-          canEdit
-        />
+        <QueryClientProvider client={queryClient}>
+          <ResourceDetailDialog
+            resource={articleResource}
+            open
+            row={article}
+            onClose={onClose}
+            onEdit={onEdit}
+            canEdit
+          />
+        </QueryClientProvider>
       </ThemeProvider>,
     );
 
@@ -48,6 +55,9 @@ describe('ResourceDetailDialog', () => {
     expect(screen.getByText('Digital Skills')).toBeInTheDocument();
     expect(screen.getByText('/news/skills-beyond-the-classroom')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Learning by building' })).toBeInTheDocument();
+
+    // Sharing is now offered alongside editing.
+    expect(screen.getByRole('button', { name: 'Share to social' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Edit article' }));
     fireEvent.click(screen.getByRole('button', { name: 'Close article details' }));

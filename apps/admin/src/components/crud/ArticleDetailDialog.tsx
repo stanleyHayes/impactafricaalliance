@@ -5,6 +5,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
 import NewspaperRoundedIcon from '@mui/icons-material/NewspaperRounded';
+import ShareRoundedIcon from '@mui/icons-material/ShareRounded';
 import TagRoundedIcon from '@mui/icons-material/TagRounded';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -18,12 +19,22 @@ import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import { alpha, useTheme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 
 import { formatUtcDate } from '../../lib/date';
 import type { ResourceRow } from '../../resources/types';
 import { DialogFooter, dialogPaperSx } from '../dialogs/DialogShell';
 import { Markdown } from '../markdown/Markdown';
+import { PublicationStatusList } from '../social/PublicationStatusList';
+import {
+  SocialPublishDialog,
+  type SocialPublishSource,
+} from '../social/SocialPublishDialog';
+
+/** Where the article lives publicly, for the link each post carries. */
+const SITE_URL = (
+  (import.meta.env.VITE_SITE_URL as string | undefined) ?? 'https://www.impactafricaalliance.org'
+).replace(/\/$/, '');
 
 interface ArticleDetailDialogProps {
   open: boolean;
@@ -400,6 +411,15 @@ const ArticleMetadata = ({ article }: { article: ArticleDetail }): JSX.Element =
 );
 
 /** Editorial, read-only preview for article records in the admin newsroom. */
+/** What the social dialog needs from an article, in its own terms. */
+const shareSource = (article: ArticleDetail): SocialPublishSource => ({
+  title: article.title,
+  ...(article.excerpt ? { excerpt: article.excerpt } : {}),
+  ...(article.slug ? { url: `${SITE_URL}/news/${article.slug}` } : {}),
+  ...(article.tags.length ? { tags: article.tags } : {}),
+  ...(article.cover?.url ? { imageUrl: article.cover.url } : {}),
+});
+
 export const ArticleDetailDialog = ({
   open,
   row,
@@ -408,6 +428,8 @@ export const ArticleDetailDialog = ({
   canEdit,
 }: ArticleDetailDialogProps): JSX.Element => {
   const article = toArticleDetail(row);
+  const [sharing, setSharing] = useState(false);
+  const articleId = typeof row?.id === 'string' ? row.id : undefined;
 
   return (
     <Dialog
@@ -448,18 +470,42 @@ export const ArticleDetailDialog = ({
             }}
           >
             <ArticleMetadata article={article} />
+            {articleId && (
+              <Box sx={{ px: 2.5, pb: 2.5 }}>
+                <Typography variant="overline" color="text.secondary">
+                  Social publications
+                </Typography>
+                <Box sx={{ mt: 1 }}>
+                  <PublicationStatusList articleId={articleId} />
+                </Box>
+              </Box>
+            )}
           </Grid>
         </Grid>
       </DialogContent>
 
       <DialogFooter>
         <Button onClick={onClose}>Close</Button>
+        {canEdit && (
+          <Button startIcon={<ShareRoundedIcon />} onClick={() => setSharing(true)}>
+            Share to social
+          </Button>
+        )}
         {canEdit && onEdit && (
           <Button variant="contained" startIcon={<EditRoundedIcon />} onClick={onEdit}>
             Edit article
           </Button>
         )}
       </DialogFooter>
+
+      {sharing && (
+        <SocialPublishDialog
+          open
+          {...(articleId ? { articleId } : {})}
+          source={shareSource(article)}
+          onClose={() => setSharing(false)}
+        />
+      )}
     </Dialog>
   );
 };

@@ -3,7 +3,7 @@ import { Schema, model } from 'mongoose';
 
 import { baseSchemaOptions } from '../../common/model-helpers.js';
 
-export const SOCIAL_PLATFORMS = ['linkedin', 'meta', 'x'] as const;
+export const SOCIAL_PLATFORMS = ['linkedin', 'meta', 'x', 'threads'] as const;
 export type SocialPlatform = (typeof SOCIAL_PLATFORMS)[number];
 
 export interface SocialAccountDocument {

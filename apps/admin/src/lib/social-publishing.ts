@@ -20,6 +20,13 @@ export const PUBLICATIONS_KEY = ['social-publications'] as const;
 export interface DestinationPreview {
   destination: SocialDestination;
   caption: string;
+  /** Whether the assistant wrote this or the deterministic template did. */
+  origin: 'ai' | 'template';
+  campaign: string;
+  /** The campaign-tagged link this destination's copy carries. */
+  linkUrl?: string;
+  /** The image cropped to this destination's frame. */
+  imageUrl?: string;
   /** Why this destination cannot accept the draft as it stands. */
   rejection?: string;
 }

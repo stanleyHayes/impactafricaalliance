@@ -113,6 +113,44 @@ services:
       - key: X_CLIENT_SECRET
         sync: false
 
+      # Threads. A separate app and connection from Facebook/Instagram even
+      # though Meta owns it, so it gets its own credentials.
+      # Redirect URI: <SOCIAL_OAUTH_REDIRECT_BASE>/api/social/threads/callback
+      - key: THREADS_APP_ID
+        sync: false
+      - key: THREADS_APP_SECRET
+        sync: false
+
+      # WhatsApp Business — opted-in subscriber messaging only. This is NOT
+      # WhatsApp Channel publishing, which has no official API.
+      - key: WHATSAPP_BUSINESS_ACCOUNT_ID
+        sync: false
+      - key: WHATSAPP_PHONE_NUMBER_ID
+        sync: false
+      - key: WHATSAPP_ACCESS_TOKEN
+        sync: false
+
+      # Google / YouTube. Enable YouTube Data API v3 on the Cloud project.
+      # Redirect URI: <SOCIAL_OAUTH_REDIRECT_BASE>/api/social/youtube/callback
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+
+      # TikTok. Content posting needs product access granted on the app first;
+      # until then the destination stays switched off.
+      # Redirect URI: <SOCIAL_OAUTH_REDIRECT_BASE>/api/social/tiktok/callback
+      - key: TIKTOK_CLIENT_KEY
+        sync: false
+      - key: TIKTOK_CLIENT_SECRET
+        sync: false
+
+      # Comma-separated allow-list of destinations the dashboard may publish
+      # to. Leave unset to enable every destination whose credentials exist.
+      # e.g. facebook,instagram,linkedin,x
+      - key: SOCIAL_ENABLED_DESTINATIONS
+        sync: false
+
       # ── Data retention (days) ─────────────────────────────────────────
       - key: SUBMISSION_RETENTION_DAYS
         value: "1095"
