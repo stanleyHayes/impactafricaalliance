@@ -18,6 +18,7 @@ import Typography from '@mui/material/Typography';
 import { useRef, useState } from 'react';
 
 import { uploadToCloudinary } from '../../lib/cloudinary';
+import { downscaleImage } from '../../lib/downscale-image';
 import { MediaPickerDialog } from '../media/MediaPickerDialog';
 
 interface MediaUploadFieldProps {
@@ -76,24 +77,18 @@ export const MediaUploadField = ({
   const [dragging, setDragging] = useState(false);
   const [picking, setPicking] = useState(false);
 
-  const handleFile = async (file: File | undefined): Promise<void> => {
-    if (!file || uploadLock.current) {
+  const handleFile = async (chosen: File | undefined): Promise<void> => {
+    if (!chosen || uploadLock.current) {
       return;
     }
     const matches = accept.split(',').some((item) => {
       const format = item.trim();
-      if (format.endsWith('/*')) return file.type.startsWith(format.slice(0, -1));
-      if (format.startsWith('.')) return file.name.toLowerCase().endsWith(format.toLowerCase());
-      return file.type === format;
+      if (format.endsWith('/*')) return chosen.type.startsWith(format.slice(0, -1));
+      if (format.startsWith('.')) return chosen.name.toLowerCase().endsWith(format.toLowerCase());
+      return chosen.type === format;
     });
     if (!matches) {
       setError(`Choose ${acceptedFormats(accept)}.`);
-      return;
-    }
-    if (file.size > sizeLimit * 1024 * 1024) {
-      setError(
-        `That file is ${(file.size / 1024 / 1024).toFixed(1)}MB — the limit is ${sizeLimit}MB.`,
-      );
       return;
     }
     uploadLock.current = true;
@@ -101,6 +96,19 @@ export const MediaUploadField = ({
     onUploadingChange?.(true);
     setError(null);
     try {
+      // Shrunk before it is measured. A photograph off a phone is routinely
+      // past the cap, and the pixels beyond 2400px are never rendered — so
+      // rejecting it outright turned away exactly the pictures people wanted.
+      const file = await downscaleImage(chosen);
+      if (file.size > sizeLimit * 1024 * 1024) {
+        const size = (file.size / 1024 / 1024).toFixed(1);
+        setError(
+          file === chosen
+            ? `That file is ${size}MB — the limit is ${sizeLimit}MB.`
+            : `That file is still ${size}MB after compressing — the limit is ${sizeLimit}MB.`,
+        );
+        return;
+      }
       onChange(await uploadToCloudinary(file, folder));
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Upload failed. Please try again.');

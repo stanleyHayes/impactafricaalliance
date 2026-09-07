@@ -87,6 +87,7 @@ export const EventDetailsFields = ({
       value={form.image}
       onChange={(image) => setField('image', image)}
       maxSizeMB={5}
+      folder="events"
       onUploadingChange={setUploading}
     />
     <Typography variant="caption" color="text.secondary">
