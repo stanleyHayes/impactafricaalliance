@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { type Timestamped } from './common.js';
+import { partialForUpdate } from './update.js';
 
 // .optional() comes last on each of these so the inferred key is optional
 // rather than required-and-possibly-undefined, which would force every caller
@@ -127,14 +128,12 @@ export const siteSettingInputSchema = z.object({
   liveChat: siteSettingLiveChatSchema.optional(),
 });
 
-export const siteSettingUpdateSchema = siteSettingInputSchema
-  .partial()
-  .extend({
-    socials: siteSettingSocialsSchema.partial().optional(),
-    announcement: siteSettingAnnouncementSchema.partial().optional(),
-    popup: siteSettingPopupSchema.partial().optional(),
-    liveChat: siteSettingLiveChatSchema.partial().optional(),
-  });
+export const siteSettingUpdateSchema = partialForUpdate(siteSettingInputSchema).extend({
+  socials: siteSettingSocialsSchema.partial().optional(),
+  announcement: siteSettingAnnouncementSchema.partial().optional(),
+  popup: siteSettingPopupSchema.partial().optional(),
+  liveChat: siteSettingLiveChatSchema.partial().optional(),
+});
 
 export type SiteSettingInput = z.infer<typeof siteSettingInputSchema>;
 export type SiteSettingUpdate = z.infer<typeof siteSettingUpdateSchema>;

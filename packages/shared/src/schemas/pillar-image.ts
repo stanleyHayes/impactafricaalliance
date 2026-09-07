@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { mediaAssetSchema, type MediaAsset, type Timestamped } from './common.js';
+import { partialForUpdate } from './update.js';
 
 /**
  * A CMS-uploaded photograph for one of the four pillars.
@@ -23,7 +24,7 @@ export const pillarImageInputSchema = z.object({
 });
 export type PillarImageInput = z.infer<typeof pillarImageInputSchema>;
 
-export const pillarImageUpdateSchema = pillarImageInputSchema.partial();
+export const pillarImageUpdateSchema = partialForUpdate(pillarImageInputSchema);
 export type PillarImageUpdate = z.infer<typeof pillarImageUpdateSchema>;
 
 export interface PillarImage extends Timestamped {
@@ -36,5 +37,7 @@ export interface PillarImage extends Timestamped {
 /** Index published pillar imagery by key, for merging over the static fallbacks. */
 export const pillarImageMap = (items: readonly PillarImage[]): Record<string, string> =>
   Object.fromEntries(
-    items.filter((item) => item.isActive && item.image?.url).map((item) => [item.pillarKey, item.image.url]),
+    items
+      .filter((item) => item.isActive && item.image?.url)
+      .map((item) => [item.pillarKey, item.image.url]),
   );

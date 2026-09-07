@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { CONTENT_STATUSES, type ContentStatus } from '../enums.js';
 
 import { mediaAssetSchema, type Timestamped, type MediaAsset } from './common.js';
+import { partialForUpdate } from './update.js';
 
 const statusEnum = z.enum(CONTENT_STATUSES as [ContentStatus, ...ContentStatus[]]);
 const currentYear = new Date().getUTCFullYear();
@@ -21,7 +22,7 @@ export const reportInputSchema = z.object({
 });
 export type ReportInput = z.infer<typeof reportInputSchema>;
 
-export const reportUpdateSchema = reportInputSchema.partial();
+export const reportUpdateSchema = partialForUpdate(reportInputSchema);
 export type ReportUpdate = z.infer<typeof reportUpdateSchema>;
 
 export interface Report extends Timestamped {

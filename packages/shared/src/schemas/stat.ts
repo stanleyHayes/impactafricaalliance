@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { slugSchema, type Timestamped } from './common.js';
+import { partialForUpdate } from './update.js';
 
 export const impactStatInputSchema = z.object({
   key: slugSchema,
@@ -12,7 +13,7 @@ export const impactStatInputSchema = z.object({
 });
 export type ImpactStatInput = z.infer<typeof impactStatInputSchema>;
 
-export const impactStatUpdateSchema = impactStatInputSchema.partial();
+export const impactStatUpdateSchema = partialForUpdate(impactStatInputSchema);
 export type ImpactStatUpdate = z.infer<typeof impactStatUpdateSchema>;
 
 export interface ImpactStat extends Timestamped {

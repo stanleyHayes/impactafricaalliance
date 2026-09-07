@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { mediaAssetSchema, type MediaAsset, type Timestamped } from './common.js';
+import { partialForUpdate } from './update.js';
 
 /**
  * A photograph the public site uses in a fixed place — a page banner, the home
@@ -75,7 +76,7 @@ export const siteImageInputSchema = z.object({
 });
 export type SiteImageInput = z.infer<typeof siteImageInputSchema>;
 
-export const siteImageUpdateSchema = siteImageInputSchema.partial();
+export const siteImageUpdateSchema = partialForUpdate(siteImageInputSchema);
 export type SiteImageUpdate = z.infer<typeof siteImageUpdateSchema>;
 
 export interface SiteImage extends Timestamped {

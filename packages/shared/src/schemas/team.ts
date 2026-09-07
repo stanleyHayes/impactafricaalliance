@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { TEAM_TIERS, type TeamTier } from '../enums.js';
 
 import { mediaAssetSchema, type Timestamped, type MediaAsset } from './common.js';
+import { partialForUpdate } from './update.js';
 
 /** Profile links are all optional; the admin form submits '' for untouched ones. */
 const optionalUrl = z
@@ -34,7 +35,7 @@ export const teamMemberInputSchema = z.object({
 });
 export type TeamMemberInput = z.infer<typeof teamMemberInputSchema>;
 
-export const teamMemberUpdateSchema = teamMemberInputSchema.partial();
+export const teamMemberUpdateSchema = partialForUpdate(teamMemberInputSchema);
 export type TeamMemberUpdate = z.infer<typeof teamMemberUpdateSchema>;
 
 export interface TeamMember extends Timestamped {

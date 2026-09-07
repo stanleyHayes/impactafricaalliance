@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { mediaAssetSchema, type Timestamped, type MediaAsset } from './common.js';
+import { partialForUpdate } from './update.js';
 
 export const partnerInputSchema = z.object({
   name: z.string().min(2).max(160).trim(),
@@ -11,7 +12,7 @@ export const partnerInputSchema = z.object({
 });
 export type PartnerInput = z.infer<typeof partnerInputSchema>;
 
-export const partnerUpdateSchema = partnerInputSchema.partial();
+export const partnerUpdateSchema = partialForUpdate(partnerInputSchema);
 export type PartnerUpdate = z.infer<typeof partnerUpdateSchema>;
 
 export interface Partner extends Timestamped {

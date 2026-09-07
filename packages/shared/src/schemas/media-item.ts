@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { type Timestamped } from './common.js';
+import { partialForUpdate } from './update.js';
 
 /**
  * Folders the library groups uploads under. Deliberately few: a folder an
@@ -50,7 +51,7 @@ export const mediaItemInputSchema = z.object({
 });
 export type MediaItemInput = z.infer<typeof mediaItemInputSchema>;
 
-export const mediaItemUpdateSchema = mediaItemInputSchema.partial();
+export const mediaItemUpdateSchema = partialForUpdate(mediaItemInputSchema);
 export type MediaItemUpdate = z.infer<typeof mediaItemUpdateSchema>;
 
 export interface MediaItem extends Timestamped {

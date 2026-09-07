@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { CONTENT_STATUSES, type ContentStatus } from '../enums.js';
 
 import { mediaAssetSchema, type MediaAsset, type Timestamped } from './common.js';
+import { partialForUpdate } from './update.js';
 
 const statusEnum = z.enum(CONTENT_STATUSES as [ContentStatus, ...ContentStatus[]]);
 
@@ -34,7 +35,7 @@ export const galleryItemInputSchema = z.object({
 });
 export type GalleryItemInput = z.infer<typeof galleryItemInputSchema>;
 
-export const galleryItemUpdateSchema = galleryItemInputSchema.partial();
+export const galleryItemUpdateSchema = partialForUpdate(galleryItemInputSchema);
 export type GalleryItemUpdate = z.infer<typeof galleryItemUpdateSchema>;
 
 export interface GalleryItem extends Timestamped {

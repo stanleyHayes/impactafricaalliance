@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import type { Timestamped } from './common.js';
+import { partialForUpdate } from './update.js';
 
 const optionalText = z
   .string()
@@ -26,7 +27,11 @@ export const officeInputSchema = z.object({
   region: optionalText,
   postalCode: optionalText,
   country: z.string().min(2).max(100).trim(),
-  phone: z.string().max(50).optional().transform((value) => (value === '' ? undefined : value)),
+  phone: z
+    .string()
+    .max(50)
+    .optional()
+    .transform((value) => (value === '' ? undefined : value)),
   email: z
     .union([z.literal(''), z.string().email().max(200)])
     .optional()
@@ -39,7 +44,7 @@ export const officeInputSchema = z.object({
 });
 export type OfficeInput = z.infer<typeof officeInputSchema>;
 
-export const officeUpdateSchema = officeInputSchema.partial();
+export const officeUpdateSchema = partialForUpdate(officeInputSchema);
 export type OfficeUpdate = z.infer<typeof officeUpdateSchema>;
 
 export interface Office extends Timestamped {

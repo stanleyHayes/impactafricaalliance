@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { CONTENT_STATUSES, type ContentStatus } from '../enums.js';
 
 import { mediaAssetSchema, slugSchema, type Timestamped, type MediaAsset } from './common.js';
+import { partialForUpdate } from './update.js';
 
 const statusEnum = z.enum(CONTENT_STATUSES as [ContentStatus, ...ContentStatus[]]);
 
@@ -20,7 +21,7 @@ export const storyInputSchema = z.object({
 });
 export type StoryInput = z.infer<typeof storyInputSchema>;
 
-export const storyUpdateSchema = storyInputSchema.partial();
+export const storyUpdateSchema = partialForUpdate(storyInputSchema);
 export type StoryUpdate = z.infer<typeof storyUpdateSchema>;
 
 export interface Story extends Timestamped {

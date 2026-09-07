@@ -10,6 +10,7 @@ import {
 } from '../enums.js';
 
 import { mediaAssetSchema, type MediaAsset, type Timestamped } from './common.js';
+import { partialForUpdate } from './update.js';
 
 const statusEnum = z.enum(CONTENT_STATUSES as [ContentStatus, ...ContentStatus[]]);
 const eventTypeEnum = z.enum(EVENT_TYPES as [EventType, ...EventType[]]);
@@ -78,7 +79,7 @@ export const eventInputSchema = z.object({
 export type EventInput = z.infer<typeof eventInputSchema>;
 
 /** Explicit null clears optional fields on PATCH; omission preserves their current value. */
-export const eventUpdateSchema = eventInputSchema.partial().extend({
+export const eventUpdateSchema = partialForUpdate(eventInputSchema).extend({
   status: statusEnum.optional(),
   registrationEnabled: z.boolean().optional(),
   questions: z.array(eventQuestionSchema).max(40).optional(),

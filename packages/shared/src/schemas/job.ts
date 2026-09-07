@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { CONTENT_STATUSES, JOB_TYPES, type ContentStatus, type JobType } from '../enums.js';
 
 import { slugSchema, type Timestamped } from './common.js';
+import { partialForUpdate } from './update.js';
 
 const statusEnum = z.enum(CONTENT_STATUSES as [ContentStatus, ...ContentStatus[]]);
 const jobTypeEnum = z.enum(JOB_TYPES as [JobType, ...JobType[]]);
@@ -19,7 +20,7 @@ export const jobInputSchema = z.object({
 });
 export type JobInput = z.infer<typeof jobInputSchema>;
 
-export const jobUpdateSchema = jobInputSchema.partial();
+export const jobUpdateSchema = partialForUpdate(jobInputSchema);
 export type JobUpdate = z.infer<typeof jobUpdateSchema>;
 
 export interface Job extends Timestamped {
