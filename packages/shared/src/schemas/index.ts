@@ -24,3 +24,4 @@ export * from './media-item.js';
 export * from './site-image.js';
 export * from './privacy-request.js';
 export * from './social.js';
+export * from './social-publication.js';

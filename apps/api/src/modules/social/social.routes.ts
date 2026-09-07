@@ -1,4 +1,13 @@
-import { socialPostInputSchema, UserRole } from '@iaa/shared';
+import {
+  DESTINATION_CAPABILITIES,
+  destinationsFor,
+  needsReconnect,
+  socialPostInputSchema,
+  socialPreviewRequestSchema,
+  socialPublishRequestSchema,
+  UserRole,
+  type SocialConnectionPlatform,
+} from '@iaa/shared';
 import { Router } from 'express';
 import type { DependencyContainer } from 'tsyringe';
 
@@ -16,6 +25,7 @@ import { TokenService } from '../auth/token.service.js';
 import { SOCIAL_PLATFORMS, type SocialPlatform } from './social-account.model.js';
 import { SocialAccountRepository } from './social-account.repository.js';
 import { OAUTH_STATE_COOKIE, SocialOAuthService } from './social-oauth.service.js';
+import { SocialPublicationService } from './social-publication.service.js';
 
 const isSocialPlatform = (value: string): value is SocialPlatform =>
   SOCIAL_PLATFORMS.includes(value as SocialPlatform);
@@ -48,17 +58,89 @@ export const createSocialRouters = (
     }),
   );
 
+  /**
+   * Draft platform-specific copy without sending anything. Deterministic, so
+   * the preview does not depend on an AI provider being reachable.
+   */
+  adminRouter.post(
+    '/preview',
+    asyncHandler(async (req, res) => {
+      const input = parseWith(socialPreviewRequestSchema, req.body);
+      const publications = container.resolve(SocialPublicationService);
+      res.json({ previews: publications.preview(input.destinations, input.source) });
+    }),
+  );
+
+  /**
+   * Queue one publication per destination and return immediately. The worker
+   * does the talking to providers, so a slow network is never the editor's
+   * problem and a failure on one destination cannot undo another.
+   */
+  adminRouter.post(
+    '/publish',
+    asyncHandler(async (req, res) => {
+      const input = parseWith(socialPublishRequestSchema, req.body);
+      const publications = container.resolve(SocialPublicationService);
+      const articleId = typeof req.body?.articleId === 'string' ? req.body.articleId : undefined;
+      const queued = await publications.queue(input, {
+        ...(articleId ? { articleId } : {}),
+        ...(req.user?.sub ? { userId: req.user.sub } : {}),
+      });
+      res.status(202).json({ publications: queued });
+    }),
+  );
+
+  adminRouter.get(
+    '/publications',
+    asyncHandler(async (req, res) => {
+      const publications = container.resolve(SocialPublicationService);
+      const articleId = typeof req.query.articleId === 'string' ? req.query.articleId : undefined;
+      res.json({
+        items: articleId
+          ? await publications.listForArticle(articleId)
+          : await publications.list(),
+      });
+    }),
+  );
+
+  adminRouter.post(
+    '/publications/:id/retry',
+    asyncHandler(async (req, res) => {
+      const publications = container.resolve(SocialPublicationService);
+      res.json(await publications.retry(pathParam(req, 'id')));
+    }),
+  );
+
+  adminRouter.post(
+    '/publications/:id/cancel',
+    asyncHandler(async (req, res) => {
+      const publications = container.resolve(SocialPublicationService);
+      res.json(await publications.cancel(pathParam(req, 'id')));
+    }),
+  );
+
   adminRouter.get(
     '/accounts',
     asyncHandler(async (_req, res) => {
       const accounts = await repository.list();
+      // Never the token, encrypted or otherwise: the browser has no use for it
+      // and every payload it appears in is another place it can leak.
       res.json(
         accounts.map((account) => ({
+          id: account.id as string,
           platform: account.platform,
           accountId: account.accountId,
           accountName: account.accountName,
           accountHandle: account.accountHandle,
           tokenExpiry: account.tokenExpiry,
+          status: account.status,
+          needsReconnect: needsReconnect(account.status),
+          scopes: account.scopes,
+          // What this one connection can actually publish to, so the dashboard
+          // does not have to know that Meta covers two destinations.
+          destinations: destinationsFor(account.platform as SocialConnectionPlatform).map(
+            (destination) => DESTINATION_CAPABILITIES[destination],
+          ),
           connectedBy: account.connectedBy,
           createdAt: account.createdAt,
         })),

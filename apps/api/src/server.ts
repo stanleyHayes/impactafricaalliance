@@ -9,6 +9,7 @@ import { createLogger } from './config/logger.js';
 import { buildContainer } from './container.js';
 import { connectDatabase, disconnectDatabase } from './db/mongoose.js';
 import { startRetentionJobs } from './modules/privacy/retention.service.js';
+import { startSocialPublicationWorker } from './modules/social/social-publication.worker.js';
 
 const REQUEST_TIMEOUT_MS = 30_000;
 
@@ -20,6 +21,7 @@ const bootstrap = async (): Promise<void> => {
   const container = buildContainer(config, logger);
   const app = createApp(container, config, logger);
   const stopRetentionJobs = startRetentionJobs(config, logger);
+  const stopSocialWorker = startSocialPublicationWorker(container, logger);
 
   const server: Server = app.listen(config.port, () => {
     logger.info(`API listening on port ${config.port} (${config.env})`);
@@ -30,6 +32,7 @@ const bootstrap = async (): Promise<void> => {
   const shutdown = (signal: string): void => {
     logger.info(`Received ${signal}, shutting down gracefully`);
     stopRetentionJobs();
+    stopSocialWorker();
     server.close(() => {
       disconnectDatabase()
         .catch((error) => logger.error({ err: error }, 'Error during DB disconnect'))

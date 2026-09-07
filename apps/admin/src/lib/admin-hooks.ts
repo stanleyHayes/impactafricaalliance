@@ -5,6 +5,7 @@ import type {
   ChangePasswordInput,
   CreateUserInput,
   DashboardSummary,
+  DestinationCapabilities,
   DisableMfaInput,
   Donation,
   Event,
@@ -24,6 +25,7 @@ import type {
   SetupMfaInput,
   SiteSetting,
   SiteSettingUpdate,
+  SocialConnectionStatus,
   SocialPostInput,
   Submission,
   SubmissionStatus,
@@ -357,11 +359,18 @@ export const useDisableMfa = (): UseMutationResult<MfaStatusResponse, Error, Dis
 };
 
 export interface SocialAccount {
+  id: string;
   platform: 'linkedin' | 'meta' | 'x';
   accountId: string;
   accountName?: string;
   accountHandle?: string;
   tokenExpiry?: string;
+  status: SocialConnectionStatus;
+  /** True when the administrator has to reauthorise before publishing works. */
+  needsReconnect: boolean;
+  scopes: string[];
+  /** What this one connection can publish to; Meta covers two. */
+  destinations: DestinationCapabilities[];
   connectedBy?: string;
   createdAt: string;
 }
