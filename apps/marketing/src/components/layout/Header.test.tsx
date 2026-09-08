@@ -1,4 +1,5 @@
 import { ThemeProvider } from '@mui/material/styles';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
@@ -8,12 +9,16 @@ import { theme } from '../../theme/theme';
 
 import { Header } from './Header';
 
+// The utility bar reads the social channels from site settings, so the header
+// needs a query client even though nothing here asserts on the request.
 const renderHeader = (path = '/'): ReturnType<typeof render> =>
   render(
     <ThemeProvider theme={theme}>
-      <MemoryRouter initialEntries={[path]}>
-        <Header />
-      </MemoryRouter>
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <MemoryRouter initialEntries={[path]}>
+          <Header />
+        </MemoryRouter>
+      </QueryClientProvider>
     </ThemeProvider>,
   );
 
@@ -85,5 +90,16 @@ describe('Header', () => {
     const closeButton = screen.getByRole('button', { name: 'Close navigation' });
     await user.click(closeButton);
     await waitFor(() => expect(closeButton).not.toBeVisible());
+  });
+
+  it('offers the social channels from the top bar, not only from the footer', () => {
+    renderHeader();
+    // Falls back to the built-in accounts while site settings are loading, so
+    // the row is never empty on a first paint.
+    expect(screen.getByRole('link', { name: 'LinkedIn' })).toHaveAttribute('target', '_blank');
+    expect(screen.getByRole('link', { name: 'Instagram' })).toHaveAttribute(
+      'rel',
+      'noopener noreferrer',
+    );
   });
 });

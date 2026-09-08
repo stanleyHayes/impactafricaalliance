@@ -2,7 +2,7 @@ import type { LoginInput, LoginResponse, MfaLoginInput, MfaRequiredResponse, Pub
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
-import { api, setSessionExpiredHandler } from '../lib/api-client';
+import { api, setSessionExpiredHandler, startKeepAlive } from '../lib/api-client';
 import { tokenStore } from '../lib/token-store';
 
 type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated';
@@ -65,6 +65,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }): JSX.Element
     });
     return () => setSessionExpiredHandler(null);
   }, []);
+
+  // The API sleeps when it is left alone, and the request that wakes it is
+  // then whatever the person happened to click — usually Save. A ping on a
+  // timer keeps it up for as long as the console is open.
+  useEffect(startKeepAlive, []);
 
   const updateUser = useCallback((next: PublicUser) => setUser(next), []);
 

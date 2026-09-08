@@ -288,7 +288,7 @@ export const Footer = (): JSX.Element => {
             </Stack>
           </Grid>
 
-          <Grid size={{ xs: 12, sm: 6, md: 5 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
             <FooterHeading>Initiatives</FooterHeading>
             <Stack spacing={1.25}>
               {PILLARS.map((pillar) => (
@@ -299,7 +299,7 @@ export const Footer = (): JSX.Element => {
             </Stack>
           </Grid>
 
-          <Grid size={{ xs: 12, sm: 6, md: 5 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <FooterHeading>Contact</FooterHeading>
             <Stack spacing={1.5}>
               <Link
@@ -341,6 +341,17 @@ export const Footer = (): JSX.Element => {
                   </Box>
                 </Link>
               )}
+            </Stack>
+          </Grid>
+
+          {/*
+            Offices stand on their own rather than trailing the email address.
+            Someone looking for the Abuja number is looking for a place, and a
+            column of places is where they will look for it.
+          */}
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <FooterHeading>Offices</FooterHeading>
+            <Stack spacing={2}>
               {offices.length > 0 ? (
                 offices.map((office) => <OfficeBlock key={office.id} office={office} />)
               ) : (

@@ -156,7 +156,7 @@ export const EventType = {
 export type EventType = (typeof EventType)[keyof typeof EventType];
 /**
  * How the team page is grouped. Mirrors the org chart in the website review:
- * the operating team, the board, and non-executive leadership.
+ * the operating team, the board, and the country and regional leads.
  */
 export const TeamTier = {
   Executive: 'executive',
@@ -167,9 +167,9 @@ export type TeamTier = (typeof TeamTier)[keyof typeof TeamTier];
 export const TEAM_TIERS = Object.values(TeamTier);
 
 export const TEAM_TIER_LABELS: Record<TeamTier, string> = {
-  executive: 'Executive Team',
+  executive: 'Functional Directors',
   board: 'Board of Directors',
-  'non-executive': 'Non-Executive Team',
+  'non-executive': 'Country & Regional Teams',
 };
 
 export const EVENT_TYPES = Object.values(EventType);

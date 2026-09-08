@@ -7,6 +7,7 @@ import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
+import Divider from '@mui/material/Divider';
 import Drawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
@@ -18,6 +19,7 @@ import { useEffect, useState } from 'react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 
 import { Logo } from '../Logo';
+import { SocialLinks } from '../SocialLinks';
 
 import { DesktopNavigation, MobileNavigationLinks } from './SiteNavigation';
 import { ThemeToggle } from './ThemeToggle';
@@ -102,6 +104,53 @@ const UtilityBar = (): JSX.Element => (
             <EmailRoundedIcon sx={{ fontSize: 15 }} />
             {ORG.email}
           </Link>
+          <Divider
+            orientation="vertical"
+            flexItem
+            sx={{ my: 0.75, borderColor: 'rgba(255,255,255,0.18)' }}
+          />
+          {/*
+            The channels sit in the utility bar rather than only in the footer:
+            someone who never scrolls to the bottom of a page still gets the
+            chance to follow, which is the point of putting them here.
+          */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              '& .MuiIconButton-root': {
+                p: 0.5,
+                color: 'rgba(255,255,255,0.72)',
+                transition: 'color 160ms ease, transform 160ms ease',
+                '&:hover': {
+                  color: 'common.white',
+                  bgcolor: 'transparent',
+                  transform: 'translateY(-2px)',
+                },
+                '&:focus-visible': { color: 'common.white' },
+              },
+              '& .MuiSvgIcon-root': { fontSize: 17 },
+              '@media (prefers-reduced-motion: reduce)': {
+                '& .MuiIconButton-root': { transition: 'none' },
+                '& .MuiIconButton-root:hover': { transform: 'none' },
+              },
+            }}
+          >
+            <Typography
+              variant="caption"
+              sx={{
+                color: 'secondary.main',
+                fontWeight: 800,
+                letterSpacing: 1.1,
+                textTransform: 'uppercase',
+                fontSize: '0.68rem',
+              }}
+            >
+              Follow
+            </Typography>
+            <SocialLinks />
+          </Box>
         </Stack>
       </Stack>
     </Container>
@@ -201,6 +250,10 @@ const MobileNavigation = ({ open, onClose }: MobileNavigationProps): JSX.Element
             >
               {ORG.email}
             </Link>
+            {/* The utility bar is hidden below lg, so the channels live here too. */}
+            <Box sx={{ mt: 1.5, ml: -0.5 }}>
+              <SocialLinks color="primary" />
+            </Box>
           </Box>
         </Box>
       </Box>

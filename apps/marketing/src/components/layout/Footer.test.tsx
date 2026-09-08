@@ -1,6 +1,6 @@
 import type { Office, SiteSetting } from '@iaa/shared';
 import { ThemeProvider } from '@mui/material/styles';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -107,5 +107,25 @@ describe('offices in the footer', () => {
     renderFooter();
 
     expect(screen.getByText(/Atlantic Tower Airport City, Accra, Ghana/)).toBeInTheDocument();
+  });
+
+  it('keeps places and ways to reach us in columns of their own', () => {
+    state.offices = [
+      office({}),
+      office({ id: 'o2', label: 'Nigeria Office', city: 'Abuja', country: 'Nigeria' }),
+    ];
+    renderFooter();
+
+    const offices = screen.getByRole('heading', { name: 'Offices' });
+    const contact = screen.getByRole('heading', { name: 'Contact' });
+
+    // Every office belongs under Offices, and neither address nor phone
+    // number strays into the column of contact methods.
+    const officeColumn = offices.parentElement as HTMLElement;
+    const contactColumn = contact.parentElement as HTMLElement;
+    expect(within(officeColumn).getByText('Head Office')).toBeInTheDocument();
+    expect(within(officeColumn).getByText('Nigeria Office')).toBeInTheDocument();
+    expect(within(contactColumn).queryByText('Head Office')).not.toBeInTheDocument();
+    expect(within(contactColumn).queryByText(/Atlantic Tower/)).not.toBeInTheDocument();
   });
 });

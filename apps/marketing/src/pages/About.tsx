@@ -5,6 +5,7 @@ import {
   brandColors,
   brandFonts,
   type TeamMember,
+  type TeamTier,
 } from '@iaa/shared';
 import type { SvgIconComponent } from '@mui/icons-material';
 import AccountBalanceRoundedIcon from '@mui/icons-material/AccountBalanceRounded';
@@ -852,7 +853,338 @@ const TeamMemberCard = ({ member }: { member: TeamMember }): JSX.Element => {
   );
 };
 
-const TeamSection = (): JSX.Element => {
+/**
+ * The rungs of the leadership ladder, most senior first. A member stands on
+ * the first rung whose title matches, and the top rung deliberately excludes a
+ * vice-presidency so "Vice President / COO" falls to the rung beneath it.
+ *
+ * Reading the chart out of job titles keeps it tied to what the dashboard
+ * already says a person does. Nobody has to remember to set a hidden rank, and
+ * a title nobody has yet — a second vice-president, say — takes its own place
+ * as soon as it exists.
+ */
+const LEADERSHIP_RUNGS: readonly ((role: string) => boolean)[] = [
+  (role) => /\b(president|chief executive|ceo)\b/i.test(role) && !/\b(vice|deputy)\b/i.test(role),
+  (role) => /\b(vice president|deputy|coo)\b/i.test(role),
+  (role) => /\bcountry director\b/i.test(role),
+];
+
+/** Which rung a member stands on. Anyone unmatched joins the grid below. */
+const rungOf = (member: TeamMember): number => {
+  const rung = LEADERSHIP_RUNGS.findIndex((matches) => matches(member.role));
+  return rung === -1 ? LEADERSHIP_RUNGS.length : rung;
+};
+
+/** The width the chart column tapers within, so the rows read as a pyramid. */
+const CHART_WIDTH = 780;
+const CHART_TOP_WIDTH = 560;
+
+/**
+ * Cards sit three spacing units apart, and the connectors have to reach across
+ * that gap to meet each other. Every rung, fork and drop is laid out in a grid
+ * with these same columns, so the lines meet the middle of a card by
+ * construction rather than by a percentage tuned to one screen width.
+ */
+const CHART_GAP = 3;
+const CHART_GAP_PX = 24;
+const ARM_HEIGHT = 26;
+
+const stemColor = alpha(brandColors.mint, 0.5);
+const branchColor = alpha(brandColors.mint, 0.24);
+
+/** The opening paragraph only: enough to place someone without a wall of text. */
+const leadParagraph = (bio: string | undefined): string =>
+  (bio ?? '').split(/\n{2,}/)[0]?.trim() ?? '';
+
+/**
+ * A principal is given a wide card with their portrait alongside the opening
+ * line of their biography, so the people who lead the organisation do not
+ * arrive in the same frame as everyone else.
+ */
+const PrincipalCard = ({ member }: { member: TeamMember }): JSX.Element => {
+  const lead = leadParagraph(member.bio);
+  return (
+    <Card
+      component="article"
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: { xs: '1fr', sm: '38% 1fr' },
+        width: '100%',
+        height: '100%',
+        overflow: 'hidden',
+        border: 1,
+        borderColor: alpha(brandColors.mint, 0.3),
+        borderRadius: 4,
+        boxShadow: 'none',
+        bgcolor: brandColors.deepForest,
+        color: brandColors.white,
+        '&:hover .principal-artwork, &:focus-within .principal-artwork': {
+          transform: 'scale(1.04)',
+        },
+        '@media (prefers-reduced-motion: reduce)': {
+          '& .principal-artwork': { transition: 'none', transform: 'none' },
+        },
+      }}
+    >
+      <Box sx={{ position: 'relative', overflow: 'hidden', minHeight: { xs: 280, sm: 250 } }}>
+        <Box
+          className="principal-artwork"
+          component="img"
+          src={member.photo?.url ?? IMAGES.teamArtwork}
+          alt={member.photo?.url ? (member.photo.alt ?? member.name) : ''}
+          loading="lazy"
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            objectPosition: member.photo?.url ? 'center 20%' : 'center',
+            transition: 'transform 500ms cubic-bezier(0.22, 1, 0.36, 1)',
+          }}
+        />
+      </Box>
+      <Box sx={{ display: 'flex', flexDirection: 'column', p: { xs: 2.5, md: 3 } }}>
+        <Typography
+          variant="overline"
+          sx={{ color: brandColors.gold, fontWeight: 800, letterSpacing: 1.4, lineHeight: 1.7 }}
+        >
+          {member.role}
+        </Typography>
+        <Typography
+          component="h3"
+          sx={{
+            mt: 0.5,
+            fontSize: { xs: '1.5rem', md: '1.8rem' },
+            fontWeight: 600,
+            lineHeight: 1.15,
+          }}
+        >
+          {member.name}
+        </Typography>
+        {lead !== '' && (
+          <Typography
+            sx={{
+              mt: 1.5,
+              color: 'rgba(255,255,255,.78)',
+              fontSize: '.92rem',
+              lineHeight: 1.6,
+              display: '-webkit-box',
+              WebkitLineClamp: 3,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+            }}
+          >
+            {lead}
+          </Typography>
+        )}
+        <Button
+          component={RouterLink}
+          to={'/about/team/' + member.id}
+          aria-label={`Read full bio of ${member.name}`}
+          endIcon={<EastIcon />}
+          sx={{
+            mt: 'auto',
+            pt: 2,
+            px: 0,
+            alignSelf: 'flex-start',
+            color: brandColors.mint,
+            '&:hover': { color: brandColors.white, bgcolor: 'transparent' },
+            '&:focus-visible': { outline: `2px solid ${brandColors.gold}`, outlineOffset: 3 },
+          }}
+        >
+          Read full bio
+        </Button>
+      </Box>
+    </Card>
+  );
+};
+
+/** A single line down to the next rung: one person reporting to one person. */
+const Stem = (): JSX.Element => (
+  <Box aria-hidden sx={{ display: 'grid', justifyItems: 'center', height: ARM_HEIGHT }}>
+    <Box sx={{ width: '1px', height: '100%', bgcolor: stemColor }} />
+  </Box>
+);
+
+/**
+ * One arm of a fork. The rail runs from the middle of this cell out to the
+ * middle of the gap, where it meets the arm beside it, and a drop falls from
+ * it into the card below. The outermost arms stop at their own centre so the
+ * rail ends over a card rather than hanging past it.
+ */
+const BranchArm = ({ index, count }: { index: number; count: number }): JSX.Element => (
+  <Box sx={{ position: 'relative', height: ARM_HEIGHT }}>
+    <Box
+      sx={{
+        position: 'absolute',
+        top: 0,
+        height: '1px',
+        bgcolor: branchColor,
+        left: index === 0 ? '50%' : `-${CHART_GAP_PX / 2}px`,
+        right: index === count - 1 ? '50%' : `-${CHART_GAP_PX / 2}px`,
+      }}
+    />
+    <Box
+      sx={{ position: 'absolute', top: 0, bottom: 0, left: '50%', width: '1px', bgcolor: stemColor }}
+    />
+  </Box>
+);
+
+/**
+ * The fork down to a rung holding more than one person. Below the small
+ * breakpoint the cards stack one above another, so the fork collapses back
+ * into a single stem.
+ */
+const Branch = ({ count }: { count: number }): JSX.Element => (
+  <Box aria-hidden>
+    <Stem />
+    <Box
+      sx={{
+        display: { xs: 'none', sm: 'grid' },
+        gridTemplateColumns: `repeat(${count}, 1fr)`,
+        columnGap: CHART_GAP,
+      }}
+    >
+      {Array.from({ length: count }, (_, index) => (
+        <BranchArm key={`arm-${index}`} index={index} count={count} />
+      ))}
+    </Box>
+    <Box sx={{ display: { xs: 'block', sm: 'none' } }}>
+      <Stem />
+    </Box>
+  </Box>
+);
+
+/**
+ * The run from the leadership down into the wider team: a stem into a rail
+ * that spans the grid, with a drop above each card in its top row. The drops
+ * sit in a grid with the same columns as the cards, so they stay over the
+ * cards as the grid reflows from four across to two to one.
+ */
+const TeamBus = ({ count }: { count: number }): JSX.Element => (
+  <Box aria-hidden>
+    <Stem />
+    <Box sx={{ height: '1px', bgcolor: branchColor }} />
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' },
+        columnGap: CHART_GAP,
+        '& > *:nth-of-type(n + 2)': { display: { xs: 'none', sm: 'grid' } },
+        '& > *:nth-of-type(n + 3)': { display: { xs: 'none', sm: 'none', lg: 'grid' } },
+      }}
+    >
+      {Array.from({ length: Math.min(count, 4) }, (_, index) => (
+        <Box
+          key={`drop-${index}`}
+          sx={{ display: 'grid', justifyItems: 'center', height: 18 }}
+        >
+          <Box sx={{ width: '1px', height: '100%', bgcolor: stemColor }} />
+        </Box>
+      ))}
+    </Box>
+  </Box>
+);
+
+/** One rung of the chart: its members centred, side by side. */
+const ChartRung = ({
+  members,
+  wide,
+}: {
+  members: TeamMember[];
+  wide: boolean;
+}): JSX.Element => (
+  <Box
+    sx={{
+      display: 'grid',
+      gridTemplateColumns: { xs: '1fr', sm: `repeat(${members.length}, 1fr)` },
+      gap: CHART_GAP,
+      mx: 'auto',
+      maxWidth: members.length === 1 ? CHART_TOP_WIDTH : '100%',
+    }}
+  >
+    {members.map((member, index) => (
+      <Box key={member.id} sx={{ display: 'flex' }}>
+        <SectionReveal delay={index * 0.06} fillHeight>
+          {wide ? <PrincipalCard member={member} /> : <TeamMemberCard member={member} />}
+        </SectionReveal>
+      </Box>
+    ))}
+  </Box>
+);
+
+const TeamGrid = ({ members }: { members: TeamMember[] }): JSX.Element => (
+  <Grid container spacing={3}>
+    {members.map((member, index) => (
+      <Grid key={member.id} size={{ xs: 12, sm: 6, lg: 3 }} sx={{ display: 'flex' }}>
+        <SectionReveal delay={index * 0.05} fillHeight>
+          <TeamMemberCard member={member} />
+        </SectionReveal>
+      </Grid>
+    ))}
+  </Grid>
+);
+
+/**
+ * The leadership group drawn as an org chart: each rung centred beneath the
+ * one it reports to, with everyone else in the full-width grid below. Two rows
+ * of cards on their own read as two rows of cards; the connecting lines are
+ * what make it a structure.
+ */
+const OrgChart = ({ members }: { members: TeamMember[] }): JSX.Element => {
+  const rungs = LEADERSHIP_RUNGS.map((_, rung) =>
+    members.filter((member) => rungOf(member) === rung),
+  );
+  const rest = members.filter((member) => rungOf(member) === LEADERSHIP_RUNGS.length);
+  const ladder = rungs.filter((rung) => rung.length > 0);
+
+  return (
+    <>
+      <Box sx={{ maxWidth: CHART_WIDTH, mx: 'auto' }}>
+        {ladder.map((rung, index) => (
+          <Box key={rung[0]?.id ?? index}>
+            {index > 0 && (rung.length > 1 ? <Branch count={rung.length} /> : <Stem />)}
+            <ChartRung members={rung} wide={rung.length === 1} />
+          </Box>
+        ))}
+      </Box>
+      {ladder.length > 0 && rest.length > 0 && <TeamBus count={rest.length} />}
+      {rest.length > 0 && <TeamGrid members={rest} />}
+    </>
+  );
+};
+
+const TeamTierGroup = ({
+  tier,
+  members,
+}: {
+  tier: TeamTier;
+  members: TeamMember[];
+}): JSX.Element => (
+  <Box sx={{ mb: 7, '&:last-of-type': { mb: 0 } }}>
+    <Typography
+      variant="overline"
+      sx={{
+        display: 'block',
+        mb: 2.5,
+        color: 'text.primary',
+        fontWeight: 800,
+        letterSpacing: 1.8,
+      }}
+    >
+      {TEAM_TIER_LABELS[tier]}
+    </Typography>
+    {/*
+      Only the leadership group has a chain of command worth drawing. The
+      country teams and the board are peers of one another, and a pyramid
+      would invent a hierarchy that does not exist.
+    */}
+    {tier === 'executive' ? <OrgChart members={members} /> : <TeamGrid members={members} />}
+  </Box>
+);
+
+export const TeamSection = (): JSX.Element => {
   const { data, isLoading } = useTeam();
   const { hash } = useLocation();
   useEffect(() => {
@@ -879,33 +1211,8 @@ const TeamSection = (): JSX.Element => {
         {!isLoading &&
           TEAM_TIERS.map((tier) => {
             const group = members.filter((member) => member.tier === tier);
-            if (group.length === 0) {
-              return null;
-            }
-            return (
-              <Box key={tier} sx={{ mb: 7, '&:last-of-type': { mb: 0 } }}>
-                <Typography
-                  variant="overline"
-                  sx={{
-                    display: 'block',
-                    mb: 2.5,
-                    color: 'text.primary',
-                    fontWeight: 800,
-                    letterSpacing: 1.8,
-                  }}
-                >
-                  {TEAM_TIER_LABELS[tier]}
-                </Typography>
-                <Grid container spacing={3}>
-                  {group.map((member, index) => (
-                    <Grid key={member.id} size={{ xs: 12, sm: 6, lg: 3 }} sx={{ display: 'flex' }}>
-                      <SectionReveal delay={index * 0.05} fillHeight>
-                        <TeamMemberCard member={member} />
-                      </SectionReveal>
-                    </Grid>
-                  ))}
-                </Grid>
-              </Box>
+            return group.length === 0 ? null : (
+              <TeamTierGroup key={tier} tier={tier} members={group} />
             );
           })}
       </Section>

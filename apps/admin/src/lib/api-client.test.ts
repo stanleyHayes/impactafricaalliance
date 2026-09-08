@@ -120,3 +120,89 @@ describe('a server that is waking up', () => {
     expect((error as ApiError).message).toBe('Validation failed');
   });
 });
+
+describe('an API that is left alone long enough to fall asleep', () => {
+  /**
+   * The client remembers when the API last answered, so each of these tests
+   * needs its own copy of the module — otherwise one test's clock leaves the
+   * next one thinking the server was heard from moments ago.
+   */
+  type Client = { api: typeof api; startKeepAlive: () => () => void };
+
+  const freshClient = async (): Promise<Client> => {
+    vi.resetModules();
+    return import('./api-client');
+  };
+
+  const healthCalls = (mock: ReturnType<typeof vi.fn>): unknown[] =>
+    mock.mock.calls.filter((call) => String(call[0]).endsWith('/health'));
+
+  it('pings while the console is open so the instance stays up', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(ok());
+    vi.stubGlobal('fetch', fetchMock);
+    const { startKeepAlive } = await freshClient();
+
+    const stop = startKeepAlive();
+    await vi.advanceTimersByTimeAsync(21 * 60_000);
+    stop();
+
+    expect(healthCalls(fetchMock).length).toBeGreaterThan(0);
+  });
+
+  it('stops pinging once the console is closed', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(ok());
+    vi.stubGlobal('fetch', fetchMock);
+    const { startKeepAlive } = await freshClient();
+
+    startKeepAlive()();
+    await vi.advanceTimersByTimeAsync(60 * 60_000);
+
+    expect(healthCalls(fetchMock)).toHaveLength(0);
+  });
+
+  it('wakes it with a throwaway GET before sending a create', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(ok({ id: 'aiche' }));
+    vi.stubGlobal('fetch', fetchMock);
+    const client = await freshClient();
+    // Six minutes of silence: long enough that the instance may have slept.
+    vi.setSystemTime(Date.now() + 6 * 60_000);
+
+    await client.api.post('/admin/team', { name: 'Aïché Goumané' });
+
+    // The health check first, then the write exactly once. A create cannot be
+    // retried, so it must only ever meet a server that is already up.
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain('/health');
+    expect(fetchMock.mock.calls[1]?.[1]).toMatchObject({ method: 'POST' });
+  });
+
+  it('sends the create straight away when the API answered a moment ago', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(ok({ id: 'aiche' }));
+    vi.stubGlobal('fetch', fetchMock);
+    const client = await freshClient();
+
+    await client.api.post('/admin/team', { name: 'Aïché Goumané' });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({ method: 'POST' });
+  });
+
+  it('keeps knocking while the instance boots, then sends the write', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockRejectedValueOnce(refused())
+      .mockRejectedValueOnce(refused())
+      .mockResolvedValue(ok({ id: 'aiche' }));
+    vi.stubGlobal('fetch', fetchMock);
+    const client = await freshClient();
+    vi.setSystemTime(Date.now() + 6 * 60_000);
+
+    const result = await withoutWaiting(() =>
+      client.api.post('/admin/team', { name: 'Aïché Goumané' }),
+    );
+
+    expect(result).toEqual({ id: 'aiche' });
+    expect(healthCalls(fetchMock)).toHaveLength(3);
+    expect(fetchMock.mock.calls.at(-1)?.[1]).toMatchObject({ method: 'POST' });
+  });
+});
