@@ -1,4 +1,6 @@
 import {
+  announcementInputSchema,
+  announcementUpdateSchema,
   articleInputSchema,
   articleUpdateSchema,
   eventInputSchema,
@@ -21,6 +23,8 @@ import {
   pillarImageUpdateSchema,
   siteImageInputSchema,
   siteImageUpdateSchema,
+  sitePopupInputSchema,
+  sitePopupUpdateSchema,
   reportInputSchema,
   reportUpdateSchema,
   storyInputSchema,
@@ -35,6 +39,7 @@ import { SocialPublisher } from '../../providers/social/social-publisher.js';
 
 import { ArticlePublishingService } from './article-publishing.service.js';
 import { EventContentService } from './event-content.service.js';
+import { AnnouncementModel } from './models/announcement.model.js';
 import { ArticleModel } from './models/article.model.js';
 import { EventModel } from './models/event.model.js';
 import { GalleryItemModel } from './models/gallery.model.js';
@@ -46,6 +51,7 @@ import { PartnerModel } from './models/partner.model.js';
 import { PillarImageModel } from './models/pillar-image.model.js';
 import { ReportModel } from './models/report.model.js';
 import { SiteImageModel } from './models/site-image.model.js';
+import { SitePopupModel } from './models/site-popup.model.js';
 import { ImpactStatModel } from './models/stat.model.js';
 import { StoryModel } from './models/story.model.js';
 import { TeamMemberModel } from './models/team.model.js';
@@ -64,6 +70,31 @@ export const buildContentModules = (container: DependencyContainer): MountedCont
       defaultSort: { publishedAt: -1, createdAt: -1 },
       serviceFactory: (repo, options) =>
         new ArticlePublishingService(repo, options, container.resolve(SocialPublisher)),
+    },
+    container,
+  ),
+  mountContentModule(
+    {
+      path: 'announcements',
+      resource: 'Announcement',
+      model: AnnouncementModel,
+      schemas: { create: announcementInputSchema, update: announcementUpdateSchema },
+      // The public list is the switched-on ones; the date window is applied by
+      // the live endpoint, so a banner queued for next month is not readable
+      // from the API before it is meant to be seen.
+      publicFilter: ACTIVE_ONLY,
+      defaultSort: { priority: -1, updatedAt: -1 },
+    },
+    container,
+  ),
+  mountContentModule(
+    {
+      path: 'popups',
+      resource: 'Popup',
+      model: SitePopupModel,
+      schemas: { create: sitePopupInputSchema, update: sitePopupUpdateSchema },
+      publicFilter: ACTIVE_ONLY,
+      defaultSort: { priority: -1, updatedAt: -1 },
     },
     container,
   ),

@@ -14,6 +14,7 @@ import { sanitizeBody } from './middleware/sanitize.js';
 import { createAiRouter } from './modules/ai/ai.routes.js';
 import { createAnalyticsRouters } from './modules/analytics/analytics.routes.js';
 import { createAuthRouter } from './modules/auth/auth.routes.js';
+import { createCampaignRouter } from './modules/campaigns/campaign.routes.js';
 import { buildContentModules } from './modules/content/content.registry.js';
 import { createDashboardRouter } from './modules/dashboard/dashboard.routes.js';
 import { createEventRegistrationRouters } from './modules/event-registrations/event-registration.routes.js';
@@ -55,6 +56,7 @@ export const createApp = (
   app.use('/api', globalRateLimit);
 
   app.use('/api/auth', createAuthRouter(container));
+  app.use('/api/live', createCampaignRouter());
 
   for (const module of buildContentModules(container)) {
     if (module.publicRouter) {

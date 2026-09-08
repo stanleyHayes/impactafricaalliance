@@ -8,7 +8,7 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { useEffect, useState } from 'react';
 
-import { useSiteSettings } from '../../lib/content-hooks';
+import { useLiveAnnouncement } from '../../lib/content-hooks';
 
 const STORAGE_PREFIX = 'iaa:announcement-dismissed:';
 
@@ -40,9 +40,8 @@ const readDismissed = (key: string): boolean => {
  * never leaves their browser.
  */
 export const AnnouncementBanner = (): JSX.Element | null => {
-  const { data } = useSiteSettings();
-  const announcement = data?.announcement;
-  const message = announcement?.enabled ? announcement.message?.trim() : undefined;
+  const { data: announcement } = useLiveAnnouncement();
+  const message = announcement?.message?.trim();
 
   const [dismissed, setDismissed] = useState(false);
 

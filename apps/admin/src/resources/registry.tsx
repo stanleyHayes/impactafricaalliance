@@ -9,6 +9,9 @@ import {
   jobInputSchema,
   pageSettingInputSchema,
   PILLARS,
+  announcementInputSchema,
+  BANNER_TONES,
+  sitePopupInputSchema,
   SITE_IMAGE_SLOTS,
   siteImageSlot,
   siteImageInputSchema,
@@ -22,6 +25,7 @@ import {
 } from '@iaa/shared';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import AutoStoriesIcon from '@mui/icons-material/AutoStories';
+import CampaignIcon from '@mui/icons-material/Campaign';
 import CollectionsIcon from '@mui/icons-material/Collections';
 import Diversity3Icon from '@mui/icons-material/Diversity3';
 import HandshakeIcon from '@mui/icons-material/Handshake';
@@ -29,6 +33,7 @@ import ImageIcon from '@mui/icons-material/Image';
 import InsightsIcon from '@mui/icons-material/Insights';
 import NewspaperIcon from '@mui/icons-material/Newspaper';
 import PlaceIcon from '@mui/icons-material/Place';
+import WebAssetIcon from '@mui/icons-material/WebAsset';
 import WorkOutlineIcon from '@mui/icons-material/WorkOutlineOutlined';
 import Avatar from '@mui/material/Avatar';
 import Chip from '@mui/material/Chip';
@@ -234,6 +239,63 @@ export const RESOURCES: readonly ResourceConfig[] = [
       { field: 'name', headerName: 'Name', flex: 1, minWidth: 160 },
       { field: 'role', headerName: 'Role', flex: 1, minWidth: 160 },
       { field: 'tier', headerName: 'Group', width: 150 },
+      booleanColumn('isActive', 'Active'),
+    ],
+  },
+  {
+    key: 'announcements',
+    label: 'Banners',
+    singular: 'Banner',
+    icon: <CampaignIcon />,
+    createSchema: announcementInputSchema,
+    // Off by default: a banner is usually written before it is wanted, and one
+    // appearing the moment it is saved is the wrong kind of surprise.
+    defaultValues: { isActive: false, priority: 0, tone: 'announcement' },
+    fields: [
+      { name: 'name', label: 'Name (for this list only)', type: 'text', wide: true },
+      { name: 'message', label: 'Message shown to visitors', type: 'textarea', wide: true },
+      { name: 'linkUrl', label: 'Link URL (optional)', type: 'text', wide: true },
+      { name: 'linkLabel', label: 'Link label (optional)', type: 'text' },
+      { name: 'tone', label: 'Tone', type: 'select', options: toOptions(BANNER_TONES) },
+      { name: 'startsAt', label: 'Starts (optional)', type: 'datetime' },
+      { name: 'endsAt', label: 'Ends (optional)', type: 'datetime' },
+      { name: 'priority', label: 'Priority (higher wins)', type: 'number' },
+      { name: 'isActive', label: 'Active', type: 'switch' },
+    ],
+    columns: [
+      { field: 'name', headerName: 'Name', flex: 1, minWidth: 160 },
+      { field: 'message', headerName: 'Message', flex: 2, minWidth: 220 },
+      { field: 'startsAt', headerName: 'Starts', width: 150 },
+      { field: 'endsAt', headerName: 'Ends', width: 150 },
+      { field: 'priority', headerName: 'Priority', width: 100 },
+      booleanColumn('isActive', 'Active'),
+    ],
+  },
+  {
+    key: 'popups',
+    label: 'Popups',
+    singular: 'Popup',
+    icon: <WebAssetIcon />,
+    createSchema: sitePopupInputSchema,
+    defaultValues: { isActive: false, priority: 0, delaySeconds: 3 },
+    fields: [
+      { name: 'name', label: 'Name (for this list only)', type: 'text', wide: true },
+      { name: 'title', label: 'Heading', type: 'text', wide: true },
+      { name: 'message', label: 'Message', type: 'textarea', wide: true },
+      { name: 'ctaLabel', label: 'Button label (optional)', type: 'text' },
+      { name: 'ctaUrl', label: 'Button URL (optional)', type: 'text', wide: true },
+      { name: 'imageUrl', label: 'Image URL (optional)', type: 'text', wide: true },
+      { name: 'delaySeconds', label: 'Seconds before showing', type: 'number' },
+      { name: 'startsAt', label: 'Starts (optional)', type: 'datetime' },
+      { name: 'endsAt', label: 'Ends (optional)', type: 'datetime' },
+      { name: 'priority', label: 'Priority (higher wins)', type: 'number' },
+      { name: 'isActive', label: 'Active', type: 'switch' },
+    ],
+    columns: [
+      { field: 'name', headerName: 'Name', flex: 1, minWidth: 160 },
+      { field: 'title', headerName: 'Heading', flex: 1, minWidth: 180 },
+      { field: 'startsAt', headerName: 'Starts', width: 150 },
+      { field: 'endsAt', headerName: 'Ends', width: 150 },
       booleanColumn('isActive', 'Active'),
     ],
   },

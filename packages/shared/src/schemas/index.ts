@@ -1,3 +1,4 @@
+export * from './campaign.js';
 export * from './review.js';
 export * from './analytics.js';
 export * from './common.js';

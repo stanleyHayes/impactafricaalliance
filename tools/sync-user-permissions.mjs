@@ -22,7 +22,24 @@ const confirm = args.includes('--confirm');
 const envFlag = args.indexOf('--env');
 loadEnv({ path: envFlag !== -1 ? args[envFlag + 1] : 'apps/api/.env.production' });
 
-const uri = process.env.MONGODB_URI_DIRECT ?? process.env.MONGODB_URI;
+/**
+ * Some networks answer SRV but time out on the TXT lookup that mongodb+srv
+ * also needs, which fails before a single query is sent. Rebuilding the
+ * equivalent standard URI skips that lookup.
+ */
+const standardUri = (srv) => {
+  const parsed = /^mongodb\+srv:\/\/([^@]+)@([^/?]+)(\/[^?]*)?(\?.*)?$/.exec(srv ?? '');
+  if (!parsed) return srv;
+  const [, creds, host, dbPath = '/', query = ''] = parsed;
+  const cluster = host.replace(/^[^.]+\./, '');
+  const hosts = ['00', '01', '02'].map((n) => `ac-n7zzzzd-shard-00-${n}.${cluster}:27017`).join(',');
+  const params = new URLSearchParams(query.replace(/^\?/, ''));
+  params.set('tls', 'true');
+  params.set('authSource', 'admin');
+  return `mongodb://${creds}@${hosts}${dbPath}?${params.toString()}`;
+};
+
+const uri = standardUri(process.env.MONGODB_URI_DIRECT ?? process.env.MONGODB_URI);
 if (!uri) {
   console.error('MONGODB_URI not found');
   process.exit(1);

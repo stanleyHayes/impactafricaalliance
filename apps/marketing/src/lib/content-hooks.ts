@@ -10,7 +10,9 @@ import type {
   Partner,
   PillarImage,
   Report,
+  Announcement,
   PublicReachSummary,
+  SitePopup,
   PublicReview,
   RatingSummary,
   SiteImage,
@@ -49,6 +51,27 @@ export const usePillarImages = (): UseQueryResult<Paginated<PillarImage>> =>
     queryKey: ['pillar-images'],
     queryFn: () => page<PillarImage>('pillar-images', '?pageSize=50'),
     staleTime: 5 * 60 * 1000,
+  });
+
+/**
+ * The banner in force right now, or null.
+ *
+ * The window is applied on the server, so a banner queued for a future date is
+ * not delivered here before it is meant to be seen.
+ */
+export const useLiveAnnouncement = (): UseQueryResult<Announcement | null> =>
+  useQuery({
+    queryKey: ['live-announcement'],
+    queryFn: () => apiGet<Announcement | null>('/live/announcement'),
+    staleTime: 60_000,
+  });
+
+/** The popup in force right now, or null. */
+export const useLivePopup = (): UseQueryResult<SitePopup | null> =>
+  useQuery({
+    queryKey: ['live-popup'],
+    queryFn: () => apiGet<SitePopup | null>('/live/popup'),
+    staleTime: 60_000,
   });
 
 /** Published reviews for one event, with the rating summary alongside. */

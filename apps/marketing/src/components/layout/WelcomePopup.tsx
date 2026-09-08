@@ -1,4 +1,4 @@
-import type { SiteSettingPopup } from '@iaa/shared';
+import type { SitePopup } from '@iaa/shared';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import EastRoundedIcon from '@mui/icons-material/EastRounded';
 import Box from '@mui/material/Box';
@@ -12,7 +12,7 @@ import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import { useEffect, useRef, useState } from 'react';
 
-import { useSiteSettings } from '../../lib/content-hooks';
+import { useLivePopup } from '../../lib/content-hooks';
 
 const SESSION_KEY = 'iaa:welcome-seen';
 const FOREVER_KEY = 'iaa:welcome-suppressed';
@@ -37,7 +37,7 @@ const writeFlag = (storage: 'local' | 'session', key: string): void => {
 };
 
 interface PopupBodyProps {
-  popup: SiteSettingPopup;
+  popup: SitePopup;
   suppress: boolean;
   onSuppressChange: (value: boolean) => void;
   onClose: () => void;
@@ -269,9 +269,10 @@ const PopupBody = ({ popup, suppress, onSuppressChange, onClose }: PopupBodyProp
  * from the dashboard.
  */
 export const WelcomePopup = (): JSX.Element | null => {
-  const { data } = useSiteSettings();
-  const popup = data?.popup;
-  const active = Boolean(popup?.enabled && (popup.title || popup.message));
+  // The server has already decided which popup is in force, so anything
+  // returned here is one to show.
+  const { data: popup } = useLivePopup();
+  const active = Boolean(popup && (popup.title || popup.message));
 
   const [open, setOpen] = useState(false);
   const [suppress, setSuppress] = useState(false);
