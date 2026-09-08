@@ -11,6 +11,7 @@ import { useId } from 'react';
 
 import type { ResourceFormStep } from '../../resources/form-steps';
 import type { FieldConfig, ResourceConfig } from '../../resources/types';
+import { InformationItem } from '../InformationItem';
 import { Markdown } from '../markdown/Markdown';
 
 const reviewText = (field: FieldConfig, value: unknown): string => {
@@ -199,16 +200,16 @@ export const ResourceReview = ({
               </Button>
             </Box>
             <Box
-              component="dl"
+              component="div"
               sx={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 140px), 1fr))',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 200px), 1fr))',
                 alignContent: 'start',
                 gap: 2,
                 m: 0,
                 minWidth: 0,
                 '@container (min-width: 900px)': {
-                  gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+                  gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
                 },
               }}
             >
@@ -221,17 +222,9 @@ export const ResourceReview = ({
                     gridColumn: needsFullRow(field, values[field.name]) ? '1 / -1' : 'auto',
                   }}
                 >
-                  <Typography
-                    component="dt"
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ mb: 0.5, fontWeight: 600 }}
-                  >
-                    {field.label}
-                  </Typography>
-                  <Box component="dd" sx={{ m: 0 }}>
+                  <InformationItem label={field.label}>
                     <ReviewValue field={field} value={values[field.name]} />
-                  </Box>
+                  </InformationItem>
                 </Box>
               ))}
             </Box>

@@ -1,5 +1,10 @@
 import { brandFonts } from '@iaa/shared';
-import { alpha, createTheme, type PaletteColorOptions, type ThemeOptions } from '@mui/material/styles';
+import {
+  alpha,
+  createTheme,
+  type PaletteColorOptions,
+  type ThemeOptions,
+} from '@mui/material/styles';
 
 export type ThemePresetKey = 'iaa' | 'aura' | 'ocean' | 'sunset';
 
@@ -165,7 +170,7 @@ const baseOptions = (palette: PresetPalette): ThemeOptions => ({
     h3: { fontFamily: brandFonts.body, fontWeight: 700, letterSpacing: '-0.012em' },
     h4: { fontFamily: brandFonts.body, fontWeight: 700, letterSpacing: '-0.01em' },
     h5: { fontFamily: brandFonts.body, fontWeight: 700 },
-    h6: { fontFamily: brandFonts.body, fontWeight: 700 },
+    h6: { fontFamily: brandFonts.body, fontWeight: 700, letterSpacing: '-0.02em' },
     button: { textTransform: 'none', fontWeight: 600 },
     body1: { lineHeight: 1.6 },
   },
@@ -178,6 +183,15 @@ const baseOptions = (palette: PresetPalette): ThemeOptions => ({
             palette.overlay,
             palette.mode === 'light' ? 0.045 : 0.06,
           )}, transparent 30rem)`,
+        },
+        'button, a, input, textarea': { touchAction: 'manipulation' },
+        '@media (prefers-reduced-motion: reduce)': {
+          '*, *::before, *::after': {
+            animationDuration: '0.01ms !important',
+            animationIterationCount: '1 !important',
+            transitionDuration: '0.01ms !important',
+            scrollBehavior: 'auto !important',
+          },
         },
         '::selection': {
           backgroundColor: alpha(palette.overlay, palette.selectionAlpha),
@@ -193,6 +207,7 @@ const baseOptions = (palette: PresetPalette): ThemeOptions => ({
           borderRadius: 10,
           paddingInline: 18,
           transition: 'transform 160ms ease, box-shadow 160ms ease',
+          '&:active': { transform: 'translateY(1px)' },
           '&:focus-visible': {
             outline: `3px solid ${alpha(palette.overlay, 0.32)}`,
             outlineOffset: 2,
@@ -234,7 +249,8 @@ const baseOptions = (palette: PresetPalette): ThemeOptions => ({
       styleOverrides: {
         root: {
           borderRadius: 10,
-          backgroundColor: palette.mode === 'light' ? palette.background.paper : alpha('#ffffff', 0.04),
+          backgroundColor:
+            palette.mode === 'light' ? palette.background.paper : alpha('#ffffff', 0.04),
           '&:hover .MuiOutlinedInput-notchedOutline': {
             borderColor: alpha(palette.overlay, 0.5),
           },
@@ -262,6 +278,15 @@ const baseOptions = (palette: PresetPalette): ThemeOptions => ({
         },
       },
     },
+    MuiIconButton: {
+      styleOverrides: {
+        root: {
+          borderRadius: 10,
+          '&.Mui-focusVisible': { outline: `2px solid ${palette.text.primary}`, outlineOffset: 2 },
+        },
+      },
+    },
+    MuiTab: { styleOverrides: { root: { textTransform: 'none', minHeight: 48, fontWeight: 650 } } },
     MuiChip: {
       styleOverrides: { root: { fontWeight: 600, borderRadius: 8 } },
     },

@@ -10,6 +10,7 @@ import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
+import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import { NavLink, Outlet } from 'react-router-dom';
 
@@ -171,7 +172,10 @@ const AccountLayout = (): JSX.Element => {
                 textDecoration: 'none',
                 transition: 'background-color 160ms ease, color 160ms ease',
                 '& svg': { fontSize: 20 },
-                '&:hover': { bgcolor: 'alpha(brandColors.forest, 0.06)', color: 'text.primary' },
+                '&:hover': {
+                  bgcolor: (theme) => alpha(theme.palette.primary.main, 0.06),
+                  color: 'text.primary',
+                },
                 '&.active': {
                   bgcolor: 'primary.main',
                   color: 'common.white',

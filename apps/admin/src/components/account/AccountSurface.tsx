@@ -1,6 +1,6 @@
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
-import type { SxProps, Theme } from '@mui/material/styles';
+import { alpha, type SxProps, type Theme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
@@ -25,8 +25,28 @@ export const AccountSectionHeader = ({
     alignItems={{ xs: 'flex-start', sm: 'center' }}
     justifyContent="space-between"
     spacing={2}
-    sx={{ mb: 3 }}
+    sx={{
+      mb: 3,
+      p: { xs: 2.5, md: 3 },
+      borderRadius: 3,
+      position: 'relative',
+      overflow: 'hidden',
+      bgcolor: (theme) => alpha(theme.palette.primary.main, 0.065),
+    }}
   >
+    <Box
+      aria-hidden
+      sx={{
+        position: 'absolute',
+        right: -20,
+        bottom: -35,
+        pointerEvents: 'none',
+        color: (theme) => alpha(theme.palette.text.primary, 0.055),
+        '& svg': { fontSize: 170 },
+      }}
+    >
+      {icon}
+    </Box>
     <Stack direction="row" spacing={1.75} alignItems="center">
       <Box
         aria-hidden
@@ -39,7 +59,7 @@ export const AccountSectionHeader = ({
           border: 1,
           borderColor: 'divider',
           borderRadius: 2.5,
-          bgcolor: 'alpha(brandColors.forest, 0.07)',
+          bgcolor: (theme) => alpha(theme.palette.primary.main, 0.1),
           color: 'text.primary',
           '& svg': { fontSize: 25 },
         }}

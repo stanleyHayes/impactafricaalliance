@@ -101,7 +101,24 @@ export const AppShell = (): JSX.Element => {
   );
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+    <Box sx={{ display: 'flex', minHeight: '100dvh' }}>
+      <Box
+        component="a"
+        href="#admin-main"
+        sx={{
+          position: 'fixed',
+          top: -100,
+          left: 16,
+          zIndex: 1500,
+          p: 1.5,
+          borderRadius: 2,
+          bgcolor: 'background.paper',
+          color: 'text.primary',
+          '&:focus': { top: 12 },
+        }}
+      >
+        Skip to content
+      </Box>
       <AppBar
         position="fixed"
         color="inherit"
@@ -145,7 +162,12 @@ export const AppShell = (): JSX.Element => {
               Manage content, community, and programme operations
             </Typography>
           </Box>
-          <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }} alignItems="center" id="admin-topbar-actions">
+          <Stack
+            direction="row"
+            spacing={{ xs: 0.5, sm: 1 }}
+            alignItems="center"
+            id="admin-topbar-actions"
+          >
             <ThemeSelector />
             <ThemeToggle />
             <NotificationsBell />
@@ -203,13 +225,15 @@ export const AppShell = (): JSX.Element => {
 
       <Box
         component="main"
+        id="admin-main"
+        tabIndex={-1}
         sx={{
           flexGrow: 1,
           // Flex items default to min-width:auto, which lets wide children (e.g. the
           // dashboard stat cards, data grids) push the page past the viewport on mobile.
           // Allowing main to shrink keeps every admin page within the viewport width.
           minWidth: 0,
-          minHeight: '100vh',
+          minHeight: '100dvh',
           p: { xs: 2, sm: 3, lg: 4 },
           width: { md: `calc(100% - ${desktopWidth}px)` },
           bgcolor: 'background.default',

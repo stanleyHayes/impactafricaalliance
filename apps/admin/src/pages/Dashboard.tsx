@@ -49,11 +49,7 @@ import { DonationChartEmpty } from '../components/charts/DonationChartEmpty';
 import { DonutChart } from '../components/charts/DonutChart';
 import { NewSubmissionsBanner } from '../components/NewSubmissionsBanner';
 import { PageHeader } from '../components/PageHeader';
-import {
-  useDashboardSummary,
-  useSubmissions,
-  useUpdatePaymentSettings,
-} from '../lib/admin-hooks';
+import { useDashboardSummary, useSubmissions, useUpdatePaymentSettings } from '../lib/admin-hooks';
 import { formatUtcShort } from '../lib/date';
 import { pageGuides } from '../lib/page-guides';
 import { RESOURCES } from '../resources/registry';
@@ -113,10 +109,22 @@ const SUBMISSION_META: Record<
   Submission['type'],
   { label: string; icon: SvgIconComponent; color: string }
 > = {
-  [SubmissionType.Contact]: { label: 'Contact', icon: MailOutlineIcon, color: brandColors.forestGreen },
+  [SubmissionType.Contact]: {
+    label: 'Contact',
+    icon: MailOutlineIcon,
+    color: brandColors.forestGreen,
+  },
   [SubmissionType.Partner]: { label: 'Partner', icon: HandshakeIcon, color: brandColors.gold },
-  [SubmissionType.Volunteer]: { label: 'Volunteer', icon: VolunteerActivismIcon, color: brandColors.mint },
-  [SubmissionType.Job]: { label: 'Job', icon: WorkOutlineOutlinedIcon, color: brandColors.deepForest },
+  [SubmissionType.Volunteer]: {
+    label: 'Volunteer',
+    icon: VolunteerActivismIcon,
+    color: brandColors.mint,
+  },
+  [SubmissionType.Job]: {
+    label: 'Job',
+    icon: WorkOutlineOutlinedIcon,
+    color: brandColors.deepForest,
+  },
 };
 
 /** Pull a human label + supporting line from an untyped submission payload, defensively. */
@@ -125,8 +133,7 @@ const describeSubmission = (submission: Submission): { title: string; detail: st
   const str = (key: string): string | undefined =>
     typeof p[key] === 'string' && (p[key] as string).trim() ? (p[key] as string) : undefined;
 
-  const title =
-    str('organizationName') ?? str('name') ?? str('email') ?? 'Anonymous submission';
+  const title = str('organizationName') ?? str('name') ?? str('email') ?? 'Anonymous submission';
   const detail =
     str('subject') ??
     str('partnershipInterest') ??
@@ -151,7 +158,12 @@ const RECENT_SUBMISSION_LIMIT = 5;
 const SubmissionRowSkeleton = (): JSX.Element => (
   <Box sx={{ px: 2.5, py: 1.75 }}>
     <Stack direction="row" spacing={1.75} alignItems="center">
-      <Skeleton variant="rounded" width={42} height={42} sx={{ borderRadius: 2.5, flexShrink: 0 }} />
+      <Skeleton
+        variant="rounded"
+        width={42}
+        height={42}
+        sx={{ borderRadius: 2.5, flexShrink: 0 }}
+      />
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Skeleton variant="text" width="45%" sx={{ fontSize: '0.875rem' }} />
         <Skeleton variant="text" width="70%" sx={{ fontSize: '0.75rem' }} />
@@ -378,7 +390,21 @@ const StatCard = ({
         '& .MuiCardActionArea-focusHighlight': { opacity: 0 },
       }}
     >
-      <CardContent sx={{ flexGrow: 1, width: '100%', p: 2.75 }}>
+      <CardContent
+        sx={{ flexGrow: 1, width: '100%', p: 2.75, position: 'relative', isolation: 'isolate' }}
+      >
+        <Icon
+          aria-hidden
+          sx={{
+            position: 'absolute',
+            right: -14,
+            bottom: 30,
+            fontSize: 132,
+            color: (theme) => alpha(theme.palette.text.primary, 0.065),
+            zIndex: -1,
+            transform: 'rotate(-12deg)',
+          }}
+        />
         <Stack direction="row" alignItems="center" justifyContent="space-between">
           <Avatar
             variant="rounded"
@@ -476,7 +502,7 @@ const Panel = ({ title, subtitle, action, children }: PanelProps): JSX.Element =
       alignItems="center"
       justifyContent="space-between"
       spacing={1}
-      sx={{ px: 2.75, py: 2 }}
+      sx={{ px: 2.75, py: 2.5, bgcolor: (theme) => alpha(theme.palette.primary.main, 0.035) }}
     >
       <Box sx={{ minWidth: 0 }}>
         <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2 }} noWrap>
@@ -542,7 +568,7 @@ const ContentTile = ({
             boxShadow: `inset 0 0 0 1px ${alpha(brandColors.forestGreen, 0.16)}`,
           }}
         >
-          {label.charAt(0).toUpperCase()}
+          {RESOURCES.find((resource) => resource.key === resourceKey)?.icon}
         </Avatar>
         <Box sx={{ minWidth: 0, flexGrow: 1 }}>
           <Typography variant="subtitle2" sx={{ fontWeight: 700, lineHeight: 1.25 }} noWrap>
@@ -589,7 +615,11 @@ const providerStatusChip = (status: PaymentProviderStatus): JSX.Element => {
   return <Chip label="Not configured" size="small" variant="outlined" />;
 };
 
-const providerSwitchTooltip = (status: PaymentProviderStatus, isAdmin: boolean, envHint: string): string => {
+const providerSwitchTooltip = (
+  status: PaymentProviderStatus,
+  isAdmin: boolean,
+  envHint: string,
+): string => {
   if (!isAdmin) {
     return 'Only admins can change payment settings';
   }
@@ -720,10 +750,7 @@ const PaymentProvidersPanel = ({
   };
 
   return (
-    <Panel
-      title="Payment providers"
-      subtitle="Enable or disable donation gateways"
-    >
+    <Panel title="Payment providers" subtitle="Enable or disable donation gateways">
       <Stack spacing={1.5} sx={{ p: 2.5 }}>
         {loading || !payments ? (
           <>
@@ -743,8 +770,8 @@ const PaymentProvidersPanel = ({
           ))
         )}
         <Typography variant="caption" color="text.secondary">
-          A provider only accepts donations when it is enabled here AND its API keys are set in
-          the API environment. Webhooks keep working for donations already in flight.
+          A provider only accepts donations when it is enabled here AND its API keys are set in the
+          API environment. Webhooks keep working for donations already in flight.
         </Typography>
       </Stack>
     </Panel>
@@ -788,7 +815,14 @@ const ProviderSplitBar = ({
       </Typography>
     </Stack>
     <Box sx={{ height: 6, borderRadius: 99, bgcolor: alpha(color, 0.14), overflow: 'hidden' }}>
-      <Box sx={{ height: '100%', width: `${Math.round(share * 100)}%`, borderRadius: 99, bgcolor: color }} />
+      <Box
+        sx={{
+          height: '100%',
+          width: `${Math.round(share * 100)}%`,
+          borderRadius: 99,
+          bgcolor: color,
+        }}
+      />
     </Box>
   </Box>
 );
@@ -1038,7 +1072,10 @@ const ContentInventoryPanel = ({
         ? Array.from({ length: DASHBOARD_CONTENT_COLLECTIONS.length })
         : content
       ).map((entry, index) => (
-        <Grid key={entry ? (entry as DashboardSummary['content'][number]).key : index} size={{ xs: 12, sm: 6 }}>
+        <Grid
+          key={entry ? (entry as DashboardSummary['content'][number]).key : index}
+          size={{ xs: 12, sm: 6 }}
+        >
           {!entry ? (
             <Skeleton variant="rounded" height={66} />
           ) : (
@@ -1193,8 +1230,7 @@ const SYSTEM_ROWS: ReadonlyArray<{
     label: 'Content collections live',
     to: `/content/${RESOURCES[0]?.key ?? 'articles'}`,
     accent: brandColors.deepForest,
-    value: (summary) =>
-      `${summary.content.reduce((sum, entry) => sum + entry.published, 0)} items`,
+    value: (summary) => `${summary.content.reduce((sum, entry) => sum + entry.published, 0)} items`,
   },
 ];
 
@@ -1248,7 +1284,11 @@ const buildSubtitle = (newCount: number): string => {
   return 'Inbox is clear. Keep the Impact Africa Alliance site fresh and current.';
 };
 
-const buildRoleStat = (isAdmin: boolean, data: DashboardSummary | undefined, loading: boolean): StatCardProps => {
+const buildRoleStat = (
+  isAdmin: boolean,
+  data: DashboardSummary | undefined,
+  loading: boolean,
+): StatCardProps => {
   if (isAdmin) {
     return {
       label: 'Team members',

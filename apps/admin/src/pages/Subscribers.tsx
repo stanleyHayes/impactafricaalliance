@@ -16,6 +16,7 @@ import { DataTable, type DataTableFilter } from '../components/data/DataTable';
 import { useViewMode } from '../components/data/useViewMode';
 import { ViewToggle } from '../components/data/ViewToggle';
 import { EmptyState } from '../components/EmptyState';
+import { InformationItem } from '../components/InformationItem';
 import { PageHeader } from '../components/PageHeader';
 import { useDeleteSubscriber, useSubscribers } from '../lib/admin-hooks';
 import { formatUtcDate } from '../lib/date';
@@ -82,6 +83,7 @@ const SubscriberCard = ({ row }: { row: GridRowModel }): JSX.Element => {
       <Box sx={{ p: 2 }}>
         <Stack direction="row" spacing={1.5} alignItems="center">
           <Avatar
+            variant="rounded"
             sx={{
               width: 44,
               height: 44,
@@ -94,7 +96,12 @@ const SubscriberCard = ({ row }: { row: GridRowModel }): JSX.Element => {
             {email.charAt(0).toUpperCase() || '?'}
           </Avatar>
           <Box sx={{ minWidth: 0, flexGrow: 1 }}>
-            <Typography variant="subtitle1" noWrap title={email} sx={{ fontWeight: 700, lineHeight: 1.3 }}>
+            <Typography
+              variant="subtitle1"
+              noWrap
+              title={email}
+              sx={{ fontWeight: 700, lineHeight: 1.3 }}
+            >
               {email}
             </Typography>
             {name && (
@@ -102,11 +109,18 @@ const SubscriberCard = ({ row }: { row: GridRowModel }): JSX.Element => {
                 {name}
               </Typography>
             )}
-            <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.75, flexWrap: 'wrap', gap: 0.5 }}>
-              {source && <Chip size="small" variant="outlined" label={source} sx={{ height: 22 }} />}
-              <Typography variant="caption" color="text.secondary">
+            <Stack
+              direction="row"
+              spacing={1}
+              alignItems="center"
+              sx={{ mt: 0.75, flexWrap: 'wrap', gap: 0.5 }}
+            >
+              {source && (
+                <Chip size="small" variant="outlined" label={source} sx={{ height: 22 }} />
+              )}
+              <InformationItem label="Subscribed">
                 {formatUtcDate(String(row.createdAt))}
-              </Typography>
+              </InformationItem>
             </Stack>
           </Box>
           <SubscriberActions subscriberId={String(row.id)} />
@@ -123,9 +137,17 @@ const Subscribers = (): JSX.Element => {
   const filters = useMemo<DataTableFilter[]>(() => {
     const items = data?.items ?? [];
     const sources = [
-      ...new Set(items.map((item) => item.source).filter((source): source is string => Boolean(source))),
+      ...new Set(
+        items.map((item) => item.source).filter((source): source is string => Boolean(source)),
+      ),
     ].sort();
-    return [{ field: 'source', label: 'Source', options: sources.map((source) => ({ value: source, label: source })) }];
+    return [
+      {
+        field: 'source',
+        label: 'Source',
+        options: sources.map((source) => ({ value: source, label: source })),
+      },
+    ];
   }, [data?.items]);
 
   return (

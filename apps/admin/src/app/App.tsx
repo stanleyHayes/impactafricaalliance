@@ -15,6 +15,7 @@ import UserGuide from '../pages/account/UserGuide';
 import Analytics from '../pages/Analytics';
 import Dashboard from '../pages/Dashboard';
 import Donations from '../pages/Donations';
+import EventDetail from '../pages/EventDetail';
 import EventEditor from '../pages/EventEditor';
 import Events from '../pages/Events';
 import Login from '../pages/Login';
@@ -80,6 +81,7 @@ export const App = (): JSX.Element => (
         }
       />
       <Route path="events" element={<Events />} />
+      <Route path="events/:eventId" element={<EventDetail />} />
       <Route
         path="events/new"
         element={

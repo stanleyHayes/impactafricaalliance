@@ -12,6 +12,7 @@ import Grid from '@mui/material/Grid';
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
 import Stack from '@mui/material/Stack';
+import { alpha } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useState } from 'react';
@@ -53,7 +54,7 @@ const SecurityGuidance = (): JSX.Element => (
         height: 56,
         placeItems: 'center',
         borderRadius: 2.5,
-        bgcolor: 'alpha(brandColors.forest, 0.08)',
+        bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
         color: 'text.primary',
       }}
     >

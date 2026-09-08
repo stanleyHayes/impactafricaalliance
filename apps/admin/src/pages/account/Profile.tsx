@@ -12,6 +12,7 @@ import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
+import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
@@ -29,9 +30,7 @@ const initials = (name: string): string =>
     .join('') || '?';
 
 const formatDate = (iso?: string): string =>
-  iso
-    ? formatUtcDate(iso, { year: 'numeric', month: 'long', day: 'numeric' })
-    : 'Not available';
+  iso ? formatUtcDate(iso, { year: 'numeric', month: 'long', day: 'numeric' }) : 'Not available';
 
 const formatRole = (role?: string): string =>
   role
@@ -85,7 +84,7 @@ const DetailItem = ({
         flexShrink: 0,
         placeItems: 'center',
         borderRadius: 1.75,
-        bgcolor: 'alpha(brandColors.forest, 0.07)',
+        bgcolor: (theme) => alpha(theme.palette.primary.main, 0.07),
         color: 'text.primary',
         '& svg': { fontSize: 20 },
       }}
@@ -229,8 +228,8 @@ const QuickAction = ({
       textDecoration: 'none',
       transition: 'background-color 160ms ease, border-color 160ms ease, transform 160ms ease',
       '&:hover': {
-        borderColor: 'alpha(brandColors.forest, 0.3)',
-        bgcolor: 'alpha(brandColors.forest, 0.035)',
+        borderColor: (theme) => alpha(theme.palette.primary.main, 0.3),
+        bgcolor: (theme) => alpha(theme.palette.primary.main, 0.035),
         transform: 'translateX(3px)',
       },
     }}
@@ -243,7 +242,7 @@ const QuickAction = ({
         flexShrink: 0,
         placeItems: 'center',
         borderRadius: 2,
-        bgcolor: 'alpha(brandColors.forest, 0.08)',
+        bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
         color: 'text.primary',
       }}
     >

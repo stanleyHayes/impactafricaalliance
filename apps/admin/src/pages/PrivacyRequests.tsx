@@ -1,4 +1,5 @@
 import PrivacyTipIcon from '@mui/icons-material/PrivacyTip';
+import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Chip from '@mui/material/Chip';
@@ -15,6 +16,7 @@ import { DataTable, type DataTableFilter } from '../components/data/DataTable';
 import { useViewMode } from '../components/data/useViewMode';
 import { ViewToggle } from '../components/data/ViewToggle';
 import { EmptyState } from '../components/EmptyState';
+import { InformationItem } from '../components/InformationItem';
 import { PageHeader } from '../components/PageHeader';
 import { usePrivacyRequests, useUpdatePrivacyRequest } from '../lib/admin-hooks';
 import { formatUtcDate } from '../lib/date';
@@ -32,7 +34,10 @@ const filters: DataTableFilter[] = [
   {
     field: 'status',
     label: 'Status',
-    options: ['pending', 'verified', 'fulfilled', 'rejected'].map((value) => ({ value, label: value })),
+    options: ['pending', 'verified', 'fulfilled', 'rejected'].map((value) => ({
+      value,
+      label: value,
+    })),
   },
   {
     field: 'type',
@@ -107,14 +112,29 @@ const PrivacyRequestCard = ({ row }: { row: GridRowModel }): JSX.Element => {
       <Box sx={{ p: 2 }}>
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1.5}>
           <Box sx={{ minWidth: 0 }}>
-            <Typography variant="subtitle1" noWrap title={email} sx={{ fontWeight: 700, lineHeight: 1.3 }}>
+            <Typography
+              variant="subtitle1"
+              noWrap
+              title={email}
+              sx={{ fontWeight: 700, lineHeight: 1.3 }}
+            >
               {email}
             </Typography>
-            <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.75, flexWrap: 'wrap', gap: 0.5 }}>
-              <Chip size="small" color="info" label={TYPE_LABELS[type] ?? type} sx={{ height: 22 }} />
-              <Typography variant="caption" color="text.secondary">
+            <Stack
+              direction="row"
+              spacing={1}
+              alignItems="center"
+              sx={{ mt: 0.75, flexWrap: 'wrap', gap: 0.5 }}
+            >
+              <Chip
+                size="small"
+                color="info"
+                label={TYPE_LABELS[type] ?? type}
+                sx={{ height: 22 }}
+              />
+              <InformationItem label="Received date">
                 {formatUtcDate(String(row.createdAt))}
-              </Typography>
+              </InformationItem>
             </Stack>
           </Box>
           <StatusCell id={String(row.id)} status={String(row.status ?? 'pending')} />
@@ -152,13 +172,9 @@ const PrivacyRequests = (): JSX.Element => {
         count={data?.total}
         help={pageGuides.PrivacyRequests}
       />
-      <Box sx={{ mb: 2 }}>
-        <Chip
-          size="small"
-          color="info"
-          label="For access requests, use the export endpoint in the API to retrieve personal data by email."
-        />
-      </Box>
+      <Alert severity="info" icon={<PrivacyTipIcon />} sx={{ mb: 2.5 }}>
+        Verify the requester’s identity before sharing personal information or completing a request.
+      </Alert>
       <DataTable
         rows={data?.items ?? []}
         columns={columns}

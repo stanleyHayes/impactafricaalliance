@@ -34,7 +34,11 @@ const TYPE_META: Record<Submission['type'], TypeMeta> = {
     label: 'Contact',
     color: brandColors.forestGreen,
   },
-  [SubmissionType.Partner]: { icon: <HandshakeRoundedIcon />, label: 'Partner', color: brandColors.gold },
+  [SubmissionType.Partner]: {
+    icon: <HandshakeRoundedIcon />,
+    label: 'Partner',
+    color: brandColors.gold,
+  },
   [SubmissionType.Volunteer]: {
     icon: <VolunteerActivismRoundedIcon />,
     label: 'Volunteer',
@@ -187,7 +191,7 @@ const NotificationsEmptyState = (): JSX.Element => (
         mx: 'auto',
         placeItems: 'center',
         borderRadius: '50%',
-        bgcolor: 'alpha(brandColors.forest, 0.08)',
+        bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
         color: 'text.primary',
       }}
     >
@@ -266,7 +270,7 @@ const Notifications = (): JSX.Element => {
                 height: 54,
                 placeItems: 'center',
                 borderRadius: 2.5,
-                bgcolor: 'alpha(brandColors.forest, 0.08)',
+                bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
                 color: 'text.primary',
               }}
             >

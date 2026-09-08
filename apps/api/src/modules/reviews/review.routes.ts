@@ -1,5 +1,6 @@
 import {
   eventReviewInputSchema,
+  objectIdSchema,
   organisationReviewInputSchema,
   reviewModerationSchema,
   UserRole,
@@ -98,9 +99,18 @@ export const createReviewRouters = (
         await service.list({
           status: req.query.status as ReviewStatus | undefined,
           subject: req.query.subject as 'event' | 'organisation' | undefined,
+          eventId:
+            req.query.eventId === undefined ? undefined : objectIdSchema.parse(req.query.eventId),
           page: page(req.query.page),
         }),
       );
+    }),
+  );
+
+  adminRouter.get(
+    '/events/:eventId/summary',
+    asyncHandler(async (req, res) => {
+      res.json(await service.summary('event', objectIdSchema.parse(req.params.eventId)));
     }),
   );
 

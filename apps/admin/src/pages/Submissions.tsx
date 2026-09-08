@@ -37,6 +37,7 @@ import { DataTable } from '../components/data/DataTable';
 import { useViewMode } from '../components/data/useViewMode';
 import { ViewToggle } from '../components/data/ViewToggle';
 import { EmptyState } from '../components/EmptyState';
+import { InformationItem } from '../components/InformationItem';
 import { PageHeader } from '../components/PageHeader';
 import { useSubmissions, useUpdateSubmissionStatus } from '../lib/admin-hooks';
 import { formatUtcDate, formatUtcShort } from '../lib/date';
@@ -47,10 +48,7 @@ import { pageGuides } from '../lib/page-guides';
  * partner and mentor enquiries a linkable home of their own, which is what the
  * website review asked for.
  */
-const INBOXES: Record<
-  string,
-  { type: Submission['type']; title: string; description: string }
-> = {
+const INBOXES: Record<string, { type: Submission['type']; title: string; description: string }> = {
   partners: {
     type: SubmissionType.Partner,
     title: 'Partner enquiries',
@@ -101,7 +99,10 @@ const TYPE_META: Record<
 };
 
 /** Chip colour for each submission status. */
-const STATUS_TONE: Record<SubmissionStatus, 'default' | 'primary' | 'secondary' | 'success' | 'error' | 'warning'> = {
+const STATUS_TONE: Record<
+  SubmissionStatus,
+  'default' | 'primary' | 'secondary' | 'success' | 'error' | 'warning'
+> = {
   [SubmissionStatus.New]: 'secondary',
   [SubmissionStatus.Read]: 'primary',
   [SubmissionStatus.Archived]: 'default',
@@ -110,7 +111,15 @@ const STATUS_TONE: Record<SubmissionStatus, 'default' | 'primary' | 'secondary' 
 /** Payload keys promoted to the card title, in priority order. */
 const TITLE_KEYS = ['name', 'jobTitle', 'fullName', 'organizationName', 'organization', 'email'];
 /** Payload keys promoted to the supporting line, in priority order. */
-const SUBTITLE_KEYS = ['subject', 'message', 'coverLetter', 'expertise', 'role', 'interest', 'email'];
+const SUBTITLE_KEYS = [
+  'subject',
+  'message',
+  'coverLetter',
+  'expertise',
+  'role',
+  'interest',
+  'email',
+];
 
 /** Returns the first present, non-empty string value among the given keys. */
 const pick = (payload: Record<string, unknown>, keys: string[]): string | undefined => {
@@ -156,7 +165,13 @@ const relativeTime = (iso: string): string => {
 };
 
 /** Inline status editor shared by the card and table views. */
-const SubmissionStatusSelect = ({ id, status }: { id: string; status: SubmissionStatus }): JSX.Element => {
+const SubmissionStatusSelect = ({
+  id,
+  status,
+}: {
+  id: string;
+  status: SubmissionStatus;
+}): JSX.Element => {
   const update = useUpdateSubmissionStatus();
   return (
     <Select
@@ -310,7 +325,13 @@ const ContactChip = ({ contact }: { contact: ContactLink }): JSX.Element => {
 };
 
 /** Tinted panel that previews the submission's message / summary line. */
-const MessagePanel = ({ message, accentColor }: { message: string; accentColor: string }): JSX.Element => (
+const MessagePanel = ({
+  message,
+  accentColor,
+}: {
+  message: string;
+  accentColor: string;
+}): JSX.Element => (
   <Box
     sx={{
       mt: 2,
@@ -341,7 +362,7 @@ const DetailsGrid = ({ details }: { details: [string, unknown][] }): JSX.Element
   const theme = useTheme();
   return (
     <Box
-      component="dl"
+      component="div"
       sx={{
         mt: 2,
         mb: 0,
@@ -354,34 +375,15 @@ const DetailsGrid = ({ details }: { details: [string, unknown][] }): JSX.Element
       }}
     >
       {details.map(([key, value]) => (
-        <Box key={key} sx={{ minWidth: 0 }}>
-          <Typography
-            component="dt"
-            variant="caption"
-            sx={{
-              display: 'block',
-              fontWeight: 700,
-              letterSpacing: 0.4,
-              textTransform: 'uppercase',
-              color: 'text.secondary',
-            }}
-          >
-            {humanizeKey(key)}
-          </Typography>
-          <Typography
-            component="dd"
-            variant="body2"
-            sx={{ m: 0, mt: 0.25, color: 'text.primary', wordBreak: 'break-word' }}
-          >
-            {typeof value === 'string' && URL_VALUE_RE.test(value) ? (
-              <Link href={value} target="_blank" rel="noopener noreferrer">
-                {value}
-              </Link>
-            ) : (
-              String(value)
-            )}
-          </Typography>
-        </Box>
+        <InformationItem key={key} label={humanizeKey(key)}>
+          {typeof value === 'string' && URL_VALUE_RE.test(value) ? (
+            <Link href={value} target="_blank" rel="noopener noreferrer">
+              {value}
+            </Link>
+          ) : (
+            String(value)
+          )}
+        </InformationItem>
       ))}
     </Box>
   );
@@ -425,12 +427,7 @@ const SubmissionCard = ({ submission }: { submission: Submission }): JSX.Element
     >
       <Box sx={{ pl: 3, pr: 2.5, py: 2.25 }}>
         {/* Header: avatar + title block on the left, time + status control on the right. */}
-        <Stack
-          direction="row"
-          spacing={2}
-          alignItems="flex-start"
-          justifyContent="space-between"
-        >
+        <Stack direction="row" spacing={2} alignItems="flex-start" justifyContent="space-between">
           <Stack direction="row" spacing={1.75} alignItems="flex-start" sx={{ minWidth: 0 }}>
             <Avatar
               variant="rounded"
@@ -543,8 +540,18 @@ const SubmissionCardSkeleton = (): JSX.Element => (
   <Card variant="outlined" sx={{ borderRadius: 2.5, overflow: 'hidden' }}>
     <Box sx={{ pl: 3, pr: 2.5, py: 2.25 }}>
       <Stack direction="row" spacing={2} alignItems="flex-start" justifyContent="space-between">
-        <Stack direction="row" spacing={1.75} alignItems="flex-start" sx={{ minWidth: 0, flexGrow: 1 }}>
-          <Skeleton variant="rounded" width={44} height={44} sx={{ borderRadius: 2, flexShrink: 0 }} />
+        <Stack
+          direction="row"
+          spacing={1.75}
+          alignItems="flex-start"
+          sx={{ minWidth: 0, flexGrow: 1 }}
+        >
+          <Skeleton
+            variant="rounded"
+            width={44}
+            height={44}
+            sx={{ borderRadius: 2, flexShrink: 0 }}
+          />
           <Box sx={{ minWidth: 0, flexGrow: 1 }}>
             <Skeleton variant="text" width="45%" sx={{ fontSize: '1rem' }} />
             <Stack direction="row" spacing={1} sx={{ mt: 0.5 }}>
@@ -598,7 +605,10 @@ const tableColumns: GridColDef[] = [
     headerName: 'Status',
     width: 170,
     renderCell: (params) => (
-      <SubmissionStatusSelect id={String(params.row.id)} status={params.value as SubmissionStatus} />
+      <SubmissionStatusSelect
+        id={String(params.row.id)}
+        status={params.value as SubmissionStatus}
+      />
     ),
   },
   {
@@ -633,12 +643,13 @@ const SubmissionsEmpty = ({
           : 'Contact, partnership, volunteer, and job enquiries from the website will land here.'
       }
       primaryAction={
-        hasFilters ? { label: 'Clear filters', onClick: onClear, icon: <FilterAltOffIcon /> } : undefined
+        hasFilters
+          ? { label: 'Clear filters', onClick: onClear, icon: <FilterAltOffIcon /> }
+          : undefined
       }
     />
   </Box>
 );
-
 
 interface SubmissionsListProps {
   view: string;
@@ -724,8 +735,7 @@ const resolveInbox = (
     lockedType: scoped?.type,
     title: scoped?.title ?? 'Submissions',
     description:
-      scoped?.description ??
-      'Contact, partnership, volunteer, and job enquiries from the website.',
+      scoped?.description ?? 'Contact, partnership, volunteer, and job enquiries from the website.',
   };
 };
 

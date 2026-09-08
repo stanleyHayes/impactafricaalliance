@@ -10,6 +10,7 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
+import { alpha } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useEffect } from 'react';
@@ -54,9 +55,9 @@ const ProfilePreview = ({ name, email }: { name: string; email: string }): JSX.E
         mt: 3,
         p: 2,
         border: 1,
-        borderColor: 'alpha(brandColors.forest, 0.12)',
+        borderColor: (theme) => alpha(theme.palette.primary.main, 0.12),
         borderRadius: 2,
-        bgcolor: 'alpha(brandColors.forest, 0.04)',
+        bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04),
       }}
     >
       <Stack spacing={1.25}>

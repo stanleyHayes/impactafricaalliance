@@ -7,6 +7,7 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
+import { alpha } from '@mui/material/styles';
 import Switch from '@mui/material/Switch';
 import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
@@ -48,7 +49,7 @@ const PreferenceRow = ({
           flexShrink: 0,
           placeItems: 'center',
           borderRadius: 2,
-          bgcolor: 'alpha(brandColors.forest, 0.08)',
+          bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
           color: 'text.primary',
           '& svg': { fontSize: 22 },
         }}

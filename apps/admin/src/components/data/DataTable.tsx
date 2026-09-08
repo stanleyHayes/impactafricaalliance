@@ -20,7 +20,7 @@ import type { ViewMode } from './useViewMode';
 const ROW_HEIGHT = 56;
 const HEADER_HEIGHT = 52;
 const FOOTER_HEIGHT = 52;
-const TOOLBAR_HEIGHT = 66;
+const TOOLBAR_HEIGHT = 74;
 const MIN_VISIBLE_ROWS = 3;
 const LOADING_ROWS = 8;
 const GRID_TEMPLATE = 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))';
@@ -119,11 +119,7 @@ const applyFilters = (
 
 /** Quick-filter equivalent for the card grid: every search word must appear in the row. */
 const filterRows = (rows: GridRowsProp, search: string): GridRowsProp => {
-  const words = search
-    .trim()
-    .toLowerCase()
-    .split(/\s+/)
-    .filter(Boolean);
+  const words = search.trim().toLowerCase().split(/\s+/).filter(Boolean);
   if (words.length === 0) {
     return rows;
   }
@@ -146,14 +142,14 @@ const buildGridSx = (theme: Theme): SxProps<Theme> => {
     // Header: subtle brand tint with high-contrast titles and a gold accent underline.
     '& .MuiDataGrid-columnHeaders': {
       bgcolor: alpha(green, 0.07),
-      borderBottom: `2px solid ${gold}`,
+      borderBottom: `1px solid ${alpha(green, 0.18)}`,
     },
     '& .MuiDataGrid-columnHeader': { px: 2 },
     '& .MuiDataGrid-columnHeaderTitle': {
       fontSize: '0.75rem',
       fontWeight: 800,
-      letterSpacing: '0.08em',
-      textTransform: 'uppercase',
+      letterSpacing: '0.01em',
+      textTransform: 'none',
       color: 'text.primary',
     },
     '& .MuiDataGrid-columnSeparator': { display: 'none' },
@@ -256,10 +252,10 @@ const TableToolbar = ({
       justifyContent="space-between"
       spacing={1.25}
       sx={{
-        p: 1.5,
+        p: 2,
         borderBottom: '1px solid',
         borderColor: 'divider',
-        bgcolor: 'background.default',
+        bgcolor: 'background.paper',
         flexShrink: 0,
       }}
     >
@@ -306,7 +302,11 @@ const TableToolbar = ({
           >
             <MenuItem value="">All</MenuItem>
             {filter.options.map((option) => (
-              <MenuItem key={option.value} value={option.value} sx={{ textTransform: 'capitalize' }}>
+              <MenuItem
+                key={option.value}
+                value={option.value}
+                sx={{ textTransform: 'capitalize' }}
+              >
                 {option.label}
               </MenuItem>
             ))}
@@ -410,7 +410,10 @@ export const DataTable = (props: DataTableProps): JSX.Element => {
   const [filterValues, setFilterValues] = useState<Record<string, string>>({});
 
   const showToolbar = searchable || Boolean(toolbarEnd) || filters.length > 0;
-  const filteredRows = useMemo(() => applyFilters(rows, filters, filterValues), [rows, filters, filterValues]);
+  const filteredRows = useMemo(
+    () => applyFilters(rows, filters, filterValues),
+    [rows, filters, filterValues],
+  );
   const cardRows = useMemo(() => filterRows(filteredRows, search), [filteredRows, search]);
   const quickFilterValues = useMemo(
     () => (search.trim() ? search.trim().split(/\s+/) : []),
@@ -452,7 +455,9 @@ export const DataTable = (props: DataTableProps): JSX.Element => {
         display: 'flex',
         flexDirection: 'column',
         height:
-          view === 'table' ? computeHeight(filteredRows.length, loading, showToolbar, height) : undefined,
+          view === 'table'
+            ? computeHeight(filteredRows.length, loading, showToolbar, height)
+            : undefined,
       }}
     >
       {showToolbar && (
@@ -496,7 +501,9 @@ export const DataTable = (props: DataTableProps): JSX.Element => {
               noRowsOverlay: () => (
                 <Stack alignItems="center" justifyContent="center" sx={{ height: '100%', p: 3 }}>
                   <Typography variant="body2" color="text.secondary">
-                    {isFiltered ? 'No records match the current search or filters.' : 'No records to display.'}
+                    {isFiltered
+                      ? 'No records match the current search or filters.'
+                      : 'No records to display.'}
                   </Typography>
                 </Stack>
               ),

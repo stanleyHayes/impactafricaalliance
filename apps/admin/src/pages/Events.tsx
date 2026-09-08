@@ -26,9 +26,9 @@ import { useNavigate } from 'react-router-dom';
 import { DialogFooter, DialogHeader, dialogPaperSx } from '../components/dialogs/DialogShell';
 import { EmptyState } from '../components/EmptyState';
 import { CalendarGrid } from '../components/events/CalendarGrid';
-import { EventDetailDialog } from '../components/events/EventDetailDialog';
 import { EventImage } from '../components/events/EventImage';
 import { EventQrDialog } from '../components/events/EventQrDialog';
+import { InformationItem } from '../components/InformationItem';
 import { PageHeader } from '../components/PageHeader';
 import { CalendarPageSkeleton } from '../components/PageSkeleton';
 import { useDeleteEvent, useEvents } from '../lib/admin-hooks';
@@ -221,24 +221,21 @@ const EventCard = ({ event, onView, onEdit, onDelete, onShowQr }: EventCardProps
               sx={{ textTransform: 'capitalize' }}
             />
           </Stack>
-          <Stack
-            direction="row"
-            spacing={1}
-            alignItems="center"
-            sx={{ mt: 1.5, color: 'text.secondary' }}
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' },
+              gap: 2,
+              mt: 2,
+            }}
           >
-            <CalendarTodayIcon fontSize="small" />
-            <Typography variant="body2">{formatEventRange(event.startAt, event.endAt)}</Typography>
-          </Stack>
-          <Stack
-            direction="row"
-            spacing={1}
-            alignItems="center"
-            sx={{ mt: 0.75, color: 'text.secondary' }}
-          >
-            <LocationOnOutlinedIcon fontSize="small" />
-            <Typography variant="body2">{event.location}</Typography>
-          </Stack>
+            <InformationItem label="Schedule" icon={<CalendarTodayIcon />}>
+              {formatEventRange(event.startAt, event.endAt)}
+            </InformationItem>
+            <InformationItem label="Location" icon={<LocationOnOutlinedIcon />}>
+              {event.location}
+            </InformationItem>
+          </Box>
           <Typography
             variant="body2"
             color="text.secondary"
@@ -283,7 +280,9 @@ const EventCard = ({ event, onView, onEdit, onDelete, onShowQr }: EventCardProps
 const Events = (): JSX.Element => {
   const navigate = useNavigate();
   const { data, isLoading, isError, refetch } = useEvents();
-  const [viewingEvent, setViewingEvent] = useState<Event | null>(null);
+  const openDetails = (event: Event): void => {
+    navigate(`/events/${event.id}`);
+  };
   const events = useMemo(() => data?.items ?? [], [data]);
   const [view, setView] = useState<'calendar' | 'card'>('calendar');
   const [month, setMonth] = useState(new Date());
@@ -382,7 +381,7 @@ const Events = (): JSX.Element => {
               month={month}
               onMonthChange={setMonth}
               onSelectDay={openCreateForDay}
-              onSelectEvent={setViewingEvent}
+              onSelectEvent={openDetails}
             />
           ) : (
             <Stack spacing={2}>
@@ -390,7 +389,7 @@ const Events = (): JSX.Element => {
                 <EventCard
                   key={event.id}
                   event={event}
-                  onView={setViewingEvent}
+                  onView={openDetails}
                   onEdit={openEdit}
                   onDelete={setDeletingEvent}
                   onShowQr={setQrEvent}
@@ -401,11 +400,6 @@ const Events = (): JSX.Element => {
         </>
       )}
 
-      <EventDetailDialog
-        event={viewingEvent}
-        onClose={() => setViewingEvent(null)}
-        onEdit={openEdit}
-      />
       <DeleteConfirmDialog
         open={Boolean(deletingEvent)}
         event={deletingEvent}

@@ -184,6 +184,8 @@ export const useDonations = (): UseQueryResult<Paginated<Donation>> =>
 /** Server-aggregated overview feeding the dashboard KPIs and charts. */
 /** The moderation queue. Pending first is the default the page opens on. */
 export const useReviews = (filters: {
+  eventId?: string;
+  page?: number;
   status?: ReviewStatus;
   subject?: 'event' | 'organisation';
 }): UseQueryResult<Paginated<AdminReview>> =>
@@ -193,6 +195,8 @@ export const useReviews = (filters: {
       const query = new URLSearchParams();
       if (filters.status) query.set('status', filters.status);
       if (filters.subject) query.set('subject', filters.subject);
+      if (filters.eventId) query.set('eventId', filters.eventId);
+      if (filters.page) query.set('page', String(filters.page));
       return api.get<Paginated<AdminReview>>(`/admin/reviews?${query.toString()}`);
     },
   });
@@ -206,7 +210,12 @@ export const useModerateReview = (): UseMutationResult<
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, ...decision }) => api.patch<void>(`/admin/reviews/${id}`, decision),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['reviews'] }),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['reviews'] }),
+        queryClient.invalidateQueries({ queryKey: ['events'] }),
+      ]);
+    },
   });
 };
 

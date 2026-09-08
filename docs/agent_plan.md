@@ -727,3 +727,32 @@ Source: `Impact Africa Alliance Website Updates.pdf`
 - Browser loaded light mode, but dropdown inspection timed out, so visual confirmation in a
   real browser is still outstanding. Lint, marketing typecheck and build all pass, and the
   change was in the tree for the full marketing suite (21 files, 114 tests, green).
+
+### Admin event detail and moderation follow-up — 2026-09-08
+
+- Event calendar and card selections now open `/events/:eventId`, a dedicated detail page with cover artwork, schedule, description, host, registration settings, private joining link, custom questions, QR code and edit access.
+- The page includes published rating distributions and an event-scoped moderation queue. `/reviews?eventId=:eventId` also opens the scoped queue; the global Reviews page remains available.
+- Admin review queries filter by event before pagination/counting. Waiting, published and rejected reviews are paginated; moderators can publish or reject and revisit earlier decisions. Decisions invalidate rating and event caches.
+- Verification: five dedicated-page/review UI tests and sixteen review-service tests pass; admin/API type checks and changed-file lint pass. The broader existing EventEditor calendar test timed out at both 5s and 15s; this is not recorded as passing.
+- Browser: dedicated page and navigation inspected. The previous admin preview used the hosted API; local preview on 5299 now targets updated API on 4001 (background workers disabled for this verification). Sign-in is required before finishing authenticated local browser verification. No deployment performed.
+
+### Admin visual redesign — 2026-09-08
+
+Owner: Codex. Status: implementation and component visual review complete; authenticated page-by-page acceptance remains pending.
+
+| Surface | Implemented treatment | Verification |
+| --- | --- | --- |
+| Shared page headings across CMS, operations, analytics, media and settings | Tinted header surface, prominent icon/title/description, count, actions and theme-aware decorative watermark | Light/dark component browser preview; 390px layout has no horizontal overflow |
+| Dashboard | Watermarked metric cards, calmer panel headings, real resource icons replacing initial-letter tiles | Admin build and suite |
+| Events and event detail | Icon/label/value schedule and registration details, section icons and watermarks, numbered question summaries | Existing event detail/editor tests; authenticated visual acceptance pending |
+| Event question editor | Numbered cards, labelled move/remove controls, required status, responsive attendee preview and choice illustrations | Two regression tests cover multi-line choice entry and moving/removing questions while retaining settings; dark desktop and 390px visual review |
+| CMS cards, detail dialogs and final form review | Shared semantic information blocks with contextual icons, readable labels and values; resource-card watermarks | Existing resource detail and form tests |
+| Submissions, subscribers, donations, privacy requests and social connections | Icon-led metadata, donation watermarks, readable privacy guidance, consistent social account information and aligned actions | Admin suite; authenticated visual acceptance pending |
+| Reviews | Watermark and inset comment treatment with responsive metadata | Existing review tests |
+| Account pages | Watermarked account headings; repaired invalid CSS alpha expressions in profile, edit profile, password, notifications, settings and account navigation | Typecheck/lint; individual visual acceptance pending |
+| Shared controls | Calmer table headers/toolbars, focus indicators, reduced-motion support, skip-to-content link, compact mobile step navigation | Component browser review and admin suite |
+
+- Existing event-detail/moderation work and unrelated worktree changes were preserved. No API/auth contract changes, publication, or deployment were made by this design slice.
+- Local admin preview is at `http://localhost:5299` and points to the local API on port 4001. Reload returned to sign-in; the API health and local CORS response are working. An authenticated session is still needed for the complete page-by-page walkthrough.
+- The temporary component preview used sample content and was removed after light/dark desktop and 390px checks. Those checks verify shared components, not authenticated page integration.
+- Final validation: admin lint, TypeScript/build, all 72 tests across 20 files, and `git diff --check` pass. Vite still reports the existing large-bundle advisory.

@@ -1,6 +1,7 @@
-import type { AdminReview, ReviewStatus } from '@iaa/shared';
+import type { AdminReview, ReviewStatus, Paginated } from '@iaa/shared';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import EventRoundedIcon from '@mui/icons-material/EventRounded';
+import FormatQuoteRoundedIcon from '@mui/icons-material/FormatQuoteRounded';
 import RateReviewRoundedIcon from '@mui/icons-material/RateReviewRounded';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import Alert from '@mui/material/Alert';
@@ -12,14 +13,17 @@ import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
+import Pagination from '@mui/material/Pagination';
 import Skeleton from '@mui/material/Skeleton';
 import Snackbar from '@mui/material/Snackbar';
 import Stack from '@mui/material/Stack';
+import { alpha } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Typography from '@mui/material/Typography';
 import { useState } from 'react';
+import { Link as RouterLink, useSearchParams } from 'react-router-dom';
 
 import { EmptyState } from '../components/EmptyState';
 import { PageHeader } from '../components/PageHeader';
@@ -54,16 +58,38 @@ const ReviewCard = ({
   onReject: (review: AdminReview) => void;
   busy: boolean;
 }): JSX.Element => (
-  <Card variant="outlined" sx={{ borderRadius: 2.5, p: 2.5 }}>
+  <Card
+    variant="outlined"
+    sx={{ borderRadius: 3, p: { xs: 2.5, md: 3.5 }, position: 'relative', overflow: 'hidden' }}
+  >
+    <FormatQuoteRoundedIcon
+      aria-hidden
+      sx={{
+        position: 'absolute',
+        right: 18,
+        top: 38,
+        fontSize: 110,
+        pointerEvents: 'none',
+        color: (theme) => alpha(theme.palette.text.primary, 0.05),
+      }}
+    />
     <Stack
       direction={{ xs: 'column', sm: 'row' }}
       justifyContent="space-between"
       alignItems={{ xs: 'flex-start', sm: 'center' }}
       spacing={1.5}
     >
-      <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
+      <Stack
+        direction="row"
+        spacing={1.5}
+        alignItems="center"
+        sx={{ minWidth: 0, flexWrap: 'wrap', rowGap: 1 }}
+      >
         <Stars rating={review.rating} />
         <Chip
+          component={RouterLink}
+          to={review.eventId ? `/events/${review.eventId}#reviews` : '/reviews'}
+          clickable
           size="small"
           icon={review.subject === 'event' ? <EventRoundedIcon /> : <RateReviewRoundedIcon />}
           label={review.subject === 'event' ? (review.eventTitle ?? 'Event') : 'Organisation'}
@@ -79,7 +105,22 @@ const ReviewCard = ({
     </Stack>
 
     {review.comment && (
-      <Typography sx={{ mt: 1.5, whiteSpace: 'pre-wrap' }}>{review.comment}</Typography>
+      <Typography
+        sx={{
+          my: 2.5,
+          p: 2.5,
+          borderLeft: 3,
+          borderColor: 'primary.main',
+          bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04),
+          borderRadius: 1,
+          whiteSpace: 'pre-wrap',
+          overflowWrap: 'anywhere',
+          lineHeight: 1.8,
+          position: 'relative',
+        }}
+      >
+        {review.comment}
+      </Typography>
     )}
 
     <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 1.5, flexWrap: 'wrap' }}>
@@ -102,22 +143,26 @@ const ReviewCard = ({
       </Alert>
     )}
 
-    {review.status === 'pending' && (
+    {
       <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
-        <Button
-          variant="contained"
-          size="small"
-          startIcon={<CheckCircleRoundedIcon />}
-          disabled={busy}
-          onClick={() => onPublish(review)}
-        >
-          Publish
-        </Button>
-        <Button size="small" color="inherit" disabled={busy} onClick={() => onReject(review)}>
-          Reject
-        </Button>
+        {review.status !== 'published' && (
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<CheckCircleRoundedIcon />}
+            disabled={busy}
+            onClick={() => onPublish(review)}
+          >
+            Publish
+          </Button>
+        )}
+        {review.status !== 'rejected' && (
+          <Button size="small" color="inherit" disabled={busy} onClick={() => onReject(review)}>
+            Reject
+          </Button>
+        )}
       </Stack>
-    )}
+    }
   </Card>
 );
 
@@ -129,9 +174,40 @@ const ReviewsSkeleton = (): JSX.Element => (
   </Stack>
 );
 
-const Reviews = (): JSX.Element => {
+const ReviewPagination = ({
+  data,
+  status,
+  page,
+  setPage,
+}: {
+  data?: Paginated<AdminReview>;
+  status: ReviewStatus;
+  page: number;
+  setPage: (page: number) => void;
+}): JSX.Element | null => {
+  if (!data) return null;
+  return (
+    <>
+      {data.totalPages > 1 && (
+        <Pagination
+          sx={{ mt: 3 }}
+          count={data.totalPages}
+          page={page}
+          onChange={(_, next) => setPage(next)}
+          aria-label="Review pages"
+        />
+      )}
+      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 2 }}>
+        {data.total} {status} reviews
+      </Typography>
+    </>
+  );
+};
+
+export const ReviewQueue = ({ eventId }: { eventId?: string }): JSX.Element => {
+  const [page, setPage] = useState(1);
   const [status, setStatus] = useState<ReviewStatus>('pending');
-  const { data, isLoading, isError } = useReviews({ status });
+  const { data, isLoading, isError, refetch } = useReviews({ status, eventId, page });
   const moderate = useModerateReview();
   const [rejecting, setRejecting] = useState<AdminReview | null>(null);
   const [reason, setReason] = useState('');
@@ -149,6 +225,7 @@ const Reviews = (): JSX.Element => {
           setNotice(decision === 'published' ? 'Review published.' : 'Review rejected.');
           setRejecting(null);
           setReason('');
+          if (items.length === 1 && page > 1) setPage(page - 1);
         },
         onError: (error) => setNotice(error.message),
       },
@@ -161,14 +238,19 @@ const Reviews = (): JSX.Element => {
     <>
       <PageHeader
         icon={<RateReviewRoundedIcon />}
-        title="Reviews"
+        title={eventId ? 'Reviews & comments' : 'Reviews'}
         description="Ratings and comments from attendees and partners. Nothing appears on the site until it is published here."
         action={
           <ToggleButtonGroup
             value={status}
             exclusive
             size="small"
-            onChange={(_event, next: ReviewStatus | null) => next && setStatus(next)}
+            onChange={(_event, next: ReviewStatus | null) => {
+              if (next) {
+                setStatus(next);
+                setPage(1);
+              }
+            }}
             aria-label="Review status"
           >
             {STATUS_TABS.map((tab) => (
@@ -183,7 +265,9 @@ const Reviews = (): JSX.Element => {
       {isLoading && !data && <ReviewsSkeleton />}
 
       {isError && (
-        <Alert severity="error">Reviews could not be loaded. Please try again.</Alert>
+        <Alert severity="error" action={<Button onClick={() => void refetch()}>Retry</Button>}>
+          Reviews could not be loaded. Please try again.
+        </Alert>
       )}
 
       {!isLoading && !isError && items.length === 0 && (
@@ -212,6 +296,7 @@ const Reviews = (): JSX.Element => {
         </Stack>
       )}
 
+      <ReviewPagination data={data} status={status} page={page} setPage={setPage} />
       <Dialog open={Boolean(rejecting)} onClose={() => setRejecting(null)} fullWidth maxWidth="sm">
         <DialogTitle>Reject this review</DialogTitle>
         <DialogContent>
@@ -225,6 +310,7 @@ const Reviews = (): JSX.Element => {
             multiline
             minRows={3}
             label="Why (optional)"
+            slotProps={{ htmlInput: { maxLength: 500 } }}
             value={reason}
             onChange={(event) => setReason(event.target.value)}
           />
@@ -235,7 +321,9 @@ const Reviews = (): JSX.Element => {
             color="error"
             variant="contained"
             disabled={moderate.isPending}
-            onClick={() => rejecting && decide(rejecting.id, 'rejected', reason.trim() || undefined)}
+            onClick={() =>
+              rejecting && decide(rejecting.id, 'rejected', reason.trim() || undefined)
+            }
           >
             Reject
           </Button>
@@ -253,4 +341,23 @@ const Reviews = (): JSX.Element => {
   );
 };
 
+const Reviews = (): JSX.Element => {
+  const [params] = useSearchParams();
+  const eventId = params.get('eventId') ?? undefined;
+  return (
+    <>
+      {eventId && (
+        <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
+          <Button component={RouterLink} to={`/events/${eventId}`}>
+            Back to event
+          </Button>
+          <Button component={RouterLink} to="/reviews">
+            All reviews
+          </Button>
+        </Stack>
+      )}
+      <ReviewQueue key={eventId ?? 'all'} eventId={eventId} />
+    </>
+  );
+};
 export default Reviews;

@@ -12,6 +12,7 @@ import { DataTable, type DataTableFilter } from '../components/data/DataTable';
 import { useViewMode } from '../components/data/useViewMode';
 import { ViewToggle } from '../components/data/ViewToggle';
 import { EmptyState } from '../components/EmptyState';
+import { InformationItem } from '../components/InformationItem';
 import { PageHeader } from '../components/PageHeader';
 import { useDonations } from '../lib/admin-hooks';
 import { formatUtcDate } from '../lib/date';
@@ -75,6 +76,8 @@ const SummaryCard = ({ label, value }: { label: string; value: string }): JSX.El
     <Box
       sx={{
         flex: 1,
+        position: 'relative',
+        overflow: 'hidden',
         minWidth: 150,
         p: 2,
         borderRadius: 2.5,
@@ -82,6 +85,16 @@ const SummaryCard = ({ label, value }: { label: string; value: string }): JSX.El
         border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
       }}
     >
+      <VolunteerActivismIcon
+        aria-hidden
+        sx={{
+          position: 'absolute',
+          right: -12,
+          bottom: -12,
+          fontSize: 100,
+          color: alpha(theme.palette.text.primary, 0.065),
+        }}
+      />
       <Typography variant="body2" color="text.secondary">
         {label}
       </Typography>
@@ -113,19 +126,23 @@ const DonationCard = ({ row }: { row: GridRowModel }): JSX.Element => {
           <Typography variant="h5" sx={{ fontWeight: 800, color: 'primary.main' }}>
             ${amount.toLocaleString()}
           </Typography>
-          <Chip size="small" label={String(row.status ?? 'unknown')} color={statusColor(row.status)} />
+          <Chip
+            size="small"
+            label={String(row.status ?? 'unknown')}
+            color={statusColor(row.status)}
+          />
         </Stack>
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          noWrap
-          title={String(row.donorEmail ?? '')}
-          sx={{ mt: 0.25 }}
-        >
-          {row.donorEmail ? String(row.donorEmail) : 'Anonymous donor'}
-        </Typography>
+        <Box sx={{ mt: 2 }}>
+          <InformationItem label="Donor email">
+            {row.donorEmail ? String(row.donorEmail) : 'Anonymous donor'}
+          </InformationItem>
+        </Box>
         <Stack direction="row" sx={{ mt: 1.5, flexWrap: 'wrap', gap: 0.5 }}>
-          <Chip size="small" label={String(row.provider ?? '')} sx={{ height: 22, textTransform: 'capitalize' }} />
+          <Chip
+            size="small"
+            label={String(row.provider ?? '')}
+            sx={{ height: 22, textTransform: 'capitalize' }}
+          />
           {row.frequency && (
             <Chip
               size="small"

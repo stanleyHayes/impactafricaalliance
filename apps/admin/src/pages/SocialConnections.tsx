@@ -12,11 +12,13 @@ import Grid from '@mui/material/Grid';
 import Skeleton from '@mui/material/Skeleton';
 import Snackbar from '@mui/material/Snackbar';
 import Stack from '@mui/material/Stack';
+import { alpha } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
+import { InformationItem } from '../components/InformationItem';
 import { PageHeader } from '../components/PageHeader';
 import { PublicationStatusList } from '../components/social/PublicationStatusList';
 import {
@@ -92,18 +94,16 @@ const PlatformCard = ({
         <Stack spacing={0.75}>
           <Chip label="Connected" color="success" size="small" sx={{ alignSelf: 'flex-start' }} />
           {account.accountName && (
-            <Typography variant="body2">
-              <strong>Account:</strong> {account.accountName}
-            </Typography>
+            <InformationItem label="Account name">{account.accountName}</InformationItem>
           )}
           {account.accountHandle && (
             <Typography variant="body2" color="text.secondary">
               @{account.accountHandle}
             </Typography>
           )}
-          <Typography variant="caption" color="text.secondary">
-            Token expires: {formatDate(account.tokenExpiry)}
-          </Typography>
+          <InformationItem label="Connection expiry date">
+            {formatDate(account.tokenExpiry)}
+          </InformationItem>
         </Stack>
       );
     }
@@ -112,8 +112,33 @@ const PlatformCard = ({
 
   return (
     <Grid size={{ xs: 12, md: 4 }}>
-      <Card elevation={0} sx={{ border: 1, borderColor: 'divider', borderRadius: 2, height: '100%' }}>
-        <CardContent>
+      <Card
+        elevation={0}
+        sx={{
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: 3,
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
+        <Box
+          aria-hidden
+          sx={{
+            position: 'absolute',
+            top: -15,
+            right: -20,
+            color: (theme) => alpha(theme.palette.text.primary, 0.055),
+            pointerEvents: 'none',
+            '& svg': { fontSize: 150 },
+          }}
+        >
+          {config.icon}
+        </Box>
+        <CardContent sx={{ p: 3, flex: 1, position: 'relative' }}>
           <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 1.5 }}>
             <Box sx={{ color: 'primary.main', display: 'flex' }}>{config.icon}</Box>
             <Typography variant="h6">{config.label}</Typography>
@@ -123,7 +148,7 @@ const PlatformCard = ({
           </Typography>
           {renderStatus()}
         </CardContent>
-        <CardActions sx={{ px: 2, pb: 2 }}>
+        <CardActions sx={{ px: 3, pb: 3 }}>
           {account ? (
             <Button
               size="small"
@@ -214,8 +239,12 @@ const ComposeCard = ({ onCompose, disabled }: ComposeCardProps): JSX.Element => 
           />
         </Stack>
       </CardContent>
-      <CardActions sx={{ px: 2, pb: 2 }}>
-        <Button variant="contained" disabled={disabled || title.trim().length === 0} onClick={start}>
+      <CardActions sx={{ px: 3, pb: 3 }}>
+        <Button
+          variant="contained"
+          disabled={disabled || title.trim().length === 0}
+          onClick={start}
+        >
           Choose destinations
         </Button>
       </CardActions>
@@ -227,9 +256,10 @@ const SocialConnections = (): JSX.Element => {
   const { data: accounts, isLoading } = useSocialAccounts();
   const disconnect = useDisconnectSocial();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [snackbar, setSnackbar] = useState<{ message: string; severity: 'success' | 'error' } | null>(
-    null,
-  );
+  const [snackbar, setSnackbar] = useState<{
+    message: string;
+    severity: 'success' | 'error';
+  } | null>(null);
   const [composing, setComposing] = useState<SocialPublishSource | null>(null);
 
   useEffect(() => {
@@ -272,11 +302,7 @@ const SocialConnections = (): JSX.Element => {
       <ComposeCard onCompose={setComposing} disabled={isLoading || accounts?.length === 0} />
 
       {composing && (
-        <SocialPublishDialog
-          open
-          source={composing}
-          onClose={() => setComposing(null)}
-        />
+        <SocialPublishDialog open source={composing} onClose={() => setComposing(null)} />
       )}
 
       <Card sx={{ mb: 2.5 }}>

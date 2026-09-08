@@ -14,6 +14,7 @@ import Typography from '@mui/material/Typography';
 import { formatUtcDate } from '../../lib/date';
 import type { FieldConfig, ResourceConfig, ResourceRow } from '../../resources/types';
 import { DialogFooter, DialogHeader, dialogPaperSx } from '../dialogs/DialogShell';
+import { InformationItem } from '../InformationItem';
 import { Markdown } from '../markdown/Markdown';
 
 import { ArticleDetailDialog } from './ArticleDetailDialog';
@@ -176,7 +177,13 @@ export const ResourceDetailDialog = ({
     `${resource.singular} details`;
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth slotProps={{ paper: { sx: dialogPaperSx } }}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+      slotProps={{ paper: { sx: dialogPaperSx } }}
+    >
       <DialogHeader
         icon={resource.icon}
         eyebrow={`${resource.singular} record`}
@@ -210,20 +217,9 @@ export const ResourceDetailDialog = ({
                   '&:hover': { borderColor: alpha(theme.palette.primary.main, 0.3) },
                 })}
               >
-                <Typography
-                  variant="caption"
-                  sx={{
-                    display: 'block',
-                    mb: 0.75,
-                    fontWeight: 700,
-                    letterSpacing: '0.05em',
-                    textTransform: 'uppercase',
-                    color: 'text.secondary',
-                  }}
-                >
-                  {field.label}
-                </Typography>
-                <FieldValue field={field} value={row[field.name]} />
+                <InformationItem label={field.label}>
+                  <FieldValue field={field} value={row[field.name]} />
+                </InformationItem>
               </Box>
             ))}
           </Box>

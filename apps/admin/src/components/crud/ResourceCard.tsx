@@ -8,12 +8,13 @@ import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
-import { useTheme } from '@mui/material/styles';
+import { alpha, useTheme } from '@mui/material/styles';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 
 import { formatUtcDate } from '../../lib/date';
 import type { FieldConfig, ResourceConfig, ResourceRow } from '../../resources/types';
+import { InformationItem } from '../InformationItem';
 
 interface ResourceRowActionsProps {
   row: ResourceRow;
@@ -39,13 +40,23 @@ export const ResourceRowActions = ({
 }: ResourceRowActionsProps): JSX.Element => (
   <Stack direction="row" justifyContent="flex-end" spacing={0.5} sx={{ width: '100%' }}>
     <Tooltip title="View">
-      <IconButton size="small" aria-label="View" onClick={() => onView(row)} sx={tintButtonSx('primary')}>
+      <IconButton
+        size="small"
+        aria-label="View"
+        onClick={() => onView(row)}
+        sx={tintButtonSx('primary')}
+      >
         <VisibilityOutlinedIcon fontSize="small" />
       </IconButton>
     </Tooltip>
     {canEdit && (
       <Tooltip title="Edit">
-        <IconButton size="small" aria-label="Edit" onClick={() => onEdit(row)} sx={tintButtonSx('primary')}>
+        <IconButton
+          size="small"
+          aria-label="Edit"
+          onClick={() => onEdit(row)}
+          sx={tintButtonSx('primary')}
+        >
           <EditIcon fontSize="small" />
         </IconButton>
       </Tooltip>
@@ -124,7 +135,11 @@ const collectChips = (fields: FieldConfig[], row: ResourceRow): CardChip[] => {
 };
 
 /** Up to two remaining primitive fields rendered as "Label: value" lines. */
-const collectMeta = (fields: FieldConfig[], row: ResourceRow, excluded: Set<string>): CardMeta[] => {
+const collectMeta = (
+  fields: FieldConfig[],
+  row: ResourceRow,
+  excluded: Set<string>,
+): CardMeta[] => {
   const meta: CardMeta[] = [];
   for (const field of fields) {
     if (meta.length >= 2 || excluded.has(field.name) || META_SKIP_TYPES.has(field.type)) {
@@ -224,6 +239,8 @@ export const ResourceCard = ({
       variant="outlined"
       sx={{
         height: '100%',
+        position: 'relative',
+        overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
         borderRadius: 2.5,
@@ -237,7 +254,20 @@ export const ResourceCard = ({
         },
       }}
     >
-      <Box sx={{ p: 2, flexGrow: 1, minWidth: 0 }}>
+      <Box
+        aria-hidden
+        sx={{
+          position: 'absolute',
+          right: -14,
+          top: 12,
+          pointerEvents: 'none',
+          color: alpha(theme.palette.text.primary, 0.055),
+          '& svg': { fontSize: 130 },
+        }}
+      >
+        {resource.icon}
+      </Box>
+      <Box sx={{ p: 2.5, flexGrow: 1, minWidth: 0, position: 'relative' }}>
         <Stack direction="row" spacing={1.5} alignItems="center">
           <Thumb imageUrl={model.imageUrl} icon={resource.icon} />
           <Box sx={{ minWidth: 0, flexGrow: 1 }}>
@@ -274,20 +304,11 @@ export const ResourceCard = ({
         </Stack>
 
         {model.meta.length > 0 && (
-          <Stack spacing={0.5} sx={{ mt: 1.5 }}>
+          <Stack component="div" spacing={1.75} sx={{ mt: 2.5, mb: 0 }}>
             {model.meta.map((item) => (
-              <Typography
-                key={item.label}
-                variant="body2"
-                color="text.secondary"
-                noWrap
-                title={item.value}
-              >
-                <Box component="span" sx={{ fontWeight: 600, color: 'text.primary' }}>
-                  {item.label}:{' '}
-                </Box>
+              <InformationItem key={item.label} label={item.label}>
                 {item.value}
-              </Typography>
+              </InformationItem>
             ))}
           </Stack>
         )}
