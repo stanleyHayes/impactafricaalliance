@@ -17,7 +17,7 @@ import { SectionReveal } from '../components/SectionReveal';
 import { Seo } from '../components/Seo';
 import { PageSkeleton } from '../components/skeletons';
 import { ApiError } from '../lib/api-client';
-import { useTeamMember } from '../lib/content-hooks';
+import { useTeamMember , useSiteSettings } from '../lib/content-hooks';
 import { useSiteImage } from '../lib/site-images';
 import { memberInitials, memberSocials } from '../lib/team-profile';
 
@@ -96,7 +96,8 @@ const Portrait = ({ member }: { member: TeamMember }): JSX.Element => {
 export const TeamProfileContent = ({ member }: { member: TeamMember }): JSX.Element => {
   const RoleMark =
     ROLE_MARKS.find(({ pattern }) => pattern.test(member.role))?.Icon ?? HubRoundedIcon;
-  const socials = memberSocials(member);
+  const { data: site } = useSiteSettings();
+  const socials = memberSocials(member, site?.teamSocialsEnabled);
   const paragraphs =
     member.bio
       ?.split(/\n+/)

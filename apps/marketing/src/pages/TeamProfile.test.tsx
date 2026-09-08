@@ -12,6 +12,8 @@ import TeamProfile from './TeamProfile';
 vi.mock('../lib/content-hooks', () => ({
   useTeamMember: vi.fn(),
   useSiteImages: () => ({ data: { items: [] } }),
+  // No settings loaded, so the defaults decide which personal links show.
+  useSiteSettings: () => ({ data: undefined }),
 }));
 vi.mock('../components/SectionReveal', () => ({
   SectionReveal: ({ children }: { children: React.ReactNode }) => children,

@@ -131,6 +131,21 @@ export const SITE_SETTING_STEPS: readonly SiteSettingStep[] = [
     ],
   },
   {
+    label: 'Team profile links',
+    title: 'Links on team profiles',
+    description:
+      'Which of a team member’s own links appear on their profile. Switching one off keeps every address on the team records, so it can be switched back on without anyone re-entering anything.',
+    fields: [
+      { name: 'teamSocialsEnabled.linkedInUrl', label: 'Show LinkedIn', type: 'switch' },
+      { name: 'teamSocialsEnabled.websiteUrl', label: 'Show personal website', type: 'switch' },
+      { name: 'teamSocialsEnabled.xUrl', label: 'Show X', type: 'switch' },
+      { name: 'teamSocialsEnabled.githubUrl', label: 'Show GitHub', type: 'switch' },
+      { name: 'teamSocialsEnabled.instagramUrl', label: 'Show Instagram', type: 'switch' },
+      { name: 'teamSocialsEnabled.facebookUrl', label: 'Show Facebook', type: 'switch' },
+      { name: 'teamSocialsEnabled.tiktokUrl', label: 'Show TikTok', type: 'switch' },
+    ],
+  },
+  {
     label: 'Video & chat',
     title: 'Video channels and live chat',
     description: 'Finish your public channels, then save all your settings together.',

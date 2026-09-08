@@ -1,8 +1,10 @@
+import { TEAM_SOCIAL_FIELDS } from '@iaa/shared';
 import type {
   SiteSettingAnnouncement,
   SiteSettingLiveChat,
   SiteSettingPopup,
   SiteSettingSocials,
+  TeamSocialsEnabled,
 } from '@iaa/shared';
 import { Schema, model } from 'mongoose';
 
@@ -26,12 +28,18 @@ export interface SiteSettingDocument {
   regionalPresence?: string[];
   mapUrl?: string;
   socials?: SiteSettingSocials;
+  teamSocialsEnabled?: TeamSocialsEnabled;
   announcement?: SiteSettingAnnouncement;
   popup?: SiteSettingPopup;
   liveChat?: SiteSettingLiveChat;
   createdAt: Date;
   updatedAt: Date;
 }
+
+const teamSocialsEnabledSubSchema = new Schema<TeamSocialsEnabled>(
+  Object.fromEntries(TEAM_SOCIAL_FIELDS.map((field) => [field, { type: Boolean }])),
+  { _id: false },
+);
 
 const socialsSubSchema = new Schema<SiteSettingSocials>(
   {
@@ -96,6 +104,9 @@ const siteSettingSchema = new Schema<SiteSettingDocument>(
     regionalPresence: { type: [String], default: undefined },
     mapUrl: { type: String },
     socials: { type: socialsSubSchema, required: false },
+    // Absent means the defaults apply, which is LinkedIn only — so a site that
+    // has never been told otherwise does not link out to personal accounts.
+    teamSocialsEnabled: { type: teamSocialsEnabledSubSchema, required: false },
     announcement: { type: announcementSubSchema, required: false },
     popup: { type: popupSubSchema, required: false },
     liveChat: { type: liveChatSubSchema, required: false },

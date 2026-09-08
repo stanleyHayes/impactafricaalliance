@@ -37,6 +37,52 @@ export const siteSettingSocialsSchema = z.object({
 export type SiteSettingSocials = z.infer<typeof siteSettingSocialsSchema>;
 
 /**
+ * The personal links a team member can list, named by the field they live in
+ * on the team record.
+ */
+export const TEAM_SOCIAL_FIELDS = [
+  'linkedInUrl',
+  'websiteUrl',
+  'xUrl',
+  'githubUrl',
+  'instagramUrl',
+  'facebookUrl',
+  'tiktokUrl',
+] as const;
+export type TeamSocialField = (typeof TEAM_SOCIAL_FIELDS)[number];
+
+/**
+ * Which of a team member's own links the site shows.
+ *
+ * One setting for everyone rather than a switch per person: the decision is
+ * about what the organisation puts its name next to, not about any individual,
+ * and nobody wants to make it seventeen times.
+ */
+export const teamSocialsEnabledSchema = z
+  .object(
+    Object.fromEntries(TEAM_SOCIAL_FIELDS.map((field) => [field, z.boolean()])) as Record<
+      TeamSocialField,
+      z.ZodBoolean
+    >,
+  )
+  .partial();
+export type TeamSocialsEnabled = z.infer<typeof teamSocialsEnabledSchema>;
+
+/**
+ * What shows when nobody has said otherwise: LinkedIn alone.
+ *
+ * A colleague's personal X or TikTok is theirs, and linking it from a staff
+ * page puts the organisation's name beside whatever is posted there. LinkedIn
+ * is the one that is professional by default.
+ */
+export const DEFAULT_TEAM_SOCIALS_ENABLED: TeamSocialsEnabled = { linkedInUrl: true };
+
+export const isTeamSocialEnabled = (
+  enabled: TeamSocialsEnabled | undefined,
+  field: TeamSocialField,
+): boolean => (enabled?.[field] ?? DEFAULT_TEAM_SOCIALS_ENABLED[field]) === true;
+
+/**
  * Site-wide announcement bar. Kept in site settings rather than hard-coded so a
  * launch notice can be edited or switched off from the dashboard without a
  * deploy, and so the copy outlives any one campaign.
@@ -123,6 +169,7 @@ export const siteSettingInputSchema = z.object({
   regionalPresence: regionalPresenceSchema,
   mapUrl: optionalUrl,
   socials: siteSettingSocialsSchema.optional(),
+  teamSocialsEnabled: teamSocialsEnabledSchema.optional(),
   announcement: siteSettingAnnouncementSchema.optional(),
   popup: siteSettingPopupSchema.optional(),
   liveChat: siteSettingLiveChatSchema.optional(),
@@ -130,6 +177,7 @@ export const siteSettingInputSchema = z.object({
 
 export const siteSettingUpdateSchema = partialForUpdate(siteSettingInputSchema).extend({
   socials: siteSettingSocialsSchema.partial().optional(),
+  teamSocialsEnabled: teamSocialsEnabledSchema.optional(),
   announcement: siteSettingAnnouncementSchema.partial().optional(),
   popup: siteSettingPopupSchema.partial().optional(),
   liveChat: siteSettingLiveChatSchema.partial().optional(),
@@ -165,6 +213,7 @@ export interface SiteSetting extends Timestamped {
   regionalPresence?: string[];
   mapUrl?: string;
   socials?: SiteSettingSocials;
+  teamSocialsEnabled?: TeamSocialsEnabled;
   announcement?: SiteSettingAnnouncement;
   popup?: SiteSettingPopup;
   liveChat?: SiteSettingLiveChat;

@@ -1,4 +1,5 @@
-import type { TeamMember } from '@iaa/shared';
+import { isTeamSocialEnabled } from '@iaa/shared';
+import type { TeamMember, TeamSocialsEnabled, TeamSocialField } from '@iaa/shared';
 import type { SvgIconComponent } from '@mui/icons-material';
 import FacebookIcon from '@mui/icons-material/Facebook';
 import GitHubIcon from '@mui/icons-material/GitHub';
@@ -8,18 +9,9 @@ import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import MusicNoteRoundedIcon from '@mui/icons-material/MusicNoteRounded';
 import XIcon from '@mui/icons-material/X';
 
-type SocialField =
-  | 'websiteUrl'
-  | 'linkedInUrl'
-  | 'githubUrl'
-  | 'xUrl'
-  | 'instagramUrl'
-  | 'facebookUrl'
-  | 'tiktokUrl';
-
 /** Rendered in this order, and only for the links a member actually has. */
 const MEMBER_SOCIALS: ReadonlyArray<{
-  field: SocialField;
+  field: TeamSocialField;
   label: string;
   Icon: SvgIconComponent;
 }> = [
@@ -40,8 +32,16 @@ export const memberInitials = (name: string): string =>
     .map((part) => part.charAt(0).toUpperCase())
     .join('');
 
-export const memberSocials = (member: TeamMember) =>
+/**
+ * The links to show for one member.
+ *
+ * A link needs both a value on the member and its channel switched on for the
+ * site as a whole. The address stays on the team record either way, so turning
+ * a channel back on shows it again without anyone re-entering anything.
+ */
+export const memberSocials = (member: TeamMember, enabled?: TeamSocialsEnabled) =>
   MEMBER_SOCIALS.flatMap(({ field, label, Icon }) => {
+    if (!isTeamSocialEnabled(enabled, field)) return [];
     const href = member[field];
     return href && /^https?:\/\//i.test(href) ? [{ field, label, Icon, href }] : [];
   });
