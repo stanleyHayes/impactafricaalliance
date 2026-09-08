@@ -23,6 +23,26 @@ function completeFirstStep() {
 
 describe('event reviews', () => {
   beforeEach(() => vi.clearAllMocks());
+  it('requires a rating before advancing', () => {
+    renderWithProviders(<EventReviewForm token={token} onDone={vi.fn()} />);
+    fireEvent.submit(screen.getByRole('form', { name: 'Review this event' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('Choose a rating first.');
+    expect(screen.queryByRole('textbox', { name: 'Name to show' })).not.toBeInTheDocument();
+    expect(apiPost).not.toHaveBeenCalled();
+  });
+  it('previews the review and preserves values when going back', () => {
+    renderWithProviders(<EventReviewForm token={token} onDone={vi.fn()} />);
+    completeFirstStep();
+    expect(screen.getByText('Great practical session.')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+    expect(screen.getByRole('radio', { name: '5 Stars' })).toBeChecked();
+    expect(
+      screen.getByRole('textbox', { name: 'Anything you want to add (optional)' }),
+    ).toHaveValue('Great practical session.');
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(screen.getByRole('textbox', { name: 'Name to show' })).toHaveValue('Ama');
+    expect(apiPost).not.toHaveBeenCalled();
+  });
   it('submits the rating and comment using the attendee token only on the final step', async () => {
     vi.mocked(apiPost).mockResolvedValue({ status: 'pending' });
     const done = vi.fn();

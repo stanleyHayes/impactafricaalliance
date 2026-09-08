@@ -1,4 +1,6 @@
 import { eventReviewInputSchema, type PublicReview, type RatingSummary } from '@iaa/shared';
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import MailOutlineRoundedIcon from '@mui/icons-material/MailOutlineRounded';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
@@ -7,6 +9,7 @@ import Pagination from '@mui/material/Pagination';
 import Rating from '@mui/material/Rating';
 import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
+import { alpha } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useState } from 'react';
@@ -42,6 +45,7 @@ export const EventReviewForm = ({
   const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const ratingLabels = ['Poor', 'Fair', 'Good', 'Very good', 'Excellent'];
 
   const submit = async (): Promise<void> => {
     if (busy) return;
@@ -95,87 +99,265 @@ export const EventReviewForm = ({
         void submit();
       }}
       sx={{
-        p: { xs: 2.5, md: 3 },
+        overflow: 'hidden',
         border: 1,
         borderColor: 'divider',
-        borderRadius: 3,
+        borderRadius: 5,
         bgcolor: 'background.paper',
       }}
     >
-      <Typography component="h3" sx={{ fontWeight: 700, fontSize: '1.5rem' }}>
-        How was the event?
-      </Typography>
-      <Typography aria-live="polite" variant="overline" color="text.secondary">
-        Step {step + 1} of 2 · {step === 0 ? 'Your experience' : 'About you'}
-      </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        Your rating helps other people decide whether the next one is for them.
-      </Typography>
-
-      {step === 0 && (
-        <>
-          <Rating
-            disabled={busy}
-            name="event-rating"
-            value={rating}
-            onChange={(_event, next) => setRating(next)}
-            size="large"
-            sx={{ mb: 2 }}
-          />
-
-          <TextField
-            label="Anything you want to add (optional)"
-            value={comment}
-            onChange={(event) => setComment(event.target.value)}
-            multiline
-            minRows={3}
-            disabled={busy}
-            slotProps={{ htmlInput: { maxLength: 2000 } }}
-            helperText={`${comment.length} / 2,000 characters`}
-            fullWidth
-          />
-        </>
-      )}
-      {step === 1 && (
-        <Stack spacing={2}>
-          <TextField
-            label="Name to show"
-            disabled={busy}
-            slotProps={{ htmlInput: { minLength: 2, maxLength: 80 } }}
-            value={displayName}
-            onChange={(event) => setDisplayName(event.target.value)}
-            required
-            fullWidth
-            helperText="However you would like to be credited."
-          />
-        </Stack>
-      )}
-
-      {error !== '' && (
-        <Alert severity="error" sx={{ mt: 2 }}>
-          {error}
-        </Alert>
-      )}
-
-      {step === 1 && (
-        <Button
-          type="button"
-          disabled={busy}
-          onClick={() => {
-            setStep(0);
-            setError('');
-          }}
-          sx={{ mt: 2, mr: 1 }}
+      <Box
+        sx={{
+          p: { xs: 3, sm: 4 },
+          pb: { xs: 2.5, sm: 3 },
+          borderBottom: 1,
+          borderColor: 'divider',
+        }}
+      >
+        <Typography
+          variant="overline"
+          color="text.secondary"
+          sx={{ fontSize: '0.65rem', letterSpacing: '0.16em', fontWeight: 700 }}
         >
-          Back
-        </Button>
-      )}
-      <Button type="submit" variant="contained" disabled={busy} sx={{ mt: 2, fontWeight: 700 }}>
-        {busy ? 'Sending…' : ['Continue', 'Submit review'][step]}
-      </Button>
-      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1.5 }}>
-        Reviews are read before they are published.
-      </Typography>
+          Your voice matters
+        </Typography>
+        <Typography
+          component="h3"
+          sx={{
+            mt: 1,
+            fontWeight: 700,
+            fontSize: { xs: '1.7rem', sm: '2rem' },
+            letterSpacing: '-0.03em',
+            lineHeight: 1.2,
+          }}
+        >
+          {step === 0 ? 'How was the event?' : 'Make it yours.'}
+        </Typography>
+        <Typography color="text.secondary" sx={{ mt: 1.5, fontSize: '0.875rem', maxWidth: 440 }}>
+          {step === 0
+            ? 'Share what stayed with you. Your experience helps others find their next event.'
+            : 'Choose the name that will appear alongside your review.'}
+        </Typography>
+        <Box
+          component="ol"
+          aria-label="Review progress"
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            listStyle: 'none',
+            p: 0,
+            m: 0,
+            mt: 3,
+          }}
+        >
+          {['Your experience', 'About you'].map((label, index) => (
+            <Box
+              component="li"
+              key={label}
+              aria-current={step === index ? 'step' : undefined}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                flex: 1,
+                color: step >= index ? 'text.primary' : 'text.secondary',
+              }}
+            >
+              <Box
+                component="span"
+                sx={{
+                  display: 'grid',
+                  placeItems: 'center',
+                  width: 26,
+                  height: 26,
+                  flexShrink: 0,
+                  borderRadius: '50%',
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  bgcolor: step >= index ? 'primary.main' : 'action.hover',
+                  color: step >= index ? 'primary.contrastText' : 'text.secondary',
+                }}
+              >
+                {step > index ? <CheckRoundedIcon sx={{ fontSize: 16 }} /> : index + 1}
+              </Box>
+              <Typography
+                component="span"
+                sx={{ fontSize: '0.75rem', fontWeight: step === index ? 700 : 500 }}
+              >
+                {label}
+              </Typography>
+            </Box>
+          ))}
+        </Box>
+      </Box>
+      <Box sx={{ p: { xs: 3, sm: 4 } }}>
+        {step === 0 ? (
+          <Stack spacing={3}>
+            <Box
+              sx={{
+                p: { xs: 2, sm: 2.5 },
+                borderRadius: 3,
+                bgcolor: (theme) => alpha(theme.palette.primary.main, 0.06),
+                border: 1,
+                borderColor: (theme) => alpha(theme.palette.primary.main, 0.16),
+              }}
+            >
+              <Typography
+                id="event-rating-label"
+                sx={{ fontSize: '0.8rem', fontWeight: 700, mb: 1.5 }}
+              >
+                Your overall rating
+              </Typography>
+              <Rating
+                disabled={busy}
+                name="event-rating"
+                aria-labelledby="event-rating-label"
+                value={rating}
+                onChange={(_event, next) => {
+                  setRating(next);
+                  setError('');
+                }}
+                size="large"
+                sx={{
+                  color: (theme) => (theme.palette.mode === 'dark' ? '#E9BA49' : '#856100'),
+                  gap: { xs: 0, sm: 0.75 },
+                  '& .MuiRating-icon': { p: 0.75, fontSize: 32 },
+                  '& .MuiRating-iconEmpty': { color: 'text.secondary' },
+                  '& .MuiRating-label': { borderRadius: 2 },
+                  '& .MuiRating-label:has(input:focus-visible)': {
+                    outline: '2px solid',
+                    outlineColor: 'primary.main',
+                    outlineOffset: 2,
+                  },
+                }}
+              />
+              <Typography
+                aria-live="polite"
+                sx={{
+                  mt: 1,
+                  fontSize: '0.8rem',
+                  color: rating ? 'text.primary' : 'text.secondary',
+                  fontWeight: rating ? 600 : 400,
+                }}
+              >
+                {rating
+                  ? `${rating} out of 5 · ${ratingLabels[rating - 1]}`
+                  : 'Select a star to rate your experience'}
+              </Typography>
+            </Box>
+            <TextField
+              label="Anything you want to add (optional)"
+              placeholder="A highlight, a takeaway, or something we could do better…"
+              value={comment}
+              onChange={(event) => setComment(event.target.value)}
+              multiline
+              minRows={4}
+              disabled={busy}
+              slotProps={{ htmlInput: { maxLength: 2000 }, inputLabel: { shrink: true } }}
+              helperText={`${comment.length} / 2,000 characters`}
+              fullWidth
+              sx={{
+                '& .MuiInputBase-root': { fontSize: '0.9rem', lineHeight: 1.7 },
+                '& .MuiInputLabel-root': { fontSize: '0.875rem' },
+                '& .MuiFormHelperText-root': { textAlign: 'right', fontSize: '0.7rem', mt: 1 },
+              }}
+            />
+          </Stack>
+        ) : (
+          <Stack spacing={3}>
+            <Box
+              sx={{
+                p: 2.5,
+                borderRadius: 3,
+                bgcolor: 'action.hover',
+                border: 1,
+                borderColor: 'divider',
+              }}
+            >
+              <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, mb: 1 }}>
+                Your review
+              </Typography>
+              <Rating
+                readOnly
+                value={rating}
+                size="small"
+                sx={{ color: (theme) => (theme.palette.mode === 'dark' ? '#E9BA49' : '#856100') }}
+              />
+              <Typography
+                sx={{
+                  mt: 1,
+                  fontSize: '0.875rem',
+                  whiteSpace: 'pre-wrap',
+                  overflowWrap: 'anywhere',
+                  color: 'text.secondary',
+                }}
+              >
+                {comment.trim() || 'You’re sharing a rating without a comment.'}
+              </Typography>
+            </Box>
+            <TextField
+              label="Name to show"
+              placeholder="Your name"
+              disabled={busy}
+              slotProps={{
+                htmlInput: { minLength: 2, maxLength: 80 },
+                inputLabel: { shrink: true },
+              }}
+              value={displayName}
+              onChange={(event) => setDisplayName(event.target.value)}
+              required
+              fullWidth
+              helperText="This name will be visible with your published review."
+            />
+          </Stack>
+        )}
+        {error !== '' && (
+          <Alert severity="error" sx={{ mt: 2 }}>
+            {error}
+          </Alert>
+        )}
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="space-between"
+          sx={{ mt: 3, pt: 3, borderTop: 1, borderColor: 'divider' }}
+        >
+          {step === 1 ? (
+            <Button
+              type="button"
+              disabled={busy}
+              onClick={() => {
+                setStep(0);
+                setError('');
+              }}
+              sx={{ color: 'text.primary' }}
+            >
+              Back
+            </Button>
+          ) : (
+            <Typography color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+              Step 1 of 2
+            </Typography>
+          )}
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={busy}
+            endIcon={step === 0 ? <ArrowForwardRoundedIcon /> : undefined}
+            sx={{ fontWeight: 700 }}
+          >
+            {busy ? 'Sending…' : ['Continue', 'Submit review'][step]}
+          </Button>
+        </Stack>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ display: 'block', mt: 2.5, fontSize: '0.7rem', textAlign: 'center' }}
+        >
+          Reviews are read before they are published.
+        </Typography>
+      </Box>
     </Box>
   );
 };
