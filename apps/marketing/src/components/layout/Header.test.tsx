@@ -102,4 +102,17 @@ describe('Header', () => {
       'noopener noreferrer',
     );
   });
+
+  it('files reviews under Get Involved, where leaving one belongs', async () => {
+    const user = userEvent.setup();
+    renderHeader();
+
+    await user.click(screen.getByRole('button', { name: 'Get Involved' }));
+    const menu = screen.getByRole('menu', { name: 'Get Involved' });
+
+    expect(within(menu).getByRole('menuitem', { name: /Reviews/ })).toHaveAttribute(
+      'href',
+      '/reviews',
+    );
+  });
 });

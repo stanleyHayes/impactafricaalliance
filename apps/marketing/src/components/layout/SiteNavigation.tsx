@@ -80,12 +80,6 @@ const NAVIGATION: NavigationItem[] = [
         description: 'Browse reports, publications, and useful downloads.',
         Icon: MenuBookRoundedIcon,
       },
-      {
-        label: 'Reviews',
-        path: '/reviews',
-        description: 'What partners and participants say about working with us.',
-        Icon: RateReviewRoundedIcon,
-      },
     ],
   },
   {
@@ -96,6 +90,12 @@ const NAVIGATION: NavigationItem[] = [
         path: '/get-involved',
         description: 'Volunteer, mentor, donate, or become a partner.',
         Icon: VolunteerActivismRoundedIcon,
+      },
+      {
+        label: 'Reviews',
+        path: '/reviews',
+        description: 'Read what people say about us, or add your own.',
+        Icon: RateReviewRoundedIcon,
       },
       {
         label: 'Contact',
