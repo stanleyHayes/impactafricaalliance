@@ -1,4 +1,4 @@
-import { SubmissionStatus, SubmissionType } from '@iaa/shared';
+import { SubmissionStatus, SubmissionType, brandFonts } from '@iaa/shared';
 import type { Submission, SubmissionType as SubmissionTypeT } from '@iaa/shared';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
@@ -180,7 +180,7 @@ export const NotificationsBell = (): JSX.Element => {
           }}
         >
           <Typography
-            sx={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700, fontSize: '0.95rem' }}
+            sx={{ fontFamily: brandFonts.heading, fontWeight: 700, fontSize: '0.95rem' }}
           >
             Notifications
           </Typography>

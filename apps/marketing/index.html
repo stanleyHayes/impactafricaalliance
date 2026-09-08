@@ -72,11 +72,17 @@
       }
     </script>
 
-    <!-- Google Fonts: Fraunces (display/headings) + Outfit (body/UI) -->
+    <!--
+      Google Fonts: Fraunces (display/headings) + Outfit (body/UI).
+      Asked for as a weight RANGE, not a list. Listing 400;500;600;700 ships four
+      static cuts per family, so the 650, 750, 800 and 850 the designs use were
+      all silently rounded down to 700. The range serves one variable file per
+      family instead — fewer requests, and every weight in between.
+    -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400..900&family=Outfit:wght@400..900&display=swap"
       rel="stylesheet"
     />
 

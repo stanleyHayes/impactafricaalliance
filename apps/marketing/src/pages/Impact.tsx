@@ -280,7 +280,7 @@ const SdgGoalCard = ({ goal, index }: { goal: SdgGoal; index: number }): JSX.Ele
               sx={{
                 mt: 0.25,
                 color: 'inherit',
-                fontFamily: "'Montserrat', sans-serif",
+                fontFamily: brandFonts.body,
                 fontSize: '2.75rem',
                 fontWeight: 800,
                 letterSpacing: '-0.06em',
@@ -477,7 +477,7 @@ export const SdgSection = (): JSX.Element => (
             <Box sx={{ position: 'relative', zIndex: 1, mt: 4 }}>
               <Typography
                 sx={{
-                  fontFamily: "'Montserrat', sans-serif",
+                  fontFamily: brandFonts.body,
                   fontSize: '3.5rem',
                   fontWeight: 800,
                   lineHeight: 1,

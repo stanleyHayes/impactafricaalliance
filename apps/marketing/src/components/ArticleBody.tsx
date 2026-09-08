@@ -265,7 +265,7 @@ export const ArticleBody = ({ body }: { body: string }): JSX.Element => (
         mr: 1,
         mt: 0.65,
         color: 'text.secondary',
-        fontFamily: "'Poppins', sans-serif",
+        fontFamily: brandFonts.display,
         fontSize: '3.8rem',
         fontWeight: 700,
         lineHeight: 0.75,
