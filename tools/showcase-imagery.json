@@ -1,0 +1,38 @@
+[
+  {
+    "key": "home-showcase-lead",
+    "prompt": "Near-square editorial photograph of three young Ghanaian adults collaborating on a laptop in a bright contemporary Accra digital learning studio. A young woman explains her work to her peers, authentic attentive expressions, medium shot, subjects in upper two thirds, desk in foreground. Premium photoreal campaign imagery for Impact Africa Alliance. Fictional illustrative scene, not a real event. Dignified contemporary African agency. Warm natural daylight, forest green and cream accents, realistic skin texture and anatomy, restrained color grading, beautiful optical depth, no posed stock-photo grins. Compose for website card cropping with faces away from edges and quiet lower quarter for HTML caption. No text, logos, watermark, collage, borders or baked-in overlay. Generate one standalone image.",
+    "file": "apps/marketing/public/images/home-showcase-lead-v2.webp",
+    "alt": "AI-generated illustration of young adults collaborating on digital skills at a laptop"
+  },
+  {
+    "key": "home-showcase-women",
+    "prompt": "Wide 16:9 editorial photograph of a confident Ghanaian female entrepreneur leading a small working meeting of three African women in a contemporary creative business studio, reviewing textile samples and a laptop, eye-level candid moment, faces well inside central frame. Premium photoreal campaign imagery for Impact Africa Alliance. Fictional illustrative scene, not a real event. Dignified contemporary African agency. Warm natural daylight, forest green and cream accents, realistic skin texture and anatomy, restrained color grading, beautiful optical depth, no posed stock-photo grins. Compose for website card cropping with faces away from edges and quiet lower quarter for HTML caption. No text, logos, watermark, collage, borders or baked-in overlay. Generate one standalone image.",
+    "file": "apps/marketing/public/images/home-showcase-women-v2.webp",
+    "alt": "AI-generated illustration of women entrepreneurs reviewing textiles and business plans"
+  },
+  {
+    "key": "home-showcase-work",
+    "prompt": "Wide 16:9 editorial photograph of two young Ghanaian professionals, woman and man, practicing a presentation with an African workplace coach in a modern office, open laptop and notebook, purposeful attentive expressions, medium shot, central faces. Premium photoreal campaign imagery for Impact Africa Alliance. Fictional illustrative scene, not a real event. Dignified contemporary African agency. Warm natural daylight, forest green and cream accents, realistic skin texture and anatomy, restrained color grading, beautiful optical depth, no posed stock-photo grins. Compose for website card cropping with faces away from edges and quiet lower quarter for HTML caption. No text, logos, watermark, collage, borders or baked-in overlay. Generate one standalone image.",
+    "file": "apps/marketing/public/images/home-showcase-work-v2.webp",
+    "alt": "AI-generated illustration of young professionals working with a workplace coach"
+  },
+  {
+    "key": "get-involved-partner",
+    "prompt": "Near-square editorial photograph of four West African nonprofit and business colleagues planning a digital education partnership around a round wooden table in a bright contemporary Accra office, reviewing a simple blank diagram and laptop together, natural collaboration, no handshake, faces upper center. Premium photoreal campaign imagery for Impact Africa Alliance. Fictional illustrative scene, not a real event. Dignified contemporary African agency. Warm natural daylight, forest green and cream accents, realistic skin texture and anatomy, restrained color grading, beautiful optical depth, no posed stock-photo grins. Compose for website card cropping with faces away from edges and quiet lower quarter for HTML caption. No text, logos, watermark, collage, borders or baked-in overlay. Generate one standalone image.",
+    "file": "apps/marketing/public/images/get-involved-partner-v2.webp",
+    "alt": "AI-generated illustration of colleagues planning an education partnership"
+  },
+  {
+    "key": "get-involved-mentor",
+    "prompt": "Wide 16:9 editorial photograph of an experienced Ghanaian woman mentor seated beside a young Ghanaian woman adult learner, reviewing a laptop together in a sunlit learning studio, focused warm conversation, medium close shot, two subjects center. Premium photoreal campaign imagery for Impact Africa Alliance. Fictional illustrative scene, not a real event. Dignified contemporary African agency. Warm natural daylight, forest green and cream accents, realistic skin texture and anatomy, restrained color grading, beautiful optical depth, no posed stock-photo grins. Compose for website card cropping with faces away from edges and quiet lower quarter for HTML caption. No text, logos, watermark, collage, borders or baked-in overlay. Generate one standalone image.",
+    "file": "apps/marketing/public/images/get-involved-mentor-v2.webp",
+    "alt": "AI-generated illustration of a mentor guiding an adult learner at a laptop"
+  },
+  {
+    "key": "get-involved-give",
+    "prompt": "Wide 16:9 editorial photograph of a young Ghanaian woman adult learner receiving a laptop in its open plain cardboard box from an African female education coordinator at a bright learning centre, a quiet joyful moment of practical support, two people, faces central, no cash. Premium photoreal campaign imagery for Impact Africa Alliance. Fictional illustrative scene, not a real event. Dignified contemporary African agency. Warm natural daylight, forest green and cream accents, realistic skin texture and anatomy, restrained color grading, beautiful optical depth, no posed stock-photo grins. Compose for website card cropping with faces away from edges and quiet lower quarter for HTML caption. No text, logos, watermark, collage, borders or baked-in overlay. Generate one standalone image.",
+    "file": "apps/marketing/public/images/get-involved-give-v2.webp",
+    "alt": "AI-generated illustration of a learner receiving a laptop from an education coordinator"
+  }
+]

@@ -29,7 +29,7 @@ import { DonateForm } from '../features/donate/DonateForm';
 import { PartnerForm } from '../features/forms/PartnerForm';
 import { VolunteerForm } from '../features/forms/VolunteerForm';
 import { useJobs, usePageCopy } from '../lib/content-hooks';
-import { useSiteImageMap } from '../lib/site-images';
+import { useShowcaseImageMap } from '../lib/site-images';
 
 const TABS = ['partner', 'volunteer', 'donate', 'careers'] as const;
 type TabKey = (typeof TABS)[number];
@@ -238,7 +238,7 @@ const CareersTab = (): JSX.Element => {
 };
 
 const GetInvolved = (): JSX.Element => {
-  const image = useSiteImageMap();
+  const showcaseImage = useShowcaseImageMap();
   const { hash } = useLocation();
   const [tab, setTab] = useState<TabKey>('partner');
 
@@ -275,20 +275,26 @@ const GetInvolved = (): JSX.Element => {
         subtitle="Partner with us and a programme reaches a new city. Mentor and a young person gets the guidance no course provides. Give, and a place on a cohort is paid for."
         panels={[
           {
-            src: image('get-involved-partner'),
-            alt: 'A training session in progress',
+            ...showcaseImage(
+              'get-involved-partner',
+              'AI-generated illustration of colleagues planning an education partnership',
+            ),
             caption: 'Partner',
             drift: 0.2,
           },
           {
-            src: image('get-involved-mentor'),
-            alt: 'A mentor working alongside a participant',
+            ...showcaseImage(
+              'get-involved-mentor',
+              'AI-generated illustration of a mentor guiding an adult learner at a laptop',
+            ),
             caption: 'Mentor',
             drift: 0.34,
           },
           {
-            src: image('get-involved-give'),
-            alt: 'A participant putting new skills to work',
+            ...showcaseImage(
+              'get-involved-give',
+              'AI-generated illustration of a learner receiving a laptop from an education coordinator',
+            ),
             caption: 'Give',
             drift: 0.26,
           },

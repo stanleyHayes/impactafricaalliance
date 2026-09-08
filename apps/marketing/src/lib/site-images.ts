@@ -28,6 +28,24 @@ export const useSiteImageMap = (): ((key: string) => string) => {
   return (key: string) => uploaded[key] ?? builtIn(key);
 };
 
+/** Keep a showcase photo and its editor-provided description together. */
+export const useShowcaseImageMap = (): ((
+  key: string,
+  fallbackAlt: string,
+) => { src: string; alt: string }) => {
+  const { data } = useSiteImages();
+  return (key, fallbackAlt) => {
+    const item = data?.items.find((row) => row.key === key && row.isActive && row.image?.url);
+    return item
+      ? {
+          src: item.image.url,
+          alt:
+            item.alt?.trim() || item.image.alt?.trim() || siteImageSlot(key)?.label || fallbackAlt,
+        }
+      : { src: builtIn(key), alt: fallbackAlt };
+  };
+};
+
 /**
  * The same resolution for the four programme photographs, which have their own
  * dashboard tab. Every place that draws a pillar reads this, so a photograph

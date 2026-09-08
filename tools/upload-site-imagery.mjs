@@ -29,17 +29,22 @@ loadEnv({ path: envFlag !== -1 ? args[envFlag + 1] : 'apps/api/.env.production' 
 
 /** What to publish, and where it goes. Edit here rather than passing a dozen flags. */
 const JOBS = [
-  // Left empty on purpose: this is a one-off publisher, and a stale job here
-  // would silently overwrite a live photograph the next time someone runs it.
-  // Add entries in this shape, then run with --confirm:
-  //
-  //   {
-  //     file: '/absolute/path/to/photo.png',
-  //     slot: 'pillar:women-empowerment',   // or 'site:<key>' from SITE_IMAGE_SLOTS
-  //     slug: 'women-empowerment',          // becomes the Cloudinary public id
-  //     alt: 'What is happening in the picture, for screen readers.',
-  //     tags: ['women', 'pillar'],
-  //   },
+  {
+    file: process.env.HOME + '/Downloads/TOM-CHRIS - PEOPLE WHO INSPIRE.JPG',
+    slot: 'team:Tom-Chris Emewulu',
+    slug: 'tom-chris-emewulu',
+    alt: 'Tom-Chris Emewulu, Impact Africa Alliance',
+    tags: ['team', 'portrait', 'board'],
+  },
+  {
+    file: process.env.HOME + '/Downloads/IMG_0203.JPG',
+    slot: 'event:Scaling Your Business in West Africa',
+    slug: 'jini-sebakunzi',
+    // Framed like a team portrait: the event page shows its artwork at 4:5.
+    portrait: true,
+    alt: 'Jini Sebakunzi, Social Impact Leader',
+    tags: ['speaker', 'portrait', 'event'],
+  },
 ];
 
 // Wide enough for a full-bleed banner on a large display, without shipping a
@@ -78,11 +83,24 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-/** Optimise in memory; nothing is written beside the original. */
-const optimise = async (file) => {
+/** The shape every team portrait is framed to, so the cards crop alike. */
+const PORTRAIT = { width: 900, height: 1125 };
+
+/**
+ * Optimise in memory; nothing is written beside the original.
+ *
+ * A portrait is cropped to the house 4:5 rather than merely shrunk, using
+ * sharp's attention strategy so the crop lands on the face instead of the
+ * middle of the frame.
+ */
+const optimise = async (file, { portrait = false } = {}) => {
   const input = readFileSync(file);
-  const pipeline = sharp(input).rotate().resize({ width: MAX_WIDTH, withoutEnlargement: true });
-  const buffer = await pipeline.webp({ quality: 82 }).toBuffer();
+  const resized = portrait
+    ? sharp(input)
+        .rotate()
+        .resize({ ...PORTRAIT, fit: 'cover', position: sharp.strategy.attention })
+    : sharp(input).rotate().resize({ width: MAX_WIDTH, withoutEnlargement: true });
+  const buffer = await resized.webp({ quality: 82 }).toBuffer();
   const meta = await sharp(buffer).metadata();
   return { buffer, width: meta.width, height: meta.height, bytes: buffer.length };
 };
@@ -101,6 +119,8 @@ const run = async () => {
   await mongoose.connect(uri, { serverSelectionTimeoutMS: 20_000 });
   const db = mongoose.connection.db;
   const pillarImages = db.collection('pillarimages');
+  const teamMembers = db.collection('teammembers');
+  const eventsCollection = db.collection('events');
   const siteImages = db.collection('siteimages');
   const mediaItems = db.collection('mediaitems');
 
@@ -108,7 +128,10 @@ const run = async () => {
 
   for (const job of JOBS) {
     const source = path.resolve(job.file);
-    const { buffer, width, height, bytes } = await optimise(source);
+    // Portraits are framed to the house 4:5; banners keep their own shape.
+    const { buffer, width, height, bytes } = await optimise(source, {
+      portrait: job.portrait ?? job.slot.startsWith('team:'),
+    });
     const sizeIn = readFileSync(source).length;
     console.log(
       `${job.file}  ${(sizeIn / 1024 / 1024).toFixed(1)}MB -> ${(bytes / 1024).toFixed(0)}KB  ${width}x${height}  ->  ${job.slot}`,
@@ -133,7 +156,7 @@ const run = async () => {
         $set: {
           url: asset.url,
           filename: path.basename(job.file),
-          folder: 'site',
+          folder: job.portrait ?? job.slot.startsWith('team:') ? 'team' : 'site',
           altText: job.alt,
           tags: job.tags,
           width: asset.width,
@@ -148,6 +171,29 @@ const run = async () => {
     );
 
     const [kind, key] = job.slot.split(':');
+
+    // `team:` and `event:` name an existing record by name or title rather
+    // than a slot, so they update rather than upsert: creating a team member
+    // or an event as a side effect of publishing a photograph would be a
+    // surprise, and a typo would leave a stray record behind.
+    if (kind === 'team' || kind === 'event') {
+      const collection = kind === 'team' ? teamMembers : eventsCollection;
+      const field = kind === 'team' ? 'name' : 'title';
+      const imageField = kind === 'team' ? 'photo' : 'image';
+      const match = new RegExp(key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+      const existing = await collection.findOne({ [field]: match });
+      if (!existing) {
+        console.log(`  !! no ${kind} matching ${key} — nothing written`);
+        continue;
+      }
+      await collection.updateOne(
+        { _id: existing._id },
+        { $set: { [imageField]: asset, updatedAt: now } },
+      );
+      console.log(`  -> ${existing[field]}: ${asset.url}`);
+      continue;
+    }
+
     const collection = kind === 'pillar' ? pillarImages : siteImages;
     const keyField = kind === 'pillar' ? 'pillarKey' : 'key';
     await collection.updateOne(

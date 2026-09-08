@@ -30,7 +30,12 @@ import { CardGridSkeleton } from '../components/skeletons';
 import { StaggerGrid, StaggerItem } from '../components/StaggerGrid';
 import { Watermark } from '../components/Watermark';
 import { useArticles, usePageCopy, useStories, type PageCopyDefaults } from '../lib/content-hooks';
-import { usePillarImage, useSiteImage, useSiteImageMap } from '../lib/site-images';
+import {
+  usePillarImage,
+  useSiteImage,
+  useSiteImageMap,
+  useShowcaseImageMap,
+} from '../lib/site-images';
 
 /**
  * The rotating hero. Slide one is the home hero slot; the rest are the four
@@ -646,7 +651,7 @@ const VisionQuote = (): JSX.Element => {
 };
 
 const Home = (): JSX.Element => {
-  const image = useSiteImageMap();
+  const showcaseImage = useShowcaseImageMap();
   const homeHero = useSiteImage('home-hero');
   const copy = usePageCopy('home', {
     seoTitle: 'Empowering Youth, Women & Communities Across Africa',
@@ -692,20 +697,26 @@ const Home = (): JSX.Element => {
         subtitle="Not slide decks or pilot schemes. Classrooms, workshops, market stalls and offices across Ghana, Nigeria and Sierra Leone, where the skills we teach turn into work people are paid for."
         panels={[
           {
-            src: image('home-showcase-lead'),
-            alt: 'Young people learning practical digital skills',
+            ...showcaseImage(
+              'home-showcase-lead',
+              'AI-generated illustration of young adults collaborating on digital skills at a laptop',
+            ),
             caption: 'Digital skills',
             drift: 0.18,
           },
           {
-            src: image('home-showcase-women'),
-            alt: 'Women building businesses and leading in their communities',
+            ...showcaseImage(
+              'home-showcase-women',
+              'AI-generated illustration of women entrepreneurs reviewing textiles and business plans',
+            ),
             caption: 'Women leading',
             drift: 0.32,
           },
           {
-            src: image('home-showcase-work'),
-            alt: 'Community members gathered at a programme session',
+            ...showcaseImage(
+              'home-showcase-work',
+              'AI-generated illustration of young professionals working with a workplace coach',
+            ),
             caption: 'Ready for work',
             drift: 0.24,
           },

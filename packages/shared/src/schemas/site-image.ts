@@ -71,7 +71,7 @@ export const SITE_IMAGE_SLOTS: readonly SiteImageSlot[] = [
     usage: 'The tall first photograph in the "The work looks like people" band.',
     previewPath: '/',
     aspect: '4 / 5',
-    fallback: '/images/program-digital-skills.webp',
+    fallback: '/images/home-showcase-lead-v2.webp',
   },
   {
     key: 'home-showcase-women',
@@ -79,7 +79,7 @@ export const SITE_IMAGE_SLOTS: readonly SiteImageSlot[] = [
     usage: 'The second photograph in the "The work looks like people" band.',
     previewPath: '/',
     aspect: '16 / 9',
-    fallback: '/images/program-women-empowerment.webp',
+    fallback: '/images/home-showcase-women-v2.webp',
   },
   {
     key: 'home-showcase-work',
@@ -87,7 +87,7 @@ export const SITE_IMAGE_SLOTS: readonly SiteImageSlot[] = [
     usage: 'The third photograph in the "The work looks like people" band.',
     previewPath: '/',
     aspect: '16 / 9',
-    fallback: '/images/community.webp',
+    fallback: '/images/home-showcase-work-v2.webp',
   },
   {
     key: 'home-vision-band',
@@ -103,7 +103,7 @@ export const SITE_IMAGE_SLOTS: readonly SiteImageSlot[] = [
     usage: 'The tall first photograph in the "Every route in changes something" band.',
     previewPath: '/get-involved',
     aspect: '4 / 5',
-    fallback: '/images/program-digital-skills.webp',
+    fallback: '/images/get-involved-partner-v2.webp',
   },
   {
     key: 'get-involved-mentor',
@@ -111,7 +111,7 @@ export const SITE_IMAGE_SLOTS: readonly SiteImageSlot[] = [
     usage: 'The second photograph in the "Every route in changes something" band.',
     previewPath: '/get-involved',
     aspect: '16 / 9',
-    fallback: '/images/community.webp',
+    fallback: '/images/get-involved-mentor-v2.webp',
   },
   {
     key: 'get-involved-give',
@@ -119,7 +119,7 @@ export const SITE_IMAGE_SLOTS: readonly SiteImageSlot[] = [
     usage: 'The third photograph in the "Every route in changes something" band.',
     previewPath: '/get-involved',
     aspect: '16 / 9',
-    fallback: '/images/program-women-empowerment.webp',
+    fallback: '/images/get-involved-give-v2.webp',
   },
   {
     key: 'resources-banner',

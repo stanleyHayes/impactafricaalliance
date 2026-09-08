@@ -59,3 +59,7 @@ apps/*/vite.live.config.ts
 /*.PNG
 /*.webp
 /portraits/
+
+# Publisher backups of CMS records before a write — local safety copies,
+# not source, and they carry live URLs.
+output/
