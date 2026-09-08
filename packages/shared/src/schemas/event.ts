@@ -113,6 +113,10 @@ export interface Event extends Timestamped {
   /** Present only on admin reads and on a registrant's own confirmation. */
   meetingUrl?: string;
   questions: EventQuestion[];
+  /** Published reviews only; recomputed whenever one is approved or rejected. */
+  ratingCount?: number;
+  /** Withheld until there are enough ratings to mean anything. */
+  ratingAverage?: number | null;
 }
 
 /** True when the event is still accepting registrations at `now`. */

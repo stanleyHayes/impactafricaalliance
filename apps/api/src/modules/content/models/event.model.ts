@@ -28,6 +28,9 @@ export interface EventDocument {
   registrationClosesAt?: Date;
   meetingUrl?: string;
   questions: EventQuestion[];
+  ratingCount: number;
+  ratingAverage: number | null;
+  reviewInvitesSentAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -66,6 +69,11 @@ const eventSchema = new Schema<EventDocument>(
     capacity: { type: Number },
     registrationClosesAt: { type: Date },
     meetingUrl: { type: String },
+    // Denormalised from published reviews; see ReviewService.refreshEventRating.
+    ratingCount: { type: Number, default: 0 },
+    ratingAverage: { type: Number, default: null },
+    // Absent until the room has been asked; presence is what stops a second ask.
+    reviewInvitesSentAt: { type: Date, required: false },
     questions: { type: [questionSubSchema], default: [] },
   },
   baseSchemaOptions,

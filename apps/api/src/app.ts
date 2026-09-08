@@ -21,6 +21,7 @@ import { createHealthRouter } from './modules/health/health.routes.js';
 import { createMediaRouter } from './modules/media/media.routes.js';
 import { createPaymentRouters } from './modules/payments/payment.routes.js';
 import { createPrivacyRequestRouters } from './modules/privacy/privacy-request.routes.js';
+import { createReviewRouters } from './modules/reviews/review.routes.js';
 import { createSiteSettingRouters } from './modules/site-settings/site-setting.routes.js';
 import { createSocialRouters } from './modules/social/social.routes.js';
 import { createSubmissionRouters } from './modules/submissions/submission.routes.js';
@@ -69,6 +70,10 @@ export const createApp = (
   const submissions = createSubmissionRouters(container);
   app.use('/api/submissions', submissions.publicRouter);
   app.use('/api/admin/submissions', submissions.adminRouter);
+
+  const reviews = createReviewRouters(container);
+  app.use('/api/reviews', reviews.publicRouter);
+  app.use('/api/admin/reviews', reviews.adminRouter);
 
   const analytics = createAnalyticsRouters(container, config);
   app.use('/api/analytics', analytics.publicRouter);

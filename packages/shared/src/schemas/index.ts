@@ -1,3 +1,4 @@
+export * from './review.js';
 export * from './analytics.js';
 export * from './common.js';
 export * from './update.js';

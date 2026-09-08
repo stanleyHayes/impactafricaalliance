@@ -38,7 +38,8 @@ const pageViewSchema = new Schema<PageViewDocument>(
     browser: { type: String, required: false, trim: true },
     os: { type: String, required: false, trim: true },
     visitorHash: { type: String, required: true, index: true },
-    occurredAt: { type: Date, required: true, index: true },
+    // Indexed below, by the TTL rule — declaring it here as well makes two.
+    occurredAt: { type: Date, required: true },
     hourUtc: { type: Number, required: true, min: 0, max: 23 },
   },
   baseSchemaOptions,
