@@ -2,6 +2,7 @@ import {
   buildEventIcs,
   eventIcsFilename,
   isRegistrationOpen,
+  isSocialEnabled,
   ORG,
   SOCIAL_LINKS,
   type Event,
@@ -9,6 +10,8 @@ import {
   type EventRegistrationResult,
   type Paginated,
   type SiteSettingSocials,
+  type SiteSettingSocialsEnabled,
+  type SocialChannelKey,
 } from '@iaa/shared';
 import { Types } from 'mongoose';
 import QRCode from 'qrcode';
@@ -62,7 +65,7 @@ const escapeHtml = (value: unknown): string =>
  * than another icon in a row.
  */
 const SOCIAL_CHANNELS: ReadonlyArray<{
-  key: keyof SiteSettingSocials;
+  key: SocialChannelKey;
   label: string;
   fallback?: string;
 }> = [
@@ -79,15 +82,21 @@ const SOCIAL_CHANNELS: ReadonlyArray<{
  * settings, and drops any channel with no link at all rather than sending a
  * dead one.
  */
-const socialSection = (socials: SiteSettingSocials | undefined): string[] => {
-  // `||`, not `??`: the schema turns a cleared field into undefined on write,
-  // but a row written before that still holds an empty string, and an empty
-  // string is a channel the reader cannot follow.
-  const links = SOCIAL_CHANNELS.map((channel) => ({
-    label: channel.label,
-    href: socials?.[channel.key]?.trim() || channel.fallback,
-  })).filter((channel): channel is { label: string; href: string } => Boolean(channel.href));
-  const whatsapp = socials?.whatsapp?.trim();
+const socialSection = (
+  socials: SiteSettingSocials | undefined,
+  enabled: SiteSettingSocialsEnabled | undefined,
+): string[] => {
+  // A channel has to be switched on and have somewhere to point. `||`, not
+  // `??`, on the address: the schema turns a cleared field into undefined on
+  // write, but a row written before that still holds an empty string, and an
+  // empty string is a channel the reader cannot follow.
+  const links = SOCIAL_CHANNELS.filter((channel) => isSocialEnabled(enabled, channel.key))
+    .map((channel) => ({
+      label: channel.label,
+      href: socials?.[channel.key]?.trim() || channel.fallback,
+    }))
+    .filter((channel): channel is { label: string; href: string } => Boolean(channel.href));
+  const whatsapp = isSocialEnabled(enabled, 'whatsapp') ? socials?.whatsapp?.trim() : undefined;
 
   if (links.length === 0 && !whatsapp) {
     return [];
@@ -219,7 +228,10 @@ export class EventRegistrationService {
       // a settings lookup that times out must cost the reader some links, not
       // their place at the event.
       const settings = await SiteSettingModel.findOne({ key: 'site' }).lean().exec();
-      const connect = socialSection(settings?.socials as SiteSettingSocials | undefined);
+      const connect = socialSection(
+        settings?.socials as SiteSettingSocials | undefined,
+        settings?.socialsEnabled as SiteSettingSocialsEnabled | undefined,
+      );
 
       await this.email.send({
         to: input.email,

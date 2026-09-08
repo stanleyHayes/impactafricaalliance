@@ -36,6 +36,49 @@ export const siteSettingSocialsSchema = z.object({
 
 export type SiteSettingSocials = z.infer<typeof siteSettingSocialsSchema>;
 
+export const SOCIAL_CHANNEL_KEYS = [
+  'linkedin',
+  'instagram',
+  'x',
+  'facebook',
+  'tiktok',
+  'youtube',
+  'whatsapp',
+] as const;
+export type SocialChannelKey = (typeof SOCIAL_CHANNEL_KEYS)[number];
+
+/**
+ * Which channels the site actually points people at.
+ *
+ * Separate from the addresses themselves so a channel can be taken down
+ * without losing where it was — turning it back on is a checkbox, not a
+ * hunt for the URL.
+ */
+export const siteSettingSocialsEnabledSchema = z
+  .object(
+    Object.fromEntries(SOCIAL_CHANNEL_KEYS.map((key) => [key, z.boolean()])) as Record<
+      SocialChannelKey,
+      z.ZodBoolean
+    >,
+  )
+  .partial();
+export type SiteSettingSocialsEnabled = z.infer<typeof siteSettingSocialsEnabledSchema>;
+
+/**
+ * What shows when nobody has said otherwise.
+ *
+ * Only LinkedIn: an account that is not being posted to is worse than no
+ * link at all, and every one of these used to appear purely because a URL for
+ * it was compiled into the site.
+ */
+export const DEFAULT_SOCIALS_ENABLED: SiteSettingSocialsEnabled = { linkedin: true };
+
+/** Whether a channel should be shown, given what the dashboard says. */
+export const isSocialEnabled = (
+  enabled: SiteSettingSocialsEnabled | undefined,
+  key: SocialChannelKey,
+): boolean => (enabled?.[key] ?? DEFAULT_SOCIALS_ENABLED[key]) === true;
+
 /**
  * Site-wide announcement bar. Kept in site settings rather than hard-coded so a
  * launch notice can be edited or switched off from the dashboard without a
@@ -123,6 +166,7 @@ export const siteSettingInputSchema = z.object({
   regionalPresence: regionalPresenceSchema,
   mapUrl: optionalUrl,
   socials: siteSettingSocialsSchema.optional(),
+  socialsEnabled: siteSettingSocialsEnabledSchema.optional(),
   announcement: siteSettingAnnouncementSchema.optional(),
   popup: siteSettingPopupSchema.optional(),
   liveChat: siteSettingLiveChatSchema.optional(),
@@ -130,6 +174,7 @@ export const siteSettingInputSchema = z.object({
 
 export const siteSettingUpdateSchema = partialForUpdate(siteSettingInputSchema).extend({
   socials: siteSettingSocialsSchema.partial().optional(),
+  socialsEnabled: siteSettingSocialsEnabledSchema.optional(),
   announcement: siteSettingAnnouncementSchema.partial().optional(),
   popup: siteSettingPopupSchema.partial().optional(),
   liveChat: siteSettingLiveChatSchema.partial().optional(),
@@ -165,6 +210,7 @@ export interface SiteSetting extends Timestamped {
   regionalPresence?: string[];
   mapUrl?: string;
   socials?: SiteSettingSocials;
+  socialsEnabled?: SiteSettingSocialsEnabled;
   announcement?: SiteSettingAnnouncement;
   popup?: SiteSettingPopup;
   liveChat?: SiteSettingLiveChat;

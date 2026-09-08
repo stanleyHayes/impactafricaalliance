@@ -1,4 +1,4 @@
-import { SOCIAL_LINKS, type SiteSettingSocials } from '@iaa/shared';
+import { isSocialEnabled, SOCIAL_LINKS, type SocialChannelKey } from '@iaa/shared';
 import type { SvgIconComponent } from '@mui/icons-material';
 import FacebookIcon from '@mui/icons-material/Facebook';
 import InstagramIcon from '@mui/icons-material/Instagram';
@@ -21,7 +21,7 @@ interface SocialLinksProps {
  * predate site settings — and so the row is never empty while settings load.
  */
 const CHANNELS: ReadonlyArray<{
-  key: keyof SiteSettingSocials;
+  key: SocialChannelKey;
   label: string;
   Icon: SvgIconComponent;
   fallback?: string;
@@ -37,10 +37,15 @@ const CHANNELS: ReadonlyArray<{
 /** Row of social icon links; opens each in a new tab with safe rel attributes. */
 export const SocialLinks = ({ color = 'inherit' }: SocialLinksProps): JSX.Element => {
   const { data: site } = useSiteSettings();
-  const links = CHANNELS.map((channel) => ({
-    ...channel,
-    href: site?.socials?.[channel.key] ?? channel.fallback,
-  })).filter((channel): channel is typeof channel & { href: string } => Boolean(channel.href));
+  // A channel needs somewhere to point AND to be switched on. Without the
+  // second test every account here appeared purely because a URL for it was
+  // compiled into the site, including ones nobody posts to.
+  const links = CHANNELS.filter((channel) => isSocialEnabled(site?.socialsEnabled, channel.key))
+    .map((channel) => ({
+      ...channel,
+      href: site?.socials?.[channel.key]?.trim() || channel.fallback,
+    }))
+    .filter((channel): channel is typeof channel & { href: string } => Boolean(channel.href));
 
   return (
     <Stack direction="row" spacing={0.5}>

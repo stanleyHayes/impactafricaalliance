@@ -122,12 +122,17 @@ export const SITE_SETTING_STEPS: readonly SiteSettingStep[] = [
   {
     label: 'Social profiles',
     title: 'Social profiles',
-    description: 'Add the profiles visitors can follow for news and updates.',
+    description:
+      'Add the profiles visitors can follow, and switch on the ones you want shown. Turning one off keeps its address, so it can be switched back on without hunting for the link again.',
     fields: [
-      { name: 'socials.facebook', label: 'Facebook', type: 'url' },
-      { name: 'socials.x', label: 'X (Twitter)', type: 'url' },
-      { name: 'socials.instagram', label: 'Instagram', type: 'url' },
       { name: 'socials.linkedin', label: 'LinkedIn', type: 'url' },
+      { name: 'socialsEnabled.linkedin', label: 'Show LinkedIn', type: 'switch' },
+      { name: 'socials.facebook', label: 'Facebook', type: 'url' },
+      { name: 'socialsEnabled.facebook', label: 'Show Facebook', type: 'switch' },
+      { name: 'socials.x', label: 'X (Twitter)', type: 'url' },
+      { name: 'socialsEnabled.x', label: 'Show X', type: 'switch' },
+      { name: 'socials.instagram', label: 'Instagram', type: 'url' },
+      { name: 'socialsEnabled.instagram', label: 'Show Instagram', type: 'switch' },
     ],
   },
   {
@@ -136,8 +141,11 @@ export const SITE_SETTING_STEPS: readonly SiteSettingStep[] = [
     description: 'Finish your public channels, then save all your settings together.',
     fields: [
       { name: 'socials.youtube', label: 'YouTube', type: 'url' },
+      { name: 'socialsEnabled.youtube', label: 'Show YouTube', type: 'switch' },
       { name: 'socials.tiktok', label: 'TikTok', type: 'url' },
+      { name: 'socialsEnabled.tiktok', label: 'Show TikTok', type: 'switch' },
       { name: 'socials.whatsapp', label: 'WhatsApp community invite', type: 'url' },
+      { name: 'socialsEnabled.whatsapp', label: 'Show WhatsApp community', type: 'switch' },
       { name: 'liveChat.enabled', label: 'Show a WhatsApp chat button', type: 'switch' },
       {
         name: 'liveChat.label',

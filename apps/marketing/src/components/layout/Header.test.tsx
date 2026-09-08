@@ -94,12 +94,11 @@ describe('Header', () => {
 
   it('offers the social channels from the top bar, not only from the footer', () => {
     renderHeader();
-    // Falls back to the built-in accounts while site settings are loading, so
-    // the row is never empty on a first paint.
-    expect(screen.getByRole('link', { name: 'LinkedIn' })).toHaveAttribute('target', '_blank');
-    expect(screen.getByRole('link', { name: 'Instagram' })).toHaveAttribute(
-      'rel',
-      'noopener noreferrer',
-    );
+    // Only the channels switched on appear. With no site settings loaded that
+    // is LinkedIn alone, rather than every account a URL exists for.
+    const linkedin = screen.getByRole('link', { name: 'LinkedIn' });
+    expect(linkedin).toHaveAttribute('target', '_blank');
+    expect(linkedin).toHaveAttribute('rel', 'noopener noreferrer');
+    expect(screen.queryByRole('link', { name: 'Instagram' })).not.toBeInTheDocument();
   });
 });

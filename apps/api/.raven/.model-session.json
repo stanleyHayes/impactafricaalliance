@@ -1,5 +1,5 @@
 {
-  "session_started_at": "2026-09-05T15:04:10.697178Z",
+  "session_started_at": "2026-09-07T13:51:33.903665Z",
   "raven_overhead": {
     "tokens": 0,
     "cost_usd": 0.0,
@@ -9,15 +9,15 @@
   "user_work": {
     "tokens": 0,
     "cost_usd": 0.0,
-    "calls": 6,
+    "calls": 2,
     "tier_counts": {
-      "SIMPLE": 6,
+      "SIMPLE": 2,
       "MEDIUM": 0,
       "COMPLEX": 0,
       "LOCAL_ONLY": 0
     },
     "last_classification": {
-      "timestamp": "2026-09-08T12:09:49.737255Z",
+      "timestamp": "2026-09-07T13:51:35.746660Z",
       "user_query_hash": "e3b0c44298fc1c14",
       "tier": "SIMPLE",
       "score": 0,
