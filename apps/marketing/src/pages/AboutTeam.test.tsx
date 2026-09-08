@@ -84,33 +84,30 @@ describe('the team section', () => {
     ]);
   });
 
-  it('gives the principals a fuller card than the people below them', () => {
+  it('shows every person the same way, with their role and no biography', () => {
     renderTeam();
 
-    const cardFor = (name: string): HTMLElement =>
-      screen.getByRole('heading', { level: 3, name }).closest('article') as HTMLElement;
+    const card = screen
+      .getByRole('heading', { level: 3, name: 'Emmanuel Mbansi' })
+      .closest('article') as HTMLElement;
 
-    // The president and vice-president carry the opening line of their bio;
-    // everyone else is a portrait, a name and a role.
-    expect(within(cardFor('Emmanuel Mbansi')).getByText(/opening line/)).toBeInTheDocument();
-    expect(
-      within(cardFor('Joshua Opoku Agyemang')).getByText(/opening line/),
-    ).toBeInTheDocument();
-    expect(within(cardFor('Jemimah Opata')).queryByText(/opening line/)).not.toBeInTheDocument();
-    expect(within(cardFor('Stanley Hayford')).queryByText(/opening line/)).not.toBeInTheDocument();
-  });
-
-  it('never shows more than the opening paragraph on a card', () => {
-    renderTeam();
-
-    expect(screen.queryByText(/second paragraph/)).not.toBeInTheDocument();
-  });
-
-  it('draws no chain of command over the country teams, who are peers', () => {
-    renderTeam([TEAM[5] as TeamMember]);
-
-    // A lone country director is not a president: no wide card, so no bio line.
-    expect(screen.getByRole('heading', { level: 3, name: 'Aïché Goumané' })).toBeInTheDocument();
+    expect(within(card).getByText('President / CEO')).toBeInTheDocument();
+    // Biographies belong on the profile page; a card carries a name and a role.
     expect(screen.queryByText(/opening line/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/second paragraph/)).not.toBeInTheDocument();
+    expect(screen.getAllByRole('article')).toHaveLength(6);
+  });
+
+  it('keeps each person under the heading for their own group', () => {
+    renderTeam();
+
+    const country = screen.getByText('Country & Regional Teams').parentElement as HTMLElement;
+
+    expect(
+      within(country).getByRole('heading', { level: 3, name: 'Aïché Goumané' }),
+    ).toBeInTheDocument();
+    expect(
+      within(country).queryByRole('heading', { name: 'Emmanuel Mbansi' }),
+    ).not.toBeInTheDocument();
   });
 });
