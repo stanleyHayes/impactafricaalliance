@@ -28,7 +28,7 @@ import { useMemo, useState } from 'react';
 import { DialogFooter, DialogHeader, dialogPaperSx } from '../components/dialogs/DialogShell';
 import { MediaUploadField } from '../components/fields/MediaUploadField';
 import { PageHeader } from '../components/PageHeader';
-import { PageSkeleton } from '../components/PageSkeleton';
+import { MediaLibrarySkeleton } from '../components/PageSkeleton';
 import { useDeleteMediaItem, useMediaLibrary, useSaveMediaItem } from '../lib/media-library';
 
 const splitTags = (value: string): string[] => [
@@ -230,7 +230,7 @@ const MediaLibraryPage = (): JSX.Element => {
     });
   }, [all, query, shelf]);
 
-  if (isLoading) return <PageSkeleton cards={2} />;
+  if (isLoading) return <MediaLibrarySkeleton />;
 
   return (
     <Box>

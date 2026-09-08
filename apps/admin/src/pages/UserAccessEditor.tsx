@@ -35,7 +35,7 @@ import { useAuth } from '../auth/AuthContext';
 import { PermissionMatrix } from '../components/auth/PermissionMatrix';
 import { FormStepNavigation } from '../components/forms/FormStepNavigation';
 import { PageHeader } from '../components/PageHeader';
-import { PageSkeleton } from '../components/PageSkeleton';
+import { FormPageSkeleton } from '../components/PageSkeleton';
 import { useInviteUser, useUpdateUserPermissions, useUsers } from '../lib/admin-hooks';
 
 const steps = ['Identity', 'Permissions', 'Review'] as const;
@@ -434,7 +434,7 @@ const AccessForm = ({ user }: { user?: PublicUser }): JSX.Element => {
 
 const PermissionsEditor = ({ userId }: { userId: string }): JSX.Element => {
   const { data: users, isLoading, isError, refetch } = useUsers();
-  if (isLoading) return <PageSkeleton cards={2} />;
+  if (isLoading) return <FormPageSkeleton backLink fields={4} />;
   if (isError)
     return (
       <Alert severity="error" action={<Button onClick={() => void refetch()}>Retry</Button>}>

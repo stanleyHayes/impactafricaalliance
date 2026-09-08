@@ -19,7 +19,7 @@ import {
 } from '../components/events/EventFormSteps';
 import { FormStepNavigation } from '../components/forms/FormStepNavigation';
 import { PageHeader } from '../components/PageHeader';
-import { PageSkeleton } from '../components/PageSkeleton';
+import { FormPageSkeleton } from '../components/PageSkeleton';
 import { useSaveEvent } from '../lib/admin-hooks';
 import { api } from '../lib/api-client';
 import {
@@ -246,7 +246,7 @@ const EventEditor = (): JSX.Element => {
     queryFn: () => api.get<Event>(`/admin/events/${eventId}`),
     enabled: Boolean(eventId),
   });
-  if (eventId && query.isPending) return <PageSkeleton cards={2} />;
+  if (eventId && query.isPending) return <FormPageSkeleton backLink steps fields={5} />;
   if (eventId && (query.isError || !query.data))
     return (
       <Stack spacing={2}>

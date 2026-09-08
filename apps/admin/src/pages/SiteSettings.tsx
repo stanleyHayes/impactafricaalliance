@@ -30,7 +30,7 @@ import {
 
 import { FormStepNavigation } from '../components/forms/FormStepNavigation';
 import { PageHeader } from '../components/PageHeader';
-import { PageSkeleton } from '../components/PageSkeleton';
+import { FormPageSkeleton } from '../components/PageSkeleton';
 import { useSiteSettings, useUpdateSiteSettings } from '../lib/admin-hooks';
 import {
   firstInvalidSettingStep,
@@ -223,7 +223,7 @@ const SiteSettings = (): JSX.Element => {
     if (invalidStep >= 0) showStep(invalidStep);
   };
 
-  if (settings.isLoading) return <PageSkeleton />;
+  if (settings.isLoading) return <FormPageSkeleton steps fields={5} />;
 
   if (settings.isError) {
     return (

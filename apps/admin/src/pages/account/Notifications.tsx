@@ -12,13 +12,13 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import Grid from '@mui/material/Grid';
+import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
 import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import { Link as RouterLink } from 'react-router-dom';
 
 import { AccountPanel, AccountSectionHeader } from '../../components/account/AccountSurface';
-import { CardListSkeleton } from '../../components/CardListSkeleton';
 import { useSubmissions, useUpdateSubmissionStatus } from '../../lib/admin-hooks';
 import { formatUtcShort } from '../../lib/date';
 
@@ -79,6 +79,29 @@ const relativeTime = (iso: string): string => {
   }
   return formatUtcShort(iso);
 };
+
+/** The loading shape of a NotificationCard, from its own padding and avatar. */
+const NotificationCardSkeleton = (): JSX.Element => (
+  <AccountPanel>
+    <Stack
+      direction={{ xs: 'column', sm: 'row' }}
+      spacing={2}
+      alignItems={{ xs: 'flex-start', sm: 'center' }}
+      sx={{ p: 2.25 }}
+    >
+      <Skeleton variant="rounded" width={48} height={48} sx={{ borderRadius: 2, flexShrink: 0 }} />
+      <Box sx={{ flexGrow: 1, minWidth: 0, width: '100%' }}>
+        <Skeleton variant="text" width="55%" sx={{ fontSize: '1rem' }} />
+        <Skeleton variant="text" width="80%" sx={{ fontSize: '0.875rem' }} />
+        <Skeleton variant="text" width={90} sx={{ fontSize: '0.75rem' }} />
+      </Box>
+      <Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
+        <Skeleton variant="rounded" width={64} height={30} sx={{ borderRadius: 1.5 }} />
+        <Skeleton variant="rounded" width={104} height={30} sx={{ borderRadius: 1.5 }} />
+      </Stack>
+    </Stack>
+  </AccountPanel>
+);
 
 const NotificationCard = ({ submission }: { submission: Submission }): JSX.Element => {
   const update = useUpdateSubmissionStatus();
@@ -192,7 +215,13 @@ const Notifications = (): JSX.Element => {
 
   const renderBody = (): JSX.Element => {
     if (isLoading) {
-      return <CardListSkeleton count={3} />;
+      return (
+        <Stack spacing={1.5}>
+          {Array.from({ length: 3 }, (_, index) => (
+            <NotificationCardSkeleton key={index} />
+          ))}
+        </Stack>
+      );
     }
     if (items.length === 0) {
       return <NotificationsEmptyState />;

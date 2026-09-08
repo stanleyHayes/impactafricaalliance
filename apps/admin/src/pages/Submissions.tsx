@@ -23,6 +23,7 @@ import Link from '@mui/material/Link';
 import MenuItem from '@mui/material/MenuItem';
 import Pagination from '@mui/material/Pagination';
 import Select from '@mui/material/Select';
+import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
 import { alpha, useTheme, type Theme } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
@@ -32,7 +33,6 @@ import type { ReactElement, ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
-import { CardListSkeleton } from '../components/CardListSkeleton';
 import { DataTable } from '../components/data/DataTable';
 import { useViewMode } from '../components/data/useViewMode';
 import { ViewToggle } from '../components/data/ViewToggle';
@@ -532,6 +532,41 @@ const SubmissionCard = ({ submission }: { submission: Submission }): JSX.Element
   );
 };
 
+/**
+ * The loading shape of a SubmissionCard.
+ *
+ * Built from that card's own padding, avatar and rows rather than a fixed
+ * height, and repeated PAGE_SIZE times, because the list that replaces it is a
+ * full page of cards — not the four the generic list skeleton drew.
+ */
+const SubmissionCardSkeleton = (): JSX.Element => (
+  <Card variant="outlined" sx={{ borderRadius: 2.5, overflow: 'hidden' }}>
+    <Box sx={{ pl: 3, pr: 2.5, py: 2.25 }}>
+      <Stack direction="row" spacing={2} alignItems="flex-start" justifyContent="space-between">
+        <Stack direction="row" spacing={1.75} alignItems="flex-start" sx={{ minWidth: 0, flexGrow: 1 }}>
+          <Skeleton variant="rounded" width={44} height={44} sx={{ borderRadius: 2, flexShrink: 0 }} />
+          <Box sx={{ minWidth: 0, flexGrow: 1 }}>
+            <Skeleton variant="text" width="45%" sx={{ fontSize: '1rem' }} />
+            <Stack direction="row" spacing={1} sx={{ mt: 0.5 }}>
+              <Skeleton variant="rounded" width={76} height={22} sx={{ borderRadius: 10 }} />
+              <Skeleton variant="rounded" width={58} height={22} sx={{ borderRadius: 10 }} />
+            </Stack>
+          </Box>
+        </Stack>
+        <Stack spacing={1} alignItems="flex-end" sx={{ flexShrink: 0 }}>
+          <Skeleton variant="text" width={64} sx={{ fontSize: '0.75rem' }} />
+          <Skeleton variant="rounded" width={116} height={32} sx={{ borderRadius: 1.5 }} />
+        </Stack>
+      </Stack>
+      <Skeleton variant="rounded" height={62} sx={{ mt: 1.75, borderRadius: 2 }} />
+      <Stack direction="row" spacing={1} sx={{ mt: 1.75 }}>
+        <Skeleton variant="rounded" width={132} height={28} sx={{ borderRadius: 10 }} />
+        <Skeleton variant="rounded" width={104} height={28} sx={{ borderRadius: 10 }} />
+      </Stack>
+    </Box>
+  </Card>
+);
+
 const PAGE_SIZE = 8;
 
 const tableColumns: GridColDef[] = [
@@ -643,7 +678,13 @@ const SubmissionsList = ({
     );
   }
   if (isLoading) {
-    return <CardListSkeleton />;
+    return (
+      <Stack spacing={2}>
+        {Array.from({ length: PAGE_SIZE }, (_, index) => (
+          <SubmissionCardSkeleton key={index} />
+        ))}
+      </Stack>
+    );
   }
   if (filtered.length === 0) {
     return <SubmissionsEmpty hasFilters={hasFilters} onClear={onClearFilters} />;

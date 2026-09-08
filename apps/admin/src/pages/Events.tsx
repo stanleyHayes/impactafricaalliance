@@ -30,7 +30,7 @@ import { EventDetailDialog } from '../components/events/EventDetailDialog';
 import { EventImage } from '../components/events/EventImage';
 import { EventQrDialog } from '../components/events/EventQrDialog';
 import { PageHeader } from '../components/PageHeader';
-import { PageSkeleton } from '../components/PageSkeleton';
+import { CalendarPageSkeleton } from '../components/PageSkeleton';
 import { useDeleteEvent, useEvents } from '../lib/admin-hooks';
 
 const STATUS_TONE: Record<
@@ -309,7 +309,7 @@ const Events = (): JSX.Element => {
   };
 
   if (isLoading) {
-    return <PageSkeleton cards={4} />;
+    return <CalendarPageSkeleton />;
   }
   if (isError)
     return (

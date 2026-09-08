@@ -17,7 +17,7 @@ import { FieldRenderer } from '../components/crud/FieldRenderer';
 import { FormStepNavigation } from '../components/forms/FormStepNavigation';
 import { ResourceReview } from '../components/forms/ResourceReview';
 import { PageHeader } from '../components/PageHeader';
-import { PageSkeleton } from '../components/PageSkeleton';
+import { FormPageSkeleton } from '../components/PageSkeleton';
 import { ApiError } from '../lib/api-client';
 import { slugify } from '../lib/slug';
 import {
@@ -278,7 +278,7 @@ const ResourceFormLoader = ({
 }): JSX.Element => {
   const record = useResourceDetail(resource.key, id);
   const navigate = useNavigate();
-  if (id && record.isLoading) return <PageSkeleton cards={2} />;
+  if (id && record.isLoading) return <FormPageSkeleton backLink steps fields={5} />;
   if (id && (record.isError || !record.data)) {
     const notFound = record.error instanceof ApiError && record.error.status === 404;
     return (
