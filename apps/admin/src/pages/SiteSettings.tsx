@@ -1,8 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
-  isSocialEnabled,
   siteSettingUpdateSchema,
-  SOCIAL_CHANNEL_KEYS,
   type SiteSetting,
   type SiteSettingUpdate,
   type SiteSettingUpdateInput,
@@ -115,18 +113,6 @@ const toPopupValues = (data: SiteSetting): SiteSettingUpdateInput['popup'] => {
  * controlled string, and `regionalPresence` flattens to comma-separated text
  * (the zod schema parses it back to an array on submit).
  */
-/**
- * The switches, with the defaults filled in.
- *
- * A site that has never been told which channels to show falls back to
- * LinkedIn only, so the form has to show that rather than every switch off —
- * otherwise it would misreport what the site is actually doing.
- */
-const toSocialsEnabledValues = (data: SiteSetting): Record<string, boolean> =>
-  Object.fromEntries(
-    SOCIAL_CHANNEL_KEYS.map((key) => [key, isSocialEnabled(data.socialsEnabled, key)]),
-  );
-
 const toFormValues = (data: SiteSetting): SiteSettingUpdateInput => ({
   ...data,
   regionalPresence: (data.regionalPresence ?? []).join(', '),
@@ -138,7 +124,6 @@ const toFormValues = (data: SiteSetting): SiteSettingUpdateInput => ({
     greeting: data.liveChat?.greeting ?? '',
   },
   socials: toSocialValues(data),
-  socialsEnabled: toSocialsEnabledValues(data),
 });
 
 const SiteSettings = (): JSX.Element => {

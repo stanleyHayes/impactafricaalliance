@@ -40,10 +40,12 @@ tools/.mongo-uri
 
 # Raven agent scratch (session cache + local audit trail). Any versioned Raven
 # config (manifest.json, architecture.md) is deliberately NOT ignored here.
-.raven/.cache/
-.raven/.model-session.json
-.raven/audit/
-.raven/state/
+# Anchored patterns only match at the repo root, so the copies under apps/*
+# were being committed. The ** prefix catches them wherever they appear.
+**/.raven/.cache/
+**/.raven/.model-session.json
+**/.raven/audit/
+**/.raven/state/
 
 # Temporary live-proxy dev configs (point a local app at the production API)
 apps/*/vite.live.config.ts

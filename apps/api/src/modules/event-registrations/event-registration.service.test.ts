@@ -183,10 +183,9 @@ describe('public calendar download', () => {
 });
 
 describe('connecting an attendee to the channels', () => {
-  it('lists only the channels that are switched on', async () => {
+  it('invites them to WhatsApp and lists the accounts from the dashboard', async () => {
     mockFindById(publishedEvent());
     mockSiteSettings({
-      socialsEnabled: { linkedin: true, instagram: true, whatsapp: true },
       socials: {
         whatsapp: 'https://whatsapp.com/channel/iaa',
         linkedin: 'https://linkedin.com/company/iaa-from-settings',
@@ -200,44 +199,26 @@ describe('connecting an attendee to the channels', () => {
 
     const { html } = send.mock.calls[0][0];
     expect(html).toContain('Connect with us');
+    expect(html).toContain('https://whatsapp.com/channel/iaa');
     expect(html).toContain('Join our WhatsApp channel');
-    // The dashboard's address wins over the one shipped in the constants...
+    // The dashboard wins over the account shipped in the constants...
     expect(html).toContain('https://linkedin.com/company/iaa-from-settings');
-    // ...and a switched-on channel with a blank address falls back rather than
+    // ...and a channel the dashboard has not filled in falls back rather than
     // sending a link to nowhere.
     expect(html).toContain('instagram.com/impactafricaalliance.global');
   });
 
-  it('leaves out the channels that are switched off', async () => {
+  it('lists the accounts but offers no WhatsApp button when there is no channel', async () => {
     mockFindById(publishedEvent());
-    mockSiteSettings({
-      socialsEnabled: { linkedin: true, instagram: false, whatsapp: false },
-      socials: { whatsapp: 'https://whatsapp.com/channel/iaa' },
-    });
+    mockSiteSettings({ socials: { linkedin: 'https://linkedin.com/company/iaa' } });
     vi.spyOn(EventRegistrationModel, 'create').mockResolvedValue({} as never);
     const { service, send } = build();
 
     await service.register(eventId, registration);
 
     const { html } = send.mock.calls[0][0];
-    // The address is still on file; it is simply not being advertised.
+    expect(html).toContain('Connect with us');
     expect(html).not.toContain('Join our WhatsApp channel');
-    expect(html).not.toContain('Instagram');
-    expect(html).toContain('LinkedIn');
-  });
-
-  it('advertises LinkedIn alone when nobody has chosen', async () => {
-    mockFindById(publishedEvent());
-    mockSiteSettings(null);
-    vi.spyOn(EventRegistrationModel, 'create').mockResolvedValue({} as never);
-    const { service, send } = build();
-
-    await service.register(eventId, registration);
-
-    const { html } = send.mock.calls[0][0];
-    expect(html).toContain('LinkedIn');
-    expect(html).not.toContain('TikTok');
-    expect(html).not.toContain('Facebook');
   });
 
   it('still confirms the place when site settings cannot be read', async () => {
