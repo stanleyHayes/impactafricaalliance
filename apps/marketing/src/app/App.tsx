@@ -15,6 +15,7 @@ const Contact = lazy(() => import('../pages/Contact'));
 const News = lazy(() => import('../pages/News'));
 const NewsArticle = lazy(() => import('../pages/NewsArticle'));
 const Resources = lazy(() => import('../pages/Resources'));
+const Reviews = lazy(() => import('../pages/Reviews'));
 const JobApplication = lazy(() => import('../pages/JobApplication'));
 const Events = lazy(() => import('../pages/Events'));
 const EventDetail = lazy(() => import('../pages/EventDetail'));
@@ -66,6 +67,14 @@ export const App = (): JSX.Element => (
         element={
           <Suspense fallback={<PageSkeleton />}>
             <InitiativePage />
+          </Suspense>
+        }
+      />
+      <Route
+        path="reviews"
+        element={
+          <Suspense fallback={<PageSkeleton />}>
+            <Reviews />
           </Suspense>
         }
       />

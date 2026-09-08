@@ -11,6 +11,8 @@ import type {
   PillarImage,
   Report,
   PublicReachSummary,
+  PublicReview,
+  RatingSummary,
   SiteImage,
   SiteSetting,
   Story,
@@ -47,6 +49,30 @@ export const usePillarImages = (): UseQueryResult<Paginated<PillarImage>> =>
     queryKey: ['pillar-images'],
     queryFn: () => page<PillarImage>('pillar-images', '?pageSize=50'),
     staleTime: 5 * 60 * 1000,
+  });
+
+/** Published reviews for one event, with the rating summary alongside. */
+export const useEventReviews = (
+  eventId: string | undefined,
+): UseQueryResult<Paginated<PublicReview> & { summary: RatingSummary }> =>
+  useQuery({
+    queryKey: ['event-reviews', eventId],
+    queryFn: () =>
+      apiGet<Paginated<PublicReview> & { summary: RatingSummary }>(`/reviews/events/${eventId}`),
+    enabled: Boolean(eventId),
+  });
+
+/** Published reviews of the organisation itself. */
+export const useOrganisationReviews = (): UseQueryResult<Paginated<PublicReview>> =>
+  useQuery({
+    queryKey: ['organisation-reviews'],
+    queryFn: () => apiGet<Paginated<PublicReview>>('/reviews/organisation'),
+  });
+
+export const useOrganisationRating = (): UseQueryResult<RatingSummary> =>
+  useQuery({
+    queryKey: ['organisation-rating'],
+    queryFn: () => apiGet<RatingSummary>('/reviews/organisation/summary'),
   });
 
 /** Headline reach figures for the public card. Cached: they move slowly. */

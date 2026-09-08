@@ -19,6 +19,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import PlaceIcon from '@mui/icons-material/Place';
 import PrivacyTipIcon from '@mui/icons-material/PrivacyTip';
 import PublicIcon from '@mui/icons-material/Public';
+import RateReviewIcon from '@mui/icons-material/RateReview';
 import SettingsIcon from '@mui/icons-material/Settings';
 import ShareIcon from '@mui/icons-material/Share';
 import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
@@ -67,6 +68,9 @@ export interface NavCounts {
 export const buildNavGroups = (user: PublicUser | null, counts: NavCounts = {}): NavGroup[] => {
   const byType = counts.submissionsByType ?? {};
   const operations: NavItem[] = [
+    // Reviews lead: a comment waiting for approval is not on the site until
+    // somebody looks at it, so it is the most time-sensitive thing here.
+    { to: '/reviews', label: 'Reviews', icon: <RateReviewIcon /> },
     // `end` so the combined inbox does not also light up on its child routes
     // (/submissions/partners and /submissions/mentors both prefix-match it).
     {

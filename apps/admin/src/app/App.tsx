@@ -23,6 +23,7 @@ import PrivacyRequests from '../pages/PrivacyRequests';
 import ResetPassword from '../pages/ResetPassword';
 import ResourceFormPage from '../pages/ResourceFormPage';
 import ResourcePage from '../pages/ResourcePage';
+import Reviews from '../pages/Reviews';
 import SiteSettings from '../pages/SiteSettings';
 import SocialConnections from '../pages/SocialConnections';
 import Submissions from '../pages/Submissions';
@@ -63,6 +64,7 @@ export const App = (): JSX.Element => (
         }
       />
       <Route path="media" element={<MediaLibrary />} />
+      <Route path="reviews" element={<Reviews />} />
       <Route path="submissions" element={<Submissions />} />
       <Route path="submissions/:inbox" element={<Submissions />} />
       <Route path="subscribers" element={<Subscribers />} />

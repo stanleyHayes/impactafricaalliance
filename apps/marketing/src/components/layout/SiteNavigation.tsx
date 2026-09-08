@@ -5,6 +5,7 @@ import LayersRoundedIcon from '@mui/icons-material/LayersRounded';
 import MailRoundedIcon from '@mui/icons-material/MailRounded';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import NewspaperRoundedIcon from '@mui/icons-material/NewspaperRounded';
+import RateReviewRoundedIcon from '@mui/icons-material/RateReviewRounded';
 import VolunteerActivismRoundedIcon from '@mui/icons-material/VolunteerActivismRounded';
 import Accordion from '@mui/material/Accordion';
 import AccordionDetails from '@mui/material/AccordionDetails';
@@ -78,6 +79,12 @@ const NAVIGATION: NavigationItem[] = [
         path: '/resources',
         description: 'Browse reports, publications, and useful downloads.',
         Icon: MenuBookRoundedIcon,
+      },
+      {
+        label: 'Reviews',
+        path: '/reviews',
+        description: 'What partners and participants say about working with us.',
+        Icon: RateReviewRoundedIcon,
       },
     ],
   },

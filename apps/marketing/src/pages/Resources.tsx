@@ -4,6 +4,7 @@ import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 import EmailRoundedIcon from '@mui/icons-material/EmailRounded';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
+import RateReviewRoundedIcon from '@mui/icons-material/RateReviewRounded';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
@@ -49,6 +50,13 @@ const RESOURCE_CARDS = [
     description:
       'Subscribe to our newsletter for quarterly updates, opportunities, and stories of change.',
     action: { label: 'Subscribe', to: '/get-involved' },
+  },
+  {
+    icon: RateReviewRoundedIcon,
+    title: 'Reviews',
+    description:
+      'What partners, participants, and attendees say about working with us — and a place to add your own.',
+    action: { label: 'Read reviews', to: '/reviews' },
   },
   {
     icon: CalendarMonthRoundedIcon,

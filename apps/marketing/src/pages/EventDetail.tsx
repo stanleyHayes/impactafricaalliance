@@ -24,6 +24,7 @@ import { PageSkeleton } from '../components/skeletons';
 import { IMAGES } from '../content/images';
 import { EventActions } from '../features/events/EventActions';
 import { EventRegistrationDialog } from '../features/events/EventRegistrationDialog';
+import { EventReviewSection } from '../features/reviews/EventReviewSection';
 import { useEvent } from '../lib/content-hooks';
 import { formatEventDate, formatEventTime, formatEventType } from '../lib/event-utils';
 
@@ -243,6 +244,13 @@ const EventBody = ({ event }: { event: Event }): JSX.Element => {
             </Stack>
           </>
         )}
+
+        {/*
+          Reviews sit at the foot of the event rather than beside the sign-up:
+          they are what a past event leaves behind, and what persuades someone
+          to trust the next one.
+        */}
+        <EventReviewSection eventId={event.id} />
       </Container>
 
       <EventRegistrationDialog

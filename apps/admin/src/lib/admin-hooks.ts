@@ -4,8 +4,10 @@ import type {
   AiAssistResponse,
   ChangePasswordInput,
   CreateUserInput,
+  AdminReview,
   AnalyticsSummary,
   DashboardSummary,
+  ReviewStatus,
   DestinationCapabilities,
   DisableMfaInput,
   Donation,
@@ -180,6 +182,34 @@ export const useDonations = (): UseQueryResult<Paginated<Donation>> =>
   });
 
 /** Server-aggregated overview feeding the dashboard KPIs and charts. */
+/** The moderation queue. Pending first is the default the page opens on. */
+export const useReviews = (filters: {
+  status?: ReviewStatus;
+  subject?: 'event' | 'organisation';
+}): UseQueryResult<Paginated<AdminReview>> =>
+  useQuery({
+    queryKey: ['reviews', filters],
+    queryFn: () => {
+      const query = new URLSearchParams();
+      if (filters.status) query.set('status', filters.status);
+      if (filters.subject) query.set('subject', filters.subject);
+      return api.get<Paginated<AdminReview>>(`/admin/reviews?${query.toString()}`);
+    },
+  });
+
+/** Approve or reject. Refreshes the queue so the decision leaves the list. */
+export const useModerateReview = (): UseMutationResult<
+  void,
+  Error,
+  { id: string; status: 'published' | 'rejected'; rejectionReason?: string }
+> => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...decision }) => api.patch<void>(`/admin/reviews/${id}`, decision),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['reviews'] }),
+  });
+};
+
 /** Traffic for the chosen window. Cached briefly — visits are not urgent. */
 export const useAnalyticsSummary = (days: number): UseQueryResult<AnalyticsSummary> =>
   useQuery({
