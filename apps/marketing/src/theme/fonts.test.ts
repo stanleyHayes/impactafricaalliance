@@ -37,32 +37,44 @@ const SYSTEM_FAMILIES = new Set([
 interface LoadedFamily {
   name: string;
   allows: (weight: number) => boolean;
+  /** Every file this family is served from, relative to public/. */
+  sources: string[];
 }
 
-/** Reads index.html and works out which families and weights actually ship. */
+/**
+ * Reads index.html and works out which families and weights actually ship.
+ *
+ * The faces are declared inline and served from /fonts, so this parses the
+ * @font-face rules rather than a stylesheet URL, and checks the file each one
+ * points at is really in the build.
+ */
 const loadedFamilies = (): LoadedFamily[] => {
   const html = readFileSync(join(APP_ROOT, 'index.html'), 'utf8');
-  const href = /href="(https:\/\/fonts\.googleapis\.com\/css2\?[^"]+)"/.exec(html)?.[1];
-  expect(href, 'index.html must load the brand fonts').toBeTruthy();
+  const faces = [
+    ...html.matchAll(
+      /@font-face\s*\{[^}]*?font-family:\s*'([^']+)'[^}]*?font-weight:\s*([^;]+);[^}]*?src:\s*url\('([^']+)'\)[^}]*?\}/g,
+    ),
+  ];
+  expect(faces.length, 'index.html must declare the brand faces').toBeGreaterThan(0);
 
-  return ((href as string).split('?')[1] ?? '')
-    .split('&')
-    .filter((part) => part.startsWith('family='))
-    .map((part) => {
-      const spec = decodeURIComponent(part.slice('family='.length)).replace(/\+/g, ' ');
-      const [name, axes = ''] = spec.split(':');
-      const weights = /wght@([\d.;]+)/.exec(axes)?.[1] ?? '';
-      const range = /^(\d+)\.\.(\d+)$/.exec(weights);
-      if (range) {
-        const [, low, high] = range;
-        return {
-          name: name as string,
-          allows: (weight: number) => weight >= Number(low) && weight <= Number(high),
-        };
-      }
-      const listed = new Set(weights.split(';').filter(Boolean).map(Number));
-      return { name: name as string, allows: (weight: number) => listed.has(weight) };
+  const byFamily = new Map<string, { low: number; high: number; sources: string[] }>();
+  for (const [, name, weight, url] of faces) {
+    const parts = (weight as string).trim().split(/\s+/).map(Number);
+    const low = parts[0] as number;
+    const high = (parts[1] ?? parts[0]) as number;
+    const seen = byFamily.get(name as string);
+    byFamily.set(name as string, {
+      low: seen ? Math.min(seen.low, low) : low,
+      high: seen ? Math.max(seen.high, high) : high,
+      sources: [...(seen?.sources ?? []), url as string],
     });
+  }
+
+  return [...byFamily].map(([name, range]) => ({
+    name,
+    sources: range.sources,
+    allows: (weight: number) => weight >= range.low && weight <= range.high,
+  }));
 };
 
 /** Every source file except the tests, which name fonts only to assert on them. */
@@ -84,6 +96,18 @@ describe('the fonts the pages ask for', () => {
 
   it('loads both brand faces', () => {
     expect(families.map((family) => family.name).sort()).toEqual(['Fraunces', 'Outfit']);
+  });
+
+  it('ships every file it declares a face for', () => {
+    const missing = families.flatMap((family) =>
+      family.sources
+        .filter((source) => !existsSync(join(APP_ROOT, 'public', source.replace(/^\//, ''))))
+        .map((source) => `${family.name}: ${source}`),
+    );
+
+    // A declared face whose file is not in the build is worse than no face at
+    // all: the browser waits for it, then falls back anyway.
+    expect(missing).toEqual([]);
   });
 
   it('names only families that are loaded or built into the browser', () => {
