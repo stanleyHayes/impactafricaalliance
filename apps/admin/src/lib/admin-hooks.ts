@@ -4,6 +4,7 @@ import type {
   AiAssistResponse,
   ChangePasswordInput,
   CreateUserInput,
+  AnalyticsSummary,
   DashboardSummary,
   DestinationCapabilities,
   DisableMfaInput,
@@ -179,6 +180,14 @@ export const useDonations = (): UseQueryResult<Paginated<Donation>> =>
   });
 
 /** Server-aggregated overview feeding the dashboard KPIs and charts. */
+/** Traffic for the chosen window. Cached briefly — visits are not urgent. */
+export const useAnalyticsSummary = (days: number): UseQueryResult<AnalyticsSummary> =>
+  useQuery({
+    queryKey: ['analytics-summary', days],
+    queryFn: () => api.get<AnalyticsSummary>(`/admin/analytics/summary?days=${days}`),
+    staleTime: 60_000,
+  });
+
 export const useDashboardSummary = (): UseQueryResult<DashboardSummary> =>
   useQuery({
     queryKey: ['dashboard-summary'],

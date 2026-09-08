@@ -107,7 +107,10 @@ export const buildNavGroups = (user: PublicUser | null, counts: NavCounts = {}):
   return [
     {
       title: 'Overview',
-      items: [{ to: '/', label: 'Dashboard', icon: <DashboardIcon />, end: true }],
+      items: [
+        { to: '/', label: 'Dashboard', icon: <DashboardIcon />, end: true },
+        { to: '/analytics', label: 'Website traffic', icon: <InsightsIcon /> },
+      ],
     },
     {
       title: 'Content',

@@ -14,6 +14,7 @@ import Typography from '@mui/material/Typography';
 import { Link as RouterLink } from 'react-router-dom';
 
 import { PageCta } from '../components/PageCta';
+import { ReachSection } from '../components/ReachSection';
 import { Section } from '../components/Section';
 import { SectionReveal } from '../components/SectionReveal';
 import { Seo } from '../components/Seo';
@@ -224,6 +225,11 @@ const Resources = (): JSX.Element => {
         ))}
       </Grid>
     </Section>
+    {/*
+      Reach sits with the resources because it is one: the thing a partner or
+      funder asks for when they ask what the work adds up to.
+    */}
+    <ReachSection />
     <PageCta copy={copy} />
   </>
   );

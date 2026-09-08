@@ -12,6 +12,7 @@ import Profile from '../pages/account/Profile';
 import Settings from '../pages/account/Settings';
 import UpdatePassword from '../pages/account/UpdatePassword';
 import UserGuide from '../pages/account/UserGuide';
+import Analytics from '../pages/Analytics';
 import Dashboard from '../pages/Dashboard';
 import Donations from '../pages/Donations';
 import EventEditor from '../pages/EventEditor';
@@ -43,6 +44,7 @@ export const App = (): JSX.Element => (
       }
     >
       <Route index element={<Dashboard />} />
+      <Route path="analytics" element={<Analytics />} />
       <Route path="content/:resource" element={<ResourcePage />} />
       <Route
         path="content/:resource/new"

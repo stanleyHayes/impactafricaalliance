@@ -10,6 +10,7 @@ import type {
   Partner,
   PillarImage,
   Report,
+  PublicReachSummary,
   SiteImage,
   SiteSetting,
   Story,
@@ -46,6 +47,14 @@ export const usePillarImages = (): UseQueryResult<Paginated<PillarImage>> =>
     queryKey: ['pillar-images'],
     queryFn: () => page<PillarImage>('pillar-images', '?pageSize=50'),
     staleTime: 5 * 60 * 1000,
+  });
+
+/** Headline reach figures for the public card. Cached: they move slowly. */
+export const usePublicReach = (days = 30): UseQueryResult<PublicReachSummary> =>
+  useQuery({
+    queryKey: ['public-reach', days],
+    queryFn: () => apiGet<PublicReachSummary>(`/analytics/reach?days=${days}`),
+    staleTime: 5 * 60_000,
   });
 
 export const useSiteImages = (): UseQueryResult<Paginated<SiteImage>> =>
