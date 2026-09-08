@@ -5,7 +5,6 @@ import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ConfirmationNumberRoundedIcon from '@mui/icons-material/ConfirmationNumberRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
-import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
@@ -24,7 +23,9 @@ import { PageSkeleton } from '../components/skeletons';
 import { IMAGES } from '../content/images';
 import { EventActions } from '../features/events/EventActions';
 import { EventRegistrationDialog } from '../features/events/EventRegistrationDialog';
+import { EventUnavailable } from '../features/events/EventUnavailable';
 import { EventReviewSection } from '../features/reviews/EventReviewSection';
+import { ApiError } from '../lib/api-client';
 import { useEvent } from '../lib/content-hooks';
 import { formatEventDate, formatEventTime, formatEventType } from '../lib/event-utils';
 
@@ -265,7 +266,7 @@ const EventBody = ({ event }: { event: Event }): JSX.Element => {
 /** Public page for a single event, so each one has a shareable address. */
 const EventDetail = (): JSX.Element => {
   const { eventId } = useParams();
-  const { data: event, isLoading, isError } = useEvent(eventId ?? '');
+  const { data: event, isLoading, isError, error, isFetching, refetch } = useEvent(eventId ?? '');
 
   if (isLoading) {
     return <PageSkeleton />;
@@ -273,15 +274,13 @@ const EventDetail = (): JSX.Element => {
 
   if (isError || !event) {
     return (
-      <Container maxWidth="sm" sx={{ py: 12 }}>
-        <Seo title="Event not found" noindex />
-        <Alert severity="info" sx={{ mb: 3 }}>
-          We couldn&apos;t find that event. It may have finished or been unpublished.
-        </Alert>
-        <Button component={RouterLink} to="/events" variant="contained" sx={{ fontWeight: 750 }}>
-          See all events
-        </Button>
-      </Container>
+      <EventUnavailable
+        temporary={
+          isError && !(error instanceof ApiError && [400, 404, 410].includes(error.status))
+        }
+        retrying={isFetching}
+        onRetry={() => void refetch()}
+      />
     );
   }
 

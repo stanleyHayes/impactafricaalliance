@@ -1,4 +1,5 @@
 import { eventReviewInputSchema, type PublicReview, type RatingSummary } from '@iaa/shared';
+import MailOutlineRoundedIcon from '@mui/icons-material/MailOutlineRounded';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -14,6 +15,7 @@ import { useSearchParams } from 'react-router-dom';
 import { apiPost } from '../../lib/api-client';
 import { useEventReviews } from '../../lib/content-hooks';
 
+import { EventReviewsEmptyState } from './EventReviewsEmptyState';
 import { previewReviews, previewSummary } from './review-preview';
 import { ReviewList } from './ReviewList';
 import { ReviewsSummary } from './ReviewsSummary';
@@ -183,8 +185,10 @@ export const EventReviewForm = ({
  * started for one with no end time. Mirrors the rule the API enforces, so the
  * form is never offered for a submission that would be refused.
  */
-export const hasTakenPlace = (event: { startAt: string; endAt?: string }, now = new Date()): boolean =>
-  now >= new Date(event.endAt ?? event.startAt);
+export const hasTakenPlace = (
+  event: { startAt: string; endAt?: string },
+  now = new Date(),
+): boolean => now >= new Date(event.endAt ?? event.startAt);
 
 export const EventReviewSection = ({
   event,
@@ -215,11 +219,31 @@ export const EventReviewSection = ({
     : data;
 
   return (
-    <Box component="section" id="event-reviews" sx={{ mt: 5, scrollMarginTop: 130 }}>
-      <Typography variant="overline" color="text.secondary">
+    <Box
+      component="section"
+      id="event-reviews"
+      aria-labelledby="event-reviews-title"
+      sx={{ mt: { xs: 5, md: 8 }, scrollMarginTop: 130 }}
+    >
+      <Typography
+        variant="overline"
+        color="text.secondary"
+        sx={{ fontSize: '0.7rem', letterSpacing: '0.14em', fontWeight: 700 }}
+      >
         From the community
       </Typography>
-      <Typography component="h2" variant="h4" sx={{ mb: 2 }}>
+      <Typography
+        id="event-reviews-title"
+        component="h2"
+        variant="h4"
+        sx={{
+          mt: 0.75,
+          mb: { xs: 3, md: 4 },
+          fontSize: { xs: '1.8rem', md: '2.5rem' },
+          lineHeight: 1.15,
+          letterSpacing: '-0.03em',
+        }}
+      >
         Event reviews & comments
       </Typography>
       {preview && (
@@ -234,12 +258,13 @@ export const EventReviewSection = ({
         retry={() => void refetch()}
       />
       <EventReviewPagination pages={content?.totalPages ?? 0} page={page} onChange={setPage} />
-      <Box sx={{ mt: 3, maxWidth: 600 }}>
+      <Box sx={{ mt: 3, maxWidth: token || preview ? 600 : 'none' }}>
         <EventReviewEntry
           key={`${eventId}-${token}-${preview}`}
           token={reviewable ? token : null}
           preview={preview}
           submitted={submitted}
+          reviewable={reviewable}
           onDone={() => {
             setSubmitted(true);
             const next = new URLSearchParams(params);
@@ -288,17 +313,7 @@ const EventReviewContent = ({
         Event reviews could not be loaded.
       </Alert>
     );
-  if (!content?.items.length)
-    return (
-      <Box sx={{ p: 3, border: 1, borderColor: 'divider', borderRadius: 3 }}>
-        <Typography sx={{ fontWeight: 700 }}>
-          Your experience could start the conversation.
-        </Typography>
-        <Typography color="text.secondary" sx={{ mt: 1 }}>
-          No reviews have been published for this event yet.
-        </Typography>
-      </Box>
-    );
+  if (!content?.items.length) return <EventReviewsEmptyState />;
   return (
     <Stack spacing={3}>
       <ReviewsSummary summary={content.summary} />
@@ -311,11 +326,13 @@ const EventReviewEntry = ({
   token,
   preview,
   submitted,
+  reviewable,
   onDone,
 }: {
   token: string | null;
   preview: boolean;
   submitted: boolean;
+  reviewable: boolean;
   onDone: () => void;
 }): JSX.Element => {
   if (submitted)
@@ -335,9 +352,19 @@ const EventReviewEntry = ({
       />
     );
   return (
-    <Alert severity="info">
-      Attended this event? Use the personal review link in your follow-up email to share a rating
-      and comment. Reviews are read before publication.
-    </Alert>
+    <Stack direction="row" spacing={1.5} sx={{ alignItems: 'flex-start', px: { xs: 0.5, md: 1 } }}>
+      <MailOutlineRoundedIcon sx={{ color: 'text.secondary', fontSize: 21, mt: 0.25 }} />
+      <Box>
+        <Typography sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
+          {reviewable
+            ? 'Attended this event? Your voice belongs here.'
+            : 'Joining us? Share your experience after the event.'}
+        </Typography>
+        <Typography color="text.secondary" sx={{ mt: 0.5, fontSize: '0.825rem', maxWidth: 720 }}>
+          Use the personal review link in your follow-up email to share a rating and comment.
+          Reviews are read before publication.
+        </Typography>
+      </Box>
+    </Stack>
   );
 };
