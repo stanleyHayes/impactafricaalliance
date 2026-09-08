@@ -178,7 +178,23 @@ export const EventReviewForm = ({
   );
 };
 
-export const EventReviewSection = ({ eventId }: { eventId: string }): JSX.Element => {
+/**
+ * When the event becomes reviewable: once it has finished, or once it has
+ * started for one with no end time. Mirrors the rule the API enforces, so the
+ * form is never offered for a submission that would be refused.
+ */
+export const hasTakenPlace = (event: { startAt: string; endAt?: string }, now = new Date()): boolean =>
+  now >= new Date(event.endAt ?? event.startAt);
+
+export const EventReviewSection = ({
+  event,
+}: {
+  event: { id: string; startAt: string; endAt?: string };
+}): JSX.Element => {
+  const eventId = event.id;
+  // An event still to come cannot be reviewed, so the form is not offered
+  // for a submission the API would refuse.
+  const reviewable = hasTakenPlace(event);
   const [params, setParams] = useSearchParams();
   const preview = import.meta.env.DEV && params.get('preview') === 'event-reviews';
   const token = params.get('review');
@@ -221,7 +237,7 @@ export const EventReviewSection = ({ eventId }: { eventId: string }): JSX.Elemen
       <Box sx={{ mt: 3, maxWidth: 600 }}>
         <EventReviewEntry
           key={`${eventId}-${token}-${preview}`}
-          token={token}
+          token={reviewable ? token : null}
           preview={preview}
           submitted={submitted}
           onDone={() => {

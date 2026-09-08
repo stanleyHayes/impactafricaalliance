@@ -250,7 +250,7 @@ const EventBody = ({ event }: { event: Event }): JSX.Element => {
           they are what a past event leaves behind, and what persuades someone
           to trust the next one.
         */}
-        <EventReviewSection eventId={event.id} />
+        <EventReviewSection event={event} />
       </Container>
 
       <EventRegistrationDialog

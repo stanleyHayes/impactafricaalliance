@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { AppLogger } from '../../config/logger.js';
 import type { EmailProvider } from '../../providers/email.provider.js';
+import { EventModel } from '../content/models/event.model.js';
 import { EventRegistrationModel } from '../event-registrations/event-registration.model.js';
 
 import { ReviewModel } from './review.model.js';
@@ -36,7 +37,16 @@ const captureUpsert = () => {
   return writes;
 };
 
+/** The event the token points at, and when it happened. */
+const mockEvent = (overrides: Record<string, unknown> = {}): void => {
+  const data = { startAt: new Date('2026-09-01T17:00:00Z'), endAt: undefined, ...overrides };
+  vi.spyOn(EventModel, 'findById').mockReturnValue({
+    exec: vi.fn().mockResolvedValue({ toObject: () => data }),
+  } as unknown as ReturnType<typeof EventModel.findById>);
+};
+
 const registrationExists = (exists: boolean): void => {
+  mockEvent();
   vi.spyOn(EventRegistrationModel, 'exists').mockReturnValue({
     exec: vi.fn().mockResolvedValue(exists ? { _id: 'x' } : null),
   } as unknown as ReturnType<typeof EventRegistrationModel.exists>);
@@ -223,5 +233,106 @@ describe('public event comment moderation', () => {
         status: 'published',
         verifiedAt: { $ne: null },
       });
+  });
+});
+
+describe('when an event may be reviewed', () => {
+  const past = new Date('2026-09-02T00:00:00Z');
+
+  it('refuses a review of an event that has not happened', async () => {
+    const { service } = build();
+    registrationExists(true);
+    mockEvent({ startAt: new Date('2099-01-01T10:00:00Z') });
+    captureUpsert();
+
+    // The invitation only goes out afterwards, but a forwarded link or a
+    // rescheduled event must not be able to get round that.
+    await expect(
+      service.submitEventReview(
+        { token: service.reviewToken(eventId, 'ama@example.com'), rating: 5, displayName: 'Ama' },
+        past,
+      ),
+    ).rejects.toThrow(/has not taken place yet/);
+  });
+
+  it('accepts one once the event has finished', async () => {
+    const { service } = build();
+    registrationExists(true);
+    mockEvent({
+      startAt: new Date('2026-09-01T17:00:00Z'),
+      endAt: new Date('2026-09-01T19:00:00Z'),
+    });
+    const writes = captureUpsert();
+
+    await service.submitEventReview(
+      { token: service.reviewToken(eventId, 'ama@example.com'), rating: 5, displayName: 'Ama' },
+      past,
+    );
+
+    expect(writes).toHaveLength(1);
+  });
+
+  it('waits for the end time on an event still under way', async () => {
+    const { service } = build();
+    registrationExists(true);
+    // Started an hour ago, runs for another hour: too early to judge it.
+    mockEvent({
+      startAt: new Date('2026-09-01T23:00:00Z'),
+      endAt: new Date('2026-09-02T01:00:00Z'),
+    });
+    captureUpsert();
+
+    await expect(
+      service.submitEventReview(
+        { token: service.reviewToken(eventId, 'ama@example.com'), rating: 5, displayName: 'Ama' },
+        past,
+      ),
+    ).rejects.toThrow(/has not taken place yet/);
+  });
+
+  it('falls back to the start time when no end was recorded', async () => {
+    const { service } = build();
+    registrationExists(true);
+    mockEvent({ startAt: new Date('2026-09-01T17:00:00Z') });
+    const writes = captureUpsert();
+
+    await service.submitEventReview(
+      { token: service.reviewToken(eventId, 'ama@example.com'), rating: 5, displayName: 'Ama' },
+      past,
+    );
+
+    expect(writes).toHaveLength(1);
+  });
+});
+
+describe('event moderation queue', () => {
+  it('filters the count and paginated results to the selected event', async () => {
+    const { service } = build();
+    const query = {
+      sort: vi.fn(),
+      skip: vi.fn(),
+      limit: vi.fn(),
+      select: vi.fn(),
+      lean: vi.fn(),
+      exec: vi.fn().mockResolvedValue([]),
+    };
+    for (const method of ['sort', 'skip', 'limit', 'select', 'lean'] as const)
+      query[method].mockReturnValue(query);
+    const find = vi.spyOn(ReviewModel, 'find').mockReturnValue(query as never);
+    const count = vi
+      .spyOn(ReviewModel, 'countDocuments')
+      .mockReturnValue({ exec: vi.fn().mockResolvedValue(41) } as never);
+    vi.spyOn(EventModel, 'find').mockReturnValue(query as never);
+    const result = await service.list({ eventId, status: 'pending', page: 2 });
+    const filter = find.mock.calls[0]?.[0];
+    expect(filter).toMatchObject({
+      subject: 'event',
+      status: 'pending',
+      verifiedAt: { $ne: null },
+    });
+    expect(String(filter?.eventId)).toBe(eventId);
+    expect(count).toHaveBeenCalledWith(filter);
+    expect(query.skip).toHaveBeenCalledWith(20);
+    expect(result.totalPages).toBe(3);
   });
 });

@@ -43,6 +43,13 @@ const escapeHtml = (value: unknown): string =>
  */
 const REVIEW_TOKEN_VERSION = 'r1';
 
+/**
+ * When an event becomes reviewable: once it has finished, or once it has
+ * started for one with no end time recorded.
+ */
+const reviewableFrom = (event: { startAt: Date | string; endAt?: Date | string | null }): Date =>
+  new Date(event.endAt ?? event.startAt);
+
 @injectable()
 export class ReviewService {
   constructor(
@@ -94,7 +101,10 @@ export class ReviewService {
     return { eventId, eventTitle: event.get('title') as string };
   }
 
-  async submitEventReview(input: EventReviewInput): Promise<{ status: ReviewStatus }> {
+  async submitEventReview(
+    input: EventReviewInput,
+    now = new Date(),
+  ): Promise<{ status: ReviewStatus }> {
     const { eventId, email } = this.openToken(input.token);
 
     // The signature says the address was registered when the link was sent;
@@ -105,6 +115,16 @@ export class ReviewService {
       email,
     }).exec();
     if (!registered) throw new ValidationError('No registration found for this review link');
+
+    // Nobody can review an event that has not happened yet. In practice the
+    // link only goes out afterwards, but the rule belongs at the write rather
+    // than in the timing of an email — a forwarded link, a re-sent invitation
+    // or a rescheduled event should not be able to get round it.
+    const event = await EventModel.findById(eventId).exec();
+    if (!event) throw new NotFoundError('Event not found');
+    if (now < reviewableFrom(event.toObject() as { startAt: Date; endAt?: Date })) {
+      throw new ValidationError('This event has not taken place yet');
+    }
 
     await ReviewModel.findOneAndUpdate(
       { subject: 'event', eventId: new Types.ObjectId(eventId), email },
@@ -251,6 +271,7 @@ export class ReviewService {
   // ── Moderation ───────────────────────────────────────────────────────────
 
   async list(options: {
+    eventId?: string;
     status?: ReviewStatus;
     subject?: 'event' | 'organisation';
     page?: number;
@@ -263,6 +284,9 @@ export class ReviewService {
       verifiedAt: { $ne: null },
       ...(options.status ? { status: options.status } : {}),
       ...(options.subject ? { subject: options.subject } : {}),
+      ...(options.eventId
+        ? { subject: 'event' as const, eventId: new Types.ObjectId(options.eventId) }
+        : {}),
     };
     const page = options.page ?? 1;
     const pageSize = options.pageSize ?? 20;
