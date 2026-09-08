@@ -5,6 +5,7 @@ import type { AppConfig } from '../../config/env.js';
 import type { AppLogger } from '../../config/logger.js';
 import type { EmailProvider } from '../../providers/email.provider.js';
 import { EventModel } from '../content/models/event.model.js';
+import { SiteSettingModel } from '../site-settings/site-setting.model.js';
 
 import { EventRegistrationModel } from './event-registration.model.js';
 import { EventRegistrationService } from './event-registration.service.js';
@@ -42,7 +43,18 @@ const publishedEvent = (overrides: Record<string, unknown> = {}) => {
   return { ...data, toJSON: () => data };
 };
 
+/**
+ * The confirmation reads the social links from site settings. Every test stubs
+ * it, so none of them reach for a database that is not there.
+ */
+const mockSiteSettings = (value: unknown = null): void => {
+  vi.spyOn(SiteSettingModel, 'findOne').mockReturnValue({
+    lean: () => ({ exec: vi.fn().mockResolvedValue(value) }),
+  } as unknown as ReturnType<typeof SiteSettingModel.findOne>);
+};
+
 const mockFindById = (value: unknown): void => {
+  mockSiteSettings();
   vi.spyOn(EventModel, 'findById').mockReturnValue({
     exec: vi.fn().mockResolvedValue(value),
   } as unknown as ReturnType<typeof EventModel.findById>);
@@ -167,5 +179,61 @@ describe('public calendar download', () => {
     mockFindById(publishedEvent({ status: 'draft' }));
     const { service } = build();
     await expect(service.calendarForEvent(eventId)).rejects.toThrow('Event');
+  });
+});
+
+describe('connecting an attendee to the channels', () => {
+  it('invites them to WhatsApp and lists the accounts from the dashboard', async () => {
+    mockFindById(publishedEvent());
+    mockSiteSettings({
+      socials: {
+        whatsapp: 'https://whatsapp.com/channel/iaa',
+        linkedin: 'https://linkedin.com/company/iaa-from-settings',
+        instagram: '',
+      },
+    });
+    vi.spyOn(EventRegistrationModel, 'create').mockResolvedValue({} as never);
+    const { service, send } = build();
+
+    await service.register(eventId, registration);
+
+    const { html } = send.mock.calls[0][0];
+    expect(html).toContain('Connect with us');
+    expect(html).toContain('https://whatsapp.com/channel/iaa');
+    expect(html).toContain('Join our WhatsApp channel');
+    // The dashboard wins over the account shipped in the constants...
+    expect(html).toContain('https://linkedin.com/company/iaa-from-settings');
+    // ...and a channel the dashboard has not filled in falls back rather than
+    // sending a link to nowhere.
+    expect(html).toContain('instagram.com/impactafricaalliance.global');
+  });
+
+  it('lists the accounts but offers no WhatsApp button when there is no channel', async () => {
+    mockFindById(publishedEvent());
+    mockSiteSettings({ socials: { linkedin: 'https://linkedin.com/company/iaa' } });
+    vi.spyOn(EventRegistrationModel, 'create').mockResolvedValue({} as never);
+    const { service, send } = build();
+
+    await service.register(eventId, registration);
+
+    const { html } = send.mock.calls[0][0];
+    expect(html).toContain('Connect with us');
+    expect(html).not.toContain('Join our WhatsApp channel');
+  });
+
+  it('still confirms the place when site settings cannot be read', async () => {
+    mockFindById(publishedEvent());
+    vi.spyOn(SiteSettingModel, 'findOne').mockReturnValue({
+      lean: () => ({ exec: vi.fn().mockRejectedValue(new Error('mongo down')) }),
+    } as unknown as ReturnType<typeof SiteSettingModel.findOne>);
+    vi.spyOn(EventRegistrationModel, 'create').mockResolvedValue({} as never);
+    const { service, logger } = build();
+
+    // The registration is already recorded by this point; losing a row of
+    // links must never take the attendee's place with it.
+    await expect(service.register(eventId, registration)).resolves.toMatchObject({
+      registered: true,
+    });
+    expect(logger.error).toHaveBeenCalled();
   });
 });
