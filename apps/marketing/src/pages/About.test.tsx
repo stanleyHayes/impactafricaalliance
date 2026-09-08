@@ -12,6 +12,9 @@ vi.mock('../lib/content-hooks', () => ({
   usePageCopy: vi.fn(),
   usePartners: vi.fn(),
   useTeam: vi.fn(),
+  // The page reads its fixed photographs from the CMS; with no rows the
+  // components fall back to the images shipped with the build.
+  useSiteImages: () => ({ data: undefined }),
 }));
 
 vi.mock('react-intersection-observer', () => ({

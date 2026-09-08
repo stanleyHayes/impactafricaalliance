@@ -36,7 +36,6 @@ import { Section } from '../components/Section';
 import { SectionReveal } from '../components/SectionReveal';
 import { Seo } from '../components/Seo';
 import { Watermark } from '../components/Watermark';
-import { IMAGES } from '../content/images';
 import { usePageCopy, useReports } from '../lib/content-hooks';
 import { useSiteImage } from '../lib/site-images';
 
@@ -575,13 +574,15 @@ const AgendaSection = (): JSX.Element => (
   </Section>
 );
 
-const VoicesBand = (): JSX.Element => (
+const VoicesBand = (): JSX.Element => {
+  const banner = useSiteImage('impact-voices-band');
+  return (
   <Box sx={{ position: 'relative', overflow: 'hidden', color: 'common.white' }}>
     <Box
       sx={{
         position: 'absolute',
         inset: 0,
-        backgroundImage: `url(${IMAGES.community})`,
+        backgroundImage: `url(${banner})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       }}
@@ -620,6 +621,7 @@ const VoicesBand = (): JSX.Element => (
     </Container>
   </Box>
 );
+};
 
 const REPORT_PROMISES = [
   'Programme outcomes and reach',

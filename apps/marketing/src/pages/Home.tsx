@@ -29,9 +29,8 @@ import { Seo } from '../components/Seo';
 import { CardGridSkeleton } from '../components/skeletons';
 import { StaggerGrid, StaggerItem } from '../components/StaggerGrid';
 import { Watermark } from '../components/Watermark';
-import { IMAGES } from '../content/images';
 import { useArticles, usePageCopy, useStories, type PageCopyDefaults } from '../lib/content-hooks';
-import { usePillarImage, useSiteImage } from '../lib/site-images';
+import { usePillarImage, useSiteImage, useSiteImageMap } from '../lib/site-images';
 
 /**
  * The rotating hero. Slide one is the home hero slot; the rest are the four
@@ -585,7 +584,9 @@ const NewsSection = (): JSX.Element => {
   );
 };
 
-const VisionQuote = (): JSX.Element => (
+const VisionQuote = (): JSX.Element => {
+  const image = useSiteImageMap();
+  return (
   <Box
     sx={{ position: 'relative', overflow: 'hidden', color: 'common.white', py: { xs: 8, md: 12 } }}
   >
@@ -593,7 +594,7 @@ const VisionQuote = (): JSX.Element => (
       sx={{
         position: 'absolute',
         inset: 0,
-        backgroundImage: `url(${IMAGES.programs['women-empowerment']})`,
+        backgroundImage: `url(${image('home-vision-band')})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       }}
@@ -642,8 +643,10 @@ const VisionQuote = (): JSX.Element => (
     </Container>
   </Box>
 );
+};
 
 const Home = (): JSX.Element => {
+  const image = useSiteImageMap();
   const homeHero = useSiteImage('home-hero');
   const copy = usePageCopy('home', {
     seoTitle: 'Empowering Youth, Women & Communities Across Africa',
@@ -689,19 +692,19 @@ const Home = (): JSX.Element => {
         subtitle="Not slide decks or pilot schemes. Classrooms, workshops, market stalls and offices across Ghana, Nigeria and Sierra Leone, where the skills we teach turn into work people are paid for."
         panels={[
           {
-            src: IMAGES.programs['digital-skills'],
+            src: image('home-showcase-lead'),
             alt: 'Young people learning practical digital skills',
             caption: 'Digital skills',
             drift: 0.18,
           },
           {
-            src: IMAGES.programs['women-empowerment'],
+            src: image('home-showcase-women'),
             alt: 'Women building businesses and leading in their communities',
             caption: 'Women leading',
             drift: 0.32,
           },
           {
-            src: IMAGES.community,
+            src: image('home-showcase-work'),
             alt: 'Community members gathered at a programme session',
             caption: 'Ready for work',
             drift: 0.24,

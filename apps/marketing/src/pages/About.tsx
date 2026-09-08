@@ -47,6 +47,7 @@ import { Seo } from '../components/Seo';
 import { CardGridSkeleton, PartnerLogosSkeleton } from '../components/skeletons';
 import { IMAGES } from '../content/images';
 import { usePageCopy, usePartners, useTeam } from '../lib/content-hooks';
+import { useSiteImage } from '../lib/site-images';
 
 const DISCIPLINES: ReadonlyArray<{ label: string; icon: SvgIconComponent }> = [
   { label: 'Technology', icon: CodeRoundedIcon },
@@ -155,6 +156,7 @@ const STRUCTURE_LEVELS = [
 ] as const;
 
 export const AboutIntro = (): JSX.Element => {
+  const introImage = useSiteImage('about-intro');
   return (
     <Section bgcolor="background.default">
       <Grid container spacing={{ xs: 4, md: 6 }} sx={{ alignItems: 'stretch' }}>
@@ -216,7 +218,7 @@ export const AboutIntro = (): JSX.Element => {
             >
               <Box
                 component="img"
-                src={IMAGES.community}
+                src={introImage}
                 alt="Impact Africa Alliance community gathering"
                 sx={{ width: '100%', height: '100%', minHeight: 'inherit', objectFit: 'cover' }}
               />
@@ -756,6 +758,7 @@ const TeamEmptyState = (): JSX.Element => (
 );
 
 const TeamMemberCard = ({ member }: { member: TeamMember }): JSX.Element => {
+  const artwork = useSiteImage('team-artwork');
   return (
     <Card
       component="article"
@@ -793,7 +796,7 @@ const TeamMemberCard = ({ member }: { member: TeamMember }): JSX.Element => {
       <Box
         className="team-artwork"
         component="img"
-        src={member.photo?.url ?? IMAGES.teamArtwork}
+        src={member.photo?.url ?? artwork}
         alt={member.photo?.url ? (member.photo.alt ?? member.name) : ''}
         loading="lazy"
         sx={{

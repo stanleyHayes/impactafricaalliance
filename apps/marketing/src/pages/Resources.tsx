@@ -17,8 +17,8 @@ import { PageCta } from '../components/PageCta';
 import { Section } from '../components/Section';
 import { SectionReveal } from '../components/SectionReveal';
 import { Seo } from '../components/Seo';
-import { IMAGES } from '../content/images';
 import { usePageCopy } from '../lib/content-hooks';
+import { useSiteImage } from '../lib/site-images';
 
 const RESOURCE_CARDS = [
   {
@@ -143,6 +143,7 @@ const ResourceCard = ({
 
 /** Resources hub: blog, reports, media kit, newsletters, and events. */
 const Resources = (): JSX.Element => {
+  const banner = useSiteImage('resources-banner');
   const copy = usePageCopy('resources', {
     seoTitle: 'Resources',
     seoDescription: 'Explore IAA resources: blog articles, research and reports, media kit, newsletters, and upcoming events.',
@@ -161,7 +162,7 @@ const Resources = (): JSX.Element => {
         overflow: 'hidden',
         color: 'common.white',
         py: { xs: 8, md: 12 },
-        backgroundImage: `linear-gradient(120deg, rgba(10,15,13,0.94) 8%, rgba(11,61,46,0.82) 52%, rgba(10,15,13,0.72) 100%), url(${IMAGES.programs['stem-learning']})`,
+        backgroundImage: `linear-gradient(120deg, rgba(10,15,13,0.94) 8%, rgba(11,61,46,0.82) 52%, rgba(10,15,13,0.72) 100%), url(${banner})`,
         backgroundPosition: 'center',
         backgroundSize: 'cover',
       }}

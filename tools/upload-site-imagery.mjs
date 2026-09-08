@@ -29,34 +29,17 @@ loadEnv({ path: envFlag !== -1 ? args[envFlag + 1] : 'apps/api/.env.production' 
 
 /** What to publish, and where it goes. Edit here rather than passing a dozen flags. */
 const JOBS = [
-  {
-    file: 'IMG_0300.PNG',
-    slot: 'pillar:women-empowerment',
-    slug: 'women-empowerment',
-    alt: 'Women of the Impact Africa Alliance team at work on crafts, sewing, photography and a laptop.',
-    tags: ['women', 'empowerment', 'pillar'],
-  },
-  {
-    file: 'IMG_0301.PNG',
-    slot: 'pillar:youth-inclusion',
-    slug: 'youth-inclusion',
-    alt: 'Three young people in Impact Africa Alliance shirts building a robotic arm beside a laptop.',
-    tags: ['youth', 'pillar'],
-  },
-  {
-    file: 'IMG_0429.JPEG',
-    slot: 'pillar:stem-learning',
-    slug: 'stem-learning',
-    alt: 'A facilitator leading a STEM session for a full classroom of secondary school students.',
-    tags: ['stem', 'training', 'pillar'],
-  },
-  {
-    file: 'IMG_0427.JPEG',
-    slot: 'site:impact-banner',
-    slug: 'impact-banner',
-    alt: 'Secondary school students and Impact Africa Alliance facilitators together after a school visit.',
-    tags: ['impact', 'banner', 'schools'],
-  },
+  // Left empty on purpose: this is a one-off publisher, and a stale job here
+  // would silently overwrite a live photograph the next time someone runs it.
+  // Add entries in this shape, then run with --confirm:
+  //
+  //   {
+  //     file: '/absolute/path/to/photo.png',
+  //     slot: 'pillar:women-empowerment',   // or 'site:<key>' from SITE_IMAGE_SLOTS
+  //     slug: 'women-empowerment',          // becomes the Cloudinary public id
+  //     alt: 'What is happening in the picture, for screen readers.',
+  //     tags: ['women', 'pillar'],
+  //   },
 ];
 
 // Wide enough for a full-bleed banner on a large display, without shipping a
@@ -64,11 +47,30 @@ const JOBS = [
 const MAX_WIDTH = 2000;
 const FOLDER = `${process.env.CLOUDINARY_UPLOAD_FOLDER ?? 'iaa'}/site`;
 
-const uri = process.env.MONGODB_URI_DIRECT ?? process.env.MONGODB_URI;
-if (!uri) {
+const configured = process.env.MONGODB_URI_DIRECT ?? process.env.MONGODB_URI;
+if (!configured) {
   console.error('MONGODB_URI not found');
   process.exit(1);
 }
+
+/**
+ * Some networks resolve SRV records but time out on the TXT lookup that
+ * `mongodb+srv://` also needs, which fails before a single query is sent.
+ * Rebuilding the equivalent standard URI skips that lookup.
+ */
+const standardUri = (srv) => {
+  const parsed = /^mongodb\+srv:\/\/([^@]+)@([^/?]+)(\/[^?]*)?(\?.*)?$/.exec(srv);
+  if (!parsed) return srv;
+  const [, creds, host, dbPath = '/', query = ''] = parsed;
+  const cluster = host.replace(/^[^.]+\./, '');
+  const hosts = ['00', '01', '02'].map((n) => `ac-n7zzzzd-shard-00-${n}.${cluster}:27017`).join(',');
+  const params = new URLSearchParams(query.replace(/^\?/, ''));
+  params.set('tls', 'true');
+  params.set('authSource', 'admin');
+  return `mongodb://${creds}@${hosts}${dbPath}?${params.toString()}`;
+};
+
+const uri = standardUri(configured);
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -130,7 +132,7 @@ const run = async () => {
       {
         $set: {
           url: asset.url,
-          filename: job.file,
+          filename: path.basename(job.file),
           folder: 'site',
           altText: job.alt,
           tags: job.tags,
