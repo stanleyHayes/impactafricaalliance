@@ -1,4 +1,10 @@
-import type { DashboardContentEntry, DashboardDonationMonth, DashboardSummary } from '@iaa/shared';
+import { DASHBOARD_CONTENT_COLLECTIONS } from '@iaa/shared';
+import type {
+  DashboardContentEntry,
+  DashboardContentKey,
+  DashboardDonationMonth,
+  DashboardSummary,
+} from '@iaa/shared';
 import type { Model } from 'mongoose';
 import { inject, injectable } from 'tsyringe';
 
@@ -20,23 +26,30 @@ import { UserModel } from '../users/user.model.js';
 const MONTHS_LOOKBACK = 6;
 
 interface ContentSource {
-  key: string;
-  label: string;
   model: Model<unknown>;
   /** `status: 'published'` collections vs `isActive` collections. */
   liveFilter: Record<string, unknown>;
 }
 
-const CONTENT_SOURCES: ContentSource[] = [
-  { key: 'articles', label: 'Articles', model: ArticleModel, liveFilter: { status: 'published' } },
-  { key: 'stories', label: 'Stories', model: StoryModel, liveFilter: { status: 'published' } },
-  { key: 'jobs', label: 'Jobs', model: JobModel, liveFilter: { status: 'published' } },
-  { key: 'reports', label: 'Reports', model: ReportModel, liveFilter: { status: 'published' } },
-  { key: 'events', label: 'Events', model: EventModel, liveFilter: { status: 'published' } },
-  { key: 'team', label: 'Team', model: TeamMemberModel, liveFilter: { isActive: true } },
-  { key: 'partners', label: 'Partners', model: PartnerModel, liveFilter: { isActive: true } },
-  { key: 'stats', label: 'Impact stats', model: ImpactStatModel, liveFilter: { isActive: true } },
-];
+const PUBLISHED = { status: 'published' };
+const ACTIVE = { isActive: true };
+
+/**
+ * Where each collection's counts come from. The keys, labels and order live in
+ * DASHBOARD_CONTENT_COLLECTIONS so the console knows how many rows to expect
+ * while this is loading; only the model and the "is it live" filter are
+ * server-side, because neither can leave the API.
+ */
+const CONTENT_SOURCES: Record<DashboardContentKey, ContentSource> = {
+  articles: { model: ArticleModel, liveFilter: PUBLISHED },
+  stories: { model: StoryModel, liveFilter: PUBLISHED },
+  jobs: { model: JobModel, liveFilter: PUBLISHED },
+  reports: { model: ReportModel, liveFilter: PUBLISHED },
+  events: { model: EventModel, liveFilter: PUBLISHED },
+  team: { model: TeamMemberModel, liveFilter: ACTIVE },
+  partners: { model: PartnerModel, liveFilter: ACTIVE },
+  stats: { model: ImpactStatModel, liveFilter: ACTIVE },
+};
 
 const monthBucketStart = (now: Date): Date =>
   new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - (MONTHS_LOOKBACK - 1), 1));
@@ -164,12 +177,13 @@ export class DashboardService {
 
   private async contentStats(): Promise<DashboardContentEntry[]> {
     return Promise.all(
-      CONTENT_SOURCES.map(async (source) => {
+      DASHBOARD_CONTENT_COLLECTIONS.map(async ({ key, label }) => {
+        const source = CONTENT_SOURCES[key];
         const [total, published] = await Promise.all([
           source.model.countDocuments().exec(),
           source.model.countDocuments(source.liveFilter).exec(),
         ]);
-        return { key: source.key, label: source.label, total, published };
+        return { key, label, total, published };
       }),
     );
   }

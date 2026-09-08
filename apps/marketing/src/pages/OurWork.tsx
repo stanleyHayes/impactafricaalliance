@@ -13,12 +13,17 @@ import { Section } from '../components/Section';
 import { SectionReveal } from '../components/SectionReveal';
 import { Seo } from '../components/Seo';
 import { programIcon } from '../content/icons';
-import { IMAGES, programImage } from '../content/images';
+import { IMAGES } from '../content/images';
 import { PROGRAMS, type ProgramContent } from '../content/programs';
 import { usePageCopy } from '../lib/content-hooks';
+import { usePillarImage } from '../lib/site-images';
 
 const ProgramFeature = ({ program, index }: { program: ProgramContent; index: number }): JSX.Element => {
   const Icon = programIcon(program.slug);
+  // Every other place that draws a programme reads its photograph from the
+  // dashboard; this page was still on the picture compiled into the build, so
+  // replacing one changed the cards and the initiative page but not here.
+  const pillarImage = usePillarImage();
   const reversed = index % 2 === 1;
   return (
     <SectionReveal>
@@ -27,7 +32,7 @@ const ProgramFeature = ({ program, index }: { program: ProgramContent; index: nu
           <Box sx={{ position: 'relative', borderRadius: 4, overflow: 'hidden', boxShadow: '0 24px 50px -24px rgba(16,40,30,0.5)' }}>
             <Box
               component="img"
-              src={programImage(program.slug)}
+              src={pillarImage(program.slug)}
               alt={program.title}
               sx={{ width: '100%', display: 'block', aspectRatio: '16 / 10', objectFit: 'cover' }}
             />

@@ -1,5 +1,6 @@
 import {
   brandColors,
+  DASHBOARD_CONTENT_COLLECTIONS,
   SubmissionType,
   type DashboardSummary,
   type PaymentProviderStatus,
@@ -43,7 +44,6 @@ import { useState, type ReactNode } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
 import { useAuth } from '../auth/AuthContext';
-import { CardListSkeleton } from '../components/CardListSkeleton';
 import { BarChart } from '../components/charts/BarChart';
 import { DonationChartEmpty } from '../components/charts/DonationChartEmpty';
 import { DonutChart } from '../components/charts/DonutChart';
@@ -138,6 +138,28 @@ const describeSubmission = (submission: Submission): { title: string; detail: st
 };
 
 /** A single tappable row in the recent-submissions feed. */
+/** How many recent submissions the panel shows, and so how many it draws while loading. */
+const RECENT_SUBMISSION_LIMIT = 5;
+
+/**
+ * The loading shape of a SubmissionRow.
+ *
+ * It repeats that row's own padding and avatar size rather than picking a
+ * height, so the two cannot drift apart and the panel is the same height
+ * before and after the data arrives.
+ */
+const SubmissionRowSkeleton = (): JSX.Element => (
+  <Box sx={{ px: 2.5, py: 1.75 }}>
+    <Stack direction="row" spacing={1.75} alignItems="center">
+      <Skeleton variant="rounded" width={42} height={42} sx={{ borderRadius: 2.5, flexShrink: 0 }} />
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Skeleton variant="text" width="45%" sx={{ fontSize: '0.875rem' }} />
+        <Skeleton variant="text" width="70%" sx={{ fontSize: '0.75rem' }} />
+      </Box>
+    </Stack>
+  </Box>
+);
+
 const SubmissionRow = ({ submission }: { submission: Submission }): JSX.Element => {
   const meta = SUBMISSION_META[submission.type];
   const { title, detail } = describeSubmission(submission);
@@ -242,9 +264,11 @@ const RecentSubmissions = ({
 }): JSX.Element => {
   if (loading) {
     return (
-      <Box sx={{ p: 2.5 }}>
-        <CardListSkeleton count={4} />
-      </Box>
+      <Stack divider={<Divider sx={{ borderColor: 'divider', opacity: 0.7 }} />}>
+        {Array.from({ length: RECENT_SUBMISSION_LIMIT }, (_, index) => (
+          <SubmissionRowSkeleton key={index} />
+        ))}
+      </Stack>
     );
   }
   if (items.length === 0) {
@@ -652,6 +676,23 @@ const ProviderRow = ({
   );
 };
 
+/** The loading shape of a ProviderRow, built from the same padding and avatar. */
+const ProviderRowSkeleton = (): JSX.Element => (
+  <Stack
+    direction="row"
+    spacing={1.75}
+    alignItems="center"
+    sx={{ p: 1.75, borderRadius: 2.5, border: '1px solid', borderColor: 'divider' }}
+  >
+    <Skeleton variant="rounded" width={40} height={40} sx={{ borderRadius: 2, flexShrink: 0 }} />
+    <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+      <Skeleton variant="text" width="40%" sx={{ fontSize: '0.875rem' }} />
+      <Skeleton variant="text" width="75%" sx={{ fontSize: '0.75rem' }} />
+    </Box>
+    <Skeleton variant="rounded" width={34} height={20} sx={{ borderRadius: 10, flexShrink: 0 }} />
+  </Stack>
+);
+
 const PaymentProvidersPanel = ({
   payments,
   isAdmin,
@@ -686,8 +727,8 @@ const PaymentProvidersPanel = ({
       <Stack spacing={1.5} sx={{ p: 2.5 }}>
         {loading || !payments ? (
           <>
-            <Skeleton variant="rounded" height={76} />
-            <Skeleton variant="rounded" height={76} />
+            <ProviderRowSkeleton />
+            <ProviderRowSkeleton />
           </>
         ) : (
           (['stripe', 'paystack'] as ProviderKey[]).map((providerKey) => (
@@ -711,6 +752,20 @@ const PaymentProvidersPanel = ({
 };
 
 // ── Donations visualization ─────────────────────────────────────────────────
+
+/** Height of the donations bar chart, shared with its loading placeholder. */
+const DONATION_CHART_HEIGHT = 200;
+
+/** The loading shape of a ProviderSplitBar: a label line above its track. */
+const ProviderSplitBarSkeleton = (): JSX.Element => (
+  <Box>
+    <Stack direction="row" justifyContent="space-between" sx={{ mb: 0.5 }}>
+      <Skeleton variant="text" width={64} sx={{ fontSize: '0.75rem' }} />
+      <Skeleton variant="text" width={72} sx={{ fontSize: '0.75rem' }} />
+    </Stack>
+    <Skeleton variant="rounded" height={6} sx={{ borderRadius: 99 }} />
+  </Box>
+);
 
 const ProviderSplitBar = ({
   label,
@@ -762,8 +817,33 @@ const DonationsPanel = ({
   >
     {loading || !donations ? (
       <Box sx={{ p: 2.5 }}>
-        <Skeleton variant="text" width={160} height={44} />
-        <Skeleton variant="rounded" height={200} sx={{ mt: 1.5 }} />
+        {/*
+          The loaded panel is a total, a chart, a rule and two provider bars.
+          Drawing only the first two left the card a third shorter than it ends
+          up, so everything below it jumped when the figures arrived.
+        */}
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={1.5}
+          justifyContent="space-between"
+          alignItems={{ xs: 'flex-start', sm: 'center' }}
+          sx={{ mb: 2 }}
+        >
+          <Box sx={{ width: '100%' }}>
+            <Skeleton variant="text" width={160} sx={{ fontSize: '2.125rem' }} />
+            <Skeleton variant="text" width={190} sx={{ fontSize: '0.75rem' }} />
+          </Box>
+          <Stack direction="row" spacing={1}>
+            <Skeleton variant="rounded" width={86} height={24} sx={{ borderRadius: 10 }} />
+            <Skeleton variant="rounded" width={74} height={24} sx={{ borderRadius: 10 }} />
+          </Stack>
+        </Stack>
+        <Skeleton variant="rounded" height={DONATION_CHART_HEIGHT} />
+        <Divider sx={{ my: 2 }} />
+        <Stack spacing={1.25}>
+          <ProviderSplitBarSkeleton />
+          <ProviderSplitBarSkeleton />
+        </Stack>
       </Box>
     ) : (
       <Box sx={{ p: 2.5 }}>
@@ -795,6 +875,7 @@ const DonationsPanel = ({
 
         {donations.monthly.some((bucket) => bucket.amountUsd > 0) ? (
           <BarChart
+            height={DONATION_CHART_HEIGHT}
             data={donations.monthly.map((bucket) => ({
               label: bucket.month,
               value: bucket.amountUsd,
@@ -848,6 +929,9 @@ const SUBMISSION_TYPE_ORDER: Submission['type'][] = [
   SubmissionType.Job,
 ];
 
+/** Diameter of the submissions donut, shared with its loading placeholder. */
+const DONUT_SIZE = 168;
+
 const SubmissionsBreakdownPanel = ({
   submissions,
   loading,
@@ -878,11 +962,34 @@ const SubmissionsBreakdownPanel = ({
     >
       {loading || !submissions ? (
         <Box sx={{ p: 2.5 }}>
-          <Skeleton variant="circular" width={168} height={168} sx={{ mx: 'auto' }} />
+          {/*
+            The donut sits in a row beside its legend, with status chips below.
+            A lone centred circle both sat in the wrong place and left out two
+            thirds of the panel's height.
+          */}
+          <Stack direction="row" spacing={2.5} alignItems="center" sx={{ width: '100%' }}>
+            <Skeleton
+              variant="circular"
+              width={DONUT_SIZE}
+              height={DONUT_SIZE}
+              sx={{ flexShrink: 0 }}
+            />
+            <Stack spacing={1} sx={{ flex: 1, minWidth: 0 }}>
+              {SUBMISSION_TYPE_ORDER.map((type) => (
+                <Skeleton key={type} variant="text" width="80%" sx={{ fontSize: '0.75rem' }} />
+              ))}
+            </Stack>
+          </Stack>
+          <Stack direction="row" spacing={1} sx={{ mt: 2.5 }}>
+            <Skeleton variant="rounded" width={62} height={24} sx={{ borderRadius: 10 }} />
+            <Skeleton variant="rounded" width={66} height={24} sx={{ borderRadius: 10 }} />
+            <Skeleton variant="rounded" width={86} height={24} sx={{ borderRadius: 10 }} />
+          </Stack>
         </Box>
       ) : (
         <Box sx={{ p: 2.5 }}>
           <DonutChart
+            size={DONUT_SIZE}
             data={SUBMISSION_TYPE_ORDER.map((type) => ({
               label: SUBMISSION_META[type].label,
               value: countOf(type),
@@ -927,7 +1034,10 @@ const ContentInventoryPanel = ({
     }
   >
     <Grid container spacing={1.5} sx={{ p: 2.5 }}>
-      {(loading || !content ? Array.from({ length: 4 }) : content).map((entry, index) => (
+      {(loading || !content
+        ? Array.from({ length: DASHBOARD_CONTENT_COLLECTIONS.length })
+        : content
+      ).map((entry, index) => (
         <Grid key={entry ? (entry as DashboardSummary['content'][number]).key : index} size={{ xs: 12, sm: 6 }}>
           {!entry ? (
             <Skeleton variant="rounded" height={66} />
@@ -1043,6 +1153,62 @@ const SystemRow = ({
   </CardActionArea>
 );
 
+/**
+ * The rows of the operations snapshot, as data.
+ *
+ * Keeping them in one list is what lets the loading state draw exactly as many
+ * rows as will appear: it used to draw three where four arrive, each of them
+ * twice the height of the real thing.
+ */
+const SYSTEM_ROWS: ReadonlyArray<{
+  icon: SvgIconComponent;
+  label: string;
+  to: string;
+  accent: string;
+  value: (summary: DashboardSummary) => string;
+}> = [
+  {
+    icon: CalendarMonthIcon,
+    label: 'Upcoming events',
+    to: '/events',
+    accent: brandColors.forestGreen,
+    value: (summary) => `${summary.events.upcoming} / ${summary.events.total}`,
+  },
+  {
+    icon: PrivacyTipIcon,
+    label: 'Open privacy requests',
+    to: '/privacy-requests',
+    accent: brandColors.gold,
+    value: (summary) => String(summary.privacyRequests.open),
+  },
+  {
+    icon: ShareIcon,
+    label: 'Social accounts connected',
+    to: '/social-connections',
+    accent: brandColors.mint,
+    value: (summary) => String(summary.socialConnections),
+  },
+  {
+    icon: AutoStoriesIcon,
+    label: 'Content collections live',
+    to: `/content/${RESOURCES[0]?.key ?? 'articles'}`,
+    accent: brandColors.deepForest,
+    value: (summary) =>
+      `${summary.content.reduce((sum, entry) => sum + entry.published, 0)} items`,
+  },
+];
+
+/** The loading shape of a SystemRow, from that row's own padding and avatar. */
+const SystemRowSkeleton = (): JSX.Element => (
+  <Box sx={{ px: 1.5, py: 1.25 }}>
+    <Stack direction="row" spacing={1.5} alignItems="center">
+      <Skeleton variant="rounded" width={34} height={34} sx={{ borderRadius: 2, flexShrink: 0 }} />
+      <Skeleton variant="text" sx={{ flexGrow: 1, fontSize: '0.875rem' }} />
+      <Skeleton variant="text" width={38} sx={{ fontSize: '0.875rem' }} />
+    </Stack>
+  </Box>
+);
+
 const SystemPanel = ({
   summary,
   loading,
@@ -1051,42 +1217,20 @@ const SystemPanel = ({
   loading: boolean;
 }): JSX.Element => (
   <Panel title="Operations snapshot" subtitle="Across the whole console">
-    {loading || !summary ? (
-      <Box sx={{ p: 2 }}>
-        <CardListSkeleton count={3} />
-      </Box>
-    ) : (
-      <Stack sx={{ p: 1 }}>
-        <SystemRow
-          icon={CalendarMonthIcon}
-          label="Upcoming events"
-          value={`${summary.events.upcoming} / ${summary.events.total}`}
-          to="/events"
-          accent={brandColors.forestGreen}
-        />
-        <SystemRow
-          icon={PrivacyTipIcon}
-          label="Open privacy requests"
-          value={String(summary.privacyRequests.open)}
-          to="/privacy-requests"
-          accent={brandColors.gold}
-        />
-        <SystemRow
-          icon={ShareIcon}
-          label="Social accounts connected"
-          value={String(summary.socialConnections)}
-          to="/social-connections"
-          accent={brandColors.mint}
-        />
-        <SystemRow
-          icon={AutoStoriesIcon}
-          label="Content collections live"
-          value={`${summary.content.reduce((sum, entry) => sum + entry.published, 0)} items`}
-          to={`/content/${RESOURCES[0]?.key ?? 'articles'}`}
-          accent={brandColors.deepForest}
-        />
-      </Stack>
-    )}
+    <Stack sx={{ p: 1 }}>
+      {loading || !summary
+        ? SYSTEM_ROWS.map((row) => <SystemRowSkeleton key={row.label} />)
+        : SYSTEM_ROWS.map((row) => (
+            <SystemRow
+              key={row.label}
+              icon={row.icon}
+              label={row.label}
+              value={row.value(summary)}
+              to={row.to}
+              accent={row.accent}
+            />
+          ))}
+    </Stack>
   </Panel>
 );
 
@@ -1095,7 +1239,7 @@ const SystemPanel = ({
 const sortRecent = (items: Submission[] | undefined): Submission[] =>
   [...(items ?? [])]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, 5);
+    .slice(0, RECENT_SUBMISSION_LIMIT);
 
 const buildSubtitle = (newCount: number): string => {
   if (newCount > 0) {
