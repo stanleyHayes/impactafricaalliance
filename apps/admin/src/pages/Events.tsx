@@ -308,28 +308,42 @@ const Events = (): JSX.Element => {
     navigate(`/events/${event.id}/edit`);
   };
 
+  // The header owes nothing to the fetch, so it is drawn once, above every
+  // outcome — rather than as a grey bar that swaps for itself a moment later.
+  const header = (
+    <PageHeader
+      icon={<CalendarMonthOutlinedIcon />}
+      title="Events"
+      description="Plan, publish, and manage upcoming events."
+      action={
+        <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>
+          Create event
+        </Button>
+      }
+    />
+  );
+
   if (isLoading) {
-    return <CalendarPageSkeleton />;
+    return (
+      <>
+        {header}
+        <CalendarPageSkeleton />
+      </>
+    );
   }
   if (isError)
     return (
-      <Alert severity="error" action={<Button onClick={() => void refetch()}>Retry</Button>}>
-        Events could not be loaded.
-      </Alert>
+      <>
+        {header}
+        <Alert severity="error" action={<Button onClick={() => void refetch()}>Retry</Button>}>
+          Events could not be loaded.
+        </Alert>
+      </>
     );
 
   return (
     <>
-      <PageHeader
-        icon={<CalendarMonthOutlinedIcon />}
-        title="Events"
-        description="Plan, publish, and manage upcoming events."
-        action={
-          <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>
-            Create event
-          </Button>
-        }
-      />
+      {header}
 
       {events.length === 0 ? (
         <EmptyState

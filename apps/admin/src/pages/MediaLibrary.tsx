@@ -230,15 +230,27 @@ const MediaLibraryPage = (): JSX.Element => {
     });
   }, [all, query, shelf]);
 
-  if (isLoading) return <MediaLibrarySkeleton />;
+
+  const header = (
+    <PageHeader
+      icon={<CollectionsIcon />}
+      title="Media library"
+      description="Every image uploaded from the dashboard, ready to reuse anywhere."
+    />
+  );
+
+  if (isLoading) {
+    return (
+      <Box>
+        {header}
+        <MediaLibrarySkeleton />
+      </Box>
+    );
+  }
 
   return (
     <Box>
-      <PageHeader
-        icon={<CollectionsIcon />}
-        title="Media library"
-        description="Every image uploaded from the dashboard, ready to reuse anywhere."
-      />
+      {header}
 
       {isError && (
         <Alert

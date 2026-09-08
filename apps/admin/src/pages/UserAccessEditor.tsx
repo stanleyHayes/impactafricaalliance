@@ -434,7 +434,15 @@ const AccessForm = ({ user }: { user?: PublicUser }): JSX.Element => {
 
 const PermissionsEditor = ({ userId }: { userId: string }): JSX.Element => {
   const { data: users, isLoading, isError, refetch } = useUsers();
-  if (isLoading) return <FormPageSkeleton backLink fields={4} />;
+  // Reached with a userId, so this is always the permissions view — the
+  // teammate's record is only needed to fill the form, not to title it.
+  if (isLoading)
+    return (
+      <>
+        <PageHeader title="Manage permissions" icon={<AdminPanelSettingsRoundedIcon />} />
+        <FormPageSkeleton backLink fields={4} />
+      </>
+    );
   if (isError)
     return (
       <Alert severity="error" action={<Button onClick={() => void refetch()}>Retry</Button>}>

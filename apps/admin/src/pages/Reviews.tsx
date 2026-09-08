@@ -23,7 +23,6 @@ import { useState } from 'react';
 
 import { EmptyState } from '../components/EmptyState';
 import { PageHeader } from '../components/PageHeader';
-import { PageHeaderSkeleton } from '../components/PageSkeleton';
 import { useModerateReview, useReviews } from '../lib/admin-hooks';
 import { formatUtcShort } from '../lib/date';
 
@@ -160,30 +159,26 @@ const Reviews = (): JSX.Element => {
 
   return (
     <>
-      {isLoading && !data ? (
-        <PageHeaderSkeleton action />
-      ) : (
-        <PageHeader
-          icon={<RateReviewRoundedIcon />}
-          title="Reviews"
-          description="Ratings and comments from attendees and partners. Nothing appears on the site until it is published here."
-          action={
-            <ToggleButtonGroup
-              value={status}
-              exclusive
-              size="small"
-              onChange={(_event, next: ReviewStatus | null) => next && setStatus(next)}
-              aria-label="Review status"
-            >
-              {STATUS_TABS.map((tab) => (
-                <ToggleButton key={tab.value} value={tab.value}>
-                  {tab.label}
-                </ToggleButton>
-              ))}
-            </ToggleButtonGroup>
-          }
-        />
-      )}
+      <PageHeader
+        icon={<RateReviewRoundedIcon />}
+        title="Reviews"
+        description="Ratings and comments from attendees and partners. Nothing appears on the site until it is published here."
+        action={
+          <ToggleButtonGroup
+            value={status}
+            exclusive
+            size="small"
+            onChange={(_event, next: ReviewStatus | null) => next && setStatus(next)}
+            aria-label="Review status"
+          >
+            {STATUS_TABS.map((tab) => (
+              <ToggleButton key={tab.value} value={tab.value}>
+                {tab.label}
+              </ToggleButton>
+            ))}
+          </ToggleButtonGroup>
+        }
+      />
 
       {isLoading && !data && <ReviewsSkeleton />}
 

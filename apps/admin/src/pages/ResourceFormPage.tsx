@@ -278,7 +278,19 @@ const ResourceFormLoader = ({
 }): JSX.Element => {
   const record = useResourceDetail(resource.key, id);
   const navigate = useNavigate();
-  if (id && record.isLoading) return <FormPageSkeleton backLink steps fields={5} />;
+  // An id in the route means this is an edit; the record itself is not needed
+  // to say so, so the heading does not wait for it.
+  if (id && record.isLoading)
+    return (
+      <>
+        <PageHeader
+          icon={resource.icon}
+          title={`Edit ${resource.singular.toLowerCase()}`}
+          description="Work through each section, then review everything before saving."
+        />
+        <FormPageSkeleton backLink steps fields={5} />
+      </>
+    );
   if (id && (record.isError || !record.data)) {
     const notFound = record.error instanceof ApiError && record.error.status === 404;
     return (

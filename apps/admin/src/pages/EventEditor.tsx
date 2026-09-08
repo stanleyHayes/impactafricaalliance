@@ -246,7 +246,15 @@ const EventEditor = (): JSX.Element => {
     queryFn: () => api.get<Event>(`/admin/events/${eventId}`),
     enabled: Boolean(eventId),
   });
-  if (eventId && query.isPending) return <FormPageSkeleton backLink steps fields={5} />;
+  // Whether this is an edit is known from the route, not the fetch, so the
+  // title is right from the first frame.
+  if (eventId && query.isPending)
+    return (
+      <>
+        <PageHeader title="Edit event" icon={<CalendarTodayIcon />} />
+        <FormPageSkeleton backLink steps fields={5} />
+      </>
+    );
   if (eventId && (query.isError || !query.data))
     return (
       <Stack spacing={2}>

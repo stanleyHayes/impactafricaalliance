@@ -15,7 +15,6 @@ import { useState } from 'react';
 import { BarChart } from '../components/charts/BarChart';
 import { EmptyState } from '../components/EmptyState';
 import { PageHeader } from '../components/PageHeader';
-import { PageHeaderSkeleton } from '../components/PageSkeleton';
 import { useAnalyticsSummary } from '../lib/admin-hooks';
 
 const WINDOWS = [
@@ -283,15 +282,6 @@ const Analytics = (): JSX.Element => {
   const [days, setDays] = useState<number>(30);
   const { data, isLoading, isError } = useAnalyticsSummary(days);
 
-  if (isLoading && !data) {
-    return (
-      <>
-        <PageHeaderSkeleton action />
-        <AnalyticsSkeleton />
-      </>
-    );
-  }
-
   return (
     <>
       <PageHeader
@@ -314,7 +304,11 @@ const Analytics = (): JSX.Element => {
           </ToggleButtonGroup>
         }
       />
-      <AnalyticsContent data={data} isError={isError} />
+      {isLoading && !data ? (
+        <AnalyticsSkeleton />
+      ) : (
+        <AnalyticsContent data={data} isError={isError} />
+      )}
     </>
   );
 };

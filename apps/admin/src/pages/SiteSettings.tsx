@@ -238,7 +238,17 @@ const SiteSettings = (): JSX.Element => {
     if (invalidStep >= 0) showStep(invalidStep);
   };
 
-  if (settings.isLoading) return <FormPageSkeleton steps fields={5} />;
+  if (settings.isLoading)
+    return (
+      <>
+        <PageHeader
+          title="Site settings"
+          description="Update your public information in focused steps. Save all changes when you are ready."
+          icon={<PublicIcon />}
+        />
+        <FormPageSkeleton steps fields={5} />
+      </>
+    );
 
   if (settings.isError) {
     return (
