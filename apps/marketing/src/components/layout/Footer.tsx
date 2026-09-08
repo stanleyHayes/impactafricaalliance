@@ -9,6 +9,7 @@ import {
   type SiteSetting,
 } from '@iaa/shared';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
+import CallOutlinedIcon from '@mui/icons-material/CallOutlined';
 import MailOutlineRoundedIcon from '@mui/icons-material/MailOutlineRounded';
 import PlaceOutlinedIcon from '@mui/icons-material/PlaceOutlined';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
@@ -74,23 +75,52 @@ const FooterLink = ({ to, children }: { to: string; children: ReactNode }): JSX.
   </Link>
 );
 
+/** Used only when no offices exist yet, so a fresh install still shows a location. */
+const siteAddress = (site: SiteSetting | undefined): string =>
+  site ? [site.addressLine1, site.city, site.country].filter(Boolean).join(', ') : '';
+
 /**
- * Prefer the office flagged primary, then the first one; fall back to the single
- * address on site settings so installs with no offices yet still show a location.
+ * One office, with the number for that office rather than one shared number.
+ *
+ * The organisation works across two countries, and somebody in Abuja ringing a
+ * Ghanaian number is a small failure that is entirely avoidable — each office
+ * carries its own phone on its own record.
  */
-const resolveHeadOffice = (
-  offices: readonly Office[],
-  site: SiteSetting | undefined,
-): string | undefined => {
-  const primary = offices.find((office) => office.isPrimary) ?? offices[0];
-  if (primary) {
-    return formatOfficeAddress(primary);
-  }
-  if (!site) {
-    return undefined;
-  }
-  return [site.addressLine1, site.city, site.country].filter(Boolean).join(', ');
-};
+const OfficeBlock = ({ office }: { office: Office }): JSX.Element => (
+  <Stack direction="row" spacing={1} alignItems="flex-start">
+    <PlaceOutlinedIcon sx={{ fontSize: 18, color: 'primary.main', mt: 0.2 }} />
+    <Box sx={{ minWidth: 0 }}>
+      <Typography
+        variant="caption"
+        sx={{ display: 'block', color: 'primary.main', fontWeight: 700, letterSpacing: 0.6 }}
+      >
+        {office.label}
+      </Typography>
+      <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.72)' }}>
+        {formatOfficeAddress(office)}
+      </Typography>
+      {office.phone && (
+        <Link
+          href={`tel:${office.phone.replace(/[^+\d]/g, '')}`}
+          underline="none"
+          sx={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 0.75,
+            mt: 0.25,
+            color: 'rgba(255,255,255,0.72)',
+            fontSize: '0.9rem',
+            transition: 'color 180ms ease',
+            '&:hover': { color: 'common.white' },
+          }}
+        >
+          <CallOutlinedIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+          {office.phone}
+        </Link>
+      )}
+    </Box>
+  </Stack>
+);
 
 /** Clean site footer: brand summary, useful navigation, and a focused contact path. */
 export const Footer = (): JSX.Element => {
@@ -99,7 +129,7 @@ export const Footer = (): JSX.Element => {
   const offices = officeData?.items ?? [];
   const email = site?.contactEmail ?? ORG.email;
   const whatsapp = site?.whatsappPhone ?? site?.contactPhone;
-  const headOffice = resolveHeadOffice(offices, site);
+  const fallbackAddress = siteAddress(site);
   const presence = site?.regionalPresence?.length ? site.regionalPresence : FALLBACK_PRESENCE;
 
   return (
@@ -311,22 +341,24 @@ export const Footer = (): JSX.Element => {
                   </Box>
                 </Link>
               )}
-              <Stack direction="row" spacing={1} alignItems="flex-start">
-                <PlaceOutlinedIcon sx={{ fontSize: 18, color: 'primary.main', mt: 0.2 }} />
-                <Box>
-                  {headOffice && (
-                    <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.72)' }}>
-                      {headOffice}
-                    </Typography>
-                  )}
+              {offices.length > 0 ? (
+                offices.map((office) => <OfficeBlock key={office.id} office={office} />)
+              ) : (
+                <Stack direction="row" spacing={1} alignItems="flex-start">
+                  <PlaceOutlinedIcon sx={{ fontSize: 18, color: 'primary.main', mt: 0.2 }} />
                   <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.72)' }}>
-                    {presence.join(' · ')}
+                    {fallbackAddress}
                   </Typography>
-                  <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.48)' }}>
-                    Pan-African delivery, community-rooted partnerships.
-                  </Typography>
-                </Box>
-              </Stack>
+                </Stack>
+              )}
+              <Box>
+                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.72)' }}>
+                  {presence.join(' · ')}
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.48)' }}>
+                  Pan-African delivery, community-rooted partnerships.
+                </Typography>
+              </Box>
             </Stack>
           </Grid>
         </Grid>
