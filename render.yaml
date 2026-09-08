@@ -37,6 +37,11 @@ services:
         generateValue: true
       - key: JWT_REFRESH_SECRET
         generateValue: true
+      # Shared with the marketing site's /api/collect proxy. Set the same value
+      # in the Vercel project, or visits are counted without a country.
+      - key: ANALYTICS_INGEST_SECRET
+        generateValue: true
+
       - key: JWT_ACCESS_TTL
         value: "900"
       - key: JWT_REFRESH_TTL

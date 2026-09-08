@@ -2,6 +2,7 @@ import Box from '@mui/material/Box';
 import { useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 
+import { recordPageView } from '../../lib/analytics';
 import { PageTransition } from '../PageTransition';
 import { SchemaOrg } from '../SchemaOrg';
 
@@ -16,6 +17,12 @@ import { WelcomePopup } from './WelcomePopup';
 /** App shell: announcement bar, header, routed page content, newsletter CTA, footer, SEO schema, cookie banner, welcome popup. */
 export const Layout = (): JSX.Element => {
   const { pathname, hash } = useLocation();
+
+  // One view per route, not per render. The hash is left out on purpose: a
+  // jump to #team is the same page, and counting it twice would overstate it.
+  useEffect(() => {
+    recordPageView(pathname);
+  }, [pathname]);
 
   useEffect(() => {
     if (!hash) {

@@ -55,6 +55,13 @@ const envSchema = z.object({
   JWT_REFRESH_SECRET: z.string().min(32).optional(),
   // Deprecated fallback — kept only for local/test backwards compatibility.
   JWT_SECRET: z.string().min(32).optional(),
+  /**
+   * Shared with the marketing site's collect proxy. Only a request carrying it
+   * is believed about which country a visit came from; anything else is still
+   * counted, just without a location.
+   */
+  ANALYTICS_INGEST_SECRET: z.string().min(16).optional(),
+
   JWT_ACCESS_TTL: z.coerce.number().int().positive().default(900),
   JWT_REFRESH_TTL: z.coerce.number().int().positive().default(2_592_000),
 
@@ -133,6 +140,7 @@ export interface AppConfig {
     readonly accessTtlSeconds: number;
     readonly refreshTtlSeconds: number;
   };
+  readonly analytics: { readonly ingestSecret?: string };
   readonly trustProxy: boolean | number | string;
   readonly seedAdmin: { email: string; password: string; name: string };
   readonly seedEditorPassword?: string;
@@ -264,6 +272,7 @@ const buildConfig = (raw: RawEnv): AppConfig => ({
   siteUrl: raw.PUBLIC_SITE_URL,
   adminUrl: raw.ADMIN_URL,
   jwt: deriveJwtSecrets(raw),
+  analytics: { ingestSecret: raw.ANALYTICS_INGEST_SECRET },
   trustProxy: parseTrustProxy(raw.TRUST_PROXY),
   seedAdmin: {
     email: raw.SEED_ADMIN_EMAIL,

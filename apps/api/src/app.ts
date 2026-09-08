@@ -12,6 +12,7 @@ import type { AppLogger } from './config/logger.js';
 import { globalRateLimit, webhookRateLimit } from './middleware/rate-limit.js';
 import { sanitizeBody } from './middleware/sanitize.js';
 import { createAiRouter } from './modules/ai/ai.routes.js';
+import { createAnalyticsRouters } from './modules/analytics/analytics.routes.js';
 import { createAuthRouter } from './modules/auth/auth.routes.js';
 import { buildContentModules } from './modules/content/content.registry.js';
 import { createDashboardRouter } from './modules/dashboard/dashboard.routes.js';
@@ -68,6 +69,10 @@ export const createApp = (
   const submissions = createSubmissionRouters(container);
   app.use('/api/submissions', submissions.publicRouter);
   app.use('/api/admin/submissions', submissions.adminRouter);
+
+  const analytics = createAnalyticsRouters(container, config);
+  app.use('/api/analytics', analytics.publicRouter);
+  app.use('/api/admin/analytics', analytics.adminRouter);
 
   app.use('/api/admin/users', createUserRouter(container));
   app.use('/api/admin/dashboard', createDashboardRouter(container));

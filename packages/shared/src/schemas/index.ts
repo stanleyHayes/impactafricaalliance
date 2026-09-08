@@ -1,3 +1,4 @@
+export * from './analytics.js';
 export * from './common.js';
 export * from './update.js';
 export * from './auth.js';
