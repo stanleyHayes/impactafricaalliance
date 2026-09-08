@@ -1,3 +1,4 @@
+import { organisationReviewInputSchema } from '@iaa/shared';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import RateReviewOutlinedIcon from '@mui/icons-material/RateReviewOutlined';
@@ -15,7 +16,8 @@ import { apiPost } from '../../lib/api-client';
 
 const ratingLabels = ['Choose a rating', 'Poor', 'Fair', 'Good', 'Very good', 'Excellent'];
 
-export const ReviewForm = (): JSX.Element => {
+export const ReviewForm = ({ preview = false }: { preview?: boolean }): JSX.Element => {
+  const [step, setStep] = useState(0);
   const [hoverRating, setHoverRating] = useState(-1);
   const [rating, setRating] = useState<number | null>(null);
   const [form, setForm] = useState({ displayName: '', email: '', role: '', comment: '' });
@@ -29,6 +31,25 @@ export const ReviewForm = (): JSX.Element => {
     if (state === 'busy') return;
     if (rating === null) {
       setError('Choose a rating first.');
+      return;
+    }
+    if (step === 0) {
+      setStep(1);
+      setError('');
+      return;
+    }
+    const validation = organisationReviewInputSchema.safeParse({
+      ...form,
+      displayName: form.displayName.trim(),
+      rating,
+      consent: true,
+    });
+    if (!validation.success) {
+      setError(validation.error.issues[0]?.message || 'Please check your details.');
+      return;
+    }
+    if (preview) {
+      setState('sent');
       return;
     }
     setState('busy');
@@ -51,12 +72,17 @@ export const ReviewForm = (): JSX.Element => {
 
   if (state === 'sent') {
     return (
-      <Alert severity="success">
+      <Alert severity="success" sx={{ boxSizing: 'border-box' }}>
+        {preview && <strong>Demo only — nothing was sent. </strong>}
         Check your email — we have sent a link to confirm it is you. Nothing is published until you
         click it, and until someone here has read it.
       </Alert>
     );
   }
+
+  let submitLabel = preview ? 'Preview submission' : 'Send my review';
+  if (step === 0) submitLabel = 'Continue';
+  if (state === 'busy') submitLabel = 'Sending your review…';
 
   return (
     <Box
@@ -70,6 +96,9 @@ export const ReviewForm = (): JSX.Element => {
         void submit();
       }}
       sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        boxSizing: 'border-box',
         border: 1,
         borderColor: 'divider',
         borderRadius: 4,
@@ -82,8 +111,8 @@ export const ReviewForm = (): JSX.Element => {
       <Box
         sx={{
           px: { xs: 3, sm: 4 },
-          pt: 3.5,
-          pb: 3,
+          pt: 2.5,
+          pb: 2,
           borderBottom: 1,
           borderColor: 'divider',
           background: (theme) =>
@@ -111,9 +140,30 @@ export const ReviewForm = (): JSX.Element => {
         >
           Share your experience.
         </Typography>
-        <Typography sx={{ mt: 1.3, color: 'text.secondary', fontSize: '0.9rem', lineHeight: 1.65 }}>
-          The moments that mattered. The things we could do better. We’re here to listen.
-        </Typography>
+        <Stack direction="row" spacing={1} sx={{ mt: 2 }} aria-label="Review progress">
+          {['Your experience', 'About you'].map((label, index) => (
+            <Box
+              key={label}
+              aria-current={step === index ? 'step' : undefined}
+              sx={{
+                flex: 1,
+                borderTop: 2,
+                borderColor: step >= index ? 'primary.main' : 'divider',
+                pt: 1,
+              }}
+            >
+              <Typography
+                sx={{
+                  fontSize: '0.72rem',
+                  fontWeight: step === index ? 700 : 400,
+                  color: step === index ? 'text.primary' : 'text.secondary',
+                }}
+              >
+                {index + 1}. {label}
+              </Typography>
+            </Box>
+          ))}
+        </Stack>
       </Box>
 
       <Box
@@ -123,115 +173,144 @@ export const ReviewForm = (): JSX.Element => {
           m: 0,
           border: 0,
           minWidth: 0,
-          p: { xs: 3, sm: 4 },
+          p: { xs: 2.5, sm: 3 },
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
           '& .MuiOutlinedInput-root': { borderRadius: 2, fontSize: '0.9rem' },
           '& .MuiInputLabel-root': { fontSize: '0.9rem' },
         }}
       >
-        <Box sx={{ textAlign: 'center', pb: 3.5 }}>
-          <Typography
-            component="legend"
-            id="experience-rating-label"
-            sx={{ width: '100%', fontSize: '0.85rem', fontWeight: 650, mb: 1.5 }}
-          >
-            How was your experience?
-          </Typography>
-          <Rating
-            name="experience-rating"
-            aria-labelledby="experience-rating-label"
-            value={rating}
-            onChange={(_event, next) => {
-              setRating(next);
-              setError('');
-            }}
-            onChangeActive={(_event, next) => setHoverRating(next)}
-            getLabelText={(value) =>
-              `${value} ${value === 1 ? 'star' : 'stars'} — ${ratingLabels[value]}`
-            }
-            sx={{
-              fontSize: { xs: 36, sm: 40 },
-              gap: 0.75,
-              color: '#E9BA49',
-              '& .MuiRating-iconEmpty': { color: 'text.disabled' },
-              '& .MuiRating-label': { p: 0.25 },
-            }}
-          />
-          <Typography
-            aria-live="polite"
-            sx={{ mt: 1, minHeight: 20, fontSize: '0.75rem', color: 'text.secondary' }}
-          >
-            {ratingLabels[hoverRating >= 0 ? hoverRating : (rating ?? 0)]}
-          </Typography>
-        </Box>
+        {step === 0 && (
+          <>
+            <Box sx={{ textAlign: 'center', pb: 2 }}>
+              <Typography
+                component="p"
+                id="experience-rating-label"
+                sx={{ width: '100%', fontSize: '0.85rem', fontWeight: 650, mb: 1.5 }}
+              >
+                How was your experience?
+              </Typography>
+              <Rating
+                name="experience-rating"
+                aria-labelledby="experience-rating-label"
+                value={rating}
+                onChange={(_event, next) => {
+                  setRating(next);
+                  setError('');
+                }}
+                onChangeActive={(_event, next) => setHoverRating(next)}
+                getLabelText={(value) =>
+                  `${value} ${value === 1 ? 'star' : 'stars'} — ${ratingLabels[value]}`
+                }
+                sx={{
+                  fontSize: { xs: 36, sm: 40 },
+                  gap: 0.75,
+                  color: '#E9BA49',
+                  '& .MuiRating-iconEmpty': { color: 'text.disabled' },
+                  '& .MuiRating-label': { p: 0.25 },
+                }}
+              />
+              <Typography
+                aria-live="polite"
+                sx={{ mt: 1, minHeight: 20, fontSize: '0.75rem', color: 'text.secondary' }}
+              >
+                {ratingLabels[hoverRating >= 0 ? hoverRating : (rating ?? 0)]}
+              </Typography>
+            </Box>
 
-        <Stack spacing={2.5}>
-          <TextField
-            label="Your review (optional)"
-            placeholder="What stood out? What could we improve?"
-            value={form.comment}
-            onChange={set('comment')}
-            multiline
-            minRows={3}
-            fullWidth
-            slotProps={{ inputLabel: { shrink: true }, htmlInput: { maxLength: 2000 } }}
-            helperText={`${form.comment.length.toLocaleString()} / 2,000 characters`}
-            sx={{ '& .MuiFormHelperText-root': { textAlign: 'right', mr: 0, fontSize: '0.7rem' } }}
-          />
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pt: 0.5 }}>
-            <Typography sx={{ whiteSpace: 'nowrap', fontWeight: 650, fontSize: '0.8rem' }}>
-              A little about you
-            </Typography>
-            <Box sx={{ height: '1px', flex: 1, bgcolor: 'divider' }} />
-          </Box>
-          <TextField
-            label="Public name"
-            placeholder="How you’d like to appear"
-            value={form.displayName}
-            onChange={set('displayName')}
-            required
-            fullWidth
-            size="small"
-            autoComplete="name"
-            slotProps={{ inputLabel: { shrink: true }, htmlInput: { minLength: 2, maxLength: 80 } }}
-          />
-          <TextField
-            label="Email address"
-            placeholder="you@example.com"
-            type="email"
-            value={form.email}
-            onChange={set('email')}
-            required
-            fullWidth
-            size="small"
-            autoComplete="email"
-            slotProps={{ inputLabel: { shrink: true }, htmlInput: { maxLength: 200 } }}
-          />
-          <TextField
-            label="Your connection to IAA (optional)"
-            placeholder="e.g. Programme participant, partner, volunteer"
-            value={form.role}
-            onChange={set('role')}
-            fullWidth
-            size="small"
-            slotProps={{ inputLabel: { shrink: true }, htmlInput: { maxLength: 80 } }}
-          />
-        </Stack>
+            <TextField
+              label="Your review (optional)"
+              placeholder="What stood out? What could we improve?"
+              value={form.comment}
+              onChange={set('comment')}
+              multiline
+              minRows={2}
+              fullWidth
+              slotProps={{ inputLabel: { shrink: true }, htmlInput: { maxLength: 2000 } }}
+              helperText={`${form.comment.length.toLocaleString()} / 2,000 characters`}
+              sx={{
+                '& .MuiFormHelperText-root': { textAlign: 'right', mr: 0, fontSize: '0.7rem' },
+              }}
+            />
+          </>
+        )}
+        {step === 1 && (
+          <Stack spacing={2.5}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pt: 0.5 }}>
+              <Typography sx={{ whiteSpace: 'nowrap', fontWeight: 650, fontSize: '0.8rem' }}>
+                A little about you
+              </Typography>
+              <Box sx={{ height: '1px', flex: 1, bgcolor: 'divider' }} />
+            </Box>
+            <TextField
+              label="Public name"
+              placeholder="How you’d like to appear"
+              value={form.displayName}
+              onChange={set('displayName')}
+              required
+              fullWidth
+              size="small"
+              autoComplete="name"
+              slotProps={{
+                inputLabel: { shrink: true },
+                htmlInput: { minLength: 2, maxLength: 80 },
+              }}
+            />
+            <TextField
+              label="Email address"
+              placeholder="you@example.com"
+              type="email"
+              value={form.email}
+              onChange={set('email')}
+              required
+              fullWidth
+              size="small"
+              autoComplete="email"
+              slotProps={{ inputLabel: { shrink: true }, htmlInput: { maxLength: 200 } }}
+            />
+            <TextField
+              label="Your connection to IAA (optional)"
+              placeholder="e.g. Programme participant, partner, volunteer"
+              value={form.role}
+              onChange={set('role')}
+              fullWidth
+              size="small"
+              slotProps={{ inputLabel: { shrink: true }, htmlInput: { maxLength: 80 } }}
+            />
+          </Stack>
+        )}
 
         {error && (
           <Alert severity="error" sx={{ mt: 2.5 }}>
             {error}
           </Alert>
         )}
-        <Button
-          type="submit"
-          variant="contained"
-          disabled={state === 'busy'}
-          fullWidth
-          endIcon={state === 'busy' ? undefined : <ArrowForwardRoundedIcon />}
-          sx={{ mt: 3, minHeight: 48, borderRadius: 2, fontWeight: 700 }}
-        >
-          {state === 'busy' ? 'Sending your review…' : 'Send my review'}
-        </Button>
+        <Stack direction="row" spacing={1.5} sx={{ pt: 2 }}>
+          {step === 1 && (
+            <Button
+              type="button"
+              disabled={state === 'busy'}
+              onClick={() => {
+                setStep(0);
+                setError('');
+              }}
+              sx={{ color: 'text.primary' }}
+            >
+              Back
+            </Button>
+          )}
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={state === 'busy'}
+            fullWidth
+            endIcon={state === 'busy' ? undefined : <ArrowForwardRoundedIcon />}
+            sx={{ minHeight: 48, borderRadius: 2, fontWeight: 700 }}
+          >
+            {submitLabel}
+          </Button>
+        </Stack>
         <Stack direction="row" spacing={1} alignItems="flex-start" sx={{ mt: 2 }}>
           <LockOutlinedIcon sx={{ fontSize: 15, mt: 0.3, color: 'text.secondary' }} />
           <Typography sx={{ fontSize: '0.72rem', lineHeight: 1.6, color: 'text.secondary' }}>

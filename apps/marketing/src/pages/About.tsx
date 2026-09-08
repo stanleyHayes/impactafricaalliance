@@ -45,6 +45,7 @@ import { Section } from '../components/Section';
 import { SectionReveal } from '../components/SectionReveal';
 import { Seo } from '../components/Seo';
 import { CardGridSkeleton, PartnerLogosSkeleton } from '../components/skeletons';
+import { Watermark } from '../components/Watermark';
 import { IMAGES } from '../content/images';
 import { usePageCopy, usePartners, useTeam } from '../lib/content-hooks';
 import { useSiteImage } from '../lib/site-images';
@@ -345,138 +346,151 @@ const VisionMission = (): JSX.Element => (
 const PurposeSection = (): JSX.Element => (
   <Box
     component="section"
-    sx={{
-      position: 'relative',
-      overflow: 'hidden',
-      bgcolor: '#0D3020',
-      color: 'common.white',
-      py: { xs: 8, md: 11 },
-      '&::before': {
-        position: 'absolute',
-        top: -150,
-        right: -140,
-        width: 420,
-        height: 420,
-        border: `1px solid ${alpha(brandColors.gold, 0.14)}`,
-        borderRadius: '50%',
-        boxShadow: `0 0 0 60px ${alpha(brandColors.gold, 0.025)}`,
-        content: '""',
-      },
-    }}
+    id="purpose"
+    sx={{ bgcolor: '#0D3020', color: 'common.white', py: { xs: 3, md: 5 } }}
   >
-    <Box sx={{ position: 'relative' }}>
-      <Section
-        color="light"
-        eyebrow="Why We Exist"
-        title="Our purpose is grounded in Africa's own blueprint for prosperity."
-        subtitle="IAA equips youth and women with knowledge, skills, and resources to lead change, drive innovation, and contribute to Africa's socio-economic growth."
-      >
-        <Grid container spacing={{ xs: 4, md: 5 }} sx={{ alignItems: 'stretch' }}>
-          <Grid size={{ xs: 12, md: 5 }}>
-            <SectionReveal fillHeight>
-              <Box
-                sx={{
-                  height: '100%',
-                  p: { xs: 3, md: 4 },
-                  border: '1px solid rgba(255,255,255,0.13)',
-                  borderRadius: 4,
-                  bgcolor: 'rgba(255,255,255,0.07)',
-                  backdropFilter: 'blur(10px)',
-                }}
-              >
-                <PublicRoundedIcon sx={{ color: 'secondary.light', fontSize: 42 }} />
-                <Typography variant="h4" sx={{ mt: 2, color: 'common.white' }}>
-                  Agenda 2063: The Africa We Want
+    <Section
+      color="light"
+      eyebrow="Why We Exist"
+      title="Our purpose is grounded in Africa's own blueprint for prosperity."
+      subtitle="IAA equips youth and women with knowledge, skills, and resources to lead change, drive innovation, and contribute to Africa's socio-economic growth."
+    >
+      <Grid container spacing={{ xs: 3, md: 5 }} sx={{ alignItems: 'stretch' }}>
+        <Grid size={{ xs: 12, md: 5 }}>
+          <SectionReveal fillHeight>
+            <Box
+              sx={{
+                position: 'relative',
+                overflow: 'hidden',
+                height: '100%',
+                boxSizing: 'border-box',
+                p: { xs: 3, md: 4 },
+                borderRadius: 4,
+                bgcolor: brandColors.mint,
+                color: brandColors.deepForest,
+              }}
+            >
+              <Watermark
+                variant="africa"
+                size={360}
+                position="bottom-right"
+                color={brandColors.forestGreen}
+                opacity={0.09}
+                sx={{ animation: 'none' }}
+              />
+              <Box sx={{ position: 'relative', zIndex: 1 }}>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <PublicRoundedIcon sx={{ fontSize: 20 }} />
+                  <Typography variant="overline" sx={{ letterSpacing: 1.8, fontWeight: 700 }}>
+                    Africa&apos;s blueprint
+                  </Typography>
+                </Stack>
+                <Typography
+                  sx={{
+                    mt: 3,
+                    fontSize: { xs: '4.5rem', md: '6rem' },
+                    fontWeight: 750,
+                    letterSpacing: '-0.07em',
+                    lineHeight: 1,
+                  }}
+                >
+                  2063
+                  <Box component="span" sx={{ color: brandColors.forestGreen }}>
+                    .
+                  </Box>
                 </Typography>
-                <Typography sx={{ mt: 2, color: 'rgba(255,255,255,0.72)', lineHeight: 1.75 }}>
-                  Our work aligns with the African Union&apos;s vision for an integrated,
-                  prosperous, and peaceful Africa, powered by its own citizens.
+                <Typography variant="h4" sx={{ mt: 1.5, fontSize: { xs: '1.8rem', md: '2rem' } }}>
+                  The Africa We Want
                 </Typography>
-                <Stack direction="row" flexWrap="wrap" gap={1} sx={{ mt: 3 }}>
+                <Typography
+                  sx={{ mt: 2, color: alpha(brandColors.deepForest, 0.8), lineHeight: 1.75 }}
+                >
+                  Our work aligns with the African Union&apos;s Agenda 2063 vision for an
+                  integrated, prosperous, and peaceful Africa, powered by its own citizens.
+                </Typography>
+                <Stack
+                  spacing={1}
+                  sx={{
+                    mt: 3,
+                    pt: 2.5,
+                    borderTop: 1,
+                    borderColor: alpha(brandColors.deepForest, 0.18),
+                  }}
+                >
                   {[
                     'Inclusive growth',
                     'People-driven development',
                     'Pan-African collaboration',
                   ].map((item) => (
-                    <Chip
-                      key={item}
-                      label={item}
-                      sx={{
-                        bgcolor: alpha(brandColors.gold, 0.16),
-                        color: 'secondary.light',
-                        fontWeight: 700,
-                      }}
-                    />
+                    <Stack key={item} direction="row" spacing={1.25} alignItems="center">
+                      <Box
+                        sx={{
+                          width: 5,
+                          height: 5,
+                          borderRadius: '50%',
+                          bgcolor: brandColors.forestGreen,
+                        }}
+                      />
+                      <Typography sx={{ fontSize: '0.85rem', fontWeight: 600 }}>{item}</Typography>
+                    </Stack>
                   ))}
                 </Stack>
               </Box>
-            </SectionReveal>
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 7 }}>
-            <SectionReveal fillHeight delay={0.08}>
-              <Box
-                sx={{
-                  height: '100%',
-                  p: { xs: 3, md: 4 },
-                  border: '1px solid rgba(255,255,255,0.13)',
-                  borderRadius: 4,
-                  bgcolor: 'rgba(255,255,255,0.05)',
-                }}
-              >
-                <Typography
-                  variant="overline"
-                  sx={{ color: 'secondary.light', fontWeight: 800, letterSpacing: 1.6 }}
-                >
-                  UN Sustainable Development Goals
-                </Typography>
-                <Typography sx={{ mt: 1, color: 'rgba(255,255,255,0.72)', lineHeight: 1.75 }}>
-                  The alliance contributes directly to priority global goals through education,
-                  gender equity, decent work, innovation, youth inclusion, and partnerships.
-                </Typography>
-                <Grid container spacing={1.25} sx={{ mt: 3 }}>
-                  {SDG_GOALS.map((goal) => (
-                    <Grid key={goal.number} size={{ xs: 12, sm: 6 }}>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          height: '100%',
-                          alignItems: 'center',
-                          gap: 1.25,
-                          p: 1.25,
-                          border: '1px solid rgba(255,255,255,0.1)',
-                          borderRadius: 2,
-                          bgcolor: 'rgba(255,255,255,0.055)',
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            display: 'grid',
-                            width: 34,
-                            height: 34,
-                            flexShrink: 0,
-                            placeItems: 'center',
-                            borderRadius: 1.25,
-                            bgcolor: 'secondary.main',
-                            color: brandColors.charcoalBlack,
-                            fontWeight: 850,
-                          }}
-                        >
-                          {goal.number}
-                        </Box>
-                        <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.84)' }}>
-                          {goal.title}
-                        </Typography>
-                      </Box>
-                    </Grid>
-                  ))}
-                </Grid>
-              </Box>
-            </SectionReveal>
-          </Grid>
+            </Box>
+          </SectionReveal>
         </Grid>
-      </Section>
-    </Box>
+        <Grid size={{ xs: 12, md: 7 }}>
+          <SectionReveal fillHeight delay={0.08}>
+            <Box sx={{ height: '100%', py: { xs: 1, md: 2 }, pl: { md: 1 } }}>
+              <Typography
+                variant="overline"
+                sx={{ color: 'secondary.light', letterSpacing: 1.6, fontWeight: 700 }}
+              >
+                Shared global priorities
+              </Typography>
+              <Typography variant="h4" sx={{ mt: 1, fontSize: { xs: '1.8rem', md: '2rem' } }}>
+                Local action. Global goals.
+              </Typography>
+              <Typography sx={{ mt: 1.5, color: 'rgba(255,255,255,0.7)', lineHeight: 1.75 }}>
+                Our programmes contribute to these UN Sustainable Development Goals through
+                education, opportunity, and partnerships.
+              </Typography>
+              <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0, mt: 3 }}>
+                {SDG_GOALS.map((goal) => (
+                  <Box
+                    component="li"
+                    key={goal.number}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 2,
+                      py: 1.5,
+                      borderTop: '1px solid rgba(255,255,255,0.13)',
+                    }}
+                  >
+                    <Typography
+                      component="span"
+                      sx={{
+                        minWidth: 32,
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        color: 'secondary.light',
+                        fontVariantNumeric: 'tabular-nums',
+                      }}
+                    >
+                      {String(goal.number).padStart(2, '0')}
+                    </Typography>
+                    <Typography sx={{ fontSize: '0.95rem', fontWeight: 500 }}>
+                      {goal.title}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+            </Box>
+          </SectionReveal>
+        </Grid>
+      </Grid>
+    </Section>
   </Box>
 );
 
@@ -938,71 +952,134 @@ const OrgStructureSection = (): JSX.Element => (
     title="A distributed structure for Pan-African delivery."
     subtitle="IAA is designed to stay close to communities while keeping strategy, accountability, and learning connected across countries."
   >
-    <Grid container spacing={{ xs: 4, md: 5 }} sx={{ alignItems: 'center' }}>
+    <Grid container spacing={{ xs: 4, md: 6 }} sx={{ alignItems: 'stretch' }}>
       <Grid size={{ xs: 12, md: 4 }}>
         <SectionReveal fillHeight>
           <Box
             sx={{
               height: '100%',
+              boxSizing: 'border-box',
+              position: 'relative',
+              overflow: 'hidden',
               p: { xs: 3, md: 4 },
               borderRadius: 4,
               bgcolor: 'primary.main',
               color: 'primary.contrastText',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
             }}
           >
-            <AccountTreeRoundedIcon sx={{ color: 'primary.contrastText', fontSize: 44 }} />
-            <Typography variant="h4" sx={{ mt: 2 }}>
-              Central clarity, local ownership.
-            </Typography>
-            <Typography
-              sx={{ mt: 2, color: alpha(brandColors.deepForest, 0.75), lineHeight: 1.75 }}
-            >
-              The structure supports governance, program quality, and local adaptation without
-              losing the human texture of community-led work.
-            </Typography>
+            <Watermark
+              variant="network"
+              size={340}
+              position="bottom-right"
+              color={brandColors.deepForest}
+              opacity={0.08}
+              sx={{ animation: 'none' }}
+            />
+            <Box sx={{ position: 'relative', zIndex: 1 }}>
+              <AccountTreeRoundedIcon sx={{ fontSize: 32, mb: 3 }} />
+              <Typography variant="h4">Central clarity, local ownership.</Typography>
+              <Typography
+                sx={{ mt: 2, color: alpha(brandColors.deepForest, 0.8), lineHeight: 1.75 }}
+              >
+                The structure supports governance, program quality, and local adaptation without
+                losing the human texture of community-led work.
+              </Typography>
+              <Typography
+                variant="overline"
+                sx={{ display: 'block', mt: 4, fontSize: '0.65rem', letterSpacing: 1.5 }}
+              >
+                One alliance. Connected at every level.
+              </Typography>
+            </Box>
           </Box>
         </SectionReveal>
       </Grid>
       <Grid size={{ xs: 12, md: 8 }}>
-        <Stack spacing={1.5}>
-          {STRUCTURE_LEVELS.map((level, index) => (
-            <SectionReveal key={level.title} delay={index * 0.04}>
+        <Box
+          component="ol"
+          sx={{
+            listStyle: 'none',
+            m: 0,
+            p: 0,
+            position: 'relative',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              left: { xs: 22, md: 26 },
+              top: 30,
+              bottom: 50,
+              width: '1px',
+              bgcolor: 'divider',
+            },
+          }}
+        >
+          {STRUCTURE_LEVELS.map((level, index) => {
+            const Icon = [
+              VisibilityRoundedIcon,
+              HubRoundedIcon,
+              PublicRoundedIcon,
+              VolunteerActivismRoundedIcon,
+            ][index]!;
+            return (
               <Box
+                component="li"
+                key={level.title}
                 sx={{
+                  position: 'relative',
                   display: 'grid',
-                  gridTemplateColumns: { xs: '44px 1fr', md: '64px 1fr' },
-                  gap: 2,
-                  alignItems: 'center',
-                  p: { xs: 2, md: 2.5 },
-                  border: '1px solid rgba(0,30,20,0.1)',
-                  borderRadius: 3,
-                  bgcolor: index === 0 ? alpha(brandColors.gold, 0.12) : 'background.paper',
+                  gridTemplateColumns: { xs: '46px 1fr', md: '54px 1fr' },
+                  gap: { xs: 2, md: 3 },
+                  pb: index === 3 ? 0 : 3,
                 }}
               >
                 <Box
                   sx={{
+                    mt: 0.5,
+                    width: { xs: 44, md: 52 },
+                    height: { xs: 44, md: 52 },
                     display: 'grid',
-                    width: { xs: 44, md: 54 },
-                    height: { xs: 44, md: 54 },
                     placeItems: 'center',
-                    borderRadius: '50%',
-                    bgcolor: index === 0 ? 'secondary.main' : 'rgba(0,30,20,0.08)',
-                    color: index === 0 ? brandColors.charcoalBlack : 'text.primary',
-                    fontWeight: 850,
+                    borderRadius: 2,
+                    border: 1,
+                    borderColor: index === 0 ? 'secondary.main' : 'divider',
+                    bgcolor: index === 0 ? 'secondary.main' : 'background.default',
+                    color: index === 0 ? brandColors.deepForest : 'text.primary',
                   }}
                 >
-                  {index + 1}
+                  <Icon sx={{ fontSize: 23 }} />
                 </Box>
-                <Box>
-                  <Typography sx={{ fontWeight: 800 }}>{level.title}</Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.35 }}>
+                <Box
+                  sx={{
+                    pb: index === 3 ? 0 : 3,
+                    borderBottom: index === 3 ? 0 : 1,
+                    borderColor: 'divider',
+                  }}
+                >
+                  <Typography
+                    variant="overline"
+                    sx={{ color: 'text.secondary', fontSize: '0.62rem', letterSpacing: 1.6 }}
+                  >
+                    Level {String(index + 1).padStart(2, '0')}
+                  </Typography>
+                  <Typography
+                    component="h3"
+                    sx={{ fontWeight: 750, fontSize: { xs: '1.05rem', md: '1.2rem' }, mt: 0.25 }}
+                  >
+                    {level.title}
+                  </Typography>
+                  <Typography
+                    sx={{ color: 'text.secondary', fontSize: '0.9rem', lineHeight: 1.7, mt: 0.75 }}
+                  >
                     {level.text}
                   </Typography>
                 </Box>
               </Box>
-            </SectionReveal>
-          ))}
-        </Stack>
+            );
+          })}
+        </Box>
       </Grid>
     </Grid>
   </Section>

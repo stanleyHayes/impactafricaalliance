@@ -126,6 +126,8 @@ export class ReviewService {
       { upsert: true, new: true },
     ).exec();
 
+    // An edited review is pending again; remove its previous public rating immediately.
+    await this.refreshEventRating(eventId);
     return { status: 'pending' };
   }
 

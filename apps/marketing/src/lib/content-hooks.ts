@@ -54,19 +54,22 @@ export const usePillarImages = (): UseQueryResult<Paginated<PillarImage>> =>
 /** Published reviews for one event, with the rating summary alongside. */
 export const useEventReviews = (
   eventId: string | undefined,
+  currentPage = 1,
 ): UseQueryResult<Paginated<PublicReview> & { summary: RatingSummary }> =>
   useQuery({
-    queryKey: ['event-reviews', eventId],
+    queryKey: ['event-reviews', eventId, currentPage],
     queryFn: () =>
-      apiGet<Paginated<PublicReview> & { summary: RatingSummary }>(`/reviews/events/${eventId}`),
+      apiGet<Paginated<PublicReview> & { summary: RatingSummary }>(
+        `/reviews/events/${eventId}?page=${currentPage}`,
+      ),
     enabled: Boolean(eventId),
   });
 
 /** Published reviews of the organisation itself. */
-export const useOrganisationReviews = (): UseQueryResult<Paginated<PublicReview>> =>
+export const useOrganisationReviews = (currentPage = 1): UseQueryResult<Paginated<PublicReview>> =>
   useQuery({
-    queryKey: ['organisation-reviews'],
-    queryFn: () => apiGet<Paginated<PublicReview>>('/reviews/organisation'),
+    queryKey: ['organisation-reviews', currentPage],
+    queryFn: () => apiGet<Paginated<PublicReview>>(`/reviews/organisation?page=${currentPage}`),
   });
 
 export const useOrganisationRating = (): UseQueryResult<RatingSummary> =>

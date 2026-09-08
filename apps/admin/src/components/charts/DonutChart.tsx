@@ -11,6 +11,8 @@ export interface DonutDatum {
 
 interface DonutChartProps {
   data: DonutDatum[];
+  showPercentages?: boolean;
+  responsive?: boolean;
   size?: number;
   thickness?: number;
   centerValue?: string;
@@ -24,6 +26,8 @@ interface DonutChartProps {
  */
 export const DonutChart = ({
   data,
+  showPercentages = false,
+  responsive = false,
   size = 168,
   thickness = 22,
   centerValue,
@@ -47,7 +51,12 @@ export const DonutChart = ({
     });
 
   return (
-    <Stack direction="row" spacing={2.5} alignItems="center" sx={{ width: '100%' }}>
+    <Stack
+      direction={responsive ? { xs: 'column', sm: 'row' } : 'row'}
+      spacing={2.5}
+      alignItems="center"
+      sx={{ width: '100%' }}
+    >
       <Box sx={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
         <Box component="svg" viewBox={`0 0 ${size} ${size}`} sx={{ width: size, height: size }}>
           <circle
@@ -96,7 +105,7 @@ export const DonutChart = ({
           </Typography>
         </Box>
       </Box>
-      <Stack spacing={1} sx={{ minWidth: 0, flexGrow: 1 }}>
+      <Stack spacing={1} sx={{ minWidth: 0, flexGrow: 1, width: responsive ? '100%' : undefined }}>
         {data.map((datum) => (
           <Stack key={datum.label} direction="row" spacing={1} alignItems="center">
             <Box
@@ -114,6 +123,7 @@ export const DonutChart = ({
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ ml: 'auto' }}>
               {datum.value}
+              {showPercentages && ` · ${total > 0 ? Math.round((datum.value / total) * 100) : 0}%`}
             </Typography>
           </Stack>
         ))}

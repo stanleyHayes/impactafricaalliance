@@ -21,6 +21,8 @@ export interface EmptyStateProps {
   secondaryAction?: EmptyStateAction;
   /** Defaults to true; gated by prefers-reduced-motion regardless. */
   animated?: boolean;
+  /** Compact treatment for an empty dashboard panel. */
+  compact?: boolean;
 }
 
 /** Medallion settles in: gentle scale + fade. */
@@ -74,7 +76,9 @@ export const EmptyState = ({
   primaryAction,
   secondaryAction,
   animated = true,
+  compact = false,
 }: EmptyStateProps): JSX.Element => {
+  const medallionSize = compact ? 72 : MEDALLION;
   const theme = useTheme();
   const green = theme.palette.primary.main;
   const greenLight = theme.palette.primary.light;
@@ -89,7 +93,7 @@ export const EmptyState = ({
         justifyContent: 'center',
         textAlign: 'center',
         px: 3,
-        py: { xs: 7, sm: 10 },
+        py: compact ? 3 : { xs: 7, sm: 10 },
         width: '100%',
         // Honor reduced-motion: freeze every decorative animation.
         '@media (prefers-reduced-motion: reduce)': {
@@ -101,9 +105,9 @@ export const EmptyState = ({
       <Box
         sx={{
           position: 'relative',
-          width: MEDALLION,
-          height: MEDALLION,
-          mb: 3.5,
+          width: medallionSize,
+          height: medallionSize,
+          mb: compact ? 2 : 3.5,
           animation: anim(animated, `${medallionIn} 0.6s cubic-bezier(0.22, 1, 0.36, 1) both`),
         }}
       >
@@ -159,7 +163,7 @@ export const EmptyState = ({
             background: `linear-gradient(155deg, ${alpha(greenLight, 0.16)} 0%, ${alpha(green, 0.1)} 100%)`,
             border: `1px solid ${alpha(green, 0.18)}`,
             boxShadow: `inset 0 1px 0 ${alpha('#ffffff', 0.6)}, 0 12px 28px -16px ${alpha(green, 0.55)}`,
-            '& > svg': { fontSize: 44, position: 'relative', zIndex: 1 },
+            '& > svg': { fontSize: compact ? 30 : 44, position: 'relative', zIndex: 1 },
           }}
         >
           {/* Sweeping light sheen across the medallion face. */}
@@ -181,7 +185,7 @@ export const EmptyState = ({
       </Box>
 
       <Typography
-        variant="h5"
+        variant={compact ? 'h6' : 'h5'}
         sx={{
           fontWeight: 700,
           color: 'text.primary',

@@ -11,6 +11,11 @@ export const ReviewsEmptyState = (): JSX.Element => {
   return (
     <Box
       sx={{
+        height: '100%',
+        boxSizing: 'border-box',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
         position: 'relative',
         overflow: 'hidden',
         px: { xs: 3, sm: 5 },

@@ -9,12 +9,12 @@ import { PageHero } from '../components/PageHero';
 import { Section } from '../components/Section';
 import { SectionReveal } from '../components/SectionReveal';
 import { Seo } from '../components/Seo';
-import { RatingHeadline } from '../features/reviews/RatingStars';
+import { previewSummary } from '../features/reviews/review-preview';
 import { ReviewForm } from '../features/reviews/ReviewForm';
-import { ReviewList } from '../features/reviews/ReviewList';
-import { ReviewsEmptyState } from '../features/reviews/ReviewsEmptyState';
+import { ReviewsFeed } from '../features/reviews/ReviewsFeed';
+import { ReviewsSummary } from '../features/reviews/ReviewsSummary';
 import { apiPost } from '../lib/api-client';
-import { useOrganisationRating, useOrganisationReviews, usePageCopy } from '../lib/content-hooks';
+import { useOrganisationRating, usePageCopy } from '../lib/content-hooks';
 
 /**
  * Confirms an address when someone arrives from the link in their email.
@@ -52,9 +52,15 @@ const Confirmation = ({ token }: { token: string }): JSX.Element => {
   );
 };
 
+const isReviewPreview = (params: URLSearchParams): boolean =>
+  import.meta.env.DEV && params.get('preview') === 'reviews';
+const confirmationToken = (params: URLSearchParams): string | null =>
+  isReviewPreview(params) ? null : params.get('token');
+
 const Reviews = (): JSX.Element => {
   const [params] = useSearchParams();
-  const token = params.get('token');
+  const token = confirmationToken(params);
+  const preview = isReviewPreview(params);
   const copy = usePageCopy('reviews', {
     seoTitle: 'Reviews',
     seoDescription:
@@ -64,8 +70,9 @@ const Reviews = (): JSX.Element => {
     heroSubtitle:
       'What partners, participants and attendees say about working with us — published as written, once read.',
   });
-  const { data, isLoading } = useOrganisationReviews();
-  const { data: summary } = useOrganisationRating();
+  const { data: liveSummary } = useOrganisationRating();
+
+  const summary = preview ? previewSummary : liveSummary;
 
   return (
     <>
@@ -77,11 +84,16 @@ const Reviews = (): JSX.Element => {
         {...(copy.heroImageUrl ? { image: copy.heroImageUrl } : {})}
       />
       <Section bgcolor="background.default">
+        {preview && (
+          <Alert severity="info" sx={{ mb: 3 }}>
+            Design preview — fictional reviews and ratings. Nothing entered here will be submitted.
+          </Alert>
+        )}
         {token && <Confirmation token={token} />}
 
         {summary && summary.count > 0 && (
           <Box sx={{ mb: 4 }}>
-            <RatingHeadline summary={summary} />
+            <ReviewsSummary summary={summary} />
           </Box>
         )}
 
@@ -92,9 +104,7 @@ const Reviews = (): JSX.Element => {
           sx={{ mt: 2 }}
         >
           <Box sx={{ flex: '1 1 60%', width: '100%', minWidth: 0 }}>
-            {isLoading && <Skeleton variant="rounded" height={240} sx={{ borderRadius: 3 }} />}
-            {!isLoading && (data?.items.length ?? 0) === 0 && <ReviewsEmptyState />}
-            <ReviewList reviews={data?.items ?? []} />
+            <ReviewsFeed preview={preview} />
           </Box>
 
           <Box
@@ -102,12 +112,10 @@ const Reviews = (): JSX.Element => {
               flex: '1 1 40%',
               width: '100%',
               minWidth: 0,
-              position: { md: 'sticky' },
-              top: { md: 96 },
             }}
           >
             <SectionReveal>
-              <ReviewForm />
+              <ReviewForm preview={preview} />
             </SectionReveal>
           </Box>
         </Stack>

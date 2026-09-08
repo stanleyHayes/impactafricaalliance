@@ -17,6 +17,8 @@ interface BarChartProps {
   formatLabel?: (label: string) => string;
   formatValue?: (value: number) => string;
   emptyMessage?: string;
+  /** Limit axis labels for dense reporting windows. */
+  maxLabels?: number;
 }
 
 const VIEWBOX_WIDTH = 600;
@@ -35,6 +37,7 @@ export const BarChart = ({
   formatLabel = (label) => label,
   formatValue = (value) => String(value),
   emptyMessage = 'No data yet',
+  maxLabels = Number.POSITIVE_INFINITY,
 }: BarChartProps): JSX.Element => {
   const theme = useTheme();
   const labelColor = theme.palette.text.secondary;
@@ -101,7 +104,7 @@ export const BarChart = ({
         const y = baselineY - barHeight;
         return (
           <g key={datum.label}>
-            <title>{`${formatLabel(datum.label)}: ${formatValue(datum.value)}`}</title>
+            <title>{`${datum.label}: ${formatValue(datum.value)}`}</title>
             <rect
               x={x}
               y={y}
@@ -111,7 +114,7 @@ export const BarChart = ({
               fill={color}
               opacity={0.92}
             />
-            {datum.value > 0 && (
+            {datum.value > 0 && data.length <= maxLabels * 2 && (
               <text
                 x={x + barWidth / 2}
                 y={y - 7}
@@ -130,7 +133,9 @@ export const BarChart = ({
               fontSize={12}
               fill={labelColor}
             >
-              {formatLabel(datum.label)}
+              {index % Math.max(1, Math.ceil(data.length / maxLabels)) === 0
+                ? formatLabel(datum.label)
+                : ''}
             </text>
           </g>
         );

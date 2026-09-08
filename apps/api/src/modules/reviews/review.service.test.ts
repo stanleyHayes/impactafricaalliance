@@ -19,6 +19,7 @@ const build = () => {
   const send = vi.fn().mockResolvedValue(undefined);
   const logger = { error: vi.fn(), warn: vi.fn(), info: vi.fn() } as unknown as AppLogger;
   const service = new ReviewService(config, { send } as unknown as EmailProvider, logger);
+  vi.spyOn(service, 'refreshEventRating').mockResolvedValue(undefined);
   return { service, send, logger };
 };
 
@@ -132,6 +133,7 @@ describe('the review link an attendee is sent', () => {
     const update = writes[0]?.update as { $set: Record<string, unknown> };
     expect(update.$set.status).toBe('pending');
     expect(update.$set.publishedAt).toBeUndefined();
+    expect(service.refreshEventRating).toHaveBeenCalledWith(eventId);
   });
 });
 
@@ -192,5 +194,34 @@ describe('a review of the organisation', () => {
     } as never);
 
     await expect(service.confirmOrganisationReview('spent')).rejects.toThrow(/already been used/);
+  });
+});
+
+describe('public event comment moderation', () => {
+  it('restricts both comments and rating summaries to approved, verified reviews', async () => {
+    const { service } = build();
+    const query = {
+      sort: vi.fn(),
+      skip: vi.fn(),
+      limit: vi.fn(),
+      select: vi.fn(),
+      lean: vi.fn(),
+      exec: vi.fn().mockResolvedValue([]),
+    };
+    for (const method of ['sort', 'skip', 'limit', 'select', 'lean'] as const)
+      query[method].mockReturnValue(query);
+    const find = vi.spyOn(ReviewModel, 'find').mockReturnValue(query as never);
+    vi.spyOn(ReviewModel, 'countDocuments').mockReturnValue({
+      exec: vi.fn().mockResolvedValue(0),
+    } as never);
+    await service.publicReviews('event', { eventId });
+    await service.summary('event', eventId);
+    expect(find).toHaveBeenCalledTimes(2);
+    for (const [filter] of find.mock.calls)
+      expect(filter).toMatchObject({
+        subject: 'event',
+        status: 'published',
+        verifiedAt: { $ne: null },
+      });
   });
 });
