@@ -1377,7 +1377,9 @@ const ManageContentPanel = (): JSX.Element => (
   <Panel title="Manage content" subtitle="Jump into a collection">
     <Grid container spacing={1.5} sx={{ p: 2.5 }}>
       {RESOURCES.map((resource) => (
-        <Grid key={resource.key} size={{ xs: 12, sm: 6 }}>
+        // Four across on a wide screen now the panel has the full width;
+        // two would leave half the row empty.
+        <Grid key={resource.key} size={{ xs: 12, sm: 6, lg: 3 }}>
           <ContentTile
             resourceKey={resource.key}
             label={resource.label}
@@ -1444,9 +1446,11 @@ const DashboardBody = ({
       </Grid>
     </Grid>
 
-    {/* Recent activity + content quick links */}
-    <Grid container spacing={2.5} sx={{ alignItems: 'stretch' }}>
-      <Grid size={{ xs: 12, md: 7 }}>
+    {/* Recent activity, then the content shortcuts beneath it. Full width
+        each: side by side, the submissions list was squeezed narrow enough to
+        wrap every entry, and the shortcut grid was cramped into two columns. */}
+    <Grid container spacing={2.5}>
+      <Grid size={12}>
         <Panel
           title="Recent submissions"
           subtitle="Latest inbound activity"
@@ -1465,7 +1469,7 @@ const DashboardBody = ({
           <RecentSubmissions loading={recentLoading} items={recent} />
         </Panel>
       </Grid>
-      <Grid size={{ xs: 12, md: 5 }}>
+      <Grid size={12}>
         <ManageContentPanel />
       </Grid>
     </Grid>
