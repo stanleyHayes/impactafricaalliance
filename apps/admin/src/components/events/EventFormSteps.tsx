@@ -184,9 +184,24 @@ export const EventRegistrationFields = ({
       onChange={(e) => setField('meetingUrl', e.target.value)}
       helperText="For online sessions. Never shown on the public event page — only someone who has completed registration sees it."
     />
+  </>
+);
+
+export const EventFollowUpFields = ({ form, setField }: StepProps): JSX.Element => (
+  <>
+    <Box sx={{ p: 2.5, bgcolor: 'action.hover', borderRadius: 2 }}>
+      <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+        Stay in touch automatically
+      </Typography>
+      <Typography variant="body2" color="text.secondary">
+        Set a reminder before the event and a thank-you afterwards. Leave either timing blank to
+        turn that email off.
+      </Typography>
+    </Box>
     <TextField
       label={fieldLabel(NotificationsOutlinedIcon, 'Remind registrants (hours before)')}
       type="number"
+      slotProps={{ htmlInput: { min: 1, max: 168, step: 1 } }}
       value={form.reminderHoursBefore}
       onChange={(e) => setField('reminderHoursBefore', e.target.value)}
       helperText="Leave blank for no reminder. 24 sends it the day before, with the joining link."
@@ -194,6 +209,7 @@ export const EventRegistrationFields = ({
     <TextField
       label={fieldLabel(FavoriteBorderOutlinedIcon, 'Thank registrants (minutes after)')}
       type="number"
+      slotProps={{ htmlInput: { min: 1, max: 1440, step: 1 } }}
       value={form.thankYouMinutesAfter}
       onChange={(e) => setField('thankYouMinutesAfter', e.target.value)}
       helperText="Leave blank for no thank-you. Counted from the end time, or the start if none is set."
@@ -205,6 +221,16 @@ export const EventRegistrationFields = ({
       onChange={(questions) => setField('questions', questions)}
     />
   </>
+);
+
+const AutomationSummary = ({ form }: { form: EventFormState }): JSX.Element => (
+  <Typography variant="body2" color="text.secondary">
+    Reminder: {form.reminderHoursBefore ? `${form.reminderHoursBefore} hours before start` : 'Off'}{' '}
+    · Thank-you:{' '}
+    {form.thankYouMinutesAfter
+      ? `${form.thankYouMinutesAfter} minutes after end (or start if no end is set)`
+      : 'Off'}
+  </Typography>
 );
 
 export const EventReviewFields = ({
@@ -259,6 +285,7 @@ export const EventReviewFields = ({
               Joining link shared after registration · {form.meetingUrl}
             </Typography>
           )}
+          <AutomationSummary form={form} />
           {form.questions.length > 0 && (
             <Typography variant="body2" color="text.secondary">
               {form.questions.length} additional registration question

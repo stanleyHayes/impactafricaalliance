@@ -765,3 +765,12 @@ Owner: Codex. Status: implemented; focused checks pass; browser visual acceptanc
 - Added loading rows, actionable retry, an explanatory empty state and page ranges. Export remains explicitly scoped to the current page, preserves custom question columns and CSV escaping, and is disabled during loading/failure.
 - Event-card registration counts use a themed treatment and open event details; zero counts remain hidden.
 - Verification: 10 focused registration/CSV/event-detail tests, admin TypeScript, changed-file ESLint and diff checks pass. Local browser navigation to port 5299 returned connection refused; no browser or authenticated visual acceptance is claimed. Main-branch publication authorized on 2026-09-09; no deployment performed.
+
+### Event communication UI redesign — 2026-09-09
+
+Owner: Codex. Status: implemented and verified with automated checks; publication to main authorized.
+
+- Identified the UI introduced by `6d254e7`: event messaging composer/history and automation timing fields in the editor.
+- Redesigned messaging with a themed header, responsive composer/content-preview columns, character limits, explicit link inclusion, message review in the send confirmation, delivery statuses, expandable sent bodies, history retry and persistent send errors. No actual messages sent during verification.
+- Split the eight-field registration step: Registration now has five fields; Questions & follow-up holds two automation timings and the question builder. Updated step validation, final action labels, review summary and form documentation. Existing direct routes, values and null-clearing contracts remain intact.
+- Verification: 12 focused tests across messaging, event detail/editor and event-form suites pass; admin TypeScript, changed-file ESLint, production build and diff checks pass. Existing bundle-size advisory remains. Browser/mobile visual acceptance and live email delivery were not verified.

@@ -10,7 +10,13 @@ import {
 } from '@iaa/shared';
 import dayjs, { type Dayjs } from 'dayjs';
 
-export const EVENT_FORM_STEPS = ['Details', 'Schedule', 'Registration', 'Review'] as const;
+export const EVENT_FORM_STEPS = [
+  'Details',
+  'Schedule',
+  'Registration',
+  'Questions & follow-up',
+  'Review',
+] as const;
 
 export interface EventFormState {
   image?: MediaAsset;
@@ -132,16 +138,8 @@ export const parseEventForm = (
 const fieldsByStep = [
   ['title', 'description', 'type', 'image'],
   ['startAt', 'endAt', 'location', 'host', 'hostTitle'],
-  [
-    'registrationEnabled',
-    'capacity',
-    'admission',
-    'registrationClosesAt',
-    'meetingUrl',
-    'reminderHoursBefore',
-    'thankYouMinutesAfter',
-    'questions',
-  ],
+  ['registrationEnabled', 'capacity', 'admission', 'registrationClosesAt', 'meetingUrl'],
+  ['reminderHoursBefore', 'thankYouMinutesAfter', 'questions'],
   ['status'],
 ];
 

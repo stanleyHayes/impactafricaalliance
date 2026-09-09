@@ -81,6 +81,19 @@ describe('event form scheduling', () => {
     expect(eventPatch(emptied.data, online).meetingUrl).toBeNull();
   });
 
+  it('validates automation on the follow-up step and clears saved timing values', () => {
+    const form = eventToForm({ ...event, reminderHoursBefore: 24, thankYouMinutesAfter: 60 });
+    expect(eventStepError({ ...form, reminderHoursBefore: '169' }, 3)).toBeDefined();
+    expect(eventStepError({ ...form, reminderHoursBefore: '169' }, 2)).toBeUndefined();
+    const parsed = parseEventForm({ ...form, reminderHoursBefore: '', thankYouMinutesAfter: '' });
+    expect(parsed.success).toBe(true);
+    if (!parsed.success) throw parsed.error;
+    expect(eventPatch(parsed.data, event)).toMatchObject({
+      reminderHoursBefore: null,
+      thankYouMinutesAfter: null,
+    });
+  });
+
   it('rejects a meeting link that is not a URL, on the registration step', () => {
     const form = { ...eventToForm(event), meetingUrl: 'not a link' };
     expect(parseEventForm(form).success).toBe(false);

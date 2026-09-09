@@ -94,6 +94,8 @@ describe('EventEditor', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
     expect(await screen.findByRole('heading', { name: 'Registration' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    await screen.findByRole('heading', { name: 'Questions & follow-up' });
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
     expect(await screen.findByRole('heading', { name: 'Review' })).toBeInTheDocument();
     expect(mutate).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Create event' }));
@@ -151,6 +153,8 @@ describe('EventEditor', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
     await screen.findByRole('heading', { name: 'Registration' });
     fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    await screen.findByRole('heading', { name: 'Questions & follow-up' });
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
     await screen.findByRole('heading', { name: 'Review' });
     fireEvent.click(screen.getByRole('button', { name: 'Update event' }));

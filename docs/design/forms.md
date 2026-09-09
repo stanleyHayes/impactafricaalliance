@@ -7,7 +7,7 @@ standing interface rule, requested on 5 September 2026. Short forms can remain c
 
 | Form | Routes | Steps |
 | --- | --- | --- |
-| Events | `/events/new`, `/events/:eventId/edit` | Details, Schedule, Registration, Review |
+| Events | `/events/new`, `/events/:eventId/edit` | Details, Schedule, Registration, Questions & follow-up, Review |
 | CMS resources with more than five fields | `/content/:resource/new`, `/content/:resource/:id/edit` | Resource-specific groups followed by Review |
 | Site settings | `/site-settings` | Organisation, contact, location, visibility and communication groups |
 | Invitations and permissions | `/users/invite`, `/users/:userId/permissions` | Identity, Permissions, Review |

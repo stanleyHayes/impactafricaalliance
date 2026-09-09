@@ -13,6 +13,7 @@ import { Link as RouterLink, useNavigate, useParams, useSearchParams } from 'rea
 
 import {
   EventDetailsFields,
+  EventFollowUpFields,
   EventScheduleFields,
   EventRegistrationFields,
   EventReviewFields,
@@ -37,7 +38,7 @@ type DateField = 'startAt' | 'endAt' | 'registrationClosesAt';
 
 const submitLabel = (saving: boolean, step: number, editing: boolean): string => {
   if (saving) return 'Saving…';
-  if (step < 3) return 'Continue';
+  if (step < EVENT_FORM_STEPS.length - 1) return 'Continue';
   return editing ? 'Update event' : 'Create event';
 };
 
@@ -200,7 +201,8 @@ const EventEditorForm = ({
                   dateProps={dateProps}
                 />
               )}
-              {step === 3 && (
+              {step === 3 && <EventFollowUpFields form={form} setField={setField} />}
+              {step === 4 && (
                 <EventReviewFields form={form} setField={setField} timezone={timezone} />
               )}
               {error && <Alert severity="error">{error}</Alert>}
