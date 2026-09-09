@@ -30,6 +30,7 @@ import {
   type FieldErrors,
 } from 'react-hook-form';
 
+import { useCan } from '../auth/useCan';
 import { FormStepNavigation } from '../components/forms/FormStepNavigation';
 import { PageHeader } from '../components/PageHeader';
 import { FormPageSkeleton } from '../components/PageSkeleton';
@@ -142,6 +143,7 @@ const toFormValues = (data: SiteSetting): SiteSettingUpdateInput => ({
 });
 
 const SiteSettings = (): JSX.Element => {
+  const can = useCan();
   const settings = useSiteSettings();
   const update = useUpdateSiteSettings();
   const [success, setSuccess] = useState(false);
@@ -224,6 +226,7 @@ const SiteSettings = (): JSX.Element => {
   };
 
   const onSubmit = async (values: SiteSettingUpdate): Promise<void> => {
+    if (!can('update', 'site-settings')) return;
     try {
       const saved = await update.mutateAsync(values);
       reset(toFormValues(saved));
@@ -369,7 +372,7 @@ const SiteSettings = (): JSX.Element => {
               type="submit"
               variant="contained"
               startIcon={<SaveRoundedIcon />}
-              disabled={!isDirty || update.isPending}
+              disabled={!can('update', 'site-settings') || !isDirty || update.isPending}
             >
               {update.isPending ? 'Saving…' : 'Save changes'}
             </Button>

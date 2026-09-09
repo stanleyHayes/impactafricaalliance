@@ -1,8 +1,16 @@
-import { CONSENT_VERSION, type Paginated, type SubmissionInput, type SubmissionStatus, type SubscribeInput } from '@iaa/shared';
+import { submissionSchema } from '@iaa/shared';
+import {
+  CONSENT_VERSION,
+  type Paginated,
+  type SubmissionInput,
+  type SubmissionStatus,
+  type SubscribeInput,
+} from '@iaa/shared';
 import { inject, injectable } from 'tsyringe';
 
 import { NotFoundError } from '../../common/errors.js';
 import { paginate } from '../../common/pagination.js';
+import { parseWith } from '../../common/validate.js';
 import type { AppConfig } from '../../config/env.js';
 import type { AppLogger } from '../../config/logger.js';
 import type { EmailProvider } from '../../providers/email.provider.js';
@@ -84,6 +92,55 @@ export class SubmissionService {
   ): Promise<Paginated<SubmissionDocument>> {
     const { items, total } = await this.repo.listSubmissions(filter, page, pageSize);
     return paginate(items, total, page, pageSize);
+  }
+
+  async get(id: string): Promise<SubmissionDocument> {
+    const item = await this.repo.findSubmission(id);
+    if (!item) throw new NotFoundError('Submission');
+    return item;
+  }
+
+  async remove(id: string): Promise<void> {
+    if (!(await this.repo.deleteSubmission(id))) throw new NotFoundError('Submission');
+  }
+
+  async update(
+    id: string,
+    input: { status: SubmissionStatus; payload?: Record<string, unknown> },
+  ): Promise<SubmissionDocument> {
+    const existing = await this.get(id);
+    let payload: Record<string, unknown> | undefined;
+    if (input.payload) {
+      const validated = parseWith(submissionSchema, {
+        ...input.payload,
+        type: existing.type,
+        consent: true,
+      });
+      const fields = Object.fromEntries(
+        Object.entries(validated).filter(
+          ([key]) => !['type', 'consent', 'consentVersion'].includes(key),
+        ),
+      );
+      payload = { ...existing.payload, ...fields };
+      // Clearing the optional numeric field must not coerce an empty input to zero.
+      if (existing.type === 'volunteer' && !('availabilityHoursPerMonth' in fields))
+        delete payload.availabilityHoursPerMonth;
+    }
+    const updated = await this.repo.updateSubmission(id, {
+      status: input.status,
+      ...(payload ? { payload } : {}),
+    });
+    if (!updated) throw new NotFoundError('Submission');
+    return updated;
+  }
+
+  async updateSubscriber(
+    id: string,
+    input: { name: string; source: string },
+  ): Promise<SubscriberDocument> {
+    const item = await this.repo.updateSubscriber(id, input);
+    if (!item) throw new NotFoundError('Subscriber');
+    return item;
   }
 
   async setStatus(id: string, status: SubmissionStatus): Promise<SubmissionDocument> {

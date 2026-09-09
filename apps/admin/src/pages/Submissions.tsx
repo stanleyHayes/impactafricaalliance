@@ -14,8 +14,10 @@ import PhoneOutlinedIcon from '@mui/icons-material/PhoneOutlined';
 import SearchIcon from '@mui/icons-material/Search';
 import VolunteerActivismOutlinedIcon from '@mui/icons-material/VolunteerActivismOutlined';
 import WorkOutlineOutlinedIcon from '@mui/icons-material/WorkOutlineOutlined';
+import Alert from '@mui/material/Alert';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
 import Chip from '@mui/material/Chip';
 import InputAdornment from '@mui/material/InputAdornment';
@@ -24,6 +26,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Pagination from '@mui/material/Pagination';
 import Select from '@mui/material/Select';
 import Skeleton from '@mui/material/Skeleton';
+import Snackbar from '@mui/material/Snackbar';
 import Stack from '@mui/material/Stack';
 import { alpha, useTheme, type Theme } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
@@ -31,9 +34,11 @@ import Typography from '@mui/material/Typography';
 import type { GridColDef } from '@mui/x-data-grid';
 import type { ReactElement, ReactNode } from 'react';
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
+import { useCan } from '../auth/useCan';
 import { DataTable } from '../components/data/DataTable';
+import { RecordActions } from '../components/data/RecordActions';
 import { useViewMode } from '../components/data/useViewMode';
 import { ViewToggle } from '../components/data/ViewToggle';
 import { EmptyState } from '../components/EmptyState';
@@ -173,27 +178,36 @@ const SubmissionStatusSelect = ({
   status: SubmissionStatus;
 }): JSX.Element => {
   const update = useUpdateSubmissionStatus();
+  const can = useCan();
+  if (!can('update', 'submissions')) return <Chip label={status} size="small" />;
   return (
-    <Select
-      size="small"
-      value={status}
-      disabled={update.isPending}
-      onChange={(event) => update.mutate({ id, status: event.target.value as SubmissionStatus })}
-      aria-label="Change status"
-      sx={{
-        minWidth: 124,
-        bgcolor: 'background.default',
-        textTransform: 'capitalize',
-        fontSize: 13,
-        '& .MuiSelect-select': { py: 0.75 },
-      }}
-    >
-      {SUBMISSION_STATUSES.map((value) => (
-        <MenuItem key={value} value={value} sx={{ textTransform: 'capitalize' }}>
-          {value}
-        </MenuItem>
-      ))}
-    </Select>
+    <>
+      <Select
+        size="small"
+        value={status}
+        disabled={update.isPending}
+        onChange={(event) => update.mutate({ id, status: event.target.value as SubmissionStatus })}
+        aria-label="Change status"
+        sx={{
+          minWidth: 124,
+          bgcolor: 'background.default',
+          textTransform: 'capitalize',
+          fontSize: 13,
+          '& .MuiSelect-select': { py: 0.75 },
+        }}
+      >
+        {SUBMISSION_STATUSES.map((value) => (
+          <MenuItem key={value} value={value} sx={{ textTransform: 'capitalize' }}>
+            {value}
+          </MenuItem>
+        ))}
+      </Select>
+      <Snackbar open={update.isError} onClose={() => update.reset()}>
+        <Alert severity="error" onClose={() => update.reset()}>
+          {update.error?.message}
+        </Alert>
+      </Snackbar>
+    </>
   );
 };
 
@@ -389,6 +403,20 @@ const DetailsGrid = ({ details }: { details: [string, unknown][] }): JSX.Element
   );
 };
 
+const SubmissionActions = ({ submission }: { submission: Submission }): JSX.Element => {
+  const navigate = useNavigate();
+  return (
+    <RecordActions
+      record={submission as unknown as Record<string, unknown>}
+      resource="submissions"
+      endpoint="/admin/submissions"
+      deletable
+      onView={() => void navigate(`/submissions/records/${submission.id}`)}
+      onEdit={() => void navigate(`/submissions/records/${submission.id}/edit`)}
+    />
+  );
+};
+
 const SubmissionCard = ({ submission }: { submission: Submission }): JSX.Element => {
   const theme = useTheme();
 
@@ -524,6 +552,7 @@ const SubmissionCard = ({ submission }: { submission: Submission }): JSX.Element
         )}
 
         {model.details.length > 0 && <DetailsGrid details={model.details} />}
+        <SubmissionActions submission={submission} />
       </Box>
     </Card>
   );
@@ -577,6 +606,13 @@ const SubmissionCardSkeleton = (): JSX.Element => (
 const PAGE_SIZE = 8;
 
 const tableColumns: GridColDef[] = [
+  {
+    field: 'actions',
+    headerName: 'Actions',
+    width: 220,
+    sortable: false,
+    renderCell: (params) => <SubmissionActions submission={params.row as Submission} />,
+  },
   {
     field: 'type',
     headerName: 'Type',
@@ -761,7 +797,10 @@ const Submissions = (): JSX.Element => {
   const [page, setPage] = useState(1);
   const [view, setView] = useViewMode('submissions');
   // A dedicated inbox locks the type; the combined view keeps the dropdown.
-  const { data, isLoading } = useSubmissions({ type: lockedType ?? type, status });
+  const { data, isLoading, isError, refetch } = useSubmissions({
+    type: lockedType ?? type,
+    status,
+  });
   const submissions = data?.items ?? [];
   const hasFilters = Boolean((!isScoped && type) || status || search);
 
@@ -859,6 +898,11 @@ const Submissions = (): JSX.Element => {
         </Box>
       </Stack>
 
+      {isError && (
+        <Alert severity="error" action={<Button onClick={() => void refetch()}>Retry</Button>}>
+          Submissions could not be loaded.
+        </Alert>
+      )}
       <SubmissionsList
         view={view}
         isLoading={isLoading}

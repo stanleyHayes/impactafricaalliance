@@ -46,6 +46,25 @@ export class SubmissionRepository {
     return SubmissionModel.create(data);
   }
 
+  findSubmission(id: string) {
+    return SubmissionModel.findById(id).exec();
+  }
+
+  deleteSubmission(id: string) {
+    return SubmissionModel.findByIdAndDelete(id).exec();
+  }
+
+  updateSubmission(
+    id: string,
+    data: { status: SubmissionStatus; payload?: Record<string, unknown> },
+  ) {
+    return SubmissionModel.findByIdAndUpdate(id, { $set: data }, { new: true }).exec();
+  }
+
+  updateSubscriber(id: string, data: { name: string; source: string }) {
+    return SubscriberModel.findByIdAndUpdate(id, { $set: data }, { new: true }).exec();
+  }
+
   updateStatus(id: string, status: SubmissionStatus) {
     return SubmissionModel.findByIdAndUpdate(id, { status }, { new: true }).exec();
   }

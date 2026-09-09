@@ -8,6 +8,10 @@ import { theme } from '../theme/theme';
 
 import SiteSettings from './SiteSettings';
 
+vi.mock('../auth/AuthContext', () => ({
+  useAuth: () => ({ user: { permissions: ['site-settings:read', 'site-settings:update'] } }),
+}));
+
 vi.mock('../lib/admin-hooks', () => ({
   useSiteSettings: vi.fn(),
   useUpdateSiteSettings: vi.fn(),

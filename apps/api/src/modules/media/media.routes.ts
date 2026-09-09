@@ -3,7 +3,7 @@ import { Router } from 'express';
 import type { DependencyContainer } from 'tsyringe';
 
 import { asyncHandler } from '../../common/async-handler.js';
-import { requireAuth, requireRole } from '../../middleware/auth.middleware.js';
+import { requireAuth, requirePermission, requireRole } from '../../middleware/auth.middleware.js';
 import { sensitiveRateLimit } from '../../middleware/rate-limit.js';
 import type { MediaProvider } from '../../providers/media.provider.js';
 import { TOKENS } from '../../tokens.js';
@@ -19,6 +19,7 @@ export const createMediaRouter = (container: DependencyContainer): Router => {
     '/sign',
     requireAuth(tokens),
     requireRole(UserRole.Admin, UserRole.Editor),
+    requirePermission('media:create'),
     asyncHandler(async (_req, res) => {
       res.json(media.createSignedUpload());
     }),

@@ -52,6 +52,7 @@ import {
 } from '@tanstack/react-query';
 
 import { api } from './api-client';
+import { fetchAllPages } from './pagination';
 
 export const useEvents = (): UseQueryResult<Paginated<Event>> =>
   useQuery({
@@ -163,9 +164,10 @@ export interface NewSubmissionCounts {
  * refetch-on-focus and never polls, so a submission landing while the tab was
  * open stayed invisible until a manual reload.
  */
-export const useNewSubmissionCounts = (): UseQueryResult<NewSubmissionCounts> =>
+export const useNewSubmissionCounts = (enabled = true): UseQueryResult<NewSubmissionCounts> =>
   useQuery({
     queryKey: ['submissions', 'new-counts'],
+    enabled,
     queryFn: async () => {
       const page = await api.get<Paginated<Submission>>(
         '/admin/submissions?status=new&pageSize=100',
@@ -198,7 +200,7 @@ export const useSubmissions = (params: {
   }
   return useQuery({
     queryKey: ['submissions', params],
-    queryFn: () => api.get<Paginated<Submission>>(`/admin/submissions?${query.toString()}`),
+    queryFn: () => fetchAllPages<Submission>(`/admin/submissions?${query.toString()}`),
   });
 };
 
@@ -217,14 +219,13 @@ export const useUpdateSubmissionStatus = (): UseMutationResult<
 export const useSubscribers = (): UseQueryResult<Paginated<Subscriber>> =>
   useQuery({
     queryKey: ['subscribers'],
-    queryFn: () =>
-      api.get<Paginated<Subscriber>>('/admin/submissions/subscribers/list?pageSize=100'),
+    queryFn: () => fetchAllPages<Subscriber>('/admin/submissions/subscribers/list?pageSize=100'),
   });
 
 export const useDonations = (): UseQueryResult<Paginated<Donation>> =>
   useQuery({
     queryKey: ['donations'],
-    queryFn: () => api.get<Paginated<Donation>>('/admin/donations?pageSize=100'),
+    queryFn: () => fetchAllPages<Donation>('/admin/donations?pageSize=100'),
   });
 
 /** Server-aggregated overview feeding the dashboard KPIs and charts. */
@@ -401,8 +402,7 @@ export const usePrivacyRequests = (status?: string): UseQueryResult<Paginated<Pr
   if (status) query.set('status', status);
   return useQuery({
     queryKey: ['privacy-requests', status],
-    queryFn: () =>
-      api.get<Paginated<PrivacyRequest>>(`/admin/privacy-requests?${query.toString()}`),
+    queryFn: () => fetchAllPages<PrivacyRequest>(`/admin/privacy-requests?${query.toString()}`),
   });
 };
 

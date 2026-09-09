@@ -18,6 +18,7 @@ import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import { Link as RouterLink } from 'react-router-dom';
 
+import { RequirePermission } from '../../auth/RequirePermission';
 import { AccountPanel, AccountSectionHeader } from '../../components/account/AccountSurface';
 import { useSubmissions, useUpdateSubmissionStatus } from '../../lib/admin-hooks';
 import { formatUtcShort } from '../../lib/date';
@@ -166,15 +167,17 @@ const NotificationCard = ({ submission }: { submission: Submission }): JSX.Eleme
           <Button size="small" component={RouterLink} to="/submissions">
             View
           </Button>
-          <Button
-            size="small"
-            variant="outlined"
-            startIcon={<DoneRoundedIcon />}
-            disabled={update.isPending}
-            onClick={() => update.mutate({ id: submission.id, status: SubmissionStatus.Read })}
-          >
-            Mark read
-          </Button>
+          <RequirePermission resource="submissions" action="update">
+            <Button
+              size="small"
+              variant="outlined"
+              startIcon={<DoneRoundedIcon />}
+              disabled={update.isPending}
+              onClick={() => update.mutate({ id: submission.id, status: SubmissionStatus.Read })}
+            >
+              Mark read
+            </Button>
+          </RequirePermission>
         </Stack>
       </Stack>
     </AccountPanel>
@@ -247,14 +250,16 @@ const Notifications = (): JSX.Element => {
         description="Inbound website activity that needs your attention."
         action={
           items.length > 0 ? (
-            <Button
-              variant="outlined"
-              startIcon={<DoneAllRoundedIcon />}
-              onClick={markAllRead}
-              disabled={markRead.isPending}
-            >
-              Mark all as read
-            </Button>
+            <RequirePermission resource="submissions" action="update">
+              <Button
+                variant="outlined"
+                startIcon={<DoneAllRoundedIcon />}
+                onClick={markAllRead}
+                disabled={markRead.isPending}
+              >
+                Mark all as read
+              </Button>
+            </RequirePermission>
           ) : undefined
         }
       />

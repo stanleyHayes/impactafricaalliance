@@ -39,6 +39,11 @@ export class PrivacyRequestController {
     res.json(await this.service.list(filter, page, pageSize));
   };
 
+  remove = async (req: Request, res: Response): Promise<void> => {
+    await this.service.remove(pathParam(req, 'id'));
+    res.status(204).send();
+  };
+
   update = async (req: Request, res: Response): Promise<void> => {
     const input = parseWith(updatePrivacyRequestSchema, req.body);
     res.json(await this.service.update(pathParam(req, 'id'), input));

@@ -10,7 +10,11 @@ import type { ResourceConfig } from '../resources/types';
 
 import ResourceFormPage from './ResourceFormPage';
 
-vi.mock('../auth/AuthContext', () => ({ useAuth: () => ({ user: { role: 'admin' } }) }));
+vi.mock('../auth/AuthContext', () => ({
+  useAuth: () => ({
+    user: { role: 'admin', permissions: ['widgets:read', 'widgets:create', 'widgets:update'] },
+  }),
+}));
 vi.mock('../lib/api-client', () => ({
   api: { get: vi.fn(), post: vi.fn(), patch: vi.fn() },
   ApiError: class extends Error {

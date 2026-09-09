@@ -1,8 +1,4 @@
-import type {
-  Paginated,
-  PrivacyRequestInput,
-  UpdatePrivacyRequestInput,
-} from '@iaa/shared';
+import type { Paginated, PrivacyRequestInput, UpdatePrivacyRequestInput } from '@iaa/shared';
 import { inject, injectable } from 'tsyringe';
 
 import { NotFoundError } from '../../common/errors.js';
@@ -10,6 +6,7 @@ import { paginate } from '../../common/pagination.js';
 import { DonationModel } from '../payments/donation.model.js';
 import { SubmissionModel, SubscriberModel } from '../submissions/submission.model.js';
 
+import { PrivacyRequestModel } from './privacy-request.model.js';
 import type { PrivacyRequestDocument } from './privacy-request.model.js';
 import {
   PrivacyRequestRepository,
@@ -18,16 +15,24 @@ import {
 
 interface PersonalDataExport {
   email: string;
-  submissions: Array<{ type: string; status: string; payload: Record<string, unknown>; createdAt: string }>;
-  subscriptions: Array<{ email: string; source?: string; consentedAt?: string; unsubscribedAt?: string }>;
+  submissions: Array<{
+    type: string;
+    status: string;
+    payload: Record<string, unknown>;
+    createdAt: string;
+  }>;
+  subscriptions: Array<{
+    email: string;
+    source?: string;
+    consentedAt?: string;
+    unsubscribedAt?: string;
+  }>;
   donations: Array<{ reference: string; amountUsd: number; status: string; createdAt: string }>;
 }
 
 @injectable()
 export class PrivacyRequestService {
-  constructor(
-    @inject(PrivacyRequestRepository) private readonly repo: PrivacyRequestRepository,
-  ) {}
+  constructor(@inject(PrivacyRequestRepository) private readonly repo: PrivacyRequestRepository) {}
 
   async create(input: PrivacyRequestInput): Promise<PrivacyRequestDocument> {
     return this.repo.create({
@@ -47,18 +52,20 @@ export class PrivacyRequestService {
     return paginate(items, total, page, pageSize);
   }
 
-  async update(
-    id: string,
-    input: UpdatePrivacyRequestInput,
-  ): Promise<PrivacyRequestDocument> {
+  async remove(id: string): Promise<void> {
+    if (!(await PrivacyRequestModel.findByIdAndDelete(id).exec()))
+      throw new NotFoundError('Privacy request');
+  }
+
+  async update(id: string, input: UpdatePrivacyRequestInput): Promise<PrivacyRequestDocument> {
     const request = await this.repo.findById(id);
     if (!request) {
       throw new NotFoundError('Privacy request');
     }
 
     const changes: Partial<PrivacyRequestDocument> = {
-      status: input.status,
-      notes: input.notes,
+      ...(input.status !== undefined ? { status: input.status } : {}),
+      ...(input.notes !== undefined ? { notes: input.notes } : {}),
     };
 
     if (input.status === 'fulfilled' && request.status !== 'fulfilled') {
@@ -79,7 +86,10 @@ export class PrivacyRequestService {
 
   async exportPersonalData(email: string): Promise<PersonalDataExport> {
     const [submissions, subscribers, donations] = await Promise.all([
-      SubmissionModel.find({ 'payload.email': email.toLowerCase() }).sort({ createdAt: -1 }).lean().exec(),
+      SubmissionModel.find({ 'payload.email': email.toLowerCase() })
+        .sort({ createdAt: -1 })
+        .lean()
+        .exec(),
       SubscriberModel.find({ email: email.toLowerCase() }).lean().exec(),
       DonationModel.find({ donorEmail: email.toLowerCase() }).sort({ createdAt: -1 }).lean().exec(),
     ]);

@@ -9,6 +9,7 @@ import Typography from '@mui/material/Typography';
 import type { GridColDef, GridRowModel } from '@mui/x-data-grid';
 
 import { DataTable, type DataTableFilter } from '../components/data/DataTable';
+import { RecordActions } from '../components/data/RecordActions';
 import { useViewMode } from '../components/data/useViewMode';
 import { ViewToggle } from '../components/data/ViewToggle';
 import { EmptyState } from '../components/EmptyState';
@@ -38,6 +39,13 @@ const statusColor = (status: unknown): 'success' | 'warning' | 'error' | 'defaul
 };
 
 const columns: GridColDef[] = [
+  {
+    field: 'actions',
+    headerName: 'Actions',
+    width: 160,
+    sortable: false,
+    renderCell: (params) => <RecordActions record={params.row} resource="donations" />,
+  },
   {
     field: 'createdAt',
     headerName: 'Date',
@@ -161,6 +169,7 @@ const DonationCard = ({ row }: { row: GridRowModel }): JSX.Element => {
             minute: '2-digit',
           })}
         </Typography>
+        <RecordActions record={row} resource="donations" />
       </Box>
     </Card>
   );

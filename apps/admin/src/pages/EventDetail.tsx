@@ -22,7 +22,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 
-import { useAuth } from '../auth/AuthContext';
+import { RequirePermission } from '../auth/RequirePermission';
+import { useCan } from '../auth/useCan';
 import { EmptyState } from '../components/EmptyState';
 import { EventImage } from '../components/events/EventImage';
 import { EventMessages } from '../components/events/EventMessages';
@@ -385,9 +386,11 @@ const EventOverview = ({ event, canManage }: { event: Event; canManage: boolean 
         actually signed up. The list was only ever reachable through the API
         before, so nobody could see the room they were about to teach.
       */}
-      {canManage && <EventRegistrations eventId={event.id} eventTitle={event.title} />}
-      {canManage && <EventMessages event={event} />}
-      {canManage && (
+      <EventRegistrations eventId={event.id} eventTitle={event.title} />
+      <RequirePermission resource="events" action="create">
+        <EventMessages event={event} />
+      </RequirePermission>
+      <RequirePermission resource="reviews" action="read">
         <Box id="reviews" sx={{ scrollMarginTop: 100 }}>
           <Stack spacing={3}>
             <EventRatings eventId={event.id} />
@@ -396,7 +399,7 @@ const EventOverview = ({ event, canManage }: { event: Event; canManage: boolean 
             </Section>
           </Stack>
         </Box>
-      )}
+      </RequirePermission>
       <Typography variant="caption" color="text.secondary">
         Created {formatDate(event.createdAt)} · Updated {formatDate(event.updatedAt)}
       </Typography>
@@ -407,13 +410,13 @@ const EventOverview = ({ event, canManage }: { event: Event; canManage: boolean 
 
 const EventDetail = (): JSX.Element => {
   const { eventId } = useParams();
-  const { user } = useAuth();
+  const can = useCan();
   const query = useQuery({
     queryKey: ['events', eventId],
     queryFn: () => api.get<Event>(`/admin/events/${eventId}`),
     enabled: Boolean(eventId),
   });
-  const canManage = user?.role === 'admin' || user?.role === 'editor';
+  const canManage = can('update', 'events');
   return (
     <>
       <Button

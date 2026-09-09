@@ -322,6 +322,13 @@ export class ReviewService {
     );
   }
 
+  async remove(id: string): Promise<void> {
+    const review = await ReviewModel.findByIdAndDelete(id).exec();
+    if (!review) throw new NotFoundError('Review not found');
+    if (review.subject === 'event' && review.eventId)
+      await this.refreshEventRating(String(review.eventId));
+  }
+
   async moderate(id: string, decision: ReviewModeration): Promise<void> {
     const review = await ReviewModel.findById(id).exec();
     if (!review) throw new NotFoundError('Review not found');

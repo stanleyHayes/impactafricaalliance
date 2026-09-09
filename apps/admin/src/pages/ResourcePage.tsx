@@ -1,12 +1,13 @@
-import { UserRole } from '@iaa/shared';
+import { type AdminResource } from '@iaa/shared';
 import AddIcon from '@mui/icons-material/Add';
 import InboxOutlinedIcon from '@mui/icons-material/InboxOutlined';
+import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import type { GridColDef } from '@mui/x-data-grid';
 import { useCallback, useMemo, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 
-import { useAuth } from '../auth/AuthContext';
+import { useCan } from '../auth/useCan';
 import { ResourceCard, ResourceRowActions } from '../components/crud/ResourceCard';
 import { ResourceDetailDialog } from '../components/crud/ResourceDetailDialog';
 import { ResourceFormDialog } from '../components/crud/ResourceFormDialog';
@@ -65,10 +66,12 @@ const deriveFilters = (resource: ResourceConfig): DataTableFilter[] => {
 };
 
 const ResourcePage = (): JSX.Element => {
-  const { user } = useAuth();
-  const canEdit = user?.role === UserRole.Admin || user?.role === UserRole.Editor;
+  const can = useCan();
 
   const { resource: key = '' } = useParams();
+  const canEdit = can('update', key as AdminResource);
+  const canDelete = can('delete', key as AdminResource);
+  const canCreate = can('create', key as AdminResource);
   const navigate = useNavigate();
   const resource = findResource(key);
   const list = useResourceList(key);
@@ -110,16 +113,17 @@ const ResourcePage = (): JSX.Element => {
     }
     const actions: GridColDef = {
       field: '__actions',
-      headerName: '',
+      headerName: 'Actions',
       sortable: false,
       filterable: false,
-      width: canEdit ? 132 : 64,
+      width: 150,
       align: 'right',
       headerAlign: 'right',
       renderCell: (params) => (
         <ResourceRowActions
           row={params.row as ResourceRow}
           canEdit={canEdit}
+          canDelete={canDelete}
           onView={(row) => setViewing(row)}
           onEdit={openEdit}
           onDelete={(id) => remove.mutate(id)}
@@ -127,9 +131,9 @@ const ResourcePage = (): JSX.Element => {
       ),
     };
     return [...resource.columns, actions];
-  }, [resource, remove, canEdit, openEdit]);
+  }, [resource, remove, canEdit, canDelete, openEdit]);
 
-  if (!resource) {
+  if (!resource || !can('read', key as AdminResource)) {
     return <Navigate to="/" replace />;
   }
 
@@ -147,7 +151,7 @@ const ResourcePage = (): JSX.Element => {
         count={list.data?.total}
         help={resourceGuide(resource.label, resource.singular)}
         action={
-          canEdit ? (
+          canCreate ? (
             <Button
               variant="contained"
               startIcon={<AddIcon />}
@@ -160,6 +164,16 @@ const ResourcePage = (): JSX.Element => {
         }
       />
 
+      {list.isError && (
+        <Alert severity="error" action={<Button onClick={() => void list.refetch()}>Retry</Button>}>
+          {list.error.message}
+        </Alert>
+      )}
+      {remove.isError && (
+        <Alert severity="error" onClose={() => remove.reset()}>
+          {remove.error.message}
+        </Alert>
+      )}
       <DataTable
         rows={items}
         columns={columns}
@@ -172,6 +186,7 @@ const ResourcePage = (): JSX.Element => {
             resource={config}
             row={row as ResourceRow}
             canEdit={canEdit}
+            canDelete={canDelete}
             onView={(cardRow) => setViewing(cardRow)}
             onEdit={openEdit}
             onDelete={(id) => remove.mutate(id)}
@@ -183,7 +198,7 @@ const ResourcePage = (): JSX.Element => {
             title={empty.title}
             description={empty.description}
             primaryAction={
-              canEdit
+              canCreate
                 ? { label: empty.primaryLabel, onClick: openCreate, icon: <AddIcon /> }
                 : undefined
             }
@@ -204,7 +219,7 @@ const ResourcePage = (): JSX.Element => {
         }}
       />
 
-      {canEdit && !usesResourceFormPage(resource) && (
+      {(canEdit || canCreate) && !usesResourceFormPage(resource) && (
         <ResourceFormDialog
           resource={resource}
           open={dialogOpen}

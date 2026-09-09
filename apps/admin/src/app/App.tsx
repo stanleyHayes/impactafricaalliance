@@ -1,6 +1,8 @@
+import Alert from '@mui/material/Alert';
 import { Navigate, Route, Routes } from 'react-router-dom';
 
 import { RequireAuth } from '../auth/RequireAuth';
+import { RequirePermission } from '../auth/RequirePermission';
 import { RequireRole } from '../auth/RequireRole';
 import { AppShell } from '../components/layout/AppShell';
 import AcceptInvitation from '../pages/AcceptInvitation';
@@ -27,6 +29,7 @@ import ResourcePage from '../pages/ResourcePage';
 import Reviews from '../pages/Reviews';
 import SiteSettings from '../pages/SiteSettings';
 import SocialConnections from '../pages/SocialConnections';
+import SubmissionDetail from '../pages/SubmissionDetail';
 import Submissions from '../pages/Submissions';
 import Subscribers from '../pages/Subscribers';
 import UserAccessEditor from '../pages/UserAccessEditor';
@@ -64,14 +67,116 @@ export const App = (): JSX.Element => (
           </RequireRole>
         }
       />
-      <Route path="media" element={<MediaLibrary />} />
-      <Route path="reviews" element={<Reviews />} />
-      <Route path="submissions" element={<Submissions />} />
-      <Route path="submissions/:inbox" element={<Submissions />} />
-      <Route path="subscribers" element={<Subscribers />} />
-      <Route path="donations" element={<Donations />} />
-      <Route path="privacy-requests" element={<PrivacyRequests />} />
-      <Route path="site-settings" element={<SiteSettings />} />
+      <Route
+        path="media"
+        element={
+          <RequirePermission
+            resource="media-library"
+            action="read"
+            fallback={
+              <Alert severity="warning">You do not have permission to view this page.</Alert>
+            }
+          >
+            <MediaLibrary />
+          </RequirePermission>
+        }
+      />
+      <Route
+        path="reviews"
+        element={
+          <RequirePermission resource="reviews" action="read">
+            <Reviews />
+          </RequirePermission>
+        }
+      />
+      <Route
+        path="submissions"
+        element={
+          <RequirePermission
+            resource="submissions"
+            action="read"
+            fallback={
+              <Alert severity="warning">You do not have permission to view this page.</Alert>
+            }
+          >
+            <Submissions />
+          </RequirePermission>
+        }
+      />
+      <Route path="submissions/records/:id" element={<SubmissionDetail />} />
+      <Route path="submissions/records/:id/edit" element={<SubmissionDetail edit />} />
+      <Route
+        path="submissions/:inbox"
+        element={
+          <RequirePermission
+            resource="submissions"
+            action="read"
+            fallback={
+              <Alert severity="warning">You do not have permission to view this page.</Alert>
+            }
+          >
+            <Submissions />
+          </RequirePermission>
+        }
+      />
+      <Route
+        path="subscribers"
+        element={
+          <RequirePermission
+            resource="subscribers"
+            action="read"
+            fallback={
+              <Alert severity="warning">You do not have permission to view this page.</Alert>
+            }
+          >
+            <Subscribers />
+          </RequirePermission>
+        }
+      />
+      <Route
+        path="donations"
+        element={
+          <RequireRole roles={['admin']}>
+            <RequirePermission
+              resource="donations"
+              action="read"
+              fallback={
+                <Alert severity="warning">You do not have permission to view this page.</Alert>
+              }
+            >
+              <Donations />
+            </RequirePermission>
+          </RequireRole>
+        }
+      />
+      <Route
+        path="privacy-requests"
+        element={
+          <RequirePermission
+            resource="privacy-requests"
+            action="read"
+            fallback={
+              <Alert severity="warning">You do not have permission to view this page.</Alert>
+            }
+          >
+            <PrivacyRequests />
+          </RequirePermission>
+        }
+      />
+      <Route
+        path="site-settings"
+        element={
+          <RequirePermission
+            resource="site-settings"
+            action="read"
+            fallback={
+              <Alert severity="warning">You do not have permission to view this page.</Alert>
+            }
+          >
+            <SiteSettings />
+          </RequirePermission>
+        }
+      />
       <Route
         path="social-connections"
         element={
@@ -80,13 +185,41 @@ export const App = (): JSX.Element => (
           </RequireRole>
         }
       />
-      <Route path="events" element={<Events />} />
-      <Route path="events/:eventId" element={<EventDetail />} />
+      <Route
+        path="events"
+        element={
+          <RequirePermission
+            resource="events"
+            action="read"
+            fallback={
+              <Alert severity="warning">You do not have permission to view this page.</Alert>
+            }
+          >
+            <Events />
+          </RequirePermission>
+        }
+      />
+      <Route
+        path="events/:eventId"
+        element={
+          <RequirePermission
+            resource="events"
+            action="read"
+            fallback={
+              <Alert severity="warning">You do not have permission to view this page.</Alert>
+            }
+          >
+            <EventDetail />
+          </RequirePermission>
+        }
+      />
       <Route
         path="events/new"
         element={
           <RequireRole roles={['admin', 'editor']}>
-            <EventEditor />
+            <RequirePermission resource="events" action="create">
+              <EventEditor />
+            </RequirePermission>
           </RequireRole>
         }
       />
@@ -94,7 +227,9 @@ export const App = (): JSX.Element => (
         path="events/:eventId/edit"
         element={
           <RequireRole roles={['admin', 'editor']}>
-            <EventEditor />
+            <RequirePermission resource="events" action="update">
+              <EventEditor />
+            </RequirePermission>
           </RequireRole>
         }
       />
@@ -102,7 +237,9 @@ export const App = (): JSX.Element => (
         path="users/invite"
         element={
           <RequireRole roles={['admin']}>
-            <UserAccessEditor />
+            <RequirePermission resource="users" action="create">
+              <UserAccessEditor />
+            </RequirePermission>
           </RequireRole>
         }
       />
@@ -110,7 +247,9 @@ export const App = (): JSX.Element => (
         path="users/:userId/permissions"
         element={
           <RequireRole roles={['admin']}>
-            <UserAccessEditor />
+            <RequirePermission resource="users" action="update">
+              <UserAccessEditor />
+            </RequirePermission>
           </RequireRole>
         }
       />
@@ -118,7 +257,9 @@ export const App = (): JSX.Element => (
         path="users"
         element={
           <RequireRole roles={['admin']}>
-            <Users />
+            <RequirePermission resource="users" action="read">
+              <Users />
+            </RequirePermission>
           </RequireRole>
         }
       />
@@ -128,7 +269,22 @@ export const App = (): JSX.Element => (
         <Route path="edit" element={<EditProfile />} />
         <Route path="password" element={<UpdatePassword />} />
         <Route path="mfa" element={<MfaSetup />} />
-        <Route path="notifications" element={<Notifications />} />
+        <Route
+          path="notifications"
+          element={
+            <RequirePermission
+              resource="submissions"
+              action="read"
+              fallback={
+                <Alert severity="info">
+                  You do not have permission to view submission notifications.
+                </Alert>
+              }
+            >
+              <Notifications />
+            </RequirePermission>
+          }
+        />
         <Route path="settings" element={<Settings />} />
         <Route path="user-guide" element={<UserGuide />} />
       </Route>

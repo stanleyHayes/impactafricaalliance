@@ -1,4 +1,5 @@
 import {
+  AdminResource,
   eventReviewInputSchema,
   objectIdSchema,
   organisationReviewInputSchema,
@@ -10,7 +11,11 @@ import { Router } from 'express';
 import type { DependencyContainer } from 'tsyringe';
 
 import { asyncHandler } from '../../common/async-handler.js';
-import { requireAuth, requireRole } from '../../middleware/auth.middleware.js';
+import {
+  requireAuth,
+  requirePermissionFor,
+  requireRole,
+} from '../../middleware/auth.middleware.js';
 import { sensitiveRateLimit } from '../../middleware/rate-limit.js';
 import { TokenService } from '../auth/token.service.js';
 
@@ -91,6 +96,14 @@ export const createReviewRouters = (
 
   const adminRouter = Router();
   adminRouter.use(requireAuth(tokens), requireRole(UserRole.Admin, UserRole.Editor));
+  adminRouter.use(requirePermissionFor(AdminResource.Reviews));
+  adminRouter.delete(
+    '/:id',
+    asyncHandler(async (req, res) => {
+      await service.remove(objectIdSchema.parse(req.params.id));
+      res.status(204).end();
+    }),
+  );
 
   adminRouter.get(
     '/',

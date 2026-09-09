@@ -8,6 +8,7 @@ import {
 } from '@tanstack/react-query';
 
 import { api, ApiError } from '../lib/api-client';
+import { fetchAllPages } from '../lib/pagination';
 
 import type { ResourceRow } from './types';
 
@@ -16,7 +17,7 @@ const adminPath = (key: string): string => `/admin/${key}`;
 export const useResourceList = (key: string): UseQueryResult<Paginated<ResourceRow>> =>
   useQuery({
     queryKey: ['resource', key],
-    queryFn: () => api.get<Paginated<ResourceRow>>(`${adminPath(key)}?pageSize=100`),
+    queryFn: () => fetchAllPages<ResourceRow>(`${adminPath(key)}?pageSize=100`),
   });
 
 export const useResourceDetail = (

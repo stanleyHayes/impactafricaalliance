@@ -1,24 +1,22 @@
-import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded';
 import MarkEmailReadIcon from '@mui/icons-material/MarkEmailRead';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Chip from '@mui/material/Chip';
-import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import { alpha, useTheme } from '@mui/material/styles';
-import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import type { GridColDef, GridRowModel } from '@mui/x-data-grid';
 import { useMemo } from 'react';
 
 import { DataTable, type DataTableFilter } from '../components/data/DataTable';
+import { RecordActions } from '../components/data/RecordActions';
 import { useViewMode } from '../components/data/useViewMode';
 import { ViewToggle } from '../components/data/ViewToggle';
 import { EmptyState } from '../components/EmptyState';
 import { InformationItem } from '../components/InformationItem';
 import { PageHeader } from '../components/PageHeader';
-import { useDeleteSubscriber, useSubscribers } from '../lib/admin-hooks';
+import { useSubscribers } from '../lib/admin-hooks';
 import { formatUtcDate } from '../lib/date';
 import { pageGuides } from '../lib/page-guides';
 
@@ -35,32 +33,21 @@ const columns: GridColDef[] = [
   {
     field: 'actions',
     headerName: 'Actions',
-    width: 100,
+    width: 220,
     sortable: false,
-    renderCell: (params) => <SubscriberActions subscriberId={String(params.row.id)} />,
+    renderCell: (params) => <SubscriberActions row={params.row} />,
   },
 ];
 
-const SubscriberActions = ({ subscriberId }: { subscriberId: string }): JSX.Element => {
-  const deleteSubscriber = useDeleteSubscriber();
-  return (
-    <Tooltip title="Delete subscriber">
-      <IconButton
-        color="error"
-        size="small"
-        disabled={deleteSubscriber.isPending}
-        onClick={() => {
-          if (window.confirm('Delete this subscriber permanently? This cannot be undone.')) {
-            deleteSubscriber.mutate(subscriberId);
-          }
-        }}
-        aria-label="Delete subscriber"
-      >
-        <DeleteRoundedIcon fontSize="small" />
-      </IconButton>
-    </Tooltip>
-  );
-};
+const SubscriberActions = ({ row }: { row: GridRowModel }): JSX.Element => (
+  <RecordActions
+    record={row}
+    resource="subscribers"
+    endpoint="/admin/submissions/subscribers"
+    editableFields={['name', 'source']}
+    deletable
+  />
+);
 
 const SubscriberCard = ({ row }: { row: GridRowModel }): JSX.Element => {
   const theme = useTheme();
@@ -123,7 +110,7 @@ const SubscriberCard = ({ row }: { row: GridRowModel }): JSX.Element => {
               </InformationItem>
             </Stack>
           </Box>
-          <SubscriberActions subscriberId={String(row.id)} />
+          <SubscriberActions row={row} />
         </Stack>
       </Box>
     </Card>

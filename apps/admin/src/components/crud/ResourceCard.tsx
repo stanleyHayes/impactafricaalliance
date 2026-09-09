@@ -19,6 +19,7 @@ import { InformationItem } from '../InformationItem';
 interface ResourceRowActionsProps {
   row: ResourceRow;
   canEdit: boolean;
+  canDelete?: boolean;
   onView: (row: ResourceRow) => void;
   onEdit: (row: ResourceRow) => void;
   onDelete: (id: string) => void;
@@ -34,6 +35,7 @@ const tintButtonSx = (tone: 'primary' | 'error') => ({
 export const ResourceRowActions = ({
   row,
   canEdit,
+  canDelete = false,
   onView,
   onEdit,
   onDelete,
@@ -61,7 +63,7 @@ export const ResourceRowActions = ({
         </IconButton>
       </Tooltip>
     )}
-    {canEdit && (
+    {canDelete && (
       <Tooltip title="Delete">
         <IconButton
           size="small"
@@ -216,6 +218,7 @@ interface ResourceCardProps {
   resource: ResourceConfig;
   row: ResourceRow;
   canEdit: boolean;
+  canDelete?: boolean;
   onView: (row: ResourceRow) => void;
   onEdit: (row: ResourceRow) => void;
   onDelete: (id: string) => void;
@@ -226,6 +229,7 @@ export const ResourceCard = ({
   resource,
   row,
   canEdit,
+  canDelete = false,
   onView,
   onEdit,
   onDelete,
@@ -327,6 +331,7 @@ export const ResourceCard = ({
         <ResourceRowActions
           row={row}
           canEdit={canEdit}
+          canDelete={canDelete}
           onView={onView}
           onEdit={onEdit}
           onDelete={onDelete}

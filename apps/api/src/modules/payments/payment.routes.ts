@@ -1,9 +1,13 @@
-import { UserRole } from '@iaa/shared';
+import { AdminResource, UserRole } from '@iaa/shared';
 import express, { Router, type NextFunction, type Request, type Response } from 'express';
 import type { DependencyContainer } from 'tsyringe';
 
 import { asyncHandler } from '../../common/async-handler.js';
-import { requireAuth, requireRole } from '../../middleware/auth.middleware.js';
+import {
+  requireAuth,
+  requirePermissionFor,
+  requireRole,
+} from '../../middleware/auth.middleware.js';
 import { sensitiveRateLimit } from '../../middleware/rate-limit.js';
 import { TokenService } from '../auth/token.service.js';
 
@@ -48,6 +52,7 @@ export const createPaymentRouters = (container: DependencyContainer): PaymentRou
 
   const adminRouter = Router();
   adminRouter.use(requireAuth(tokens), requireRole(UserRole.Admin));
+  adminRouter.use(requirePermissionFor(AdminResource.Donations));
   adminRouter.get('/', asyncHandler(controller.list));
   adminRouter.get('/settings', asyncHandler(controller.getSettings));
   adminRouter.patch('/settings', asyncHandler(controller.updateSettings));

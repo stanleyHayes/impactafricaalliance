@@ -8,6 +8,7 @@ import {
 } from '@tanstack/react-query';
 
 import { api } from './api-client';
+import { fetchAllPages } from './pagination';
 
 const PATH = '/admin/media-library';
 export const MEDIA_QUERY_KEY = ['resource', 'media-library'] as const;
@@ -22,7 +23,7 @@ export const MEDIA_QUERY_KEY = ['resource', 'media-library'] as const;
 export const useMediaLibrary = (enabled = true): UseQueryResult<Paginated<MediaItem>> =>
   useQuery({
     queryKey: MEDIA_QUERY_KEY,
-    queryFn: () => api.get<Paginated<MediaItem>>(`${PATH}?pageSize=100`),
+    queryFn: () => fetchAllPages<MediaItem>(`${PATH}?pageSize=100`),
     enabled,
   });
 

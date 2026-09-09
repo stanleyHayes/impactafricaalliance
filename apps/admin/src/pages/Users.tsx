@@ -1,8 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { USER_ROLES, createUserSchema, type CreateUserInput, type PublicUser } from '@iaa/shared';
 import AddIcon from '@mui/icons-material/Add';
-import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
 import GroupsIcon from '@mui/icons-material/Groups';
 import MailOutlineIcon from '@mui/icons-material/MailOutlineOutlined';
 import PersonAddRoundedIcon from '@mui/icons-material/PersonAddRounded';
@@ -15,19 +13,19 @@ import Chip from '@mui/material/Chip';
 import Dialog from '@mui/material/Dialog';
 import DialogContent from '@mui/material/DialogContent';
 import Divider from '@mui/material/Divider';
-import IconButton from '@mui/material/IconButton';
 import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
 import { alpha, useTheme } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
-import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import type { GridColDef } from '@mui/x-data-grid';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 
+import { RequirePermission } from '../auth/RequirePermission';
 import { DataTable, type DataTableFilter } from '../components/data/DataTable';
+import { RecordActions } from '../components/data/RecordActions';
 import { useViewMode } from '../components/data/useViewMode';
 import { ViewToggle } from '../components/data/ViewToggle';
 import {
@@ -38,7 +36,7 @@ import {
 } from '../components/dialogs/DialogShell';
 import { EmptyState } from '../components/EmptyState';
 import { PageHeader } from '../components/PageHeader';
-import { useDeleteUser, useSaveUser, useUsers } from '../lib/admin-hooks';
+import { useSaveUser, useUsers } from '../lib/admin-hooks';
 import { pageGuides } from '../lib/page-guides';
 
 const CreateUserDialog = ({
@@ -165,13 +163,35 @@ const filters: DataTableFilter[] = [
   },
 ];
 
+const UserActions = ({
+  user,
+  onManage,
+}: {
+  user: PublicUser;
+  onManage: (user: PublicUser) => void;
+}): JSX.Element => (
+  <Stack direction="row" spacing={0.5}>
+    <RecordActions
+      record={user as unknown as Record<string, unknown>}
+      resource="users"
+      endpoint="/admin/users"
+      editableFields={['name', 'isActive']}
+      deletable
+    />
+    <RequirePermission resource="users" action="update">
+      <Button size="small" onClick={() => onManage(user)}>
+        Permissions
+      </Button>
+    </RequirePermission>
+  </Stack>
+);
+
 interface UserCardProps {
   user: PublicUser;
   onManage: (user: PublicUser) => void;
-  onDelete: (id: string) => void;
 }
 
-const UserCard = ({ user, onManage, onDelete }: UserCardProps): JSX.Element => {
+const UserCard = ({ user, onManage }: UserCardProps): JSX.Element => {
   const theme = useTheme();
   return (
     <Card
@@ -237,31 +257,7 @@ const UserCard = ({ user, onManage, onDelete }: UserCardProps): JSX.Element => {
         </Typography>
       </Box>
       <Divider />
-      <Stack direction="row" justifyContent="flex-end" spacing={0.5} sx={{ px: 1.5, py: 0.75 }}>
-        <Tooltip title="Manage permissions">
-          <IconButton size="small" aria-label="Manage permissions" onClick={() => onManage(user)}>
-            <EditIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Delete user">
-          <IconButton
-            size="small"
-            aria-label="Delete user"
-            onClick={() => {
-              if (window.confirm('Delete this user?')) {
-                onDelete(user.id);
-              }
-            }}
-            sx={{
-              color: 'error.main',
-              bgcolor: 'rgba(211,47,47,0.06)',
-              '&:hover': { bgcolor: 'rgba(211,47,47,0.12)' },
-            }}
-          >
-            <DeleteIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-      </Stack>
+      <UserActions user={user} onManage={onManage} />
     </Card>
   );
 };
@@ -269,7 +265,6 @@ const UserCard = ({ user, onManage, onDelete }: UserCardProps): JSX.Element => {
 const Users = (): JSX.Element => {
   const navigate = useNavigate();
   const { data: users, isLoading } = useUsers();
-  const remove = useDeleteUser();
   const [createOpen, setCreateOpen] = useState(false);
   const [view, setView] = useViewMode('users');
   const manageUser = (user: PublicUser): void => {
@@ -312,42 +307,12 @@ const Users = (): JSX.Element => {
     },
     {
       field: '__actions',
-      headerName: '',
-      width: 120,
+      headerName: 'Actions',
+      width: 330,
       sortable: false,
       align: 'right',
       headerAlign: 'right',
-      renderCell: (params) => (
-        <Box sx={{ display: 'flex', gap: 0.5 }}>
-          <Tooltip title="Manage permissions">
-            <IconButton
-              size="small"
-              aria-label="Manage permissions"
-              onClick={() => manageUser(params.row as PublicUser)}
-            >
-              <EditIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Delete user">
-            <IconButton
-              size="small"
-              aria-label="Delete user"
-              onClick={() => {
-                if (window.confirm('Delete this user?')) {
-                  remove.mutate(String(params.row.id));
-                }
-              }}
-              sx={{
-                color: 'error.main',
-                bgcolor: 'rgba(211,47,47,0.06)',
-                '&:hover': { bgcolor: 'rgba(211,47,47,0.12)' },
-              }}
-            >
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </Box>
-      ),
+      renderCell: (params) => <UserActions user={params.row as PublicUser} onManage={manageUser} />,
     },
   ];
 
@@ -360,32 +325,29 @@ const Users = (): JSX.Element => {
         count={users?.length}
         help={pageGuides.Users}
         action={
-          <Box sx={{ display: 'flex', gap: 1.5 }}>
-            <Button
-              variant="outlined"
-              startIcon={<AddIcon />}
-              onClick={() => setCreateOpen(true)}
-              sx={{ borderRadius: 2.5, px: 2.5 }}
-            >
-              Create
-            </Button>
-            <Button
-              variant="contained"
-              startIcon={<MailOutlineIcon />}
-              component={RouterLink}
-              to="/users/invite"
-              sx={{ borderRadius: 2.5, px: 2.5 }}
-            >
-              Invite
-            </Button>
-          </Box>
+          <RequirePermission resource="users" action="create">
+            <Box sx={{ display: 'flex', gap: 1.5 }}>
+              <Button
+                variant="outlined"
+                startIcon={<AddIcon />}
+                onClick={() => setCreateOpen(true)}
+                sx={{ borderRadius: 2.5, px: 2.5 }}
+              >
+                Create
+              </Button>
+              <Button
+                variant="contained"
+                startIcon={<MailOutlineIcon />}
+                component={RouterLink}
+                to="/users/invite"
+                sx={{ borderRadius: 2.5, px: 2.5 }}
+              >
+                Invite
+              </Button>
+            </Box>
+          </RequirePermission>
         }
       />
-      {remove.isError && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          Could not delete user. At least one administrator must remain.
-        </Alert>
-      )}
       <DataTable
         rows={users ?? []}
         columns={columns}
@@ -393,13 +355,7 @@ const Users = (): JSX.Element => {
         filters={filters}
         view={view}
         toolbarEnd={<ViewToggle value={view} onChange={setView} />}
-        renderCard={(row) => (
-          <UserCard
-            user={row as PublicUser}
-            onManage={manageUser}
-            onDelete={(id) => remove.mutate(id)}
-          />
-        )}
+        renderCard={(row) => <UserCard user={row as PublicUser} onManage={manageUser} />}
         empty={
           <EmptyState
             icon={<GroupsIcon />}

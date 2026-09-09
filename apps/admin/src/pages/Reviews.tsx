@@ -25,6 +25,8 @@ import Typography from '@mui/material/Typography';
 import { useState } from 'react';
 import { Link as RouterLink, useSearchParams } from 'react-router-dom';
 
+import { RequirePermission } from '../auth/RequirePermission';
+import { RecordActions } from '../components/data/RecordActions';
 import { EmptyState } from '../components/EmptyState';
 import { PageHeader } from '../components/PageHeader';
 import { useModerateReview, useReviews } from '../lib/admin-hooks';
@@ -143,25 +145,35 @@ const ReviewCard = ({
       </Alert>
     )}
 
+    <RecordActions
+      record={review as unknown as Record<string, unknown>}
+      resource="reviews"
+      endpoint="/admin/reviews"
+      editableFields={['status', 'rejectionReason']}
+      selectOptions={{ status: ['published', 'rejected'] }}
+      deletable
+    />
     {
-      <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
-        {review.status !== 'published' && (
-          <Button
-            variant="contained"
-            size="small"
-            startIcon={<CheckCircleRoundedIcon />}
-            disabled={busy}
-            onClick={() => onPublish(review)}
-          >
-            Publish
-          </Button>
-        )}
-        {review.status !== 'rejected' && (
-          <Button size="small" color="inherit" disabled={busy} onClick={() => onReject(review)}>
-            Reject
-          </Button>
-        )}
-      </Stack>
+      <RequirePermission resource="reviews" action="update">
+        <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
+          {review.status !== 'published' && (
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<CheckCircleRoundedIcon />}
+              disabled={busy}
+              onClick={() => onPublish(review)}
+            >
+              Publish
+            </Button>
+          )}
+          {review.status !== 'rejected' && (
+            <Button size="small" color="inherit" disabled={busy} onClick={() => onReject(review)}>
+              Reject
+            </Button>
+          )}
+        </Stack>
+      </RequirePermission>
     }
   </Card>
 );

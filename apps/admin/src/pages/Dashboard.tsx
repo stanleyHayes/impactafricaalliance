@@ -44,6 +44,7 @@ import { useState, type ReactNode } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
 import { useAuth } from '../auth/AuthContext';
+import { RequirePermission } from '../auth/RequirePermission';
 import { BarChart } from '../components/charts/BarChart';
 import { DonationChartEmpty } from '../components/charts/DonationChartEmpty';
 import { DonutChart } from '../components/charts/DonutChart';
@@ -1497,7 +1498,9 @@ const Dashboard = (): JSX.Element => {
         action={<HeaderActions />}
       />
 
-      <NewSubmissionsBanner />
+      <RequirePermission resource="submissions" action="read">
+        <NewSubmissionsBanner />
+      </RequirePermission>
 
       {summary.isError && (
         <Alert severity="error" sx={{ mb: 2.5 }}>

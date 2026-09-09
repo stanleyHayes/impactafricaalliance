@@ -1,9 +1,13 @@
-import { UserRole } from '@iaa/shared';
+import { AdminResource, UserRole } from '@iaa/shared';
 import { Router } from 'express';
 import type { DependencyContainer } from 'tsyringe';
 
 import { asyncHandler } from '../../common/async-handler.js';
-import { requireAuth, requireRole } from '../../middleware/auth.middleware.js';
+import {
+  requireAuth,
+  requirePermissionFor,
+  requireRole,
+} from '../../middleware/auth.middleware.js';
 import { sensitiveRateLimit } from '../../middleware/rate-limit.js';
 import { TokenService } from '../auth/token.service.js';
 
@@ -26,10 +30,15 @@ export const createSubmissionRouters = (container: DependencyContainer): Submiss
 
   const adminRouter = Router();
   adminRouter.use(requireAuth(tokens), requireRole(UserRole.Admin, UserRole.Editor));
-  adminRouter.get('/', asyncHandler(controller.list));
-  adminRouter.patch('/:id', asyncHandler(controller.setStatus));
+  adminRouter.use('/subscribers', requirePermissionFor(AdminResource.Subscribers));
   adminRouter.get('/subscribers/list', asyncHandler(controller.listSubscribers));
   adminRouter.delete('/subscribers/:id', asyncHandler(controller.deleteSubscriber));
+  adminRouter.patch('/subscribers/:id', asyncHandler(controller.updateSubscriber));
+  adminRouter.use(requirePermissionFor(AdminResource.Submissions));
+  adminRouter.get('/:id', asyncHandler(controller.get));
+  adminRouter.delete('/:id', asyncHandler(controller.remove));
+  adminRouter.get('/', asyncHandler(controller.list));
+  adminRouter.patch('/:id', asyncHandler(controller.setStatus));
 
   return { publicRouter, adminRouter };
 };

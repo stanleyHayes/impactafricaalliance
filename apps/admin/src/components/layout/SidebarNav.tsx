@@ -196,7 +196,10 @@ const ThreadedNavLink = ({
       }}
     >
       <ListItemIcon>{item.icon}</ListItemIcon>
-      <ListItemText primary={item.label} slotProps={{ primary: { variant: 'body2', noWrap: true } }} />
+      <ListItemText
+        primary={item.label}
+        slotProps={{ primary: { variant: 'body2', noWrap: true } }}
+      />
       <NavBadge count={item.badge} />
     </ListItemButton>
     {/* Horizontal L-foot reaching from the spine toward the item. Rendered after
@@ -224,7 +227,7 @@ const ThreadedNavLink = ({
 /** Grouped, collapsible sidebar navigation. Collapses to an icon rail on desktop. */
 export const SidebarNav = ({ collapsed, onNavigate }: SidebarNavProps): JSX.Element => {
   const { user } = useAuth();
-  const { data: counts } = useNewSubmissionCounts();
+  const { data: counts } = useNewSubmissionCounts(user?.permissions.includes('submissions:read'));
   const groups = buildNavGroups(user, {
     submissionsTotal: counts?.total,
     submissionsByType: counts?.byType,

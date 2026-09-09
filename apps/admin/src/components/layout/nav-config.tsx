@@ -108,7 +108,7 @@ export const buildNavGroups = (user: PublicUser | null, counts: NavCounts = {}):
     siteItems.push({ to: '/social-connections', label: 'Social connections', icon: <ShareIcon /> });
   }
 
-  return [
+  const groups: NavGroup[] = [
     {
       title: 'Overview',
       items: [
@@ -148,4 +148,16 @@ export const buildNavGroups = (user: PublicUser | null, counts: NavCounts = {}):
       ],
     },
   ];
+  const mayRead = (item: NavItem): boolean => {
+    const path = item.to.split('/').filter(Boolean);
+    let resource = path[0];
+    if (resource === 'content') resource = path[1];
+    if (resource === 'donations' && user?.role !== UserRole.Admin) return false;
+    if (resource === 'media') resource = 'media-library';
+    if (!resource || ['account', 'analytics', 'social-connections'].includes(resource)) return true;
+    return Boolean(user?.permissions.some((permission) => permission === `${resource}:read`));
+  };
+  return groups
+    .map((group) => ({ ...group, items: group.items.filter(mayRead) }))
+    .filter((group) => group.items.length > 0);
 };

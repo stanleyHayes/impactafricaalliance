@@ -16,7 +16,7 @@ export const privacyRequestInputSchema = z.object({
 export type PrivacyRequestInput = z.infer<typeof privacyRequestInputSchema>;
 
 export const updatePrivacyRequestSchema = z.object({
-  status: z.enum(PRIVACY_REQUEST_STATUSES),
+  status: z.enum(PRIVACY_REQUEST_STATUSES).optional(),
   notes: z.string().max(2000).trim().optional(),
 });
 export type UpdatePrivacyRequestInput = z.infer<typeof updatePrivacyRequestSchema>;

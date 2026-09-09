@@ -336,3 +336,22 @@ describe('event moderation queue', () => {
     expect(result.totalPages).toBe(3);
   });
 });
+
+describe('deleting a review', () => {
+  it('refreshes the associated event rating after removal', async () => {
+    const { service } = build();
+    vi.spyOn(ReviewModel, 'findByIdAndDelete').mockReturnValue({
+      exec: vi.fn().mockResolvedValue({ subject: 'event', eventId }),
+    } as unknown as ReturnType<typeof ReviewModel.findByIdAndDelete>);
+    await service.remove('507f1f77bcf86cd799439022');
+    expect(service.refreshEventRating).toHaveBeenCalledWith(eventId);
+  });
+  it('returns a missing-record error without changing ratings', async () => {
+    const { service } = build();
+    vi.spyOn(ReviewModel, 'findByIdAndDelete').mockReturnValue({
+      exec: vi.fn().mockResolvedValue(null),
+    } as unknown as ReturnType<typeof ReviewModel.findByIdAndDelete>);
+    await expect(service.remove('507f1f77bcf86cd799439022')).rejects.toThrow('Review not found');
+    expect(service.refreshEventRating).not.toHaveBeenCalled();
+  });
+});

@@ -28,6 +28,7 @@ export const AdminResource = {
   Reports: 'reports',
   Jobs: 'jobs',
   Events: 'events',
+  Reviews: 'reviews',
   Gallery: 'gallery',
   Offices: 'offices',
   Announcements: 'announcements',
@@ -68,6 +69,7 @@ const editorPermissions = (): Permission[] => {
     AdminResource.Reports,
     AdminResource.Jobs,
     AdminResource.Events,
+    AdminResource.Reviews,
     AdminResource.Gallery,
     AdminResource.Offices,
     AdminResource.Announcements,
@@ -99,7 +101,6 @@ export const ContentStatus = {
 } as const;
 export type ContentStatus = (typeof ContentStatus)[keyof typeof ContentStatus];
 export const CONTENT_STATUSES = Object.values(ContentStatus);
-
 
 export const JobType = {
   FullTime: 'full-time',

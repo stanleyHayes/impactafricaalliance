@@ -20,6 +20,8 @@ import { useState } from 'react';
 import type { ComponentType, MouseEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { RequirePermission } from '../../auth/RequirePermission';
+import { useHasPermission } from '../../auth/useCan';
 import { useNewSubmissionCounts, useUpdateSubmissionStatus } from '../../lib/admin-hooks';
 import { formatUtcShort } from '../../lib/date';
 import { usePreferences } from '../../lib/preferences';
@@ -88,13 +90,14 @@ export const NotificationsBell = (): JSX.Element => {
   const { prefs } = usePreferences();
   // One live query drives the bell, the sidebar badges and the dashboard
   // banner, so the three can never disagree about how much is waiting.
-  const { data } = useNewSubmissionCounts();
+  const canRead = useHasPermission('read', 'submissions');
+  const { data } = useNewSubmissionCounts(canRead);
   const markRead = useUpdateSubmissionStatus();
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const open = Boolean(anchorEl);
 
-  const items: Submission[] = data?.items ?? [];
-  const total = data?.total ?? items.length;
+  const items: Submission[] = canRead ? (data?.items ?? []) : [];
+  const total = canRead ? (data?.total ?? items.length) : 0;
   const count = prefs.showNotificationBadge ? total : 0;
   const recent = [...items]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
@@ -179,9 +182,7 @@ export const NotificationsBell = (): JSX.Element => {
               )})`,
           }}
         >
-          <Typography
-            sx={{ fontFamily: brandFonts.heading, fontWeight: 700, fontSize: '0.95rem' }}
-          >
+          <Typography sx={{ fontFamily: brandFonts.heading, fontWeight: 700, fontSize: '0.95rem' }}>
             Notifications
           </Typography>
           <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
@@ -305,25 +306,27 @@ export const NotificationsBell = (): JSX.Element => {
                       </Typography>
                     )}
                   </Box>
-                  <Tooltip title="Mark as read">
-                    <IconButton
-                      className="iaa-notif-action"
-                      size="small"
-                      aria-label="Mark as read"
-                      disabled={markRead.isPending}
-                      onClick={(event) => handleMarkRead(event, item.id)}
-                      sx={{
-                        mt: 0.25,
-                        flexShrink: 0,
-                        color: 'text.secondary',
-                        opacity: { xs: 1, sm: 0 },
-                        transition: (t) => t.transitions.create('opacity'),
-                        '&:hover': { color: 'text.primary' },
-                      }}
-                    >
-                      <MarkEmailReadOutlinedIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
+                  <RequirePermission resource="submissions" action="update">
+                    <Tooltip title="Mark as read">
+                      <IconButton
+                        className="iaa-notif-action"
+                        size="small"
+                        aria-label="Mark as read"
+                        disabled={markRead.isPending}
+                        onClick={(event) => handleMarkRead(event, item.id)}
+                        sx={{
+                          mt: 0.25,
+                          flexShrink: 0,
+                          color: 'text.secondary',
+                          opacity: { xs: 1, sm: 0 },
+                          transition: (t) => t.transitions.create('opacity'),
+                          '&:hover': { color: 'text.primary' },
+                        }}
+                      >
+                        <MarkEmailReadOutlinedIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </RequirePermission>
                 </Box>
               );
             })}

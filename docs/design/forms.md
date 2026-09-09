@@ -39,3 +39,8 @@ are distinct from invalid dates, and clearing existing values sends the API's ex
 - Pending uploads block step changes/save; failed saves preserve the full form for retry.
 - Optional removal and unchanged timestamp round trips preserve the API contract.
 - Keyboard controls and narrow layouts remain usable; check the desktop and touch date pickers.
+
+Submission edits use `/submissions/records/:id/edit`: type-specific Contact, Partnership,
+Volunteering or Application steps followed by Status & review. The read route is
+`/submissions/records/:id`. Consent evidence stays read-only. Optional monthly hours can be cleared;
+Back retains answers, intermediate Enter validates/advances, and only the final review saves.

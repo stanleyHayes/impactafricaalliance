@@ -774,3 +774,23 @@ Owner: Codex. Status: implemented and verified with automated checks; publicatio
 - Redesigned messaging with a themed header, responsive composer/content-preview columns, character limits, explicit link inclusion, message review in the send confirmation, delivery statuses, expandable sent bodies, history retry and persistent send errors. No actual messages sent during verification.
 - Split the eight-field registration step: Registration now has five fields; Questions & follow-up holds two automation timings and the question builder. Updated step validation, final action labels, review summary and form documentation. Existing direct routes, values and null-clearing contracts remain intact.
 - Verification: 12 focused tests across messaging, event detail/editor and event-form suites pass; admin TypeScript, changed-file ESLint, production build and diff checks pass. Existing bundle-size advisory remains. Browser/mobile visual acceptance and live email delivery were not verified.
+
+### 2026-09-09 — Admin item actions and field review
+
+- **Owner:** Codex. **Status:** Implementation verified; verification recorded in
+  [admin-actions-review.md](admin-actions-review.md). Production browser acceptance/deployment pending.
+- Reviewed the admin route inventory and record fields. Added complete submission details and a
+  dedicated stepwise editor, explicit actions on standalone lists, independent edit/delete permissions
+  on CMS records, and matching API guards across specialized routes.
+- Added subscriber name/source edits, user name/active edits, privacy note/delete actions, review
+  moderation/delete actions with rating refresh, and full donation details. Preserved provider-owned
+  financial transaction fields, original attendee responses, sent-message history and consent evidence.
+- Read-gated navigation/notifications and write-gated mark-read/settings controls. Removed first-page
+  truncation from client-paginated resource/inbox lists.
+- New tests cover per-action permission denial, all four submission types, step validation and failed
+  saves, delete confirmation, nested/false/zero fields, pagination and review-rating refresh.
+- Publishing to `main` was authorized in the follow-up request. No production data mutations or
+  manual deployments were performed during verification.
+
+- **Final checks:** 90 admin, 132 API and 126 shared tests passed (348 total); admin/API builds,
+  ESLint and `git diff --check` passed. Authenticated production browser verification was not run.

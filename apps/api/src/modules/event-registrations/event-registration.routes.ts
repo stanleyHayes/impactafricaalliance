@@ -1,9 +1,13 @@
-import { UserRole } from '@iaa/shared';
+import { AdminResource, UserRole } from '@iaa/shared';
 import { Router } from 'express';
 import type { DependencyContainer } from 'tsyringe';
 
 import { asyncHandler } from '../../common/async-handler.js';
-import { requireAuth, requireRole } from '../../middleware/auth.middleware.js';
+import {
+  requireAuth,
+  requirePermissionFor,
+  requireRole,
+} from '../../middleware/auth.middleware.js';
 import { sensitiveRateLimit } from '../../middleware/rate-limit.js';
 import { TokenService } from '../auth/token.service.js';
 
@@ -30,6 +34,7 @@ export const createEventRegistrationRouters = (
   // router already claims GET /:id — "/counts" would be swallowed by it.
   const adminRouter = Router();
   adminRouter.use(requireAuth(tokens), requireRole(UserRole.Admin, UserRole.Editor));
+  adminRouter.use(requirePermissionFor(AdminResource.Events));
   adminRouter.get('/counts', asyncHandler(controller.counts));
   adminRouter.get('/:eventId/qr', asyncHandler(controller.qr));
   adminRouter.get('/:eventId', asyncHandler(controller.list));

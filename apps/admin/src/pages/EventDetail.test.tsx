@@ -10,7 +10,11 @@ import { theme } from '../theme/theme';
 
 import EventDetail from './EventDetail';
 
-vi.mock('../auth/AuthContext', () => ({ useAuth: () => ({ user: { role: 'admin' } }) }));
+vi.mock('../auth/AuthContext', () => ({
+  useAuth: () => ({
+    user: { role: 'admin', permissions: ['events:read', 'events:update', 'reviews:read'] },
+  }),
+}));
 vi.mock('../lib/api-client', () => ({ api: { get: vi.fn() } }));
 vi.mock('./Reviews', () => ({
   ReviewQueue: ({ eventId }: { eventId: string }) => <div>Queue for {eventId}</div>,

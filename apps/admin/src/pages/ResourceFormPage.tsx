@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { UserRole } from '@iaa/shared';
+import { type AdminResource } from '@iaa/shared';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
@@ -12,7 +12,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useForm, type Resolver } from 'react-hook-form';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 
-import { useAuth } from '../auth/AuthContext';
+import { useCan } from '../auth/useCan';
 import { FieldRenderer } from '../components/crud/FieldRenderer';
 import { FormStepNavigation } from '../components/forms/FormStepNavigation';
 import { ResourceReview } from '../components/forms/ResourceReview';
@@ -324,9 +324,13 @@ const ResourceFormLoader = ({
 
 const ResourceFormPage = (): JSX.Element => {
   const { resource: key = '', id } = useParams();
-  const { user } = useAuth();
+  const can = useCan();
   const resource = findResource(key);
-  if (!resource || (user?.role !== UserRole.Admin && user?.role !== UserRole.Editor))
+  if (
+    !resource ||
+    !can(id ? 'update' : 'create', key as AdminResource) ||
+    !can('read', key as AdminResource)
+  )
     return <Navigate to="/" replace />;
   if (!usesResourceFormPage(resource)) return <Navigate to={`/content/${resource.key}`} replace />;
   return <ResourceFormLoader key={`${key}:${id ?? 'new'}`} resource={resource} id={id} />;

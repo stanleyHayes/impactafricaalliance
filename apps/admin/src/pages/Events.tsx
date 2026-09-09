@@ -24,6 +24,8 @@ import Typography from '@mui/material/Typography';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { RequirePermission } from '../auth/RequirePermission';
+import { useCan } from '../auth/useCan';
 import { DialogFooter, DialogHeader, dialogPaperSx } from '../components/dialogs/DialogShell';
 import { EmptyState } from '../components/EmptyState';
 import { CalendarGrid } from '../components/events/CalendarGrid';
@@ -282,6 +284,9 @@ const EventCard = ({
           </Typography>
         </Box>
         <Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
+          <Button size="small" onClick={() => onView(event)}>
+            View
+          </Button>
           <IconButton
             aria-label="Show QR code"
             onClick={() => onShowQr(event)}
@@ -290,17 +295,21 @@ const EventCard = ({
           >
             <QrCode2Icon />
           </IconButton>
-          <IconButton aria-label="Edit event" onClick={() => onEdit(event)} size="small">
-            <EditOutlinedIcon />
-          </IconButton>
-          <IconButton
-            aria-label="Delete event"
-            onClick={() => onDelete(event)}
-            size="small"
-            color="error"
-          >
-            <DeleteOutlinedIcon />
-          </IconButton>
+          <RequirePermission resource="events" action="update">
+            <IconButton aria-label="Edit event" onClick={() => onEdit(event)} size="small">
+              <EditOutlinedIcon />
+            </IconButton>
+          </RequirePermission>
+          <RequirePermission resource="events" action="delete">
+            <IconButton
+              aria-label="Delete event"
+              onClick={() => onDelete(event)}
+              size="small"
+              color="error"
+            >
+              <DeleteOutlinedIcon />
+            </IconButton>
+          </RequirePermission>
         </Stack>
       </Stack>
     </Card>
@@ -308,6 +317,7 @@ const EventCard = ({
 };
 
 const Events = (): JSX.Element => {
+  const can = useCan();
   const navigate = useNavigate();
   const { data, isLoading, isError, refetch } = useEvents();
   const openDetails = (event: Event): void => {
@@ -346,9 +356,11 @@ const Events = (): JSX.Element => {
       title="Events"
       description="Plan, publish, and manage upcoming events."
       action={
-        <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>
-          Create event
-        </Button>
+        <RequirePermission resource="events" action="create">
+          <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>
+            Create event
+          </Button>
+        </RequirePermission>
       }
     />
   );
@@ -380,7 +392,11 @@ const Events = (): JSX.Element => {
           icon={<CalendarMonthOutlinedIcon />}
           title="No events yet"
           description="Create your first event to see it on the calendar and public website."
-          primaryAction={{ label: 'Create event', onClick: openCreate, icon: <AddIcon /> }}
+          primaryAction={
+            can('create', 'events')
+              ? { label: 'Create event', onClick: openCreate, icon: <AddIcon /> }
+              : undefined
+          }
         />
       ) : (
         <>

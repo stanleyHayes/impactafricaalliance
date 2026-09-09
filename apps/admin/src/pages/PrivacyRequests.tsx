@@ -12,7 +12,9 @@ import { useTheme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import type { GridColDef, GridRowModel } from '@mui/x-data-grid';
 
+import { useCan } from '../auth/useCan';
 import { DataTable, type DataTableFilter } from '../components/data/DataTable';
+import { RecordActions } from '../components/data/RecordActions';
 import { useViewMode } from '../components/data/useViewMode';
 import { ViewToggle } from '../components/data/ViewToggle';
 import { EmptyState } from '../components/EmptyState';
@@ -48,6 +50,8 @@ const filters: DataTableFilter[] = [
 
 const StatusCell = ({ id, status }: { id: string; status: string }): JSX.Element => {
   const update = useUpdatePrivacyRequest();
+  const can = useCan();
+  if (!can('update', 'privacy-requests')) return <Chip label={status} />;
   return (
     <FormControl size="small" sx={{ minWidth: 130 }}>
       <InputLabel id={`status-label-${id}`}>Status</InputLabel>
@@ -69,6 +73,21 @@ const StatusCell = ({ id, status }: { id: string; status: string }): JSX.Element
 };
 
 const columns: GridColDef[] = [
+  {
+    field: 'actions',
+    headerName: 'Actions',
+    width: 160,
+    sortable: false,
+    renderCell: (params) => (
+      <RecordActions
+        record={params.row}
+        resource="privacy-requests"
+        endpoint="/admin/privacy-requests"
+        editableFields={['notes']}
+        deletable
+      />
+    ),
+  },
   { field: 'email', headerName: 'Email', flex: 1, minWidth: 240 },
   {
     field: 'type',
@@ -154,6 +173,13 @@ const PrivacyRequestCard = ({ row }: { row: GridRowModel }): JSX.Element => {
             {notes}
           </Typography>
         )}
+        <RecordActions
+          record={row}
+          resource="privacy-requests"
+          endpoint="/admin/privacy-requests"
+          editableFields={['notes']}
+          deletable
+        />
       </Box>
     </Card>
   );

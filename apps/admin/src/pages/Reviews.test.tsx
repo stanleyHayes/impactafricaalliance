@@ -1,4 +1,5 @@
 import { ThemeProvider } from '@mui/material/styles';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
@@ -7,6 +8,10 @@ import { useModerateReview, useReviews } from '../lib/admin-hooks';
 import { theme } from '../theme/theme';
 
 import Reviews, { ReviewQueue } from './Reviews';
+
+vi.mock('../auth/AuthContext', () => ({
+  useAuth: () => ({ user: { permissions: ['reviews:read', 'reviews:update', 'reviews:delete'] } }),
+}));
 
 vi.mock('../lib/admin-hooks', () => ({
   useReviews: vi.fn(),
@@ -25,11 +30,13 @@ const renderLoading = (): void => {
   } as unknown as ReturnType<typeof useModerateReview>);
 
   render(
-    <ThemeProvider theme={theme}>
-      <MemoryRouter>
-        <Reviews />
-      </MemoryRouter>
-    </ThemeProvider>,
+    <QueryClientProvider client={new QueryClient()}>
+      <ThemeProvider theme={theme}>
+        <MemoryRouter>
+          <Reviews />
+        </MemoryRouter>
+      </ThemeProvider>
+    </QueryClientProvider>,
   );
 };
 
@@ -86,11 +93,13 @@ describe('event review moderation', () => {
       isPending: false,
     } as unknown as ReturnType<typeof useModerateReview>);
     render(
-      <ThemeProvider theme={theme}>
-        <MemoryRouter>
-          <ReviewQueue eventId="event-1" />
-        </MemoryRouter>
-      </ThemeProvider>,
+      <QueryClientProvider client={new QueryClient()}>
+        <ThemeProvider theme={theme}>
+          <MemoryRouter>
+            <ReviewQueue eventId="event-1" />
+          </MemoryRouter>
+        </ThemeProvider>
+      </QueryClientProvider>,
     );
     expect(useReviews).toHaveBeenLastCalledWith({ eventId: 'event-1', status: 'pending', page: 1 });
     fireEvent.click(screen.getByRole('button', { name: 'Go to page 2' }));

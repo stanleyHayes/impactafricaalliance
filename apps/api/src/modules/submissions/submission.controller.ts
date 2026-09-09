@@ -3,7 +3,9 @@ import {
   submissionSchema,
   subscribeSchema,
   unsubscribeSchema,
-  updateSubmissionStatusSchema,
+  updateSubmissionSchema,
+  updateSubscriberSchema,
+  objectIdSchema,
   SUBMISSION_TYPES,
   SUBMISSION_STATUSES,
   type SubmissionStatus,
@@ -60,8 +62,26 @@ export class SubmissionController {
   };
 
   setStatus = async (req: Request, res: Response): Promise<void> => {
-    const { status } = parseWith(updateSubmissionStatusSchema, req.body);
-    res.json(await this.submissions.setStatus(pathParam(req, 'id'), status));
+    const input = parseWith(updateSubmissionSchema, req.body);
+    res.json(await this.submissions.update(parseWith(objectIdSchema, pathParam(req, 'id')), input));
+  };
+
+  get = async (req: Request, res: Response): Promise<void> => {
+    res.json(await this.submissions.get(parseWith(objectIdSchema, pathParam(req, 'id'))));
+  };
+
+  remove = async (req: Request, res: Response): Promise<void> => {
+    await this.submissions.remove(parseWith(objectIdSchema, pathParam(req, 'id')));
+    res.status(204).send();
+  };
+
+  updateSubscriber = async (req: Request, res: Response): Promise<void> => {
+    res.json(
+      await this.submissions.updateSubscriber(
+        parseWith(objectIdSchema, pathParam(req, 'id')),
+        parseWith(updateSubscriberSchema, req.body),
+      ),
+    );
   };
 
   listSubscribers = async (req: Request, res: Response): Promise<void> => {
