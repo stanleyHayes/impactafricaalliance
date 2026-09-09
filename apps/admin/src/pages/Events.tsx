@@ -6,6 +6,7 @@ import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
 import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
+import PeopleOutlineRoundedIcon from '@mui/icons-material/PeopleOutlineRounded';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
@@ -31,7 +32,7 @@ import { EventQrDialog } from '../components/events/EventQrDialog';
 import { InformationItem } from '../components/InformationItem';
 import { PageHeader } from '../components/PageHeader';
 import { CalendarPageSkeleton } from '../components/PageSkeleton';
-import { useDeleteEvent, useEvents } from '../lib/admin-hooks';
+import { useDeleteEvent, useEvents, useRegistrationCounts } from '../lib/admin-hooks';
 
 const STATUS_TONE: Record<
   ContentStatus,
@@ -147,9 +148,18 @@ interface EventCardProps {
   onEdit: (event: Event) => void;
   onShowQr: (event: Event) => void;
   onDelete: (event: Event) => void;
+  /** Absent while the counts are still loading. */
+  registrationCount?: number;
 }
 
-const EventCard = ({ event, onView, onEdit, onDelete, onShowQr }: EventCardProps): JSX.Element => {
+const EventCard = ({
+  event,
+  onView,
+  onEdit,
+  onDelete,
+  onShowQr,
+  registrationCount,
+}: EventCardProps): JSX.Element => {
   const theme = useTheme();
 
   return (
@@ -220,6 +230,18 @@ const EventCard = ({ event, onView, onEdit, onDelete, onShowQr }: EventCardProps
               label={event.status}
               sx={{ textTransform: 'capitalize' }}
             />
+            {/*
+              Only once somebody has signed up. A "0 registered" badge on every
+              draft is noise, and says nothing the empty list would not.
+            */}
+            {registrationCount !== undefined && registrationCount > 0 && (
+              <Chip
+                size="small"
+                variant="outlined"
+                icon={<PeopleOutlineRoundedIcon />}
+                label={`${registrationCount} registered`}
+              />
+            )}
           </Stack>
           <Box
             sx={{
@@ -285,6 +307,7 @@ const Events = (): JSX.Element => {
   };
   const events = useMemo(() => data?.items ?? [], [data]);
   const [view, setView] = useState<'calendar' | 'card'>('calendar');
+  const { data: counts } = useRegistrationCounts();
   const [month, setMonth] = useState(new Date());
   const [deletingEvent, setDeletingEvent] = useState<Event | null>(null);
   const [qrEvent, setQrEvent] = useState<Event | null>(null);
@@ -389,6 +412,7 @@ const Events = (): JSX.Element => {
                 <EventCard
                   key={event.id}
                   event={event}
+                  registrationCount={counts?.[event.id]}
                   onView={openDetails}
                   onEdit={openEdit}
                   onDelete={setDeletingEvent}

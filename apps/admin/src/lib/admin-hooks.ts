@@ -7,6 +7,7 @@ import type {
   AdminReview,
   AnalyticsSummary,
   DashboardSummary,
+  EventRegistration,
   ReviewStatus,
   DestinationCapabilities,
   DisableMfaInput,
@@ -62,6 +63,28 @@ export const useEvents = (): UseQueryResult<Paginated<Event>> =>
       }
       return { ...first, items };
     },
+  });
+
+/** Who has signed up for one event, newest first. */
+export const useEventRegistrations = (
+  eventId: string | undefined,
+  page = 1,
+): UseQueryResult<Paginated<EventRegistration>> =>
+  useQuery({
+    queryKey: ['event-registrations', eventId, page],
+    queryFn: () =>
+      api.get<Paginated<EventRegistration>>(
+        `/admin/event-registrations/${eventId}?page=${page}&pageSize=25`,
+      ),
+    enabled: Boolean(eventId),
+  });
+
+/** How many have signed up for each event, keyed by event id. */
+export const useRegistrationCounts = (): UseQueryResult<Record<string, number>> =>
+  useQuery({
+    queryKey: ['event-registration-counts'],
+    queryFn: () => api.get<Record<string, number>>('/admin/event-registrations/counts'),
+    staleTime: 60_000,
   });
 
 export interface EventQrCode {
