@@ -756,3 +756,12 @@ Owner: Codex. Status: implementation and component visual review complete; authe
 - Local admin preview is at `http://localhost:5299` and points to the local API on port 4001. Reload returned to sign-in; the API health and local CORS response are working. An authenticated session is still needed for the complete page-by-page walkthrough.
 - The temporary component preview used sample content and was removed after light/dark desktop and 390px checks. Those checks verify shared components, not authenticated page integration.
 - Final validation: admin lint, TypeScript/build, all 72 tests across 20 files, and `git diff --check` pass. Vite still reports the existing large-bundle advisory.
+
+### Admin registration directory redesign — 2026-09-09
+
+Owner: Codex. Status: implemented; focused checks pass; browser visual acceptance pending.
+
+- Replaced the registration table with a themed audience header, prominent total, attendee initials, responsive directory rows and expandable contact/profile details and custom answers using shared InformationItem blocks.
+- Added loading rows, actionable retry, an explanatory empty state and page ranges. Export remains explicitly scoped to the current page, preserves custom question columns and CSV escaping, and is disabled during loading/failure.
+- Event-card registration counts use a themed treatment and open event details; zero counts remain hidden.
+- Verification: 10 focused registration/CSV/event-detail tests, admin TypeScript, changed-file ESLint and diff checks pass. Local browser navigation to port 5299 returned connection refused; no browser or authenticated visual acceptance is claimed. Main-branch publication authorized on 2026-09-09; no deployment performed.

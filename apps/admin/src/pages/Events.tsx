@@ -239,7 +239,15 @@ const EventCard = ({
                 size="small"
                 variant="outlined"
                 icon={<PeopleOutlineRoundedIcon />}
-                label={`${registrationCount} registered`}
+                label={`${registrationCount.toLocaleString()} registered`}
+                onClick={() => onView(event)}
+                sx={{
+                  bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
+                  color: 'primary.main',
+                  borderColor: 'transparent',
+                  fontWeight: 700,
+                  fontVariantNumeric: 'tabular-nums',
+                }}
               />
             )}
           </Stack>
