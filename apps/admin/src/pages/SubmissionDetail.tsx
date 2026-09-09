@@ -198,14 +198,17 @@ const SubmissionDetail = ({ edit = false }: { edit?: boolean }): JSX.Element => 
           <SubmissionEditor key={query.data.id} item={query.data} />
         ) : (
           <Paper sx={{ p: 3 }}>
-            <RecordActions
-              record={query.data as unknown as Record<string, unknown>}
-              resource="submissions"
-              endpoint="/admin/submissions"
-              deletable
-              onEdit={() => void navigate(`/submissions/records/${id}/edit`)}
-            />
             <RecordFields record={query.data as unknown as Record<string, unknown>} />
+            <Stack sx={{ mt: 3 }}>
+              {' '}
+              <RecordActions
+                record={query.data as unknown as Record<string, unknown>}
+                resource="submissions"
+                endpoint="/admin/submissions"
+                deletable
+                onEdit={() => void navigate(`/submissions/records/${id}/edit`)}
+              />
+            </Stack>
           </Paper>
         ))}
     </Stack>

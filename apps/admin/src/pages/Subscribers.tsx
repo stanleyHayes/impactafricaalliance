@@ -33,7 +33,9 @@ const columns: GridColDef[] = [
   {
     field: 'actions',
     headerName: 'Actions',
-    width: 220,
+    align: 'right',
+    headerAlign: 'right',
+    width: 132,
     sortable: false,
     renderCell: (params) => <SubscriberActions row={params.row} />,
   },
@@ -110,8 +112,10 @@ const SubscriberCard = ({ row }: { row: GridRowModel }): JSX.Element => {
               </InformationItem>
             </Stack>
           </Box>
-          <SubscriberActions row={row} />
         </Stack>
+        <Box sx={{ mt: 2 }}>
+          <SubscriberActions row={row} />
+        </Box>
       </Box>
     </Card>
   );

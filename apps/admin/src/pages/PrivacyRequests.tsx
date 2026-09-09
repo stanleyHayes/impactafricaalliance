@@ -73,21 +73,6 @@ const StatusCell = ({ id, status }: { id: string; status: string }): JSX.Element
 };
 
 const columns: GridColDef[] = [
-  {
-    field: 'actions',
-    headerName: 'Actions',
-    width: 160,
-    sortable: false,
-    renderCell: (params) => (
-      <RecordActions
-        record={params.row}
-        resource="privacy-requests"
-        endpoint="/admin/privacy-requests"
-        editableFields={['notes']}
-        deletable
-      />
-    ),
-  },
   { field: 'email', headerName: 'Email', flex: 1, minWidth: 240 },
   {
     field: 'type',
@@ -108,6 +93,23 @@ const columns: GridColDef[] = [
     renderCell: (params) => formatUtcDate(String(params.row.createdAt)),
   },
   { field: 'notes', headerName: 'Notes', flex: 1, minWidth: 200 },
+  {
+    field: 'actions',
+    headerName: 'Actions',
+    align: 'right',
+    headerAlign: 'right',
+    width: 132,
+    sortable: false,
+    renderCell: (params) => (
+      <RecordActions
+        record={params.row}
+        resource="privacy-requests"
+        endpoint="/admin/privacy-requests"
+        editableFields={['notes']}
+        deletable
+      />
+    ),
+  },
 ];
 
 const PrivacyRequestCard = ({ row }: { row: GridRowModel }): JSX.Element => {

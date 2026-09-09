@@ -20,6 +20,7 @@ const mount = () =>
           name: 'Test subscriber',
           source: 'Website',
           consent: false,
+          createdAt: '2026-09-09T14:30:00.000Z',
           details: { hours: 0, nested: ['First answer', 'Second answer'] },
         }}
         editableFields={['name', 'source']}
@@ -36,7 +37,9 @@ describe('record actions', () => {
     mount();
     expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'View' }).textContent).toBe('');
     fireEvent.click(screen.getByRole('button', { name: 'View' }));
+    expect(screen.getByText('9 September 2026 at 14:30 UTC')).toBeInTheDocument();
     expect(screen.getByText('No')).toBeInTheDocument();
     expect(screen.getByText('0')).toBeInTheDocument();
     expect(screen.getByText('Second answer')).toBeInTheDocument();

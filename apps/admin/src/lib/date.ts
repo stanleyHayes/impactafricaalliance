@@ -15,3 +15,7 @@ export const formatUtcDate = (
 /** Short UTC date (e.g. "11 Jul 2026") for compact columns. */
 export const formatUtcShort = (iso: string | undefined | null): string =>
   formatUtcDate(iso, { day: 'numeric', month: 'short' });
+
+/** Full, readable timestamp for record details, with an explicit timezone. */
+export const formatUtcDateTime = (iso: string): string =>
+  `${formatUtcDate(iso, { dateStyle: 'long', timeStyle: 'short' })} UTC`;

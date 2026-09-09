@@ -1,4 +1,7 @@
 import type { AdminResource } from '@iaa/shared';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlined';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import {
   Alert,
   Button,
@@ -17,7 +20,10 @@ import { useState } from 'react';
 
 import { useCan } from '../../auth/useCan';
 import { api } from '../../lib/api-client';
+import { formatUtcDate, formatUtcDateTime } from '../../lib/date';
 import { InformationItem } from '../InformationItem';
+
+import { ActionIcon } from './ActionIcon';
 
 export const fieldLabel = (key: string): string =>
   key
@@ -25,8 +31,23 @@ export const fieldLabel = (key: string): string =>
     .replace(/[_-]/g, ' ')
     .replace(/^./, (c) => c.toUpperCase());
 
-const RecordValue = ({ value }: { value: unknown }): JSX.Element => {
+const isRecordDate = (field: string, value: unknown): value is string =>
+  typeof value === 'string' &&
+  /(?:At|Date|date|_at|_date)$/.test(field) &&
+  /^\d{4}-\d{2}-\d{2}(?:T.*)?$/.test(value) &&
+  !Number.isNaN(Date.parse(value));
+
+const RecordValue = ({ value, field }: { value: unknown; field: string }): JSX.Element => {
   if (value === null || value === undefined || value === '') return <>Not provided</>;
+  if (isRecordDate(field, value)) {
+    return (
+      <time dateTime={value} title={value}>
+        {value.includes('T')
+          ? formatUtcDateTime(value)
+          : formatUtcDate(value, { day: 'numeric', month: 'long', year: 'numeric' })}
+      </time>
+    );
+  }
   if (typeof value === 'boolean') return <>{value ? 'Yes' : 'No'}</>;
   if (Array.isArray(value))
     return (
@@ -51,7 +72,7 @@ export const RecordFields = ({ record }: { record: Record<string, unknown> }): J
       .filter(([key]) => key !== '__seed' && key !== '__v')
       .map(([key, value]) => (
         <InformationItem key={key} label={fieldLabel(key)}>
-          <RecordValue value={value} />
+          <RecordValue value={value} field={key} />
         </InformationItem>
       ))}
   </Stack>
@@ -84,21 +105,26 @@ const ActionButtons = ({
 }): JSX.Element => {
   const can = useCan();
   return (
-    <Stack direction="row" spacing={0.5} aria-label="Actions">
+    <Stack
+      direction="row"
+      spacing={0.5}
+      aria-label="Actions"
+      sx={{ justifyContent: 'flex-end', alignItems: 'center', width: '100%' }}
+    >
       {can('read', resource) && (
-        <Button size="small" disabled={disabled} onClick={onView}>
-          View
-        </Button>
+        <ActionIcon label="View" disabled={disabled} onClick={onView}>
+          <VisibilityOutlinedIcon fontSize="small" />
+        </ActionIcon>
       )}
       {can('update', resource) && onEdit && (
-        <Button size="small" disabled={disabled} onClick={onEdit}>
-          Edit
-        </Button>
+        <ActionIcon label="Edit" disabled={disabled} onClick={onEdit}>
+          <EditOutlinedIcon fontSize="small" />
+        </ActionIcon>
       )}
       {can('delete', resource) && onDelete && (
-        <Button size="small" color="error" disabled={disabled} onClick={onDelete}>
-          Delete
-        </Button>
+        <ActionIcon label="Delete" disabled={disabled} onClick={onDelete} color="error">
+          <DeleteOutlineIcon fontSize="small" />
+        </ActionIcon>
       )}
     </Stack>
   );

@@ -67,3 +67,11 @@ large-bundle advisory; it does not prevent the build.
   permissions, missing-record/invalid-ID handling, and review-deletion rating refresh.
 - Admin and API builds; shared schema tests; ESLint; `git diff --check`.
 - No production records were edited or deleted during verification.
+
+## Action presentation follow-up
+
+Record actions use icons with tooltips and accessible names. Table Actions columns appear last and
+align right; card/detail actions follow the record content. Explicit Save, Close and destructive
+confirmation buttons retain text labels. Detail timestamps read, for example,
+“9 September 2026 at 14:30 UTC”; hovering retains the exact original timestamp.
+The follow-up passed nine focused component tests, admin typecheck, ESLint and the whitespace check.

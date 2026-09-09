@@ -8,6 +8,7 @@ import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
 import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
 import PeopleOutlineRoundedIcon from '@mui/icons-material/PeopleOutlineRounded';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -15,7 +16,6 @@ import Card from '@mui/material/Card';
 import Chip from '@mui/material/Chip';
 import Dialog from '@mui/material/Dialog';
 import DialogContent from '@mui/material/DialogContent';
-import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import { alpha, useTheme } from '@mui/material/styles';
 import ToggleButton from '@mui/material/ToggleButton';
@@ -26,6 +26,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { RequirePermission } from '../auth/RequirePermission';
 import { useCan } from '../auth/useCan';
+import { ActionIcon } from '../components/data/ActionIcon';
 import { DialogFooter, DialogHeader, dialogPaperSx } from '../components/dialogs/DialogShell';
 import { EmptyState } from '../components/EmptyState';
 import { CalendarGrid } from '../components/events/CalendarGrid';
@@ -284,31 +285,21 @@ const EventCard = ({
           </Typography>
         </Box>
         <Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
-          <Button size="small" onClick={() => onView(event)}>
-            View
-          </Button>
-          <IconButton
-            aria-label="Show QR code"
-            onClick={() => onShowQr(event)}
-            size="small"
-            title="QR code for flyers and slides"
-          >
-            <QrCode2Icon />
-          </IconButton>
+          <ActionIcon label="View event" onClick={() => onView(event)}>
+            <VisibilityOutlinedIcon fontSize="small" />
+          </ActionIcon>
+          <ActionIcon label="Show QR code" onClick={() => onShowQr(event)}>
+            <QrCode2Icon fontSize="small" />
+          </ActionIcon>
           <RequirePermission resource="events" action="update">
-            <IconButton aria-label="Edit event" onClick={() => onEdit(event)} size="small">
-              <EditOutlinedIcon />
-            </IconButton>
+            <ActionIcon label="Edit event" onClick={() => onEdit(event)}>
+              <EditOutlinedIcon fontSize="small" />
+            </ActionIcon>
           </RequirePermission>
           <RequirePermission resource="events" action="delete">
-            <IconButton
-              aria-label="Delete event"
-              onClick={() => onDelete(event)}
-              size="small"
-              color="error"
-            >
-              <DeleteOutlinedIcon />
-            </IconButton>
+            <ActionIcon label="Delete event" color="error" onClick={() => onDelete(event)}>
+              <DeleteOutlinedIcon fontSize="small" />
+            </ActionIcon>
           </RequirePermission>
         </Stack>
       </Stack>

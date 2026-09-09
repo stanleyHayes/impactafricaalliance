@@ -40,13 +40,6 @@ const statusColor = (status: unknown): 'success' | 'warning' | 'error' | 'defaul
 
 const columns: GridColDef[] = [
   {
-    field: 'actions',
-    headerName: 'Actions',
-    width: 160,
-    sortable: false,
-    renderCell: (params) => <RecordActions record={params.row} resource="donations" />,
-  },
-  {
     field: 'createdAt',
     headerName: 'Date',
     width: 170,
@@ -75,6 +68,15 @@ const columns: GridColDef[] = [
     renderCell: (params) => (
       <Chip size="small" label={String(params.value)} color={statusColor(params.value)} />
     ),
+  },
+  {
+    field: 'actions',
+    headerName: 'Actions',
+    align: 'right',
+    headerAlign: 'right',
+    width: 132,
+    sortable: false,
+    renderCell: (params) => <RecordActions record={params.row} resource="donations" />,
   },
 ];
 

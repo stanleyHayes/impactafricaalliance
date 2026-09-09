@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { USER_ROLES, createUserSchema, type CreateUserInput, type PublicUser } from '@iaa/shared';
 import AddIcon from '@mui/icons-material/Add';
+import AdminPanelSettingsOutlinedIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
 import GroupsIcon from '@mui/icons-material/Groups';
 import MailOutlineIcon from '@mui/icons-material/MailOutlineOutlined';
 import PersonAddRoundedIcon from '@mui/icons-material/PersonAddRounded';
@@ -24,6 +25,7 @@ import { useForm } from 'react-hook-form';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 
 import { RequirePermission } from '../auth/RequirePermission';
+import { ActionIcon } from '../components/data/ActionIcon';
 import { DataTable, type DataTableFilter } from '../components/data/DataTable';
 import { RecordActions } from '../components/data/RecordActions';
 import { useViewMode } from '../components/data/useViewMode';
@@ -170,7 +172,11 @@ const UserActions = ({
   user: PublicUser;
   onManage: (user: PublicUser) => void;
 }): JSX.Element => (
-  <Stack direction="row" spacing={0.5}>
+  <Stack
+    direction="row"
+    spacing={0.5}
+    sx={{ justifyContent: 'flex-end', alignItems: 'center', width: '100%' }}
+  >
     <RecordActions
       record={user as unknown as Record<string, unknown>}
       resource="users"
@@ -179,9 +185,9 @@ const UserActions = ({
       deletable
     />
     <RequirePermission resource="users" action="update">
-      <Button size="small" onClick={() => onManage(user)}>
-        Permissions
-      </Button>
+      <ActionIcon label="Permissions" onClick={() => onManage(user)}>
+        <AdminPanelSettingsOutlinedIcon fontSize="small" />
+      </ActionIcon>
     </RequirePermission>
   </Stack>
 );
@@ -308,7 +314,7 @@ const Users = (): JSX.Element => {
     {
       field: '__actions',
       headerName: 'Actions',
-      width: 330,
+      width: 170,
       sortable: false,
       align: 'right',
       headerAlign: 'right',

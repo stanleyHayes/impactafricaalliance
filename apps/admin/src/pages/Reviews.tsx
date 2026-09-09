@@ -1,4 +1,5 @@
 import type { AdminReview, ReviewStatus, Paginated } from '@iaa/shared';
+import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import EventRoundedIcon from '@mui/icons-material/EventRounded';
 import FormatQuoteRoundedIcon from '@mui/icons-material/FormatQuoteRounded';
@@ -26,6 +27,7 @@ import { useState } from 'react';
 import { Link as RouterLink, useSearchParams } from 'react-router-dom';
 
 import { RequirePermission } from '../auth/RequirePermission';
+import { ActionIcon } from '../components/data/ActionIcon';
 import { RecordActions } from '../components/data/RecordActions';
 import { EmptyState } from '../components/EmptyState';
 import { PageHeader } from '../components/PageHeader';
@@ -145,36 +147,39 @@ const ReviewCard = ({
       </Alert>
     )}
 
-    <RecordActions
-      record={review as unknown as Record<string, unknown>}
-      resource="reviews"
-      endpoint="/admin/reviews"
-      editableFields={['status', 'rejectionReason']}
-      selectOptions={{ status: ['published', 'rejected'] }}
-      deletable
-    />
-    {
+    <Stack
+      direction="row"
+      spacing={1}
+      sx={{ mt: 2, justifyContent: 'flex-end', alignItems: 'center' }}
+    >
       <RequirePermission resource="reviews" action="update">
-        <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
-          {review.status !== 'published' && (
-            <Button
-              variant="contained"
-              size="small"
-              startIcon={<CheckCircleRoundedIcon />}
-              disabled={busy}
-              onClick={() => onPublish(review)}
-            >
-              Publish
-            </Button>
-          )}
-          {review.status !== 'rejected' && (
-            <Button size="small" color="inherit" disabled={busy} onClick={() => onReject(review)}>
-              Reject
-            </Button>
-          )}
-        </Stack>
+        {review.status !== 'published' && (
+          <ActionIcon
+            label="Publish"
+            color="success"
+            disabled={busy}
+            onClick={() => onPublish(review)}
+          >
+            <CheckCircleRoundedIcon fontSize="small" />
+          </ActionIcon>
+        )}
+        {review.status !== 'rejected' && (
+          <ActionIcon label="Reject" disabled={busy} onClick={() => onReject(review)}>
+            <BlockOutlinedIcon fontSize="small" />
+          </ActionIcon>
+        )}
       </RequirePermission>
-    }
+      <Box>
+        <RecordActions
+          record={review as unknown as Record<string, unknown>}
+          resource="reviews"
+          endpoint="/admin/reviews"
+          editableFields={['status', 'rejectionReason']}
+          selectOptions={{ status: ['published', 'rejected'] }}
+          deletable
+        />
+      </Box>
+    </Stack>
   </Card>
 );
 

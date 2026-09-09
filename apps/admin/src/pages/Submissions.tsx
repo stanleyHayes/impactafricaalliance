@@ -607,13 +607,6 @@ const PAGE_SIZE = 8;
 
 const tableColumns: GridColDef[] = [
   {
-    field: 'actions',
-    headerName: 'Actions',
-    width: 220,
-    sortable: false,
-    renderCell: (params) => <SubmissionActions submission={params.row as Submission} />,
-  },
-  {
     field: 'type',
     headerName: 'Type',
     width: 130,
@@ -652,6 +645,15 @@ const tableColumns: GridColDef[] = [
     headerName: 'Received',
     width: 170,
     renderCell: (params) => formatUtcDate(String(params.row.createdAt)),
+  },
+  {
+    field: 'actions',
+    headerName: 'Actions',
+    align: 'right',
+    headerAlign: 'right',
+    width: 132,
+    sortable: false,
+    renderCell: (params) => <SubmissionActions submission={params.row as Submission} />,
   },
 ];
 

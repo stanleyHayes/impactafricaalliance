@@ -794,3 +794,14 @@ Owner: Codex. Status: implemented and verified with automated checks; publicatio
 
 - **Final checks:** 90 admin, 132 API and 126 shared tests passed (348 total); admin/API builds,
   ESLint and `git diff --check` passed. Authenticated production browser verification was not run.
+
+### 2026-09-09 — Action placement and readable dates
+
+- **Owner:** Codex. **Status:** Verified.
+- Replaced record, event, review moderation and user-permission text actions with compact icons and
+  tooltips, preserving accessible labels, confirmation dialogs and independent permission checks.
+- Actions are the final table column, aligned right. Subscriber cards and submission detail pages put
+  actions after the information; review actions share a trailing group.
+- Detail timestamps display a full readable date/time with UTC, retaining the original ISO timestamp
+  on hover. Compact list dates keep their existing human-readable formatting.
+- Verification: 9 focused component tests passed; admin typecheck, ESLint and `git diff --check` passed.
