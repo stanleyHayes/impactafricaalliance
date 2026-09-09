@@ -25,6 +25,7 @@ import { Link as RouterLink, useParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { EmptyState } from '../components/EmptyState';
 import { EventImage } from '../components/events/EventImage';
+import { EventMessages } from '../components/events/EventMessages';
 import { EventQrDialog } from '../components/events/EventQrDialog';
 import { EventRegistrations } from '../components/events/EventRegistrations';
 import { InformationItem } from '../components/InformationItem';
@@ -385,6 +386,7 @@ const EventOverview = ({ event, canManage }: { event: Event; canManage: boolean 
         before, so nobody could see the room they were about to teach.
       */}
       {canManage && <EventRegistrations eventId={event.id} eventTitle={event.title} />}
+      {canManage && <EventMessages event={event} />}
       {canManage && (
         <Box id="reviews" sx={{ scrollMarginTop: 100 }}>
           <Stack spacing={3}>

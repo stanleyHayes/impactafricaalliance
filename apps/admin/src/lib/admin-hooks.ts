@@ -7,6 +7,8 @@ import type {
   AdminReview,
   AnalyticsSummary,
   DashboardSummary,
+  EventMessage,
+  EventMessageInput,
   EventRegistration,
   ReviewStatus,
   DestinationCapabilities,
@@ -64,6 +66,27 @@ export const useEvents = (): UseQueryResult<Paginated<Event>> =>
       return { ...first, items };
     },
   });
+
+/** What has already been sent to an event's registrants. */
+export const useEventMessages = (
+  eventId: string | undefined,
+): UseQueryResult<Paginated<EventMessage>> =>
+  useQuery({
+    queryKey: ['event-messages', eventId],
+    queryFn: () => api.get<Paginated<EventMessage>>(`/admin/event-messages/${eventId}`),
+    enabled: Boolean(eventId),
+  });
+
+/** Write to everyone registered. Refreshes the log so the send appears in it. */
+export const useSendEventMessage = (
+  eventId: string,
+): UseMutationResult<EventMessage, Error, EventMessageInput> => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input) => api.post<EventMessage>(`/admin/event-messages/${eventId}`, input),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['event-messages', eventId] }),
+  });
+};
 
 /** Who has signed up for one event, newest first. */
 export const useEventRegistrations = (

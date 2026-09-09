@@ -17,6 +17,7 @@ import { createAuthRouter } from './modules/auth/auth.routes.js';
 import { createCampaignRouter } from './modules/campaigns/campaign.routes.js';
 import { buildContentModules } from './modules/content/content.registry.js';
 import { createDashboardRouter } from './modules/dashboard/dashboard.routes.js';
+import { createEventMessageRouter } from './modules/event-messages/event-message.routes.js';
 import { createEventRegistrationRouters } from './modules/event-registrations/event-registration.routes.js';
 import { createHealthRouter } from './modules/health/health.routes.js';
 import { createMediaRouter } from './modules/media/media.routes.js';
@@ -68,6 +69,7 @@ export const createApp = (
   const eventRegistrations = createEventRegistrationRouters(container);
   app.use('/api/events', eventRegistrations.publicRouter);
   app.use('/api/admin/event-registrations', eventRegistrations.adminRouter);
+  app.use('/api/admin/event-messages', createEventMessageRouter(container));
 
   const submissions = createSubmissionRouters(container);
   app.use('/api/submissions', submissions.publicRouter);

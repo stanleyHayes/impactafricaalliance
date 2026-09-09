@@ -8,6 +8,7 @@ import { loadConfig } from './config/env.js';
 import { createLogger } from './config/logger.js';
 import { buildContainer } from './container.js';
 import { connectDatabase, disconnectDatabase } from './db/mongoose.js';
+import { startEventAutomationWorker } from './modules/event-messages/event-automation.worker.js';
 import { startRetentionJobs } from './modules/privacy/retention.service.js';
 import { startReviewInviteWorker } from './modules/reviews/review-invite.worker.js';
 import { startSocialPublicationWorker } from './modules/social/social-publication.worker.js';
@@ -24,6 +25,7 @@ const bootstrap = async (): Promise<void> => {
   const stopRetentionJobs = startRetentionJobs(config, logger);
   const stopSocialWorker = startSocialPublicationWorker(container, logger);
   const stopReviewInvites = startReviewInviteWorker(container, logger);
+  const stopEventAutomation = startEventAutomationWorker(container, logger);
 
   const server: Server = app.listen(config.port, () => {
     logger.info(`API listening on port ${config.port} (${config.env})`);
@@ -36,6 +38,7 @@ const bootstrap = async (): Promise<void> => {
     stopRetentionJobs();
     stopSocialWorker();
     stopReviewInvites();
+    stopEventAutomation();
     server.close(() => {
       disconnectDatabase()
         .catch((error) => logger.error({ err: error }, 'Error during DB disconnect'))

@@ -1,3 +1,4 @@
+export * from './event-message.js';
 export * from './campaign.js';
 export * from './review.js';
 export * from './analytics.js';

@@ -2,8 +2,10 @@ import { CONTENT_STATUSES, EVENT_TYPES } from '@iaa/shared';
 import type { SvgIconComponent } from '@mui/icons-material';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
+import FavoriteBorderOutlinedIcon from '@mui/icons-material/FavoriteBorderOutlined';
 import LocalOfferOutlinedIcon from '@mui/icons-material/LocalOfferOutlined';
 import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
+import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined';
 import PersonOutlinedIcon from '@mui/icons-material/PersonOutlined';
 import TitleIcon from '@mui/icons-material/Title';
 import VideocamOutlinedIcon from '@mui/icons-material/VideocamOutlined';
@@ -181,6 +183,20 @@ export const EventRegistrationFields = ({
       value={form.meetingUrl}
       onChange={(e) => setField('meetingUrl', e.target.value)}
       helperText="For online sessions. Never shown on the public event page — only someone who has completed registration sees it."
+    />
+    <TextField
+      label={fieldLabel(NotificationsOutlinedIcon, 'Remind registrants (hours before)')}
+      type="number"
+      value={form.reminderHoursBefore}
+      onChange={(e) => setField('reminderHoursBefore', e.target.value)}
+      helperText="Leave blank for no reminder. 24 sends it the day before, with the joining link."
+    />
+    <TextField
+      label={fieldLabel(FavoriteBorderOutlinedIcon, 'Thank registrants (minutes after)')}
+      type="number"
+      value={form.thankYouMinutesAfter}
+      onChange={(e) => setField('thankYouMinutesAfter', e.target.value)}
+      helperText="Leave blank for no thank-you. Counted from the end time, or the start if none is set."
     />
     <QuestionBuilder
       label="Extra questions for this event"

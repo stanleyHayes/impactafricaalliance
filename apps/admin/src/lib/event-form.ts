@@ -26,6 +26,8 @@ export interface EventFormState {
   admission: string;
   registrationEnabled: boolean;
   capacity: string;
+  reminderHoursBefore: string;
+  thankYouMinutesAfter: string;
   registrationClosesAt: Dayjs | null;
   meetingUrl: string;
   questions: EventQuestion[];
@@ -47,6 +49,8 @@ export const emptyEventForm = (date?: string | null): EventFormState => {
     admission: '',
     registrationEnabled: false,
     capacity: '',
+    reminderHoursBefore: '',
+    thankYouMinutesAfter: '',
     registrationClosesAt: null,
     meetingUrl: '',
     questions: [],
@@ -67,6 +71,8 @@ export const eventToForm = (event: Event): EventFormState => ({
   admission: event.admission ?? '',
   registrationEnabled: event.registrationEnabled ?? false,
   capacity: event.capacity === undefined ? '' : String(event.capacity),
+  reminderHoursBefore: event.reminderHoursBefore ? String(event.reminderHoursBefore) : '',
+  thankYouMinutesAfter: event.thankYouMinutesAfter ? String(event.thankYouMinutesAfter) : '',
   registrationClosesAt: event.registrationClosesAt ? dayjs(event.registrationClosesAt) : null,
   meetingUrl: event.meetingUrl ?? '',
   questions: event.questions ?? [],
@@ -112,6 +118,12 @@ export const parseEventForm = (
     admission: form.admission.trim() || undefined,
     registrationEnabled: form.registrationEnabled,
     capacity: form.capacity.trim() ? Number(form.capacity) : undefined,
+    // Blank means "do not send", which is null rather than undefined so that
+    // clearing the field actually turns an existing automation off.
+    reminderHoursBefore: form.reminderHoursBefore.trim() ? Number(form.reminderHoursBefore) : null,
+    thankYouMinutesAfter: form.thankYouMinutesAfter.trim()
+      ? Number(form.thankYouMinutesAfter)
+      : null,
     registrationClosesAt: toIso(form.registrationClosesAt),
     meetingUrl: form.meetingUrl.trim() || undefined,
     questions: form.questions.filter((question) => question.label.trim().length > 0),
@@ -120,7 +132,16 @@ export const parseEventForm = (
 const fieldsByStep = [
   ['title', 'description', 'type', 'image'],
   ['startAt', 'endAt', 'location', 'host', 'hostTitle'],
-  ['registrationEnabled', 'capacity', 'admission', 'registrationClosesAt', 'meetingUrl', 'questions'],
+  [
+    'registrationEnabled',
+    'capacity',
+    'admission',
+    'registrationClosesAt',
+    'meetingUrl',
+    'reminderHoursBefore',
+    'thankYouMinutesAfter',
+    'questions',
+  ],
   ['status'],
 ];
 

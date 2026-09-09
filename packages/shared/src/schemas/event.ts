@@ -75,6 +75,10 @@ export const eventInputSchema = z.object({
    */
   meetingUrl: optionalUrl,
   questions: z.array(eventQuestionSchema).max(40).default([]),
+  /** Hours before the start to remind registrants. Absent means no reminder. */
+  reminderHoursBefore: z.number().int().min(1).max(168).nullish(),
+  /** Minutes after the end to thank them. Absent means no thanks. */
+  thankYouMinutesAfter: z.number().int().min(1).max(1440).nullish(),
 });
 export type EventInput = z.infer<typeof eventInputSchema>;
 
@@ -114,6 +118,11 @@ export interface Event extends Timestamped {
   meetingUrl?: string;
   questions: EventQuestion[];
   /** Published reviews only; recomputed whenever one is approved or rejected. */
+  reminderHoursBefore?: number | null;
+  thankYouMinutesAfter?: number | null;
+  /** Stamped when each automated send goes out, so neither repeats. */
+  reminderSentAt?: string;
+  thankYouSentAt?: string;
   ratingCount?: number;
   /** Withheld until there are enough ratings to mean anything. */
   ratingAverage?: number | null;

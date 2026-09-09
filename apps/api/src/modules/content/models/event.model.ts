@@ -30,6 +30,10 @@ export interface EventDocument {
   questions: EventQuestion[];
   ratingCount: number;
   ratingAverage: number | null;
+  reminderHoursBefore?: number | null;
+  thankYouMinutesAfter?: number | null;
+  reminderSentAt?: Date;
+  thankYouSentAt?: Date;
   reviewInvitesSentAt?: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -73,6 +77,11 @@ const eventSchema = new Schema<EventDocument>(
     ratingCount: { type: Number, default: 0 },
     ratingAverage: { type: Number, default: null },
     // Absent until the room has been asked; presence is what stops a second ask.
+    reminderHoursBefore: { type: Number, default: null },
+    thankYouMinutesAfter: { type: Number, default: null },
+    // Presence is what stops each automated send happening twice.
+    reminderSentAt: { type: Date, required: false },
+    thankYouSentAt: { type: Date, required: false },
     reviewInvitesSentAt: { type: Date, required: false },
     questions: { type: [questionSubSchema], default: [] },
   },
