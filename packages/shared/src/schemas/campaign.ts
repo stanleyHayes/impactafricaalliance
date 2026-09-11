@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { clearableDate } from './common.js';
 import { partialForUpdate } from './update.js';
 
 /**
@@ -24,11 +25,6 @@ const optionalShortText = z
   .optional()
   .transform((value) => (value === '' ? undefined : value));
 
-const optionalDate = z
-  .union([z.literal(''), z.string().datetime()])
-  .optional()
-  .transform((value) => (value === '' ? undefined : value));
-
 /** How loudly a banner reads. Tone, not decoration: it sets the colour. */
 export const BANNER_TONES = ['announcement', 'success', 'warning'] as const;
 export type BannerTone = (typeof BANNER_TONES)[number];
@@ -41,8 +37,8 @@ const scheduling = {
   name: z.string().min(2).max(120).trim(),
   isActive: z.boolean().default(false),
   /** Optional window. Absent start means "as soon as it is switched on". */
-  startsAt: optionalDate,
-  endsAt: optionalDate,
+  startsAt: clearableDate,
+  endsAt: clearableDate,
   /** Higher wins when more than one is live at the same moment. */
   priority: z.number().int().min(0).max(100).default(0),
 };

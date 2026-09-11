@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { CONTENT_STATUSES, type ContentStatus } from '../enums.js';
 
-import { mediaAssetSchema, type MediaAsset, type Timestamped } from './common.js';
+import { clearableDate, mediaAssetSchema, type MediaAsset, type Timestamped } from './common.js';
 import { partialForUpdate } from './update.js';
 
 const statusEnum = z.enum(CONTENT_STATUSES as [ContentStatus, ...ContentStatus[]]);
@@ -28,7 +28,7 @@ export const galleryItemInputSchema = z.object({
   location: optionalText(160),
   image: mediaAssetSchema,
   /** ISO date the photo was taken; drives newest-first ordering. */
-  capturedOn: z.string().datetime().optional(),
+  capturedOn: clearableDate,
   featured: z.boolean().default(false),
   status: statusEnum.default('draft'),
   order: z.number().int().min(0).default(0),

@@ -1,6 +1,20 @@
 import { z } from 'zod';
 
 /** A 24-character hex MongoDB ObjectId, validated as a string on the wire. */
+/**
+ * An optional date that can actually be cleared.
+ *
+ * A plain `.optional()` date looks right and silently fails: clearing the
+ * field in a form produces undefined, JSON drops the key, and a PATCH that
+ * omits a key leaves the stored value alone — so the date comes back on the
+ * next page load having reported a successful save. Accepting null gives the
+ * form a way to say "remove this" rather than "I have nothing to add".
+ */
+export const clearableDate = z
+  .union([z.literal(''), z.null(), z.string().datetime()])
+  .optional()
+  .transform((value) => (value === '' ? null : value));
+
 export const objectIdSchema = z.string().regex(/^[a-f\d]{24}$/i, 'Invalid identifier');
 
 /** A Cloudinary asset reference attached to content. */

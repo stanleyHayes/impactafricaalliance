@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { CONTENT_STATUSES, JOB_TYPES, type ContentStatus, type JobType } from '../enums.js';
 
-import { slugSchema, type Timestamped } from './common.js';
+import { clearableDate, slugSchema, type Timestamped } from './common.js';
 import { partialForUpdate } from './update.js';
 
 const statusEnum = z.enum(CONTENT_STATUSES as [ContentStatus, ...ContentStatus[]]);
@@ -15,7 +15,7 @@ export const jobInputSchema = z.object({
   type: jobTypeEnum,
   description: z.string().min(20),
   applyUrl: z.string().url().optional(),
-  deadline: z.string().datetime().optional(),
+  deadline: clearableDate,
   status: statusEnum.default('draft'),
 });
 export type JobInput = z.infer<typeof jobInputSchema>;

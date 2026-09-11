@@ -102,7 +102,9 @@ const datetimeRenderer: Renderer = (field, rhf, error) => (
     slotProps={{ inputLabel: { shrink: true } }}
     value={toLocalInput(rhf.value)}
     onChange={(e) =>
-      rhf.onChange(e.target.value ? new Date(e.target.value).toISOString() : undefined)
+      // null, not undefined: undefined is dropped by JSON, so a PATCH would
+      // omit the key and the old date would quietly survive being cleared.
+      rhf.onChange(e.target.value ? new Date(e.target.value).toISOString() : null)
     }
     error={Boolean(error)}
     helperText={error}
