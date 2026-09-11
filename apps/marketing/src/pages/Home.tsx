@@ -45,7 +45,7 @@ import {
 const HERO_STORY = [
   { key: 'digital-skills', label: 'Digital skills for work and enterprise' },
   { key: 'stem-learning', label: 'Accessible STEM learning across communities' },
-  { key: 'youth-inclusion', label: 'Young people ready for work' },
+  { key: 'youth-inclusion', label: 'Young people launched into work' },
   { key: 'women-empowerment', label: 'Women leading economic change' },
 ] as const;
 
@@ -717,7 +717,7 @@ const Home = (): JSX.Element => {
               'home-showcase-work',
               'AI-generated illustration of young professionals working with a workplace coach',
             ),
-            caption: 'Ready for work',
+            caption: 'Career Launchpad',
             drift: 0.24,
           },
         ]}

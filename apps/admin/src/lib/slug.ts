@@ -1,4 +1,4 @@
-/** Turn a title into a URL-safe slug: "Ready for Work!" -> "ready-for-work". */
+/** Turn a title into a URL-safe slug: "Career Launchpad!" -> "career-launchpad". */
 export const slugify = (value: string): string =>
   value
     .normalize('NFKD')

@@ -100,7 +100,9 @@ const renderDateTime: ValueRenderer = (_field, value) => {
         year: 'numeric',
         month: 'short',
         day: 'numeric',
-        hour: '2-digit',
+        hour: 'numeric',
+        hour12: true,
+
         minute: '2-digit',
       })}
     </Typography>

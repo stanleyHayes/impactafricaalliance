@@ -8,9 +8,9 @@ const dateFormatter = new Intl.DateTimeFormat('en-GB', {
 });
 
 const timeFormatter = new Intl.DateTimeFormat('en-GB', {
-  hour: '2-digit',
+  hour: 'numeric',
   minute: '2-digit',
-  hour12: false,
+  hour12: true,
   timeZone: 'UTC',
 });
 
@@ -23,7 +23,9 @@ export const formatEventType = (type: string): string =>
 
 export const formatEventDate = (iso: string): string => dateFormatter.format(new Date(iso));
 
-export const formatEventTime = (iso: string): string => timeFormatter.format(new Date(iso));
+/** "6:00 PM", not "18:00" — the clock Ghana and Nigeria read. */
+export const formatEventTime = (iso: string): string =>
+  timeFormatter.format(new Date(iso)).replace(/\b(am|pm)\b/i, (match) => match.toUpperCase());
 
 export const sortEventsByDate = (a: Event, b: Event): number =>
   new Date(a.startAt).getTime() - new Date(b.startAt).getTime();

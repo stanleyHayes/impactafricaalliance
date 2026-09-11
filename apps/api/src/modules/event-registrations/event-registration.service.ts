@@ -1,5 +1,6 @@
 import {
   buildEventIcs,
+  formatDateTime,
   eventIcsFilename,
   isRegistrationOpen,
   ORG,
@@ -35,16 +36,7 @@ const joiningLink = (event: { meetingUrl?: string }): Pick<EventRegistrationResu
   event.meetingUrl ? { meetingUrl: event.meetingUrl } : {};
 
 /** Matches how the public site prints an event time, so the two agree. */
-const whenFormatter = new Intl.DateTimeFormat('en-GB', {
-  weekday: 'long',
-  day: 'numeric',
-  month: 'long',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-  hour12: false,
-  timeZone: 'UTC',
-});
+
 
 const escapeHtml = (value: unknown): string =>
   String(value ?? '').replace(
@@ -195,7 +187,7 @@ export class EventRegistrationService {
     input: EventRegistrationInput,
     alreadyRegistered: boolean,
   ): Promise<void> => {
-    const when = whenFormatter.format(new Date(event.startAt));
+    const when = formatDateTime(event.startAt);
     const firstName = input.fullName.trim().split(/\s+/)[0] ?? 'there';
     const url = this.eventUrl(event.id);
     const rows: string[] = [

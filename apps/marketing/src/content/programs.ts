@@ -49,18 +49,18 @@ export const PROGRAMS: readonly ProgramContent[] = [
   {
     slug: 'youth-inclusion',
     initiative: 'Initiative 03',
-    title: 'Youth Inclusion & Ready for Work',
+    title: 'Youth Inclusion & Career Launchpad',
     descriptor:
       'Closing the gap between leaving school and landing work, so no young person is left on the sidelines.',
     challenge:
       'Africa adds millions of young people to its workforce every year, yet most arrive without the workplace readiness employers screen for: communication, teamwork, digital fluency, and the confidence to navigate a first job. Young women, rural youth, and young people with disabilities are excluded first and hardest.',
     whatWeDo: [
-      'Ready for Work training in employability, communication, teamwork, and workplace confidence',
+      'Career Launchpad training in employability, communication, teamwork, and workplace confidence',
       'Career guidance, CV and interview coaching, and one-to-one mentorship from working professionals',
       'Internship, apprenticeship, and graduate placement pathways built with employer partners',
       'Deliberate inclusion of young women, rural youth, and young people with disabilities in every cohort',
     ],
-    goal: 'To move young Africans from education into decent, dignified work through a structured Ready for Work pathway, and to make inclusion the default rather than the exception, advancing SDG 4, SDG 8, and SDG 10.',
+    goal: 'To move young Africans from education into decent, dignified work through a structured Career Launchpad pathway, and to make inclusion the default rather than the exception, advancing SDG 4, SDG 8, and SDG 10.',
   },
   {
     slug: 'women-empowerment',

@@ -11,7 +11,7 @@ export const IMAGES = {
   programs: {
     'digital-skills': '/images/program-digital-skills.webp',
     'stem-learning': '/images/program-stem-learning.webp',
-    // TODO: replace with dedicated Ready for Work photography once shot.
+    // TODO: replace with dedicated Career Launchpad photography once shot.
     'youth-inclusion': '/images/community.webp',
     'women-empowerment': '/images/program-women-empowerment.webp',
   },

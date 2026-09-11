@@ -276,152 +276,6 @@
       "helpText": null
     }
   ],
-  "Ready for Work": [
-    {
-      "id": "stage",
-      "label": "Which stage best describes where you are right now?",
-      "type": "single-choice",
-      "required": false,
-      "options": [
-        "Exploring my career options",
-        "Studying",
-        "Looking for my first job",
-        "Looking for a better job",
-        "Building my career",
-        "Starting a business",
-        "Scaling an existing business",
-        "Looking for funding/investment",
-        "Looking for scholarships/fellowships",
-        "Building skills for the future",
-        "Leading a youth/women-focused initiative",
-        "Other"
-      ],
-      "helpText": null
-    },
-    {
-      "id": "challenges",
-      "label": "What are the biggest challenges you face right now?",
-      "type": "multi-choice",
-      "required": false,
-      "helpText": "Pick up to three.",
-      "options": [
-        "Finding employment",
-        "Building relevant skills",
-        "Using AI effectively",
-        "Building my CV/portfolio",
-        "Passing interviews",
-        "Finding clients",
-        "Growing my business",
-        "Accessing funding",
-        "Finding investors",
-        "Building professional networks",
-        "Finding scholarships",
-        "Finding fellowships/global opportunities",
-        "Lack of mentorship",
-        "Lack of confidence",
-        "Lack of access to opportunities",
-        "Balancing career and personal responsibilities",
-        "Other"
-      ]
-    },
-    {
-      "id": "job-seeking",
-      "label": "Are you currently looking for employment?",
-      "type": "single-choice",
-      "required": false,
-      "options": [
-        "Yes, actively",
-        "Yes, but not urgently",
-        "No, but open to opportunities",
-        "No"
-      ],
-      "helpText": null
-    },
-    {
-      "id": "job-type",
-      "label": "What type of opportunity are you looking for?",
-      "type": "single-choice",
-      "required": false,
-      "options": [
-        "Internship",
-        "Graduate/entry-level job",
-        "Mid-level job",
-        "Senior-level position",
-        "Remote job",
-        "Freelance opportunity",
-        "Contract work",
-        "Apprenticeship",
-        "Volunteer opportunity"
-      ],
-      "helpText": null
-    },
-    {
-      "id": "job-challenge",
-      "label": "What is your biggest challenge in getting a job?",
-      "type": "single-choice",
-      "required": false,
-      "options": [
-        "Finding opportunities",
-        "CV/resume",
-        "LinkedIn profile",
-        "Personal branding",
-        "Networking",
-        "Interviews",
-        "Lack of experience",
-        "Lack of skills",
-        "Knowing where to apply",
-        "Confidence",
-        "Other"
-      ],
-      "helpText": null
-    },
-    {
-      "id": "ready-meaning",
-      "label": "What would make you feel \"ready for work\"?",
-      "type": "long-text",
-      "required": false,
-      "options": [],
-      "helpText": null
-    },
-    {
-      "id": "your-question",
-      "label": "What one question would you like answered during the session?",
-      "type": "long-text",
-      "required": false,
-      "options": [],
-      "helpText": null
-    },
-    {
-      "id": "community",
-      "label": "Would you like updates about future programmes and opportunities?",
-      "type": "single-choice",
-      "required": false,
-      "options": [
-        "Yes",
-        "No"
-      ],
-      "helpText": null
-    },
-    {
-      "id": "heard-via",
-      "label": "How did you hear about this webinar?",
-      "type": "single-choice",
-      "required": false,
-      "options": [
-        "LinkedIn",
-        "Instagram",
-        "WhatsApp",
-        "Facebook",
-        "X",
-        "Friend/colleague",
-        "School/university",
-        "Organization/community",
-        "Email",
-        "Other"
-      ],
-      "helpText": null
-    }
-  ],
   "Scaling Your Business": [
     {
       "id": "stage",
@@ -537,6 +391,152 @@
         "Grants vs investment",
         "Scaling across West Africa"
       ],
+      "helpText": null
+    },
+    {
+      "id": "your-question",
+      "label": "What one question would you like answered during the session?",
+      "type": "long-text",
+      "required": false,
+      "options": [],
+      "helpText": null
+    },
+    {
+      "id": "community",
+      "label": "Would you like updates about future programmes and opportunities?",
+      "type": "single-choice",
+      "required": false,
+      "options": [
+        "Yes",
+        "No"
+      ],
+      "helpText": null
+    },
+    {
+      "id": "heard-via",
+      "label": "How did you hear about this webinar?",
+      "type": "single-choice",
+      "required": false,
+      "options": [
+        "LinkedIn",
+        "Instagram",
+        "WhatsApp",
+        "Facebook",
+        "X",
+        "Friend/colleague",
+        "School/university",
+        "Organization/community",
+        "Email",
+        "Other"
+      ],
+      "helpText": null
+    }
+  ],
+  "Career Launchpad": [
+    {
+      "id": "stage",
+      "label": "Which stage best describes where you are right now?",
+      "type": "single-choice",
+      "required": false,
+      "options": [
+        "Exploring my career options",
+        "Studying",
+        "Looking for my first job",
+        "Looking for a better job",
+        "Building my career",
+        "Starting a business",
+        "Scaling an existing business",
+        "Looking for funding/investment",
+        "Looking for scholarships/fellowships",
+        "Building skills for the future",
+        "Leading a youth/women-focused initiative",
+        "Other"
+      ],
+      "helpText": null
+    },
+    {
+      "id": "challenges",
+      "label": "What are the biggest challenges you face right now?",
+      "type": "multi-choice",
+      "required": false,
+      "helpText": "Pick up to three.",
+      "options": [
+        "Finding employment",
+        "Building relevant skills",
+        "Using AI effectively",
+        "Building my CV/portfolio",
+        "Passing interviews",
+        "Finding clients",
+        "Growing my business",
+        "Accessing funding",
+        "Finding investors",
+        "Building professional networks",
+        "Finding scholarships",
+        "Finding fellowships/global opportunities",
+        "Lack of mentorship",
+        "Lack of confidence",
+        "Lack of access to opportunities",
+        "Balancing career and personal responsibilities",
+        "Other"
+      ]
+    },
+    {
+      "id": "job-seeking",
+      "label": "Are you currently looking for employment?",
+      "type": "single-choice",
+      "required": false,
+      "options": [
+        "Yes, actively",
+        "Yes, but not urgently",
+        "No, but open to opportunities",
+        "No"
+      ],
+      "helpText": null
+    },
+    {
+      "id": "job-type",
+      "label": "What type of opportunity are you looking for?",
+      "type": "single-choice",
+      "required": false,
+      "options": [
+        "Internship",
+        "Graduate/entry-level job",
+        "Mid-level job",
+        "Senior-level position",
+        "Remote job",
+        "Freelance opportunity",
+        "Contract work",
+        "Apprenticeship",
+        "Volunteer opportunity"
+      ],
+      "helpText": null
+    },
+    {
+      "id": "job-challenge",
+      "label": "What is your biggest challenge in getting a job?",
+      "type": "single-choice",
+      "required": false,
+      "options": [
+        "Finding opportunities",
+        "CV/resume",
+        "LinkedIn profile",
+        "Personal branding",
+        "Networking",
+        "Interviews",
+        "Lack of experience",
+        "Lack of skills",
+        "Knowing where to apply",
+        "Confidence",
+        "Other"
+      ],
+      "helpText": null
+    },
+    {
+      "id": "ready-meaning",
+      "label": "What would make you feel ready for your first role?",
+      "type": "long-text",
+      "required": false,
+      "options": [],
       "helpText": null
     },
     {

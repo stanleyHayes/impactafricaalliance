@@ -1,5 +1,6 @@
 import {
   bodyToHtml,
+  formatDateTime,
   ORG,
   type EventMessage,
   type EventMessageInput,
@@ -28,15 +29,7 @@ const escapeHtml = (value: unknown): string =>
       character,
   );
 
-const whenFormatter = new Intl.DateTimeFormat('en-GB', {
-  weekday: 'long',
-  day: 'numeric',
-  month: 'long',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-  timeZone: 'UTC',
-});
+
 
 interface EventLike {
   id: string;
@@ -65,7 +58,7 @@ export class EventMessageService {
       bodyToHtml(input.body, escapeHtml),
       `<hr style="border:0;border-top:1px solid #E4E0D6;margin:24px 0 18px" />`,
       `<p style="margin:0 0 6px"><strong>${escapeHtml(event.title)}</strong></p>`,
-      `<p style="margin:0 0 6px">${escapeHtml(whenFormatter.format(event.startAt))} GMT</p>`,
+      `<p style="margin:0 0 6px">${escapeHtml(formatDateTime(event.startAt))} GMT</p>`,
       `<p style="margin:0 0 6px">${escapeHtml(event.location)}</p>`,
     ];
 

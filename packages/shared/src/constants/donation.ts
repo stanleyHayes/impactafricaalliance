@@ -11,7 +11,7 @@ export interface DonationTier {
 export const DONATION_TIERS: readonly DonationTier[] = [
   { amountUsd: 25, impact: 'Provides digital learning materials for one youth participant' },
   { amountUsd: 100, impact: 'Covers a 3-month online course subscription for one learner' },
-  { amountUsd: 500, impact: 'Funds one Ready for Work employability workshop for a youth cohort' },
+  { amountUsd: 500, impact: 'Funds one Career Launchpad employability workshop for a youth cohort' },
   {
     amountUsd: 1000,
     impact: 'Sponsors a woman through the full entrepreneurship and mentorship program',

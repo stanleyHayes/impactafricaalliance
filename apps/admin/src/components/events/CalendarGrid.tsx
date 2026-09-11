@@ -135,7 +135,9 @@ export const CalendarGrid = ({
                   >
                     <Typography variant="caption" component="span" sx={{ display: 'block' }}>
                       {new Date(event.startAt).toLocaleTimeString('en-GB', {
-                        hour: '2-digit',
+                        hour: 'numeric',
+                        hour12: true,
+
                         minute: '2-digit',
                       })}{' '}
                       · {event.status}

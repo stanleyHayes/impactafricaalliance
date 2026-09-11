@@ -50,9 +50,9 @@ export const PILLARS: readonly PillarDefinition[] = [
   },
   {
     key: 'youth-inclusion',
-    title: 'Youth Inclusion & Ready for Work',
+    title: 'Youth Inclusion & Career Launchpad',
     description:
-      'Preparing young people for the world of work through employability training, mentorship, and structured pathways into jobs, apprenticeships, and enterprise.',
+      'Equipping young Africans with the essential skills, mentorship, and opportunities to successfully transition from learning to earning and become competitive for the future of work.',
     path: '/our-work/youth-inclusion',
   },
   {
@@ -84,7 +84,7 @@ export const SDG_GOALS: readonly SdgGoal[] = [
   {
     number: 8,
     title: 'Decent Work & Growth',
-    contribution: 'Ready for Work training, job placement, apprenticeships, startup incubation',
+    contribution: 'Career Launchpad training, job placement, apprenticeships, startup incubation',
   },
   {
     number: 9,

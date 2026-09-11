@@ -83,7 +83,7 @@ export const SITE_IMAGE_SLOTS: readonly SiteImageSlot[] = [
   },
   {
     key: 'home-showcase-work',
-    label: 'Home — On the ground: Ready for work',
+    label: 'Home — On the ground: Career Launchpad',
     usage: 'The third photograph in the "The work looks like people" band.',
     previewPath: '/',
     aspect: '16 / 9',

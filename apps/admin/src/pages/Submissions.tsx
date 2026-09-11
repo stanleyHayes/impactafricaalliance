@@ -530,7 +530,9 @@ const SubmissionCard = ({ submission }: { submission: Submission }): JSX.Element
                 year: 'numeric',
                 month: 'short',
                 day: 'numeric',
-                hour: '2-digit',
+                hour: 'numeric',
+                hour12: true,
+
                 minute: '2-digit',
               })}
               sx={{ whiteSpace: 'nowrap', fontWeight: 500 }}

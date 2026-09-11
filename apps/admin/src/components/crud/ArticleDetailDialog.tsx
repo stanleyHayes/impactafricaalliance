@@ -77,7 +77,9 @@ const formatDate = (value: unknown): string => {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
-    hour: '2-digit',
+    hour: 'numeric',
+    hour12: true,
+
     minute: '2-digit',
   });
 };

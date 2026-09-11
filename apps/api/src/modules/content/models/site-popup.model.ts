@@ -32,7 +32,14 @@ const sitePopupSchema = new Schema<SitePopupDocument>(
     endsAt: { type: Date },
     priority: { type: Number, default: 0 },
   },
-  baseSchemaOptions,
+  {
+    ...baseSchemaOptions,
+    // Pinned. Mongoose would pluralise "SitePopup" to "sitepopups", which
+    // matches neither the route (/popups) nor the console's resource key, and
+    // a record written to the obvious name would sit in a collection nothing
+    // reads — which is exactly what happened.
+    collection: 'popups',
+  },
 );
 
 sitePopupSchema.index({ isActive: 1, priority: -1, updatedAt: -1 });

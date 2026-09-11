@@ -72,7 +72,9 @@ const formatEventRange = (startIso: string, endIso?: string): string => {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
-    hour: '2-digit',
+    hour: 'numeric',
+    hour12: true,
+
     minute: '2-digit',
   };
 
@@ -88,8 +90,8 @@ const formatEventRange = (startIso: string, endIso?: string): string => {
       month: 'short',
       year: 'numeric',
     });
-    const startTime = start.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-    const endTime = end.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    const startTime = start.toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit', hour12: true });
+    const endTime = end.toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit', hour12: true });
     return `${date} · ${startTime} – ${endTime}`;
   }
 

@@ -48,7 +48,9 @@ const columns: GridColDef[] = [
         year: 'numeric',
         month: 'short',
         day: 'numeric',
-        hour: '2-digit',
+        hour: 'numeric',
+        hour12: true,
+
         minute: '2-digit',
       }),
   },
@@ -167,7 +169,9 @@ const DonationCard = ({ row }: { row: GridRowModel }): JSX.Element => {
             year: 'numeric',
             month: 'short',
             day: 'numeric',
-            hour: '2-digit',
+            hour: 'numeric',
+            hour12: true,
+
             minute: '2-digit',
           })}
         </Typography>

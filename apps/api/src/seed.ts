@@ -441,7 +441,7 @@ const EVENTS: Array<Partial<EventDocument>> = [
     ],
   },
   {
-    title: '“Ready for Work”: How to Land Your Dream Job in 60 Days',
+    title: 'Career Launchpad: How to Land Your Dream Job in 60 Days',
     description:
       'The job market is changing, and having a degree is no longer enough. You need the right skills, mindset, strategy, and tools to stand out and get hired. A practical session on positioning yourself for the jobs you actually want, the skills employers look for, using AI to supercharge your search, improving your CV and LinkedIn, preparing for interviews, and a 60-day strategy for moving from job seeker to job offer.',
     startAt: new Date('2026-09-25T17:00:00.000Z'),
@@ -491,7 +491,7 @@ const EVENTS: Array<Partial<EventDocument>> = [
       },
       {
         id: 'ready-meaning',
-        label: 'What would make you feel "ready for work"?',
+        label: 'What would make you feel ready for your first role?',
         type: 'long-text',
         options: [],
         required: false,

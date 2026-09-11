@@ -4,12 +4,12 @@ import { slugify } from './slug';
 
 describe('slugify', () => {
   it('lowercases and hyphenates a title', () => {
-    expect(slugify('Ready for Work')).toBe('ready-for-work');
+    expect(slugify('Career Launchpad')).toBe('career-launchpad');
   });
 
   it('drops punctuation rather than encoding it', () => {
-    expect(slugify('"Ready for Work": Land Your Dream Job!')).toBe(
-      'ready-for-work-land-your-dream-job',
+    expect(slugify('"Career Launchpad": Land Your Dream Job!')).toBe(
+      'career-launchpad-land-your-dream-job',
     );
   });
 
