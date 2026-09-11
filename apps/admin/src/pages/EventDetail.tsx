@@ -345,11 +345,16 @@ const EventOverview = ({ event, canManage }: { event: Event; canManage: boolean 
                 Edit event
               </Button>
             )}
-            {canManage && (
+            {/*
+              Gated on reviews rather than on events: someone who can edit an
+              event but cannot moderate has nothing at the other end of this
+              jump, and used to land on a blank stretch of page.
+            */}
+            <RequirePermission resource="reviews" action="read">
               <Button component="a" href="#reviews" startIcon={<RateReviewRoundedIcon />}>
                 Reviews & ratings
               </Button>
-            )}
+            </RequirePermission>
             <Button onClick={() => setShowQr(true)} startIcon={<QrCode2Icon />}>
               Event QR code
             </Button>
@@ -390,7 +395,24 @@ const EventOverview = ({ event, canManage }: { event: Event; canManage: boolean 
       <RequirePermission resource="events" action="create">
         <EventMessages event={event} />
       </RequirePermission>
-      <RequirePermission resource="reviews" action="read">
+      {/*
+        Says so when the account cannot see reviews. Rendering nothing made a
+        missing permission look like a broken feature — which is how it was
+        reported.
+      */}
+      <RequirePermission
+        resource="reviews"
+        action="read"
+        fallback={
+          <Section title="Reviews & ratings">
+            <EmptyState
+              icon={<RateReviewRoundedIcon />}
+              title="You do not have access to reviews"
+              description="Attendee ratings and the moderation queue are restricted. An administrator can grant your account the reviews permission under Users."
+            />
+          </Section>
+        }
+      >
         <Box id="reviews" sx={{ scrollMarginTop: 100 }}>
           <Stack spacing={3}>
             <EventRatings eventId={event.id} />
