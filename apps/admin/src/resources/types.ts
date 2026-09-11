@@ -9,6 +9,8 @@ export type FieldType =
   | 'number'
   | 'slug'
   | 'select'
+  /** Laid out as cards rather than a dropdown, for options you choose by looking. */
+  | 'choice'
   | 'switch'
   | 'tags'
   | 'datetime'
@@ -19,6 +21,13 @@ export type FieldType =
 export interface SelectOption {
   value: string;
   label: string;
+  /** One line on what choosing this means. Shown under the label in the menu. */
+  description?: string;
+  icon?: ReactNode;
+  /** A colour chip shown before the label — for options that are a colour. */
+  swatch?: string;
+  /** Full-bleed preview for the card layout; ignored by the dropdown. */
+  preview?: ReactNode;
 }
 
 export interface FieldConfig {

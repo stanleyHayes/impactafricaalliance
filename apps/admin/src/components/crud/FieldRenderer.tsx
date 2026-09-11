@@ -5,7 +5,6 @@ import Box from '@mui/material/Box';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormHelperText from '@mui/material/FormHelperText';
 import InputAdornment from '@mui/material/InputAdornment';
-import MenuItem from '@mui/material/MenuItem';
 import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
 import {
@@ -17,7 +16,10 @@ import {
 
 import type { FieldConfig, FieldType } from '../../resources/types';
 import { AiAssistButton } from '../ai/AiAssistButton';
+import { ChoiceCards } from '../fields/ChoiceCards';
+import { IsoDateTimeField } from '../fields/EventDateTimeField';
 import { MediaUploadField } from '../fields/MediaUploadField';
+import { OptionSelect } from '../fields/OptionSelect';
 import { QuestionBuilder } from '../fields/QuestionBuilder';
 import { TagsField } from '../fields/TagsField';
 import { MarkdownEditor } from '../markdown/MarkdownEditor';
@@ -37,14 +39,6 @@ type Renderer = (
   onUploadingChange?: FieldRendererProps['onUploadingChange'],
 ) => JSX.Element;
 
-const toLocalInput = (iso: unknown): string => {
-  if (typeof iso !== 'string' || iso.length === 0) {
-    return '';
-  }
-  const date = new Date(iso);
-  return Number.isNaN(date.getTime()) ? '' : date.toISOString().slice(0, 16);
-};
-
 const switchRenderer: Renderer = (field, rhf) => (
   <FormControlLabel
     control={
@@ -55,21 +49,25 @@ const switchRenderer: Renderer = (field, rhf) => (
 );
 
 const selectRenderer: Renderer = (field, rhf, error) => (
-  <TextField
-    select
-    fullWidth
+  <OptionSelect
     label={field.label}
-    value={rhf.value ?? ''}
+    options={field.options ?? []}
+    value={typeof rhf.value === 'string' ? rhf.value : ''}
     onChange={rhf.onChange}
-    error={Boolean(error)}
-    helperText={error}
-  >
-    {field.options?.map((option) => (
-      <MenuItem key={option.value} value={option.value} sx={{ textTransform: 'capitalize' }}>
-        {option.label}
-      </MenuItem>
-    ))}
-  </TextField>
+    error={error}
+    helperText={field.helperText}
+  />
+);
+
+const choiceRenderer: Renderer = (field, rhf, error) => (
+  <ChoiceCards
+    label={field.label}
+    options={field.options ?? []}
+    value={typeof rhf.value === 'string' ? rhf.value : ''}
+    onChange={rhf.onChange}
+    error={error}
+    helperText={field.helperText}
+  />
 );
 
 const numberRenderer: Renderer = (field, rhf, error) => (
@@ -95,19 +93,12 @@ const tagsRenderer: Renderer = (field, rhf, error) => (
 );
 
 const datetimeRenderer: Renderer = (field, rhf, error) => (
-  <TextField
-    type="datetime-local"
-    fullWidth
+  <IsoDateTimeField
     label={field.label}
-    slotProps={{ inputLabel: { shrink: true } }}
-    value={toLocalInput(rhf.value)}
-    onChange={(e) =>
-      // null, not undefined: undefined is dropped by JSON, so a PATCH would
-      // omit the key and the old date would quietly survive being cleared.
-      rhf.onChange(e.target.value ? new Date(e.target.value).toISOString() : null)
-    }
-    error={Boolean(error)}
-    helperText={error}
+    value={typeof rhf.value === 'string' ? rhf.value : null}
+    onChange={rhf.onChange}
+    error={error}
+    helperText={field.helperText}
   />
 );
 
@@ -185,6 +176,7 @@ const questionsRenderer: Renderer = (field, rhf) => (
 const RENDERERS: Record<FieldType, Renderer> = {
   switch: switchRenderer,
   select: selectRenderer,
+  choice: choiceRenderer,
   number: numberRenderer,
   tags: tagsRenderer,
   datetime: datetimeRenderer,

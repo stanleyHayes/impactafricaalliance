@@ -1,5 +1,7 @@
 import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
+import EventAvailableRoundedIcon from '@mui/icons-material/EventAvailableRounded';
 import GridViewRoundedIcon from '@mui/icons-material/GridViewRounded';
+import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import {
   Alert,
@@ -7,7 +9,6 @@ import {
   Button,
   Grid,
   InputAdornment,
-  MenuItem,
   TextField,
   ToggleButton,
   ToggleButtonGroup,
@@ -19,6 +20,7 @@ import { useState } from 'react';
 import { CalendarGrid } from '../components/events/CalendarGrid';
 import { EventCard } from '../components/events/EventCard';
 import { EventEmptyState } from '../components/events/EventEmptyState';
+import { OptionSelect } from '../components/forms/OptionSelect';
 import { PageHero } from '../components/PageHero';
 import { Section } from '../components/Section';
 import { Seo } from '../components/Seo';
@@ -141,29 +143,38 @@ const Events = (): JSX.Element => {
                 },
               }}
             />
-            <TextField
-              select
+            <OptionSelect
               label="Event type"
               value={type}
-              onChange={(e) => setType(e.target.value)}
-            >
-              <MenuItem value="all">All types</MenuItem>
-              {[...new Set(events.map((event) => event.type))].sort().map((item) => (
-                <MenuItem key={item} value={item}>
-                  {formatEventType(item)}
-                </MenuItem>
-              ))}
-            </TextField>
-            <TextField
-              select
+              onChange={setType}
+              options={[
+                { value: 'all', label: 'All types', description: 'Every kind of event together.' },
+                ...[...new Set(events.map((event) => event.type))].sort().map((item) => ({
+                  value: item,
+                  label: formatEventType(item),
+                })),
+              ]}
+            />
+            <OptionSelect
               label="When"
               value={period}
-              onChange={(e) => setPeriod(e.target.value as EventPeriod)}
-            >
-              <MenuItem value="all">All dates</MenuItem>
-              <MenuItem value="upcoming">Upcoming & ongoing</MenuItem>
-              <MenuItem value="past">Past events</MenuItem>
-            </TextField>
+              onChange={(value) => setPeriod(value as EventPeriod)}
+              options={[
+                { value: 'all', label: 'All dates', description: 'Past and future together.' },
+                {
+                  value: 'upcoming',
+                  label: 'Upcoming & ongoing',
+                  description: 'Still to come, or happening now.',
+                  icon: <EventAvailableRoundedIcon />,
+                },
+                {
+                  value: 'past',
+                  label: 'Past events',
+                  description: 'Already finished — where reviews and recordings live.',
+                  icon: <HistoryRoundedIcon />,
+                },
+              ]}
+            />
           </Box>
           <Stack direction="row" alignItems="center" justifyContent="space-between">
             <Typography role="status" variant="body2" color="text.secondary">

@@ -1,4 +1,4 @@
-import { EVENT_QUESTION_TYPES, type EventQuestion, type EventQuestionType } from '@iaa/shared';
+import { type EventQuestion, type EventQuestionType } from '@iaa/shared';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded';
 import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded';
@@ -10,7 +10,6 @@ import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import IconButton from '@mui/material/IconButton';
-import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import { alpha } from '@mui/material/styles';
@@ -19,6 +18,10 @@ import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useState } from 'react';
+
+import { QUESTION_TYPE_OPTIONS } from '../../lib/select-options';
+
+import { OptionSelect } from './OptionSelect';
 
 const TYPE_LABELS: Record<EventQuestionType, string> = {
   'short-text': 'Short answer',
@@ -262,21 +265,14 @@ export const QuestionBuilder = ({
                     onChange={(event) => update(index, { label: event.target.value })}
                   />
                   <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                    <TextField
-                      select
+                    <OptionSelect
                       label="Answer type"
-                      fullWidth
+                      options={QUESTION_TYPE_OPTIONS}
                       value={question.type}
-                      onChange={(event) =>
-                        update(index, { type: event.target.value as EventQuestionType })
+                      onChange={(value: string) =>
+                        update(index, { type: value as EventQuestionType })
                       }
-                    >
-                      {EVENT_QUESTION_TYPES.map((type) => (
-                        <MenuItem key={type} value={type}>
-                          {TYPE_LABELS[type]}
-                        </MenuItem>
-                      ))}
-                    </TextField>
+                    />
                     <FormControlLabel
                       sx={{ flexShrink: 0 }}
                       control={

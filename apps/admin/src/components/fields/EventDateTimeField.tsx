@@ -3,6 +3,7 @@ import Box from '@mui/material/Box';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import type { DateTimeValidationError } from '@mui/x-date-pickers/models';
 import type { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 
 interface EventDateTimeFieldProps {
   label: string;
@@ -41,8 +42,9 @@ export const EventDateTimeField = ({
     onChange={onChange}
     onError={onError}
     disabled={disabled}
-    ampm={false}
-    format="DD MMM YYYY, HH:mm"
+    ampm
+    // 12-hour throughout: the team reads 6:00 PM, not 18:00.
+    format="DD MMM YYYY, hh:mm A"
     desktopModeMediaQuery="@media (min-width: 768px) and (pointer: fine)"
     closeOnSelect={false}
     minutesStep={1}
@@ -65,3 +67,37 @@ export const EventDateTimeField = ({
     }}
   />
 );
+
+/**
+ * The same picker for forms that hold an ISO string rather than a Dayjs.
+ *
+ * The CMS forms used `<input type="datetime-local">`, which hands the browser's
+ * own calendar to the reader — a different control on every machine, 24-hour on
+ * most of them, and nothing like the rest of the console.
+ */
+export const IsoDateTimeField = ({
+  label,
+  value,
+  onChange,
+  error,
+  helperText,
+}: {
+  label: string;
+  value: string | null | undefined;
+  /** null, never undefined — undefined is dropped by JSON, so a cleared date would survive a PATCH. */
+  onChange: (value: string | null) => void;
+  error?: string;
+  helperText?: string;
+}): JSX.Element => {
+  const parsed = typeof value === 'string' && value !== '' ? dayjs(value) : null;
+  return (
+    <EventDateTimeField
+      label={label}
+      value={parsed?.isValid() ? parsed : null}
+      onChange={(next) => onChange(next?.isValid() ? next.toISOString() : null)}
+      onError={() => undefined}
+      error={error}
+      helperText={helperText}
+    />
+  );
+};

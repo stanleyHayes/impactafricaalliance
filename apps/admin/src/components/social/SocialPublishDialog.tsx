@@ -5,6 +5,7 @@ import {
   type SocialPublicationInput,
   type DestinationCapabilities,
 } from '@iaa/shared';
+import ScheduleSendRoundedIcon from '@mui/icons-material/ScheduleSendRounded';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
 import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
@@ -13,8 +14,6 @@ import Chip from '@mui/material/Chip';
 import Dialog from '@mui/material/Dialog';
 import DialogContent from '@mui/material/DialogContent';
 import FormControlLabel from '@mui/material/FormControlLabel';
-import Radio from '@mui/material/Radio';
-import RadioGroup from '@mui/material/RadioGroup';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
@@ -27,6 +26,8 @@ import {
   type DestinationPreview,
 } from '../../lib/social-publishing';
 import { DialogFooter, DialogHeader, dialogPaperSx } from '../dialogs/DialogShell';
+import { ChoiceCards } from '../fields/ChoiceCards';
+import { IsoDateTimeField } from '../fields/EventDateTimeField';
 
 export interface SocialPublishSource {
   title: string;
@@ -306,19 +307,33 @@ const ReviewStep = ({
       );
     })}
 
-    <RadioGroup value={when} onChange={(event) => onWhen(event.target.value as 'now')}>
-      <FormControlLabel value="now" control={<Radio />} label="Publish now" />
-      <FormControlLabel value="schedule" control={<Radio />} label="Schedule" />
-    </RadioGroup>
+    <ChoiceCards
+      label="When to publish"
+      columns={2}
+      value={when}
+      onChange={(value: string) => onWhen(value as 'now')}
+      options={[
+        {
+          value: 'now',
+          label: 'Publish now',
+          description: 'Goes out as soon as you confirm.',
+          icon: <SendRoundedIcon />,
+        },
+        {
+          value: 'schedule',
+          label: 'Schedule',
+          description: 'Held in the queue and posted at a time you choose.',
+          icon: <ScheduleSendRoundedIcon />,
+        },
+      ]}
+    />
     {when === 'schedule' && (
-      <TextField
-        type="datetime-local"
+      <IsoDateTimeField
         label="When"
         value={scheduledFor}
-        onChange={(event) => onScheduledFor(event.target.value)}
+        onChange={(value: string | null) => onScheduledFor(value ?? '')}
         // Stored in UTC; shown in the timezone the administrator is working in.
         helperText={`Times are in ${timezone}.`}
-        slotProps={{ inputLabel: { shrink: true } }}
       />
     )}
   </Stack>

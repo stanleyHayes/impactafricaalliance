@@ -5,7 +5,6 @@ import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
-import MenuItem from '@mui/material/MenuItem';
 import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
 import { alpha, useTheme, type SxProps, type Theme } from '@mui/material/styles';
@@ -13,6 +12,8 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { DataGrid, type GridColDef, type GridRowModel, type GridRowsProp } from '@mui/x-data-grid';
 import { useMemo, useState, type ReactNode } from 'react';
+
+import { OptionSelect } from '../fields/OptionSelect';
 
 import { TableLoadingSkeleton } from './TableLoadingSkeleton';
 import type { ViewMode } from './useViewMode';
@@ -28,6 +29,11 @@ const GRID_TEMPLATE = 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))';
 export interface DataTableFilterOption {
   value: string;
   label: string;
+  /** One line on what this narrows the list to. */
+  description?: string;
+  icon?: ReactNode;
+  /** A colour chip shown before the label — for options that are a colour. */
+  swatch?: string;
 }
 
 export interface DataTableFilter {
@@ -291,26 +297,20 @@ const TableToolbar = ({
           />
         )}
         {filters.map((filter) => (
-          <TextField
+          <OptionSelect
             key={filter.field}
-            select
             size="small"
+            fullWidth={false}
             label={filter.label}
             value={filterValues[filter.field] ?? ''}
-            onChange={(event) => onFilterChange(filter.field, event.target.value)}
-            sx={{ minWidth: 140 }}
-          >
-            <MenuItem value="">All</MenuItem>
-            {filter.options.map((option) => (
-              <MenuItem
-                key={option.value}
-                value={option.value}
-                sx={{ textTransform: 'capitalize' }}
-              >
-                {option.label}
-              </MenuItem>
-            ))}
-          </TextField>
+            onChange={(value: string) => onFilterChange(filter.field, value)}
+            placeholder="All"
+            options={[
+              { value: '', label: `All ${filter.label.toLowerCase()}` },
+              ...filter.options,
+            ]}
+            sx={{ minWidth: 190 }}
+          />
         ))}
         {hasActiveFilters && (
           <Chip

@@ -1,6 +1,4 @@
 import {
-  SUBMISSION_STATUSES,
-  SUBMISSION_TYPES,
   SubmissionStatus,
   SubmissionType,
   type Submission,
@@ -22,9 +20,7 @@ import Card from '@mui/material/Card';
 import Chip from '@mui/material/Chip';
 import InputAdornment from '@mui/material/InputAdornment';
 import Link from '@mui/material/Link';
-import MenuItem from '@mui/material/MenuItem';
 import Pagination from '@mui/material/Pagination';
-import Select from '@mui/material/Select';
 import Skeleton from '@mui/material/Skeleton';
 import Snackbar from '@mui/material/Snackbar';
 import Stack from '@mui/material/Stack';
@@ -42,11 +38,17 @@ import { RecordActions } from '../components/data/RecordActions';
 import { useViewMode } from '../components/data/useViewMode';
 import { ViewToggle } from '../components/data/ViewToggle';
 import { EmptyState } from '../components/EmptyState';
+import { OptionSelect } from '../components/fields/OptionSelect';
 import { InformationItem } from '../components/InformationItem';
 import { PageHeader } from '../components/PageHeader';
 import { useSubmissions, useUpdateSubmissionStatus } from '../lib/admin-hooks';
 import { formatUtcDate, formatUtcShort } from '../lib/date';
 import { pageGuides } from '../lib/page-guides';
+import {
+  SUBMISSION_STATUS_OPTIONS,
+  SUBMISSION_TYPE_OPTIONS,
+  withAnyOption,
+} from '../lib/select-options';
 
 /**
  * Dedicated inboxes. The combined list still lives at /submissions; these give
@@ -182,26 +184,21 @@ const SubmissionStatusSelect = ({
   if (!can('update', 'submissions')) return <Chip label={status} size="small" />;
   return (
     <>
-      <Select
+      <OptionSelect
         size="small"
+        fullWidth={false}
         value={status}
         disabled={update.isPending}
-        onChange={(event) => update.mutate({ id, status: event.target.value as SubmissionStatus })}
-        aria-label="Change status"
+        onChange={(value: string) =>
+          update.mutate({ id, status: value as SubmissionStatus })
+        }
+        options={SUBMISSION_STATUS_OPTIONS}
         sx={{
-          minWidth: 124,
-          bgcolor: 'background.default',
-          textTransform: 'capitalize',
-          fontSize: 13,
+          minWidth: 150,
+          '& .MuiInputBase-root': { bgcolor: 'background.default', fontSize: 13 },
           '& .MuiSelect-select': { py: 0.75 },
         }}
-      >
-        {SUBMISSION_STATUSES.map((value) => (
-          <MenuItem key={value} value={value} sx={{ textTransform: 'capitalize' }}>
-            {value}
-          </MenuItem>
-        ))}
-      </Select>
+      />
       <Snackbar open={update.isError} onClose={() => update.reset()}>
         <Alert severity="error" onClose={() => update.reset()}>
           {update.error?.message}
@@ -857,36 +854,34 @@ const Submissions = (): JSX.Element => {
             },
           }}
         />
-        <TextField
-          select
+        <OptionSelect
           size="small"
+          fullWidth={false}
           label="Type"
           value={type}
-          onChange={(e) => setType(e.target.value)}
-          sx={{ minWidth: 160, display: isScoped ? 'none' : undefined }}
-        >
-          <MenuItem value="">All types</MenuItem>
-          {SUBMISSION_TYPES.map((value) => (
-            <MenuItem key={value} value={value} sx={{ textTransform: 'capitalize' }}>
-              {value}
-            </MenuItem>
-          ))}
-        </TextField>
-        <TextField
-          select
+          onChange={setType}
+          placeholder="All types"
+          options={withAnyOption(
+            SUBMISSION_TYPE_OPTIONS,
+            'All types',
+            'Every kind of enquiry together.',
+          )}
+          sx={{ minWidth: 190, display: isScoped ? 'none' : undefined }}
+        />
+        <OptionSelect
           size="small"
+          fullWidth={false}
           label="Status"
           value={status}
-          onChange={(e) => setStatus(e.target.value)}
-          sx={{ minWidth: 160 }}
-        >
-          <MenuItem value="">All statuses</MenuItem>
-          {SUBMISSION_STATUSES.map((value) => (
-            <MenuItem key={value} value={value} sx={{ textTransform: 'capitalize' }}>
-              {value}
-            </MenuItem>
-          ))}
-        </TextField>
+          onChange={setStatus}
+          placeholder="All statuses"
+          options={withAnyOption(
+            SUBMISSION_STATUS_OPTIONS,
+            'All statuses',
+            'New, read and archived together.',
+          )}
+          sx={{ minWidth: 190 }}
+        />
         {hasFilters && (
           <Chip
             label="Clear filters"

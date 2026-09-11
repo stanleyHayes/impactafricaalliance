@@ -1,3 +1,4 @@
+import { BANNER_TONE_STYLES } from '@iaa/shared';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import EastRoundedIcon from '@mui/icons-material/EastRounded';
 import Box from '@mui/material/Box';
@@ -42,6 +43,10 @@ const readDismissed = (key: string): boolean => {
 export const AnnouncementBanner = (): JSX.Element | null => {
   const { data: announcement } = useLiveAnnouncement();
   const message = announcement?.message?.trim();
+  // The dashboard has offered a colour all along and the banner ignored it,
+  // painting gold whatever was chosen. Falls back to the gold it always was.
+  const tone = BANNER_TONE_STYLES[announcement?.tone ?? 'announcement'] ??
+    BANNER_TONE_STYLES.announcement;
 
   const [dismissed, setDismissed] = useState(false);
 
@@ -68,8 +73,8 @@ export const AnnouncementBanner = (): JSX.Element | null => {
       aria-label="Site announcement"
       sx={{
         position: 'relative',
-        bgcolor: 'secondary.main',
-        color: 'common.black',
+        bgcolor: tone.background,
+        color: tone.foreground,
         // Sits above the sticky header so the header's blur never bleeds over it.
         zIndex: (theme) => theme.zIndex.appBar + 1,
       }}
@@ -104,7 +109,7 @@ export const AnnouncementBanner = (): JSX.Element | null => {
                 alignItems: 'center',
                 flexShrink: 0,
                 gap: 0.5,
-                color: 'common.black',
+                color: 'inherit',
                 fontSize: '0.82rem',
                 fontWeight: 800,
                 textDecoration: 'underline',
@@ -127,9 +132,9 @@ export const AnnouncementBanner = (): JSX.Element | null => {
           position: 'absolute',
           top: '50%',
           right: { xs: 4, sm: 10 },
-          color: 'common.black',
+          color: 'inherit',
           transform: 'translateY(-50%)',
-          '&:hover': { bgcolor: 'rgba(0,0,0,0.1)' },
+          '&:hover': { bgcolor: 'rgba(127,127,127,0.22)' },
         }}
       >
         <CloseRoundedIcon sx={{ fontSize: 18 }} />

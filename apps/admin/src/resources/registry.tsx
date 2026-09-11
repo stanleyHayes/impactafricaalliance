@@ -1,6 +1,4 @@
 import {
-  CONTENT_STATUSES,
-  JOB_TYPES,
   PAGE_KEYS,
   type MediaAsset,
   articleInputSchema,
@@ -10,12 +8,12 @@ import {
   pageSettingInputSchema,
   PILLARS,
   announcementInputSchema,
+  BANNER_TONE_STYLES,
   BANNER_TONES,
   sitePopupInputSchema,
   SITE_IMAGE_SLOTS,
   siteImageSlot,
   siteImageInputSchema,
-  TEAM_TIERS,
   officeInputSchema,
   pillarImageInputSchema,
   partnerInputSchema,
@@ -36,6 +34,7 @@ import PlaceIcon from '@mui/icons-material/Place';
 import WebAssetIcon from '@mui/icons-material/WebAsset';
 import WorkOutlineIcon from '@mui/icons-material/WorkOutlineOutlined';
 import Avatar from '@mui/material/Avatar';
+import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import type { GridColDef } from '@mui/x-data-grid';
@@ -44,11 +43,47 @@ import { ArticlePreview } from '../components/markdown/ArticlePreview';
 import { PageSettingPreview } from '../components/markdown/PageSettingPreview';
 import { ImageSlotPreview } from '../components/media/ImageSlotPreview';
 import { formatUtcDate } from '../lib/date';
+import {
+  CONTENT_STATUS_OPTIONS,
+  JOB_TYPE_OPTIONS,
+  TEAM_TIER_OPTIONS,
+} from '../lib/select-options';
 
 import type { ResourceConfig, SelectOption } from './types';
 
-const toOptions = (values: readonly string[]): SelectOption[] =>
-  values.map((value) => ({ value, label: value.replace(/-/g, ' ') }));
+/**
+ * A banner tone shown as the banner, not as the word "warning".
+ *
+ * The colour is the whole of the choice, so the card renders a strip of the
+ * real thing with real text on it — the same pair the site will paint.
+ */
+const TONE_OPTIONS: SelectOption[] = BANNER_TONES.map((tone) => {
+  const style = BANNER_TONE_STYLES[tone];
+  return {
+    value: tone,
+    label: style.label,
+    description: style.description,
+    swatch: style.background,
+    preview: (
+      <Box
+        sx={{
+          height: '100%',
+          display: 'grid',
+          placeItems: 'center',
+          bgcolor: style.background,
+          color: style.foreground,
+          fontWeight: 700,
+          fontSize: '0.72rem',
+          letterSpacing: 0.2,
+          px: 1.5,
+          textAlign: 'center',
+        }}
+      >
+        {style.label} banner
+      </Box>
+    ),
+  };
+});
 
 const statusColumn: GridColDef = {
   field: 'status',
@@ -166,7 +201,7 @@ export const RESOURCES: readonly ResourceConfig[] = [
     fields: [
       { name: 'title', label: 'Title', type: 'text', wide: true },
       { name: 'slug', label: 'Slug', type: 'slug' },
-      { name: 'status', label: 'Status', type: 'select', options: toOptions(CONTENT_STATUSES) },
+      { name: 'status', label: 'Status', type: 'select', options: CONTENT_STATUS_OPTIONS },
       { name: 'excerpt', label: 'Excerpt', type: 'textarea', wide: true },
       { name: 'body', label: 'Body', type: 'richtext', wide: true },
       { name: 'tags', label: 'Tags (comma separated)', type: 'tags', wide: true },
@@ -197,7 +232,7 @@ export const RESOURCES: readonly ResourceConfig[] = [
       { name: 'quote', label: 'Quote', type: 'textarea', wide: true },
       { name: 'narrative', label: 'Narrative', type: 'richtext', wide: true },
       { name: 'photo', label: 'Photo', type: 'image', wide: true },
-      { name: 'status', label: 'Status', type: 'select', options: toOptions(CONTENT_STATUSES) },
+      { name: 'status', label: 'Status', type: 'select', options: CONTENT_STATUS_OPTIONS },
       { name: 'featured', label: 'Featured', type: 'switch' },
       { name: 'order', label: 'Order', type: 'number' },
     ],
@@ -219,7 +254,7 @@ export const RESOURCES: readonly ResourceConfig[] = [
     fields: [
       { name: 'name', label: 'Name', type: 'text' },
       { name: 'role', label: 'Role', type: 'text' },
-      { name: 'tier', label: 'Group', type: 'select', options: toOptions(TEAM_TIERS) },
+      { name: 'tier', label: 'Group', type: 'select', options: TEAM_TIER_OPTIONS },
       { name: 'bio', label: 'Bio', type: 'textarea', wide: true },
       { name: 'photo', label: 'Photo', type: 'image', wide: true },
       // Every profile link is optional — blanks are dropped, and the public
@@ -256,7 +291,14 @@ export const RESOURCES: readonly ResourceConfig[] = [
       { name: 'message', label: 'Message shown to visitors', type: 'textarea', wide: true },
       { name: 'linkUrl', label: 'Link URL (optional)', type: 'text', wide: true },
       { name: 'linkLabel', label: 'Link label (optional)', type: 'text' },
-      { name: 'tone', label: 'Tone', type: 'select', options: toOptions(BANNER_TONES) },
+      {
+        name: 'tone',
+        label: 'Banner colour',
+        type: 'choice',
+        options: TONE_OPTIONS,
+        helperText: 'Sets the strip colour at the top of every page.',
+        wide: true,
+      },
       { name: 'startsAt', label: 'Starts (optional)', type: 'datetime' },
       { name: 'endsAt', label: 'Ends (optional)', type: 'datetime' },
       { name: 'priority', label: 'Priority (higher wins)', type: 'number' },
@@ -459,7 +501,7 @@ export const RESOURCES: readonly ResourceConfig[] = [
       { name: 'title', label: 'Title', type: 'text', wide: true },
       { name: 'description', label: 'Description', type: 'textarea', wide: true },
       { name: 'year', label: 'Year', type: 'number' },
-      { name: 'status', label: 'Status', type: 'select', options: toOptions(CONTENT_STATUSES) },
+      { name: 'status', label: 'Status', type: 'select', options: CONTENT_STATUS_OPTIONS },
       { name: 'file', label: 'PDF file', type: 'file', wide: true },
       { name: 'order', label: 'Order', type: 'number' },
     ],
@@ -480,11 +522,11 @@ export const RESOURCES: readonly ResourceConfig[] = [
       { name: 'title', label: 'Title', type: 'text', wide: true },
       { name: 'slug', label: 'Slug', type: 'slug' },
       { name: 'location', label: 'Location', type: 'text' },
-      { name: 'type', label: 'Type', type: 'select', options: toOptions(JOB_TYPES) },
+      { name: 'type', label: 'Type', type: 'select', options: JOB_TYPE_OPTIONS },
       { name: 'description', label: 'Description', type: 'richtext', wide: true },
       { name: 'applyUrl', label: 'Apply URL', type: 'text', wide: true },
       { name: 'deadline', label: 'Deadline', type: 'datetime' },
-      { name: 'status', label: 'Status', type: 'select', options: toOptions(CONTENT_STATUSES) },
+      { name: 'status', label: 'Status', type: 'select', options: CONTENT_STATUS_OPTIONS },
     ],
     columns: [
       { field: 'title', headerName: 'Title', flex: 1, minWidth: 220 },
@@ -517,7 +559,7 @@ export const RESOURCES: readonly ResourceConfig[] = [
       { name: 'location', label: 'Location', type: 'text' },
       { name: 'caption', label: 'Caption', type: 'textarea', wide: true },
       { name: 'capturedOn', label: 'Date taken', type: 'datetime' },
-      { name: 'status', label: 'Status', type: 'select', options: toOptions(CONTENT_STATUSES) },
+      { name: 'status', label: 'Status', type: 'select', options: CONTENT_STATUS_OPTIONS },
       { name: 'featured', label: 'Feature (shown large)', type: 'switch' },
       { name: 'order', label: 'Order', type: 'number' },
     ],
@@ -585,7 +627,7 @@ export const RESOURCES: readonly ResourceConfig[] = [
       { name: 'ctaBody', label: 'Call to action body', type: 'textarea', wide: true },
       { name: 'ctaLabel', label: 'Call to action button', type: 'text' },
       { name: 'ctaUrl', label: 'Call to action URL', type: 'text' },
-      { name: 'status', label: 'Status', type: 'select', options: toOptions(CONTENT_STATUSES) },
+      { name: 'status', label: 'Status', type: 'select', options: CONTENT_STATUS_OPTIONS },
     ],
     columns: [
       { field: 'pageKey', headerName: 'Page', flex: 1, minWidth: 180 },

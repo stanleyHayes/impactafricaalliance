@@ -18,7 +18,6 @@ import Dialog from '@mui/material/Dialog';
 import DialogContent from '@mui/material/DialogContent';
 import InputAdornment from '@mui/material/InputAdornment';
 import Link from '@mui/material/Link';
-import MenuItem from '@mui/material/MenuItem';
 import Snackbar from '@mui/material/Snackbar';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
@@ -30,9 +29,11 @@ import { useCan } from '../auth/useCan';
 import { RecordActions } from '../components/data/RecordActions';
 import { DialogFooter, DialogHeader, dialogPaperSx } from '../components/dialogs/DialogShell';
 import { MediaUploadField } from '../components/fields/MediaUploadField';
+import { OptionSelect } from '../components/fields/OptionSelect';
 import { PageHeader } from '../components/PageHeader';
 import { MediaLibrarySkeleton } from '../components/PageSkeleton';
 import { useDeleteMediaItem, useMediaLibrary, useSaveMediaItem } from '../lib/media-library';
+import { MEDIA_FOLDER_OPTIONS } from '../lib/select-options';
 
 const splitTags = (value: string): string[] => [
   ...new Set(
@@ -120,20 +121,13 @@ const DetailsDialog = ({
             minRows={2}
             fullWidth
           />
-          <TextField
+          <OptionSelect
             disabled={fieldsDisabled}
-            select
             label="Shelf"
             value={folder}
-            onChange={(event) => setFolder(event.target.value as MediaFolder)}
-            fullWidth
-          >
-            {MEDIA_FOLDERS.map((value) => (
-              <MenuItem key={value} value={value}>
-                {MEDIA_FOLDER_LABELS[value]}
-              </MenuItem>
-            ))}
-          </TextField>
+            onChange={(value: string) => setFolder(value as MediaFolder)}
+            options={MEDIA_FOLDER_OPTIONS}
+          />
           <TextField
             disabled={fieldsDisabled}
             label="Tags"

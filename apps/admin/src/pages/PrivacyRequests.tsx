@@ -3,10 +3,6 @@ import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Chip from '@mui/material/Chip';
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import MenuItem from '@mui/material/MenuItem';
-import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
 import { useTheme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
@@ -18,11 +14,13 @@ import { RecordActions } from '../components/data/RecordActions';
 import { useViewMode } from '../components/data/useViewMode';
 import { ViewToggle } from '../components/data/ViewToggle';
 import { EmptyState } from '../components/EmptyState';
+import { OptionSelect } from '../components/fields/OptionSelect';
 import { InformationItem } from '../components/InformationItem';
 import { PageHeader } from '../components/PageHeader';
 import { usePrivacyRequests, useUpdatePrivacyRequest } from '../lib/admin-hooks';
 import { formatUtcDate } from '../lib/date';
 import { pageGuides } from '../lib/page-guides';
+import { PRIVACY_STATUS_OPTIONS } from '../lib/select-options';
 
 const TYPE_LABELS: Record<string, string> = {
   access: 'Access',
@@ -53,22 +51,18 @@ const StatusCell = ({ id, status }: { id: string; status: string }): JSX.Element
   const can = useCan();
   if (!can('update', 'privacy-requests')) return <Chip label={status} />;
   return (
-    <FormControl size="small" sx={{ minWidth: 130 }}>
-      <InputLabel id={`status-label-${id}`}>Status</InputLabel>
-      <Select
-        labelId={`status-label-${id}`}
-        value={status}
+    <Box onClick={(event) => event.stopPropagation()}>
+      <OptionSelect
+        size="small"
+        fullWidth={false}
         label="Status"
+        value={status}
         disabled={update.isPending}
-        onClick={(event) => event.stopPropagation()}
-        onChange={(event) => update.mutate({ id, body: { status: event.target.value as never } })}
-      >
-        <MenuItem value="pending">Pending</MenuItem>
-        <MenuItem value="verified">Verified</MenuItem>
-        <MenuItem value="fulfilled">Fulfilled</MenuItem>
-        <MenuItem value="rejected">Rejected</MenuItem>
-      </Select>
-    </FormControl>
+        onChange={(value: string) => update.mutate({ id, body: { status: value as never } })}
+        options={PRIVACY_STATUS_OPTIONS}
+        sx={{ minWidth: 165 }}
+      />
+    </Box>
   );
 };
 

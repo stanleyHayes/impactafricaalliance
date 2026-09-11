@@ -5,12 +5,23 @@ import {
   type PaletteColorOptions,
   type ThemeOptions,
 } from '@mui/material/styles';
+import { createElement } from 'react';
+
+import {
+  CheckboxCheckedIcon,
+  CheckboxIcon,
+  CheckboxIndeterminateIcon,
+  RadioCheckedIcon,
+  RadioIcon,
+} from './control-icons';
 
 export type ThemePresetKey = 'iaa' | 'aura' | 'ocean' | 'sunset';
 
 export interface ThemePreset {
   key: ThemePresetKey;
   label: string;
+  /** One line on the character of the palette, shown under its name in the picker. */
+  description: string;
   iconColor: string;
   light: PresetPalette;
   dark: PresetPalette;
@@ -33,6 +44,7 @@ const PRESETS: Record<ThemePresetKey, ThemePreset> = {
   iaa: {
     key: 'iaa',
     label: 'IAA',
+    description: 'The house palette. Forest green and gold, as on the website.',
     iconColor: '#00D68B',
     light: {
       mode: 'light',
@@ -62,6 +74,7 @@ const PRESETS: Record<ThemePresetKey, ThemePreset> = {
   aura: {
     key: 'aura',
     label: 'Aura',
+    description: 'Violet and cyan. Cooler and higher contrast for long sessions.',
     iconColor: '#A78BFA',
     light: {
       mode: 'light',
@@ -91,6 +104,7 @@ const PRESETS: Record<ThemePresetKey, ThemePreset> = {
   ocean: {
     key: 'ocean',
     label: 'Ocean',
+    description: 'Sky blue on slate. Calm, and the easiest on a bright screen.',
     iconColor: '#38BDF8',
     light: {
       mode: 'light',
@@ -120,6 +134,7 @@ const PRESETS: Record<ThemePresetKey, ThemePreset> = {
   sunset: {
     key: 'sunset',
     label: 'Sunset',
+    description: 'Warm orange. The friendliest of the four, and the loudest.',
     iconColor: '#FB923C',
     light: {
       mode: 'light',
@@ -287,6 +302,41 @@ const baseOptions = (palette: PresetPalette): ThemeOptions => ({
       },
     },
     MuiTab: { styleOverrides: { root: { textTransform: 'none', minHeight: 48, fontWeight: 650 } } },
+    // Own marks rather than Material's filled square and circle, so a tick in
+    // this console looks like it belongs to it. See theme/control-icons.tsx.
+    MuiCheckbox: {
+      defaultProps: {
+        disableRipple: true,
+        icon: createElement(CheckboxIcon),
+        checkedIcon: createElement(CheckboxCheckedIcon),
+        indeterminateIcon: createElement(CheckboxIndeterminateIcon),
+      },
+      styleOverrides: {
+        root: {
+          borderRadius: 8,
+          '&.Mui-focusVisible': {
+            outline: `2px solid ${(palette.primary as { main: string }).main}`,
+            outlineOffset: -2,
+          },
+        },
+      },
+    },
+    MuiRadio: {
+      defaultProps: {
+        disableRipple: true,
+        icon: createElement(RadioIcon),
+        checkedIcon: createElement(RadioCheckedIcon),
+      },
+      styleOverrides: {
+        root: {
+          borderRadius: '50%',
+          '&.Mui-focusVisible': {
+            outline: `2px solid ${(palette.primary as { main: string }).main}`,
+            outlineOffset: -2,
+          },
+        },
+      },
+    },
     MuiChip: {
       styleOverrides: { root: { fontWeight: 600, borderRadius: 8 } },
     },

@@ -126,7 +126,8 @@ describe('UserAccessEditor', { timeout: 30_000 }, () => {
 
     const role = await screen.findByRole('combobox', { name: 'Role' });
     fireEvent.mouseDown(role);
-    fireEvent.click(screen.getByRole('option', { name: 'editor' }));
+    // The option is named by its label and the line of description beneath it.
+    fireEvent.click(screen.getByRole('option', { name: /^Editor\b/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
     expect(screen.getByRole('checkbox', { name: 'Read Events' })).toBeChecked();
     expect(screen.getByRole('checkbox', { name: 'Read Articles' })).not.toBeChecked();

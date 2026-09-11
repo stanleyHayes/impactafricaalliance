@@ -1,7 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { USER_ROLES, createUserSchema, type CreateUserInput, type PublicUser } from '@iaa/shared';
+import { createUserSchema, type CreateUserInput, type PublicUser } from '@iaa/shared';
 import AddIcon from '@mui/icons-material/Add';
 import AdminPanelSettingsOutlinedIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
+import BlockRoundedIcon from '@mui/icons-material/BlockRounded';
+import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded';
 import GroupsIcon from '@mui/icons-material/Groups';
 import MailOutlineIcon from '@mui/icons-material/MailOutlineOutlined';
 import PersonAddRoundedIcon from '@mui/icons-material/PersonAddRounded';
@@ -14,14 +16,13 @@ import Chip from '@mui/material/Chip';
 import Dialog from '@mui/material/Dialog';
 import DialogContent from '@mui/material/DialogContent';
 import Divider from '@mui/material/Divider';
-import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
 import { alpha, useTheme } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import type { GridColDef } from '@mui/x-data-grid';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 
 import { RequirePermission } from '../auth/RequirePermission';
@@ -37,9 +38,11 @@ import {
   dialogSectionSx,
 } from '../components/dialogs/DialogShell';
 import { EmptyState } from '../components/EmptyState';
+import { OptionSelect } from '../components/fields/OptionSelect';
 import { PageHeader } from '../components/PageHeader';
 import { useSaveUser, useUsers } from '../lib/admin-hooks';
 import { pageGuides } from '../lib/page-guides';
+import { ROLE_OPTIONS } from '../lib/select-options';
 
 const CreateUserDialog = ({
   open,
@@ -51,6 +54,7 @@ const CreateUserDialog = ({
   const save = useSaveUser();
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { errors },
@@ -108,20 +112,19 @@ const CreateUserDialog = ({
             helperText={errors.password?.message}
             {...register('password')}
           />
-          <TextField
-            select
-            label="Role"
-            defaultValue="editor"
-            error={Boolean(errors.role)}
-            helperText={errors.role?.message}
-            {...register('role')}
-          >
-            {USER_ROLES.map((role) => (
-              <MenuItem key={role} value={role} sx={{ textTransform: 'capitalize' }}>
-                {role}
-              </MenuItem>
-            ))}
-          </TextField>
+          <Controller
+            name="role"
+            control={control}
+            render={({ field }) => (
+              <OptionSelect
+                label="Role"
+                options={ROLE_OPTIONS}
+                value={field.value ?? 'editor'}
+                onChange={field.onChange}
+                error={errors.role?.message}
+              />
+            )}
+          />
           {save.isError && (
             <Alert severity="error">Could not create user. The email may already be in use.</Alert>
           )}
@@ -150,17 +153,23 @@ const permissionSummary = (user: PublicUser): string => {
 };
 
 const filters: DataTableFilter[] = [
-  {
-    field: 'role',
-    label: 'Role',
-    options: USER_ROLES.map((role) => ({ value: role, label: role })),
-  },
+  { field: 'role', label: 'Role', options: ROLE_OPTIONS },
   {
     field: 'isActive',
     label: 'Status',
     options: [
-      { value: 'true', label: 'Active' },
-      { value: 'false', label: 'Inactive' },
+      {
+        value: 'true',
+        label: 'Active',
+        description: 'Can sign in and work.',
+        icon: <CheckCircleOutlineRoundedIcon />,
+      },
+      {
+        value: 'false',
+        label: 'Inactive',
+        description: 'Suspended — kept for the record, but cannot sign in.',
+        icon: <BlockRoundedIcon />,
+      },
     ],
   },
 ];

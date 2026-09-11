@@ -1,41 +1,66 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
-  PRIVACY_REQUEST_TYPES,
   privacyRequestInputSchema,
   type PrivacyRequestInput,
-  type PrivacyRequestType,
 } from '@iaa/shared';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
+import BlockRoundedIcon from '@mui/icons-material/BlockRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
+import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import FolderOpenRoundedIcon from '@mui/icons-material/FolderOpenRounded';
 import MailOutlineRoundedIcon from '@mui/icons-material/MailOutlineRounded';
+import PauseCircleOutlineRoundedIcon from '@mui/icons-material/PauseCircleOutlineRounded';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import FormControl from '@mui/material/FormControl';
-import FormHelperText from '@mui/material/FormHelperText';
 import InputAdornment from '@mui/material/InputAdornment';
-import InputLabel from '@mui/material/InputLabel';
-import MenuItem from '@mui/material/MenuItem';
-import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
 import { alpha } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useMutation } from '@tanstack/react-query';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 
+import { OptionSelect, type SelectChoice } from '../components/forms/OptionSelect';
 import { LegalLayout } from '../components/legal/LegalLayout';
 import { Seo } from '../components/Seo';
 import { apiPost } from '../lib/api-client';
 import { usePageCopy } from '../lib/content-hooks';
 
-const TYPE_LABELS: Record<PrivacyRequestType, string> = {
-  access: 'Access my data',
-  rectify: 'Correct my data',
-  delete: 'Delete my data',
-  restrict: 'Restrict processing of my data',
-  object: 'Object to processing of my data',
-};
+/** Each right, named as the law names it and explained as a person would say it. */
+const TYPE_OPTIONS: SelectChoice[] = [
+  {
+    value: 'access',
+    label: 'Access my data',
+    description: 'Get a copy of everything we hold about you.',
+    icon: <FolderOpenRoundedIcon />,
+  },
+  {
+    value: 'rectify',
+    label: 'Correct my data',
+    description: 'Something we hold is wrong or out of date.',
+    icon: <EditOutlinedIcon />,
+  },
+  {
+    value: 'delete',
+    label: 'Delete my data',
+    description: 'Erase what we hold, where we are not required to keep it.',
+    icon: <DeleteOutlineRoundedIcon />,
+  },
+  {
+    value: 'restrict',
+    label: 'Restrict processing of my data',
+    description: 'Keep it, but stop using it while something is resolved.',
+    icon: <PauseCircleOutlineRoundedIcon />,
+  },
+  {
+    value: 'object',
+    label: 'Object to processing of my data',
+    description: 'You disagree with a particular use of your data.',
+    icon: <BlockRoundedIcon />,
+  },
+];
 
 const PrivacyRequest = (): JSX.Element => {
   const copy = usePageCopy('privacy-request', {
@@ -52,6 +77,7 @@ const PrivacyRequest = (): JSX.Element => {
   });
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors },
   } = useForm<PrivacyRequestInput>({
@@ -144,22 +170,20 @@ const PrivacyRequest = (): JSX.Element => {
               helperText={errors.email?.message}
               {...register('email')}
             />
-            <FormControl fullWidth disabled={mutation.isPending} error={Boolean(errors.type)}>
-              <InputLabel id="request-type-label">Request type</InputLabel>
-              <Select
-                labelId="request-type-label"
-                label="Request type"
-                defaultValue="access"
-                {...register('type')}
-              >
-                {PRIVACY_REQUEST_TYPES.map((type) => (
-                  <MenuItem key={type} value={type}>
-                    {TYPE_LABELS[type]}
-                  </MenuItem>
-                ))}
-              </Select>
-              {errors.type && <FormHelperText>{errors.type.message}</FormHelperText>}
-            </FormControl>
+            <Controller
+              name="type"
+              control={control}
+              render={({ field }) => (
+                <OptionSelect
+                  label="Request type"
+                  options={TYPE_OPTIONS}
+                  value={field.value ?? 'access'}
+                  onChange={field.onChange}
+                  disabled={mutation.isPending}
+                  error={errors.type?.message}
+                />
+              )}
+            />
             <TextField
               label="Details (optional)"
               disabled={mutation.isPending}

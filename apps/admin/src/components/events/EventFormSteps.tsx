@@ -1,4 +1,3 @@
-import { CONTENT_STATUSES, EVENT_TYPES } from '@iaa/shared';
 import type { SvgIconComponent } from '@mui/icons-material';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
@@ -11,16 +10,18 @@ import TitleIcon from '@mui/icons-material/Title';
 import VideocamOutlinedIcon from '@mui/icons-material/VideocamOutlined';
 import Box from '@mui/material/Box';
 import FormControlLabel from '@mui/material/FormControlLabel';
-import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import type { ComponentProps } from 'react';
 
+
 import type { EventFormState } from '../../lib/event-form';
+import { CONTENT_STATUS_OPTIONS, EVENT_TYPE_OPTIONS } from '../../lib/select-options';
 import { EventDateTimeField } from '../fields/EventDateTimeField';
 import { MediaUploadField } from '../fields/MediaUploadField';
+import { OptionSelect } from '../fields/OptionSelect';
 import { QuestionBuilder } from '../fields/QuestionBuilder';
 
 import { EventImage } from './EventImage';
@@ -62,18 +63,12 @@ export const EventDetailsFields = ({
       value={form.title}
       onChange={(e) => setField('title', e.target.value)}
     />
-    <TextField
-      select
-      label={fieldLabel(LocalOfferOutlinedIcon, 'Type')}
+    <OptionSelect
+      label="Type"
+      options={EVENT_TYPE_OPTIONS}
       value={form.type}
-      onChange={(e) => setField('type', e.target.value as EventFormState['type'])}
-    >
-      {EVENT_TYPES.map((type) => (
-        <MenuItem key={type} value={type}>
-          {TYPE_LABELS[type]}
-        </MenuItem>
-      ))}
-    </TextField>
+      onChange={(value: string) => setField('type', value as EventFormState['type'])}
+    />
     <TextField
       label={fieldLabel(DescriptionOutlinedIcon, 'Description')}
       required
@@ -298,18 +293,11 @@ export const EventReviewFields = ({
     <Typography sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
       {form.description}
     </Typography>
-    <TextField
-      select
+    <OptionSelect
       label="Publication status"
+      options={CONTENT_STATUS_OPTIONS}
       value={form.status}
-      onChange={(e) => setField('status', e.target.value as EventFormState['status'])}
-      helperText="Published events appear on the public website. Drafts are visible only to the team."
-    >
-      {CONTENT_STATUSES.map((status) => (
-        <MenuItem key={status} value={status} sx={{ textTransform: 'capitalize' }}>
-          {status}
-        </MenuItem>
-      ))}
-    </TextField>
+      onChange={(value: string) => setField('status', value as EventFormState['status'])}
+    />
   </>
 );

@@ -29,6 +29,38 @@ const optionalShortText = z
 export const BANNER_TONES = ['announcement', 'success', 'warning'] as const;
 export type BannerTone = (typeof BANNER_TONES)[number];
 
+/**
+ * What each tone actually looks like on the site.
+ *
+ * Kept here rather than in either app because both need it and they must not
+ * disagree: the console paints a swatch to choose from, and the banner paints
+ * the real thing. The pairs are picked for contrast — every one of these
+ * foregrounds clears AA on its own background.
+ */
+export const BANNER_TONE_STYLES: Record<
+  BannerTone,
+  { label: string; description: string; background: string; foreground: string }
+> = {
+  announcement: {
+    label: 'Announcement',
+    description: 'The house gold. For news, launches and anything you simply want seen.',
+    background: '#F5B800',
+    foreground: '#0A0F0D',
+  },
+  success: {
+    label: 'Success',
+    description: 'Forest green. For something achieved — a target met, a cohort graduated.',
+    background: '#0B3D2E',
+    foreground: '#E6FAF2',
+  },
+  warning: {
+    label: 'Warning',
+    description: 'Amber-red. For a deadline, a closure or a change people must not miss.',
+    background: '#B3400B',
+    foreground: '#FFF7DB',
+  },
+};
+
 const scheduling = {
   /**
    * A name for the list, never shown to a visitor. Without it a queue of

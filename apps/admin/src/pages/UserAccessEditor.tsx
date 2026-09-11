@@ -2,7 +2,6 @@ import {
   ADMIN_RESOURCES,
   PERMISSION_ACTIONS,
   ROLE_TEMPLATES,
-  USER_ROLES,
   inviteUserSchema,
   updateUserPermissionsSchema,
   type Permission,
@@ -23,7 +22,6 @@ import Checkbox from '@mui/material/Checkbox';
 import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
 import FormControlLabel from '@mui/material/FormControlLabel';
-import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
@@ -33,10 +31,12 @@ import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 
 import { useAuth } from '../auth/AuthContext';
 import { PermissionMatrix } from '../components/auth/PermissionMatrix';
+import { OptionSelect } from '../components/fields/OptionSelect';
 import { FormStepNavigation } from '../components/forms/FormStepNavigation';
 import { PageHeader } from '../components/PageHeader';
 import { FormPageSkeleton } from '../components/PageSkeleton';
 import { useInviteUser, useUpdateUserPermissions, useUsers } from '../lib/admin-hooks';
+import { ROLE_OPTIONS } from '../lib/select-options';
 
 const steps = ['Identity', 'Permissions', 'Review'] as const;
 
@@ -120,18 +120,12 @@ const IdentityStep = ({
         helperText={validationError ?? 'The invitation will be sent to this address.'}
       />
     )}
-    <TextField
-      select
+    <OptionSelect
       label="Role"
+      options={ROLE_OPTIONS}
       value={role}
-      onChange={(event) => onRoleChange(event.target.value as UserRole)}
-    >
-      {USER_ROLES.map((value) => (
-        <MenuItem key={value} value={value} sx={{ textTransform: 'capitalize' }}>
-          {value}
-        </MenuItem>
-      ))}
-    </TextField>
+      onChange={(value: string) => onRoleChange(value as UserRole)}
+    />
     <Typography variant="body2" color="text.secondary">
       Review individual resource permissions in the next step.
     </Typography>

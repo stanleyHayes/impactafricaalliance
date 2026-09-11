@@ -1,19 +1,20 @@
 import {
   submissionSchema,
-  SUBMISSION_STATUSES,
   type Submission,
   type SubmissionStatus,
 } from '@iaa/shared';
-import { Alert, Button, MenuItem, Paper, Skeleton, Stack, TextField } from '@mui/material';
+import { Alert, Button, Paper, Skeleton, Stack, TextField } from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 
 import { useCan } from '../auth/useCan';
 import { RecordActions, RecordFields, fieldLabel } from '../components/data/RecordActions';
+import { OptionSelect } from '../components/fields/OptionSelect';
 import { FormStepNavigation } from '../components/forms/FormStepNavigation';
 import { PageHeader } from '../components/PageHeader';
 import { api } from '../lib/api-client';
+import { SUBMISSION_STATUS_OPTIONS } from '../lib/select-options';
 
 const groups: Record<Submission['type'], { label: string; fields: string[] }[]> = {
   contact: [
@@ -125,19 +126,13 @@ const SubmissionEditor = ({ item }: { item: Submission }): JSX.Element => {
         ))}
         {final && (
           <>
-            <TextField
-              select
+            <OptionSelect
               label="Status"
+              options={SUBMISSION_STATUS_OPTIONS}
               value={status}
               disabled={save.isPending}
-              onChange={(event) => setStatus(event.target.value as SubmissionStatus)}
-            >
-              {SUBMISSION_STATUSES.map((value) => (
-                <MenuItem key={value} value={value}>
-                  {fieldLabel(value)}
-                </MenuItem>
-              ))}
-            </TextField>
+              onChange={(value: string) => setStatus(value as SubmissionStatus)}
+            />
             <RecordFields record={{ ...item, status, payload }} />
           </>
         )}

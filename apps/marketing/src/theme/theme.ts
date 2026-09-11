@@ -1,5 +1,14 @@
 import { brandColors, brandFonts } from '@iaa/shared';
 import { alpha, createTheme, type ThemeOptions } from '@mui/material/styles';
+import { createElement } from 'react';
+
+import {
+  CheckboxCheckedIcon,
+  CheckboxIcon,
+  CheckboxIndeterminateIcon,
+  RadioCheckedIcon,
+  RadioIcon,
+} from './control-icons';
 
 const lightPalette: ThemeOptions['palette'] = {
   mode: 'light',
@@ -87,6 +96,25 @@ const baseOptions = (mode: 'light' | 'dark'): ThemeOptions => ({
     subtitle1: { fontWeight: 500 },
   },
   components: {
+    // Own marks rather than Material's filled square and circle, so a tick on
+    // this site looks like it belongs to it. See theme/control-icons.tsx.
+    MuiCheckbox: {
+      defaultProps: {
+        disableRipple: true,
+        icon: createElement(CheckboxIcon),
+        checkedIcon: createElement(CheckboxCheckedIcon),
+        indeterminateIcon: createElement(CheckboxIndeterminateIcon),
+      },
+      styleOverrides: { root: { borderRadius: 8 } },
+    },
+    MuiRadio: {
+      defaultProps: {
+        disableRipple: true,
+        icon: createElement(RadioIcon),
+        checkedIcon: createElement(RadioCheckedIcon),
+      },
+      styleOverrides: { root: { borderRadius: '50%' } },
+    },
     MuiCssBaseline: {
       styleOverrides: {
         html: { scrollBehavior: 'smooth' },
