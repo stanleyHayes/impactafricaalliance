@@ -42,6 +42,14 @@ services:
       - key: ANALYTICS_INGEST_SECRET
         generateValue: true
 
+      # Lets the scheduled GitHub Action run the due automation (review
+      # invitations, event reminders, thank-yous). The free plan sleeps, and a
+      # sleeping process runs no timers, so something awake has to knock.
+      # Set the SAME value here and as the AUTOMATION_RUN_SECRET repository
+      # secret in GitHub, or the run is refused and no email goes out.
+      - key: AUTOMATION_RUN_SECRET
+        sync: false
+
       - key: JWT_ACCESS_TTL
         value: "900"
       - key: JWT_REFRESH_TTL

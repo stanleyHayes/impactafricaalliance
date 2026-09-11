@@ -3,6 +3,7 @@ import {
   eventReviewInputSchema,
   objectIdSchema,
   organisationReviewInputSchema,
+  reviewLinkRequestSchema,
   reviewModerationSchema,
   UserRole,
   type ReviewStatus,
@@ -45,6 +46,23 @@ export const createReviewRouters = (
     asyncHandler(async (req, res) => {
       const input = eventReviewInputSchema.parse(req.body);
       res.status(202).json(await service.submitEventReview(input));
+    }),
+  );
+
+  /**
+   * Sends an attendee their own review link.
+   *
+   * Always 202, whether or not the address was registered — the caller is
+   * anonymous, and answering differently would turn this into a way to ask who
+   * attended.
+   */
+  publicRouter.post(
+    '/events/:eventId/link',
+    sensitiveRateLimit,
+    asyncHandler(async (req, res) => {
+      const { email } = reviewLinkRequestSchema.parse(req.body);
+      await service.requestReviewLink(objectIdSchema.parse(req.params.eventId), email);
+      res.status(202).json({ sent: true });
     }),
   );
 

@@ -61,6 +61,17 @@ export const organisationReviewInputSchema = z.object({
 });
 export type OrganisationReviewInput = z.infer<typeof organisationReviewInputSchema>;
 
+/**
+ * What someone sends when they want their own review link again.
+ *
+ * The link is the only way to the form, so an attendee who deleted the email
+ * would otherwise have no way in.
+ */
+export const reviewLinkRequestSchema = z.object({
+  email: z.string().email('Enter the email you registered with').max(200).toLowerCase().trim(),
+});
+export type ReviewLinkRequest = z.infer<typeof reviewLinkRequestSchema>;
+
 export const reviewModerationSchema = z.object({
   status: z.enum(['published', 'rejected']),
   /** Shown to nobody but the team; it explains the decision to the next reader. */

@@ -61,6 +61,13 @@ const envSchema = z.object({
    * counted, just without a location.
    */
   ANALYTICS_INGEST_SECRET: z.string().min(16).optional(),
+  /**
+   * Lets an outside scheduler run the due automation — review invitations,
+   * reminders, thank-yous. The in-process timers cannot be relied on while the
+   * instance sleeps between requests, so something awake has to knock.
+   * Unset means the endpoint refuses everyone, including the scheduler.
+   */
+  AUTOMATION_RUN_SECRET: z.string().min(24).optional(),
 
   JWT_ACCESS_TTL: z.coerce.number().int().positive().default(900),
   JWT_REFRESH_TTL: z.coerce.number().int().positive().default(2_592_000),
@@ -141,6 +148,7 @@ export interface AppConfig {
     readonly refreshTtlSeconds: number;
   };
   readonly analytics: { readonly ingestSecret?: string };
+  readonly automations: { readonly runSecret?: string };
   readonly trustProxy: boolean | number | string;
   readonly seedAdmin: { email: string; password: string; name: string };
   readonly seedEditorPassword?: string;
@@ -273,6 +281,7 @@ const buildConfig = (raw: RawEnv): AppConfig => ({
   adminUrl: raw.ADMIN_URL,
   jwt: deriveJwtSecrets(raw),
   analytics: { ingestSecret: raw.ANALYTICS_INGEST_SECRET },
+  automations: { runSecret: raw.AUTOMATION_RUN_SECRET },
   trustProxy: parseTrustProxy(raw.TRUST_PROXY),
   seedAdmin: {
     email: raw.SEED_ADMIN_EMAIL,

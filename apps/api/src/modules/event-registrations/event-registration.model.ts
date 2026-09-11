@@ -19,6 +19,11 @@ export interface EventRegistrationDocument {
   answers: EventAnswer[];
   consent: boolean;
   consentedAt?: Date;
+  /**
+   * Stamped once this person has been asked to review the event, so a run
+   * interrupted half way through a room resumes rather than starting again.
+   */
+  reviewInvitedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -48,6 +53,7 @@ const eventRegistrationSchema = new Schema<EventRegistrationDocument>(
     answers: { type: [answerSubSchema], default: [] },
     consent: { type: Boolean, required: true },
     consentedAt: { type: Date },
+    reviewInvitedAt: { type: Date },
   },
   baseSchemaOptions,
 );

@@ -1,6 +1,7 @@
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 
 import {
+  ORG,
   ratingSummary,
   type AdminReview,
   type EventReviewInput,
@@ -64,6 +65,73 @@ export class ReviewService {
       .update(payload)
       .digest('base64url');
     return `${Buffer.from(payload).toString('base64url')}.${signature}`;
+  }
+
+  /**
+   * The invitation an attendee gets after the event.
+   *
+   * Lives here rather than in the worker because two things send it: the
+   * scheduled run that asks the whole room, and the "send me my link" request
+   * from someone who deleted the email.
+   */
+  inviteEmail(
+    event: { id: string; title: string },
+    registration: { email: string; fullName?: string },
+  ): { to: string; subject: string; html: string } {
+    const token = this.reviewToken(event.id, registration.email);
+    const url = `${this.config.siteUrl.replace(/\/$/, '')}/events/${event.id}?review=${encodeURIComponent(token)}#event-reviews`;
+    const firstName = (registration.fullName ?? '').trim().split(/\s+/)[0] || 'there';
+    return {
+      to: registration.email,
+      subject: `How was ${event.title}?`,
+      html: [
+        `<p>Hi ${escapeHtml(firstName)},</p>`,
+        `<p>Thanks for joining <strong>${escapeHtml(event.title)}</strong>. If you have a minute, how was it?</p>`,
+        `<p style="margin:20px 0"><a href="${escapeHtml(url)}" style="background:#183E33;color:#F4EDDC;padding:12px 20px;border-radius:6px;text-decoration:none;font-weight:700;display:inline-block">Leave a review</a></p>`,
+        `<p style="color:#666;font-size:13px">Your rating helps other people decide whether the next one is for them. Reviews are read before they are published.</p>`,
+        `<p style="color:#666;font-size:13px">${escapeHtml(ORG.name)} — ${escapeHtml(ORG.tagline)}</p>`,
+      ].join(''),
+    };
+  }
+
+  /**
+   * Sends someone their own review link on request.
+   *
+   * The invitation email is the only way to the form, which leaves anyone who
+   * deleted it with no way in — so the event page offers this instead. It
+   * answers the same whether or not the address was registered: the caller is
+   * anonymous, and confirming who attended an event to whoever asks is not
+   * ours to do.
+   */
+  async requestReviewLink(eventId: string, email: string): Promise<void> {
+    const event = await EventModel.findById(eventId).exec();
+    if (!event) return;
+    if (new Date() < reviewableFrom(event.toObject() as { startAt: Date; endAt?: Date })) return;
+
+    const registration = await EventRegistrationModel.findOne({
+      eventId: new Types.ObjectId(eventId),
+      email,
+    })
+      .select('email fullName')
+      .lean()
+      .exec();
+    if (!registration) return;
+
+    try {
+      await this.email.send(
+        this.inviteEmail(
+          { id: eventId, title: event.get('title') as string },
+          { email: registration.email, fullName: registration.fullName },
+        ),
+      );
+      // Counts as having been asked, so the scheduled run does not ask again.
+      await EventRegistrationModel.updateOne(
+        { _id: registration._id },
+        { $set: { reviewInvitedAt: new Date() } },
+      ).exec();
+    } catch (error) {
+      this.logger.error({ err: error, eventId }, 'Could not send a requested review link');
+    }
   }
 
   /** Reads a token back, or refuses it. Never says which half was wrong. */

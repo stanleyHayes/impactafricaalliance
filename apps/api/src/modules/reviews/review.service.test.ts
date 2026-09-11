@@ -41,7 +41,10 @@ const captureUpsert = () => {
 const mockEvent = (overrides: Record<string, unknown> = {}): void => {
   const data = { startAt: new Date('2026-09-01T17:00:00Z'), endAt: undefined, ...overrides };
   vi.spyOn(EventModel, 'findById').mockReturnValue({
-    exec: vi.fn().mockResolvedValue({ toObject: () => data }),
+    exec: vi.fn().mockResolvedValue({
+      toObject: () => data,
+      get: (key: string) => (data as Record<string, unknown>)[key] ?? 'Leveraging AI',
+    }),
   } as unknown as ReturnType<typeof EventModel.findById>);
 };
 
@@ -353,5 +356,69 @@ describe('deleting a review', () => {
     } as unknown as ReturnType<typeof ReviewModel.findByIdAndDelete>);
     await expect(service.remove('507f1f77bcf86cd799439022')).rejects.toThrow('Review not found');
     expect(service.refreshEventRating).not.toHaveBeenCalled();
+  });
+});
+
+describe('asking for a review link again', () => {
+  /** The registration the request finds, or nothing. */
+  const registeredAs = (registration: Record<string, unknown> | null): void => {
+    vi.spyOn(EventRegistrationModel, 'findOne').mockReturnValue({
+      select: () => ({ lean: () => ({ exec: vi.fn().mockResolvedValue(registration) }) }),
+    } as unknown as ReturnType<typeof EventRegistrationModel.findOne>);
+    vi.spyOn(EventRegistrationModel, 'updateOne').mockReturnValue({
+      exec: vi.fn().mockResolvedValue({}),
+    } as unknown as ReturnType<typeof EventRegistrationModel.updateOne>);
+  };
+
+  it('emails a working link to someone who was registered', async () => {
+    const { service, send } = build();
+    mockEvent();
+    registeredAs({ _id: 'r1', email: 'ama@example.com', fullName: 'Ama Mensah' });
+
+    await service.requestReviewLink(eventId, 'ama@example.com');
+
+    expect(send).toHaveBeenCalledTimes(1);
+    const message = send.mock.calls[0]?.[0] as { to: string; html: string };
+    expect(message.to).toBe('ama@example.com');
+    // The link in the email must be one the submit endpoint will accept.
+    const token = decodeURIComponent(/[?&]review=([^"&#]+)/.exec(message.html)?.[1] ?? '');
+    registrationExists(true);
+    captureUpsert();
+    await expect(
+      service.submitEventReview({ token, rating: 5, displayName: 'Ama M.' }),
+    ).resolves.toEqual({ status: 'pending' });
+  });
+
+  it('stays quiet about an address that never registered', async () => {
+    const { service, send } = build();
+    mockEvent();
+    registeredAs(null);
+
+    await service.requestReviewLink(eventId, 'stranger@example.com');
+
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it('sends nothing before the event has happened', async () => {
+    const { service, send } = build();
+    mockEvent({ startAt: new Date(Date.now() + 86_400_000) });
+    registeredAs({ _id: 'r1', email: 'ama@example.com', fullName: 'Ama Mensah' });
+
+    await service.requestReviewLink(eventId, 'ama@example.com');
+
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it('marks the person as asked, so the scheduled run skips them', async () => {
+    const { service } = build();
+    mockEvent();
+    registeredAs({ _id: 'r1', email: 'ama@example.com', fullName: 'Ama Mensah' });
+
+    await service.requestReviewLink(eventId, 'ama@example.com');
+
+    expect(EventRegistrationModel.updateOne).toHaveBeenCalledWith(
+      { _id: 'r1' },
+      { $set: { reviewInvitedAt: expect.any(Date) } },
+    );
   });
 });

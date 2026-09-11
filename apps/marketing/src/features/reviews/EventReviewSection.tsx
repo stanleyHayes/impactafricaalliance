@@ -20,6 +20,7 @@ import { useEventReviews } from '../../lib/content-hooks';
 
 import { EventReviewsEmptyState } from './EventReviewsEmptyState';
 import { previewReviews, previewSummary } from './review-preview';
+import { ReviewLinkRequest } from './ReviewLinkRequest';
 import { ReviewList } from './ReviewList';
 import { ReviewsSummary } from './ReviewsSummary';
 
@@ -443,6 +444,7 @@ export const EventReviewSection = ({
       <Box sx={{ mt: 3, maxWidth: token || preview ? 600 : 'none' }}>
         <EventReviewEntry
           key={`${eventId}-${token}-${preview}`}
+          eventId={eventId}
           token={reviewable ? token : null}
           preview={preview}
           submitted={submitted}
@@ -505,12 +507,14 @@ const EventReviewContent = ({
 };
 
 const EventReviewEntry = ({
+  eventId,
   token,
   preview,
   submitted,
   reviewable,
   onDone,
 }: {
+  eventId: string;
   token: string | null;
   preview: boolean;
   submitted: boolean;
@@ -533,18 +537,19 @@ const EventReviewEntry = ({
         onDone={onDone}
       />
     );
+  // Once it is over there is something to say, so the page offers a way to say
+  // it rather than pointing at an email the reader may no longer have.
+  if (reviewable) return <ReviewLinkRequest eventId={eventId} />;
   return (
     <Stack direction="row" spacing={1.5} sx={{ alignItems: 'flex-start', px: { xs: 0.5, md: 1 } }}>
       <MailOutlineRoundedIcon sx={{ color: 'text.secondary', fontSize: 21, mt: 0.25 }} />
       <Box>
         <Typography sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
-          {reviewable
-            ? 'Attended this event? Your voice belongs here.'
-            : 'Joining us? Share your experience after the event.'}
+          Joining us? Share your experience after the event.
         </Typography>
         <Typography color="text.secondary" sx={{ mt: 0.5, fontSize: '0.825rem', maxWidth: 720 }}>
-          Use the personal review link in your follow-up email to share a rating and comment.
-          Reviews are read before publication.
+          We will email everyone who registered once it has finished, with a personal link to leave
+          a rating and comment. Reviews are read before publication.
         </Typography>
       </Box>
     </Stack>

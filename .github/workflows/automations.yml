@@ -1,0 +1,70 @@
+# Runs the API's due automation: review invitations, event reminders and
+# thank-you emails.
+#
+# Why this exists rather than a timer inside the API: the API runs on a plan
+# where the instance sleeps after a quiet quarter of an hour, and a sleeping
+# process does not run timers. The first webinar's review invitations were due
+# at 21:00 and never went out for exactly that reason. This workflow is awake
+# on a schedule, so it both wakes the instance and gives it the work.
+#
+# Requires the AUTOMATION_RUN_SECRET repository secret to match the value set
+# on the API. Without it every run is refused and no email goes out.
+name: Run scheduled automations
+
+on:
+  schedule:
+    # Every 15 minutes. GitHub queues scheduled runs and may delay them under
+    # load, which is fine here: the work is "anything now due", not "this
+    # minute". Nothing is sent twice — each send is recorded as it happens.
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: automations
+  cancel-in-progress: false
+
+permissions: {}
+
+env:
+  # Override with an API_BASE_URL repository variable if the API ever moves to
+  # its own domain; the default is where it lives today.
+  API_BASE_URL: ${{ vars.API_BASE_URL || 'https://iaa-api.onrender.com' }}
+
+jobs:
+  run:
+    name: Send anything due
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Wake the API
+        # A sleeping instance takes the better part of a minute to answer, and
+        # the run itself should not be the request that pays for the cold
+        # start. --retry covers the connection being refused while it boots.
+        run: |
+          curl --silent --show-error --fail \
+            --retry 6 --retry-delay 15 --retry-all-errors \
+            --max-time 90 \
+            "$API_BASE_URL/api/health"
+
+      - name: Run due automations
+        env:
+          SECRET: ${{ secrets.AUTOMATION_RUN_SECRET }}
+        run: |
+          if [ -z "$SECRET" ]; then
+            echo "AUTOMATION_RUN_SECRET is not set — no automation can run." >&2
+            exit 1
+          fi
+          status=$(curl --silent --show-error \
+            --max-time 180 \
+            --output response.json \
+            --write-out '%{http_code}' \
+            --request POST \
+            --header "x-automation-secret: $SECRET" \
+            "$API_BASE_URL/api/automations/run")
+          cat response.json
+          echo
+          # 207 means one half of the run failed; the body says which.
+          if [ "$status" != "200" ]; then
+            echo "Automation run returned HTTP $status" >&2
+            exit 1
+          fi

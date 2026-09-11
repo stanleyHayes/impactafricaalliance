@@ -8,10 +8,10 @@ import { EventMessageService } from './event-message.service.js';
 /**
  * Sends the reminders and the thank-yous.
  *
- * On the same in-process interval as the other background work rather than a
- * scheduler: this is a handful of emails a week, and cron infrastructure to
- * deliver them is not a trade worth making. Five minutes is fine-grained
- * enough for "a few minutes after it ends" while staying cheap.
+ * The in-process interval below is a backstop, not the mechanism. On a plan
+ * where the instance sleeps between requests a timer never gets to fire, so
+ * the real trigger is /api/automations/run, called by a scheduler that is
+ * awake. Five minutes is fine-grained enough for "a few minutes after it ends".
  */
 const TICK_MS = 5 * 60_000;
 const FIRST_RUN_DELAY_MS = 45_000;
@@ -47,6 +47,72 @@ const DEFAULTS = {
   }),
 };
 
+export interface EventAutomationRun {
+  reminders: number;
+  thankYous: number;
+}
+
+/** One pass over the events that are due a reminder or a thank-you. */
+export const runEventAutomation = async (
+  container: DependencyContainer,
+  logger: AppLogger,
+): Promise<EventAutomationRun> => {
+  const messages = container.resolve(EventMessageService);
+  const now = Date.now();
+  const result: EventAutomationRun = { reminders: 0, thankYous: 0 };
+
+  // Reminders: due, not yet sent, and not so late that sending is worse
+  // than staying quiet.
+  const reminders = await EventModel.find({
+    status: 'published',
+    reminderHoursBefore: { $gt: 0 },
+    reminderSentAt: { $exists: false },
+    startAt: { $gt: new Date(now) },
+  }).exec();
+
+  for (const event of reminders) {
+    const hours = event.get('reminderHoursBefore') as number;
+    const dueAt = (event.get('startAt') as Date).getTime() - hours * 3_600_000;
+    if (now < dueAt || now > dueAt + REMINDER_GRACE_MS) continue;
+
+    const title = event.get('title') as string;
+    try {
+      await messages.send(String(event.id), 'reminder', DEFAULTS.reminder(title));
+      result.reminders += 1;
+    } catch (error) {
+      // "Nobody registered" is the usual reason and is not a failure worth
+      // retrying on every run, so the event is stamped either way.
+      logger.warn({ err: error, eventId: String(event.id) }, 'Reminder not sent');
+    }
+    await EventModel.findByIdAndUpdate(event.id, { $set: { reminderSentAt: new Date() } }).exec();
+  }
+
+  const thanks = await EventModel.find({
+    status: 'published',
+    thankYouMinutesAfter: { $gt: 0 },
+    thankYouSentAt: { $exists: false },
+    startAt: { $lte: new Date(now) },
+  }).exec();
+
+  for (const event of thanks) {
+    const minutes = event.get('thankYouMinutesAfter') as number;
+    const endsAt = (event.get('endAt') as Date | undefined) ?? (event.get('startAt') as Date);
+    const dueAt = endsAt.getTime() + minutes * 60_000;
+    if (now < dueAt || now > dueAt + THANK_YOU_GRACE_MS) continue;
+
+    const title = event.get('title') as string;
+    try {
+      await messages.send(String(event.id), 'thank-you', DEFAULTS.thankYou(title));
+      result.thankYous += 1;
+    } catch (error) {
+      logger.warn({ err: error, eventId: String(event.id) }, 'Thank-you not sent');
+    }
+    await EventModel.findByIdAndUpdate(event.id, { $set: { thankYouSentAt: new Date() } }).exec();
+  }
+
+  return result;
+};
+
 export const startEventAutomationWorker = (
   container: DependencyContainer,
   logger: AppLogger,
@@ -57,55 +123,7 @@ export const startEventAutomationWorker = (
     if (running) return;
     running = true;
     try {
-      const messages = container.resolve(EventMessageService);
-      const now = Date.now();
-
-      // Reminders: due, not yet sent, and not so late that sending is worse
-      // than staying quiet.
-      const reminders = await EventModel.find({
-        status: 'published',
-        reminderHoursBefore: { $gt: 0 },
-        reminderSentAt: { $exists: false },
-        startAt: { $gt: new Date(now) },
-      }).exec();
-
-      for (const event of reminders) {
-        const hours = event.get('reminderHoursBefore') as number;
-        const dueAt = (event.get('startAt') as Date).getTime() - hours * 3_600_000;
-        if (now < dueAt || now > dueAt + REMINDER_GRACE_MS) continue;
-
-        const title = event.get('title') as string;
-        try {
-          await messages.send(String(event.id), 'reminder', DEFAULTS.reminder(title));
-        } catch (error) {
-          // "Nobody registered" is the usual reason and is not a failure worth
-          // retrying every five minutes, so the event is stamped either way.
-          logger.warn({ err: error, eventId: String(event.id) }, 'Reminder not sent');
-        }
-        await EventModel.findByIdAndUpdate(event.id, { $set: { reminderSentAt: new Date() } }).exec();
-      }
-
-      const thanks = await EventModel.find({
-        status: 'published',
-        thankYouMinutesAfter: { $gt: 0 },
-        thankYouSentAt: { $exists: false },
-        startAt: { $lte: new Date(now) },
-      }).exec();
-
-      for (const event of thanks) {
-        const minutes = event.get('thankYouMinutesAfter') as number;
-        const endsAt = (event.get('endAt') as Date | undefined) ?? (event.get('startAt') as Date);
-        const dueAt = endsAt.getTime() + minutes * 60_000;
-        if (now < dueAt || now > dueAt + THANK_YOU_GRACE_MS) continue;
-
-        const title = event.get('title') as string;
-        try {
-          await messages.send(String(event.id), 'thank-you', DEFAULTS.thankYou(title));
-        } catch (error) {
-          logger.warn({ err: error, eventId: String(event.id) }, 'Thank-you not sent');
-        }
-        await EventModel.findByIdAndUpdate(event.id, { $set: { thankYouSentAt: new Date() } }).exec();
-      }
+      await runEventAutomation(container, logger);
     } catch (error) {
       logger.error({ err: error }, 'Event automation worker failed');
     } finally {

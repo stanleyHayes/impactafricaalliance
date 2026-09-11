@@ -14,6 +14,7 @@ import { sanitizeBody } from './middleware/sanitize.js';
 import { createAiRouter } from './modules/ai/ai.routes.js';
 import { createAnalyticsRouters } from './modules/analytics/analytics.routes.js';
 import { createAuthRouter } from './modules/auth/auth.routes.js';
+import { createAutomationRouter } from './modules/automations/automation.routes.js';
 import { createCampaignRouter } from './modules/campaigns/campaign.routes.js';
 import { buildContentModules } from './modules/content/content.registry.js';
 import { createDashboardRouter } from './modules/dashboard/dashboard.routes.js';
@@ -57,6 +58,8 @@ export const createApp = (
   app.use('/api', globalRateLimit);
 
   app.use('/api/auth', createAuthRouter(container));
+  // Called by the scheduler, not by a person; see the router for why.
+  app.use('/api/automations', createAutomationRouter(container, config, logger));
   app.use('/api/live', createCampaignRouter());
 
   for (const module of buildContentModules(container)) {
