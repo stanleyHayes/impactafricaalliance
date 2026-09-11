@@ -13,10 +13,20 @@ name: Run scheduled automations
 
 on:
   schedule:
-    # Every 15 minutes. GitHub queues scheduled runs and may delay them under
-    # load, which is fine here: the work is "anything now due", not "this
-    # minute". Nothing is sent twice — each send is recorded as it happens.
-    - cron: '*/15 * * * *'
+    # Hourly, and deliberately no more often than that.
+    #
+    # Render's free tier allows 750 instance-hours a month across the whole
+    # account, and this account runs dozens of free services. Knocking every
+    # quarter of an hour would keep this one awake around the clock — roughly
+    # 730 hours — and starve every other free service on the account. Waking
+    # it once an hour costs about a quarter of that.
+    #
+    # An hour is inside every grace window the workers allow: two hours for a
+    # reminder, twenty-four for a thank-you, and fourteen days for a review
+    # invitation. GitHub also queues scheduled runs and may delay them under
+    # load, which is fine here — the work is "anything now due", not "this
+    # minute". Nothing is sent twice: each send is recorded as it happens.
+    - cron: '0 * * * *'
   workflow_dispatch:
 
 concurrency:
