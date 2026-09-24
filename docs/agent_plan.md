@@ -805,3 +805,13 @@ Owner: Codex. Status: implemented and verified with automated checks; publicatio
 - Detail timestamps display a full readable date/time with UTC, retaining the original ISO timestamp
   on hover. Compact list dates keep their existing human-readable formatting.
 - Verification: 9 focused component tests passed; admin typecheck, ESLint and `git diff --check` passed.
+
+### 2026-09-24 — Event discovery and Cloudinary uploads
+
+- Owner: Codex. Status: verified; publication to main authorized.
+- Admin and marketing list upcoming/ongoing events first, then past events newest-first. Cards, calendar entries and agendas label past events using end time (start time fallback).
+- Each site saves its calendar/card preference in browser localStorage, validates saved values, and remains usable when storage is unavailable.
+- Reproduced Cloudinary 401 with a non-asset invalid-file probe: signing `max_file_size` produces an invalid signature; omitting it passes authentication and reaches file validation. Removed the unsupported field from signatures and both upload clients; retained browser size checks. Corrected CV signatures to return the actual signed folder.
+- No production event or media asset was created or edited during verification. Deployment and authenticated event-editor acceptance remain unverified.
+
+- Verification: 16 focused tests pass across shared event ordering, both view preferences, marketing filters, admin calendar/uploads and API signatures. Admin, marketing and API TypeScript checks, changed-file ESLint and diff checks pass.

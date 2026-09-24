@@ -71,7 +71,6 @@ export const uploadToCloudinary = async (
   form.append('signature', signature.signature);
   form.append('folder', signature.folder);
   form.append('allowed_formats', signature.allowedFormats);
-  form.append('max_file_size', String(signature.maxFileSize));
 
   const response = await fetch(uploadUrl(signature.cloudName), { method: 'POST', body: form });
   if (!response.ok) {

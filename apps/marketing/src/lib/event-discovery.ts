@@ -1,4 +1,4 @@
-import type { Event } from '@iaa/shared';
+import { compareEvents, isPastEvent, type Event } from '@iaa/shared';
 export type EventPeriod = 'all' | 'upcoming' | 'past';
 export const filterEvents = (
   events: Event[],
@@ -10,16 +10,12 @@ export const filterEvents = (
     .filter((event) => {
       const searchable =
         `${event.title} ${event.description} ${event.location} ${event.host ?? ''}`.toLocaleLowerCase();
-      const ended = new Date(event.endAt ?? event.startAt).getTime() < now;
+      const ended = isPastEvent(event, now);
       return (
         terms.every((term) => searchable.includes(term)) &&
         (type === 'all' || event.type === type) &&
         (period === 'all' || (period === 'past' ? ended : !ended))
       );
     })
-    .sort((a, b) =>
-      period === 'past'
-        ? Date.parse(b.startAt) - Date.parse(a.startAt)
-        : Date.parse(a.startAt) - Date.parse(b.startAt),
-    );
+    .sort((a, b) => compareEvents(a, b, now));
 };

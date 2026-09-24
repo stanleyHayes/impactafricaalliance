@@ -29,6 +29,7 @@ import { IMAGES } from '../content/images';
 import { useEvents, usePageCopy } from '../lib/content-hooks';
 import { filterEvents, type EventPeriod } from '../lib/event-discovery';
 import { formatEventType } from '../lib/event-utils';
+import { useEventView } from '../lib/use-event-view';
 
 const Events = (): JSX.Element => {
   const copy = usePageCopy('events', {
@@ -40,7 +41,7 @@ const Events = (): JSX.Element => {
       'Discover workshops, conversations and gatherings connecting people and ideas across Africa.',
   });
   const { data, isLoading, isError, refetch } = useEvents();
-  const [view, setView] = useState('card');
+  const [view, setView] = useEventView();
   const [query, setQuery] = useState('');
   const [type, setType] = useState('all');
   const [period, setPeriod] = useState<EventPeriod>('all');
@@ -101,7 +102,7 @@ const Events = (): JSX.Element => {
             <ToggleButtonGroup
               value={view}
               exclusive
-              onChange={(_, value: string | null) => value && setView(value)}
+              onChange={(_, value: 'calendar' | 'card' | null) => value && setView(value)}
               aria-label="Event view"
               size="small"
               sx={{ alignSelf: 'flex-start' }}

@@ -1,3 +1,4 @@
+import { compareEvents, isPastEvent } from '@iaa/shared';
 import type { ContentStatus, EventType, Event } from '@iaa/shared';
 import AddIcon from '@mui/icons-material/Add';
 import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined';
@@ -36,6 +37,7 @@ import { InformationItem } from '../components/InformationItem';
 import { PageHeader } from '../components/PageHeader';
 import { CalendarPageSkeleton } from '../components/PageSkeleton';
 import { useDeleteEvent, useEvents, useRegistrationCounts } from '../lib/admin-hooks';
+import { useEventView } from '../lib/use-event-view';
 
 const STATUS_TONE: Record<
   ContentStatus,
@@ -90,8 +92,16 @@ const formatEventRange = (startIso: string, endIso?: string): string => {
       month: 'short',
       year: 'numeric',
     });
-    const startTime = start.toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit', hour12: true });
-    const endTime = end.toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit', hour12: true });
+    const startTime = start.toLocaleTimeString('en-GB', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+    const endTime = end.toLocaleTimeString('en-GB', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
     return `${date} · ${startTime} – ${endTime}`;
   }
 
@@ -227,6 +237,7 @@ const EventCard = ({
             alignItems="center"
             sx={{ mt: 1, flexWrap: 'wrap', rowGap: 0.5 }}
           >
+            {isPastEvent(event) && <Chip size="small" label="Past event" />}
             <Chip size="small" color={TYPE_TONE[event.type]} label={TYPE_LABEL[event.type]} />
             <Chip
               size="small"
@@ -317,16 +328,13 @@ const Events = (): JSX.Element => {
     navigate(`/events/${event.id}`);
   };
   const events = useMemo(() => data?.items ?? [], [data]);
-  const [view, setView] = useState<'calendar' | 'card'>('calendar');
+  const [view, setView] = useEventView();
   const { data: counts } = useRegistrationCounts();
   const [month, setMonth] = useState(new Date());
   const [deletingEvent, setDeletingEvent] = useState<Event | null>(null);
   const [qrEvent, setQrEvent] = useState<Event | null>(null);
 
-  const sortedEvents = useMemo(
-    () => [...events].sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime()),
-    [events],
-  );
+  const sortedEvents = useMemo(() => [...events].sort((a, b) => compareEvents(a, b)), [events]);
 
   const openCreate = (): void => {
     navigate('/events/new');

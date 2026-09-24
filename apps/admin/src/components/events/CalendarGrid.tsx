@@ -1,4 +1,4 @@
-import type { Event } from '@iaa/shared';
+import { compareEvents, isPastEvent, type Event } from '@iaa/shared';
 import AddIcon from '@mui/icons-material/Add';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -22,7 +22,6 @@ interface CalendarGridProps {
 }
 const dateKey = (date: Date): string => date.toLocaleDateString('sv-SE');
 
-
 export const CalendarGrid = ({
   events,
   month,
@@ -43,9 +42,9 @@ export const CalendarGrid = ({
       const day = new Date(event.startAt);
       return day.getFullYear() === month.getFullYear() && day.getMonth() === month.getMonth();
     })
-    .sort((a, b) => Date.parse(a.startAt) - Date.parse(b.startAt));
+    .sort((a, b) => compareEvents(a, b));
   const agenda = selected
-    ? events.filter((event) => dateKey(new Date(event.startAt)) === selected)
+    ? monthEvents.filter((event) => dateKey(new Date(event.startAt)) === selected)
     : monthEvents;
   const navigate = (date: Date): void => {
     setSelected(null);
@@ -141,6 +140,7 @@ export const CalendarGrid = ({
                         minute: '2-digit',
                       })}{' '}
                       · {event.status}
+                      {isPastEvent(event) ? ' · Past event' : ''}
                     </Typography>
                     <Typography
                       component="span"
@@ -212,6 +212,7 @@ export const CalendarGrid = ({
               <Typography sx={{ fontWeight: 650 }}>{event.title}</Typography>
               <Typography variant="caption" color="text.secondary">
                 {new Date(event.startAt).toLocaleString('en-GB')} · {event.status}
+                {isPastEvent(event) ? ' · Past event' : ''}
               </Typography>
             </Box>
           </Button>

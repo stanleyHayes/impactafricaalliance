@@ -1,4 +1,4 @@
-import type { Event } from '@iaa/shared';
+import { compareEvents, isPastEvent, type Event } from '@iaa/shared';
 import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
@@ -25,14 +25,16 @@ export const CalendarGrid = ({ events }: { events: Event[] }): JSX.Element => {
   const today = new Date();
   const firstRelevant =
     events.find((event) => Date.parse(event.endAt ?? event.startAt) >= today.getTime()) ??
-    events[events.length - 1];
+    events[0];
   const [month, setMonth] = useState(() => new Date(firstRelevant?.startAt ?? today));
   const [selected, setSelected] = useState<string | null>(null);
   const year = month.getUTCFullYear();
   const index = month.getUTCMonth();
   const offset = (new Date(Date.UTC(year, index, 1)).getUTCDay() + 6) % 7;
   const days = new Date(Date.UTC(year, index + 1, 0)).getUTCDate();
-  const monthEvents = events.filter((event) => monthOf(new Date(event.startAt)) === monthOf(month));
+  const monthEvents = events
+    .filter((event) => monthOf(new Date(event.startAt)) === monthOf(month))
+    .sort((a, b) => compareEvents(a, b));
   const agenda = selected
     ? monthEvents.filter((event) => keyOf(new Date(event.startAt)) === selected)
     : monthEvents;
@@ -138,6 +140,7 @@ export const CalendarGrid = ({ events }: { events: Event[] }): JSX.Element => {
                     >
                       <AccessTimeRoundedIcon sx={{ fontSize: 13, flexShrink: 0 }} />
                       {formatEventTime(event.startAt)}
+                      {isPastEvent(event) ? ' · Past event' : ''}
                     </Typography>
                     <Typography
                       component="span"
@@ -246,6 +249,7 @@ export const CalendarGrid = ({ events }: { events: Event[] }): JSX.Element => {
                 >
                   <AccessTimeRoundedIcon sx={{ fontSize: 14, flexShrink: 0 }} />
                   {formatEventTime(event.startAt)} GMT
+                  {isPastEvent(event) ? ' · Past event' : ''}
                 </Typography>
               </Box>
               <Typography variant="h6" sx={{ my: 0.5, lineHeight: 1.3 }}>

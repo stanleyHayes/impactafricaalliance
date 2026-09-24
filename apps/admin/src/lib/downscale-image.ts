@@ -1,7 +1,7 @@
 /**
  * Shrink an oversized photograph in the browser before it is uploaded.
  *
- * Uploads are capped at 5 MB by the signature the API issues, and a photograph
+ * The upload form caps files at the 5 MB limit the API issues, and a photograph
  * taken on a phone routinely arrives at two or three times that — so the cap
  * was rejecting exactly the pictures people most wanted to use, with no way
  * through it from the dashboard.

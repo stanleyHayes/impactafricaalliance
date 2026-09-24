@@ -38,19 +38,22 @@ export class CloudinaryMediaProvider implements MediaProvider {
     allowed_formats: string;
     max_file_size: number;
   }): SignedUpload {
-    const { cloudName, apiKey, apiSecret, folder } = this.config.cloudinary;
+    const { cloudName, apiKey, apiSecret } = this.config.cloudinary;
     if (!cloudName || !apiKey || !apiSecret) {
       throw new ServiceUnavailableError('Cloudinary is not configured');
     }
-    const signature = cloudinary.utils.api_sign_request(params, apiSecret);
+    // max_file_size is not a signed Upload API parameter. Cloudinary ignores it
+    // when validating, so including it in the signature causes a 401.
+    const { max_file_size: maxFileSize, ...signedParams } = params;
+    const signature = cloudinary.utils.api_sign_request(signedParams, apiSecret);
     return {
       timestamp: params.timestamp,
       signature,
       apiKey,
       cloudName,
-      folder,
+      folder: params.folder,
       allowedFormats: params.allowed_formats,
-      maxFileSize: params.max_file_size,
+      maxFileSize,
     };
   }
 

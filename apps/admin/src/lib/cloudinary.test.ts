@@ -19,18 +19,16 @@ beforeEach(() => {
 });
 describe('signed media upload', () => {
   it('sends the signed fields and returns media metadata for persistence', async () => {
-    const fetchMock = vi
-      .spyOn(globalThis, 'fetch')
-      .mockResolvedValue(
-        new Response(
-          JSON.stringify({
-            secure_url: 'https://res.cloudinary.com/demo/image/upload/event.png',
-            public_id: 'events/one',
-            width: 800,
-            height: 600,
-          }),
-        ),
-      );
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          secure_url: 'https://res.cloudinary.com/demo/image/upload/event.png',
+          public_id: 'events/one',
+          width: 800,
+          height: 600,
+        }),
+      ),
+    );
     const result = await uploadToCloudinary(
       new File(['image'], 'event.png', { type: 'image/png' }),
     );
@@ -38,6 +36,8 @@ describe('signed media upload', () => {
     const body = fetchMock.mock.calls[0]?.[1]?.body as FormData;
     expect(body.get('signature')).toBe(signed.signature);
     expect(body.get('folder')).toBe('events');
+    expect(body.has('max_file_size')).toBe(false);
+    expect(body.get('allowed_formats')).toBe(signed.allowedFormats);
     expect(result.publicId).toBe('events/one');
     expect(result.width).toBe(800);
     fetchMock.mockRestore();

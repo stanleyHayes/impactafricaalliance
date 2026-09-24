@@ -1,4 +1,4 @@
-import { isRegistrationOpen, type Event } from '@iaa/shared';
+import { isPastEvent, isRegistrationOpen, type Event } from '@iaa/shared';
 import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
@@ -95,6 +95,9 @@ export const EventCard = ({ event }: { event: Event }): JSX.Element => {
             {formatEventTime(event.startAt)} GMT
           </Typography>
         </Box>
+        {isPastEvent(event) && (
+          <Chip label="Past event" size="small" sx={{ alignSelf: 'flex-start', mb: 1 }} />
+        )}
         <Typography
           component="h3"
           variant="h5"
