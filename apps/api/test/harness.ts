@@ -1,6 +1,8 @@
 import 'reflect-metadata';
 
-import type { Application } from 'express';
+import { once } from 'node:events';
+import { createServer, type Server } from 'node:http';
+
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
 import { vi } from 'vitest';
@@ -13,7 +15,15 @@ import { connectDatabase } from '../src/db/mongoose.js';
 import { TOKENS } from '../src/tokens.js';
 
 export interface TestContext {
-  app: Application;
+  /**
+   * The app, already listening on the loopback address for the whole file.
+   * Handing supertest a bare Express app makes it open a fresh server on every
+   * request, bound to all interfaces; with several test files running at once,
+   * another process holding the same port on 127.0.0.1 (a test server or an
+   * in-memory mongod) then answers instead, with a stray 404 or no HTTP at all.
+   * A server bound to 127.0.0.1 itself always wins its own port.
+   */
+  app: Server;
   config: AppConfig;
   emailSend: ReturnType<typeof vi.fn>;
   teardown: () => Promise<void>;
@@ -43,13 +53,17 @@ export const createTestContext = async (): Promise<TestContext> => {
   const emailSend = vi.fn().mockResolvedValue(undefined);
   container.register(TOKENS.EmailProvider, { useValue: { send: emailSend } });
 
-  const app = createApp(container, config, logger);
+  const server = createServer(createApp(container, config, logger));
+  server.listen(0, '127.0.0.1');
+  await once(server, 'listening');
 
   return {
-    app,
+    app: server,
     config,
     emailSend,
     teardown: async () => {
+      server.closeAllConnections();
+      await new Promise<void>((resolve) => server.close(() => resolve()));
       await mongoose.disconnect();
       await mongo.stop();
     },
