@@ -156,7 +156,7 @@ export const pageGuides: Record<string, PageGuide> = {
     title: 'Reviewing an application',
     steps: [
       'Answers appear in the order the applicant saw them, labelled as they were asked.',
-      'File links expire after a short time. Reopen the application for fresh ones.',
+      'Uploaded files are private. Their links are made each time you open the application, and anyone with a link can open the file, so do not forward them.',
       'Add a review with a recommendation, a score and notes. Reviews are internal and never shown to the applicant.',
       'Change the status with a note explaining why. The history keeps every change and who made it.',
     ],

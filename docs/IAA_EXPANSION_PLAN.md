@@ -672,3 +672,8 @@ contracts already exist.
 | Date | Phase | Status | Notes |
 | --- | --- | --- | --- |
 | 2026-09-27 | 0 Discovery + plan | Done | This document and `IAA_EXPANSION_DISCOVERY.md` |
+| 2026-09-27 | F Foundation | Done | Shared contracts, models, audit, people, counters, preview tokens, rate limiters, media profiles, router stubs, admin shared pieces and marketing stubs (commit `5de8698`) |
+| 2026-09-27 | 1 Projects + Tasks | Built and reviewed, not yet committed | §3.2 and §3.3 routes, list/board/drawer/editors, project Tasks tab via `ProjectTasksPanel`; progress follows task completion. Extra: `PATCH /api/admin/tasks/:id/archive`. Open: evidence audit actions (`media-added` and similar) are cast, not in `AUDIT_ACTIONS` |
+| 2026-09-27 | 2 Forms + Applications + applicant flow | Built and reviewed, not yet committed | §3.4 routes, builder, review pages, privacy hook, `/apply/:slug` and `/apply/preview`. Extra: 409s carry `details.reason`; `preview` is a reserved form slug. Not yet tried against a real Cloudinary account or real email |
+| 2026-09-27 | 3 Impact stories | Built and reviewed, not yet committed | §3.5 routes, block editor, from-project prefill, public pages, crawler meta, sitemap. Extra: `preview` is a reserved story slug. The sitemap keeps its old copy until the API with `/impact-stories` is deployed |
+| 2026-09-27 | 4 Hardening (integration pass) | In progress | Cross-module wiring checked; `test/integration/expansion-flows.test.ts` and the widened 403 sweep added; dashboard "Your work" panel; `docs/design/forms.md` updated. Still to do: browser walkthrough at 390px, tablet and dark theme; index sync and permission backfill per environment (§8) |

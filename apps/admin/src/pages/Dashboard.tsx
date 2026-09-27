@@ -48,6 +48,7 @@ import { RequirePermission } from '../auth/RequirePermission';
 import { BarChart } from '../components/charts/BarChart';
 import { DonationChartEmpty } from '../components/charts/DonationChartEmpty';
 import { DonutChart } from '../components/charts/DonutChart';
+import { YourWorkPanel } from '../components/dashboard/YourWorkPanel';
 import { NewSubmissionsBanner } from '../components/NewSubmissionsBanner';
 import { PageHeader } from '../components/PageHeader';
 import { useDashboardSummary, useSubmissions, useUpdatePaymentSettings } from '../lib/admin-hooks';
@@ -1410,6 +1411,10 @@ const DashboardBody = ({
   onFeedback,
 }: DashboardBodyProps): JSX.Element => (
   <Stack spacing={3.5}>
+    {/* The person's own tasks and the work waiting on them first: it is what
+        they act on today. Renders nothing without any of its permissions. */}
+    <YourWorkPanel />
+
     {/* KPI stat cards */}
     <Grid id="admin-dashboard-stats" container spacing={2.5}>
       {buildStats(isAdmin, data, loading).map((stat) => (

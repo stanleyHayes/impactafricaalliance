@@ -206,6 +206,80 @@ describe('submission actions and permissions', () => {
       ).toBe(403);
     }
   });
+  it('guards every admin route of the expansion by its own permission, even for an admin role', async () => {
+    // Plan §7: projects, tasks, forms, applications, impact stories, the people
+    // directory and document signing. Ids are well formed so a refusal can only
+    // come from the permission check, never from input parsing.
+    const id = '64b000000000000000000001';
+    const routes: [method: 'get' | 'post' | 'patch' | 'delete', path: string][] = [
+      ['get', 'projects'],
+      ['post', 'projects'],
+      ['get', `projects/${id}`],
+      ['patch', `projects/${id}`],
+      ['delete', `projects/${id}`],
+      ['post', `projects/${id}/media`],
+      ['patch', `projects/${id}/media/photo-1`],
+      ['delete', `projects/${id}/media/photo-1`],
+      ['post', `projects/${id}/documents`],
+      ['delete', `projects/${id}/documents/doc-1`],
+      ['get', `projects/${id}/activity`],
+      ['get', 'tasks'],
+      ['get', 'tasks/board'],
+      ['get', 'tasks/summary'],
+      ['post', 'tasks'],
+      ['get', 'tasks/IAA-1'],
+      ['patch', `tasks/${id}`],
+      ['patch', `tasks/${id}/move`],
+      ['patch', `tasks/${id}/archive`],
+      ['delete', `tasks/${id}`],
+      ['get', `tasks/${id}/activity`],
+      ['post', `tasks/${id}/checklist`],
+      ['patch', `tasks/${id}/checklist/item-1`],
+      ['delete', `tasks/${id}/checklist/item-1`],
+      ['post', `tasks/${id}/attachments`],
+      ['delete', `tasks/${id}/attachments/file-1`],
+      ['get', `tasks/${id}/comments`],
+      ['post', `tasks/${id}/comments`],
+      ['patch', `tasks/${id}/comments/${id}`],
+      ['delete', `tasks/${id}/comments/${id}`],
+      ['get', 'forms'],
+      ['post', 'forms'],
+      ['get', `forms/${id}`],
+      ['patch', `forms/${id}`],
+      ['patch', `forms/${id}/status`],
+      ['patch', `forms/${id}/archive`],
+      ['post', `forms/${id}/duplicate`],
+      ['post', `forms/${id}/preview`],
+      ['delete', `forms/${id}`],
+      ['get', 'applications'],
+      ['get', 'applications/counts'],
+      ['get', `applications/export?formId=${id}`],
+      ['get', `applications/${id}`],
+      ['patch', `applications/${id}/status`],
+      ['post', `applications/${id}/reviews`],
+      ['delete', `applications/${id}/reviews/review-1`],
+      ['get', 'impact-stories'],
+      ['post', 'impact-stories'],
+      ['post', `impact-stories/from-project/${id}`],
+      ['get', `impact-stories/${id}`],
+      ['patch', `impact-stories/${id}`],
+      ['patch', `impact-stories/${id}/status`],
+      ['post', `impact-stories/${id}/preview`],
+      ['delete', `impact-stories/${id}`],
+      ['get', 'people'],
+      ['post', 'media/sign-document'],
+    ];
+    for (const [method, path] of routes) {
+      const response = await request(ctx.app)
+        [method](`/api/admin/${path}`)
+        // Its own address, so this sweep never spends the API-wide limit the
+        // rest of this file shares.
+        .set('X-Forwarded-For', '10.61.0.1')
+        .set('Authorization', `Bearer ${reader}`)
+        .send({});
+      expect(response.status, `${method.toUpperCase()} ${path}`).toBe(403);
+    }
+  });
   it('rejects missing authentication and malformed record IDs', async () => {
     expect((await request(ctx.app).get('/api/admin/submissions')).status).toBe(401);
     expect(

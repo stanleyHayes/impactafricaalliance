@@ -60,8 +60,12 @@ import TaskEditorPage from '../pages/tasks/TaskEditorPage';
 import UserAccessEditor from '../pages/UserAccessEditor';
 import Users from '../pages/Users';
 
+// Says who can fix it, so a missing permission reads as a next step rather
+// than a dead end.
 const NO_PERMISSION = (
-  <Alert severity="warning">You do not have permission to view this page.</Alert>
+  <Alert severity="warning">
+    You do not have permission to view this page. An administrator can grant access under Users.
+  </Alert>
 );
 
 /**

@@ -11,10 +11,22 @@ standing interface rule, requested on 5 September 2026. Short forms can remain c
 | CMS resources with more than five fields | `/content/:resource/new`, `/content/:resource/:id/edit` | Resource-specific groups followed by Review |
 | Site settings | `/site-settings` | Organisation, contact, location, visibility and communication groups |
 | Invitations and permissions | `/users/invite`, `/users/:userId/permissions` | Identity, Permissions, Review |
+| Projects | `/projects/new`, `/projects/:projectId/edit` | Basics, People, Schedule & place, Scope, Story & cover, Review |
+| Tasks | `/tasks/new`, `/tasks/:taskKey/edit` | Basics, Assignment, Schedule, Details, Review |
+| Application forms (builder) | `/forms/new`, `/forms/:formId/edit` | Basics, Introduction, Questions, Schedule & limits, Confirmation, Review |
+| Impact stories | `/impact-stories/new`, `/impact-stories/:storyId/edit` | Basics, Classification, Blocks, Search & sharing, Review |
 
 The CMS threshold is calculated from field definitions, so adding a sixth field automatically moves
 that resource into the dedicated editor. Explicit step groups retain every field, with a five-field
 fallback for future additions. Partners, pillar images and direct user creation remain short dialogs.
+
+The work modules keep a few short forms as dialogs, each at five fields or fewer: quick task
+creation (top bar and a project's Tasks tab), a project milestone, metric, risk, progress figure or
+photo's details, and an application review. An application's status change (status and note) sits
+inline on its page. The task drawer saves each field as it changes; it is a set of single-value
+preferences, not a multi-field submission form.
+Starting an impact story from a project (`/impact-stories/from-project/:projectId`) creates a draft
+and opens it in the story editor, so it has no form of its own.
 
 Use the shared `FormStepNavigation` component. Let the form own validation and submission. Keep field
 state across steps; preserve image uploads, AI assistance, Markdown editors, previews and permission
@@ -26,8 +38,11 @@ rich text, and long content. Summary widths follow the content rather than the i
 Images, uploaded file links, custom previews, and all configured fields remain available for review.
 
 Event scheduling uses [MUI X DateTimePicker](https://mui.com/x/react-date-pickers/date-time-picker/)
-with the Day.js adapter, British date formatting and 24-hour time. Mouse devices get a calendar/time
-popover and touch devices get a MUI dialog. Dates display in the browser timezone and serialize to UTC.
+with the Day.js adapter, British date formatting and 12-hour time (`DD MMM YYYY, hh:mm A`). Mouse
+devices get a calendar/time popover and touch devices get a MUI dialog. Dates display in the browser
+timezone and serialize to UTC. Form opening and closing times use the same 12-hour picker.
+Calendar dates without a time (project and task dates, milestones) use `DateField` and are stored at
+12:00 UTC of the chosen day, so every staff time zone reads the same day.
 End times must follow the start; registration can close at or before the start. Empty optional dates
 are distinct from invalid dates, and clearing existing values sends the API's explicit null update.
 
