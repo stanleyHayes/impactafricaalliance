@@ -104,6 +104,8 @@ export interface ProjectRecord {
   media: ProjectMediaRecord[];
   documents: FileAttachmentRecord[];
   archivedAt?: Date | null;
+  /** The status it was archived from, so Restore can put it back there. */
+  archivedFromStatus?: ProjectStatus | null;
   createdBy?: Types.ObjectId | null;
   updatedBy?: Types.ObjectId | null;
   createdAt: Date;
@@ -210,6 +212,7 @@ const projectSchema = new Schema<ProjectRecord>(
     media: { type: [mediaItemSubSchema], default: [] },
     documents: { type: [fileAttachmentSubSchema], default: [] },
     archivedAt: { type: Date },
+    archivedFromStatus: { type: String, enum: PROJECT_STATUSES },
     createdBy: userRef(),
     updatedBy: userRef(),
   },

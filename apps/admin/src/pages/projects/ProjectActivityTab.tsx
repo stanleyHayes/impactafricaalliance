@@ -1,18 +1,27 @@
-import ConstructionRoundedIcon from '@mui/icons-material/ConstructionRounded';
+import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded';
 
-import { EmptyState } from '../../components/EmptyState';
+import { ActivityTimeline } from '../../components/audit/ActivityTimeline';
+import { DetailSection } from '../../components/detail/DetailSection';
+import { useProjectOutlet } from '../../components/projects/useProjectOutlet';
+import { projectActivity } from '../../lib/projects';
 
 /**
- * The project's Activity tab. Placeholder until the projects module lands; the
- * route and the tab that leads here are already final.
+ * The project's Activity tab: who changed what, and when, newest first. Read
+ * through the project's own endpoint, so it needs no more than
+ * `projects:read`.
  */
-const ProjectActivityTab = (): JSX.Element => (
-  <EmptyState
-    compact
-    icon={<ConstructionRoundedIcon />}
-    title="This tab is being built"
-    description="Who changed what on this project, and when, will appear here."
-  />
-);
+const ProjectActivityTab = (): JSX.Element => {
+  const { project } = useProjectOutlet();
+  const { endpoint, queryKey } = projectActivity(project.id);
+  return (
+    <DetailSection
+      title="Activity"
+      icon={<HistoryRoundedIcon />}
+      description="Every change to the project, its evidence and its status."
+    >
+      <ActivityTimeline endpoint={endpoint} queryKey={queryKey} />
+    </DetailSection>
+  );
+};
 
 export default ProjectActivityTab;

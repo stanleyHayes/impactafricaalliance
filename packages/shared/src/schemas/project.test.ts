@@ -12,6 +12,7 @@ import {
   projectListQuerySchema,
   projectMediaInputSchema,
   projectMediaUpdateSchema,
+  projectRestoreStatus,
   projectUpdateSchema,
   type ProjectStatus,
 } from './project.js';
@@ -95,6 +96,16 @@ describe('project status changes', () => {
   it('always allows staying put', () => {
     for (const status of PROJECT_STATUSES) {
       expect(canTransitionProject(status, status)).toBe(true);
+    }
+  });
+
+  it('restores an archived project to where it was, or to draft when that is unknown', () => {
+    expect(projectRestoreStatus('on-hold')).toBe('on-hold');
+    expect(projectRestoreStatus(null)).toBe('draft');
+    expect(projectRestoreStatus(undefined)).toBe('draft');
+    expect(projectRestoreStatus('archived')).toBe('draft');
+    for (const status of PROJECT_STATUSES) {
+      expect(canTransitionProject('archived', projectRestoreStatus(status))).toBe(true);
     }
   });
 });

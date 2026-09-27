@@ -1,18 +1,45 @@
-import ConstructionRoundedIcon from '@mui/icons-material/ConstructionRounded';
+import { PROJECT_DOCUMENT_LIMIT } from '@iaa/shared';
+import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
+import Alert from '@mui/material/Alert';
+import Stack from '@mui/material/Stack';
 
-import { EmptyState } from '../../components/EmptyState';
+import { useCan } from '../../auth/useCan';
+import { DetailSection } from '../../components/detail/DetailSection';
+import { FileAttachmentList } from '../../components/files/FileAttachmentList';
+import { countLabel } from '../../components/projects/project-format';
+import { READ_ONLY_NOTE, useProjectOutlet } from '../../components/projects/useProjectOutlet';
+import { useAddProjectDocument, useRemoveProjectDocument } from '../../lib/projects';
 
 /**
- * The project's Documents tab. Placeholder until the projects module lands; the
- * route and the tab that leads here are already final.
+ * The project's Documents tab: reports, budgets, agreements and minutes kept
+ * with the project. Uploads stay out of the media library (`register: false`).
  */
-const ProjectDocumentsTab = (): JSX.Element => (
-  <EmptyState
-    compact
-    icon={<ConstructionRoundedIcon />}
-    title="This tab is being built"
-    description="Reports, budgets and other documents attached to the project will appear here."
-  />
-);
+const ProjectDocumentsTab = (): JSX.Element => {
+  const { project } = useProjectOutlet();
+  const can = useCan();
+  const canUpdate = can('update', 'projects');
+  const add = useAddProjectDocument(project.id);
+  const remove = useRemoveProjectDocument(project.id);
+  return (
+    <Stack spacing={3}>
+      {!canUpdate && <Alert severity="info">{READ_ONLY_NOTE}</Alert>}
+      <DetailSection
+        title="Documents"
+        icon={<FolderOutlinedIcon />}
+        description={`${countLabel(project.documents.length, 'document')}. PDF, Word, Excel, PowerPoint, CSV, text or images, up to 10 MB each.`}
+      >
+        <FileAttachmentList
+          items={project.documents}
+          canEdit={canUpdate}
+          onAdd={(input) => add.mutateAsync(input)}
+          onRemove={(id) => remove.mutateAsync(id)}
+          max={PROJECT_DOCUMENT_LIMIT}
+          folder="projects"
+          emptyText="No documents attached to this project yet. Reports, budgets and agreements belong here."
+        />
+      </DetailSection>
+    </Stack>
+  );
+};
 
 export default ProjectDocumentsTab;

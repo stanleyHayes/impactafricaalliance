@@ -48,6 +48,19 @@ export const PROJECT_STATUSES = [
 export type ProjectStatus = (typeof PROJECT_STATUSES)[number];
 
 /**
+ * Each status as it reads in a sentence, so an API message ("cannot move from
+ * Draft to Completed") and the dashboard's chips use the same words.
+ */
+export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
+  draft: 'Draft',
+  planned: 'Planned',
+  active: 'Active',
+  'on-hold': 'On hold',
+  completed: 'Completed',
+  archived: 'Archived',
+};
+
+/**
  * The moves allowed from each status. Loose on purpose: projects pause,
  * restart and get reopened, and a rule that forbids what really happened only
  * teaches people to pick the wrong status. What it does refuse is completing
@@ -66,6 +79,17 @@ export const PROJECT_STATUS_TRANSITIONS: Record<ProjectStatus, readonly ProjectS
 /** True when a project may move from one status to another. Staying put is always allowed. */
 export const canTransitionProject = (from: ProjectStatus, to: ProjectStatus): boolean =>
   from === to || PROJECT_STATUS_TRANSITIONS[from].includes(to);
+
+/**
+ * Where "Restore" takes an archived project: back to the status it was
+ * archived from, or to draft when that is not known. Draft is the one status
+ * that promises nothing, so a project restored blind never claims to be
+ * running.
+ */
+export const projectRestoreStatus = (
+  archivedFromStatus?: ProjectStatus | null,
+): Exclude<ProjectStatus, 'archived'> =>
+  archivedFromStatus && archivedFromStatus !== 'archived' ? archivedFromStatus : 'draft';
 
 /** A milestone is a checkpoint with a date; an activity is a piece of delivery work. */
 export const MILESTONE_KINDS = ['milestone', 'activity'] as const;
@@ -389,6 +413,12 @@ export interface Project extends Timestamped {
   /** Impact stories written from this project, published or not. */
   storyCount: number;
   archivedAt?: string | null;
+  /**
+   * The status the project had when it was archived, so restoring it puts it
+   * back where it was rather than making someone remember. Null when it is
+   * not archived, or was archived before this was recorded.
+   */
+  archivedFromStatus?: ProjectStatus | null;
   createdBy?: PersonSummary | null;
   updatedBy?: PersonSummary | null;
 }

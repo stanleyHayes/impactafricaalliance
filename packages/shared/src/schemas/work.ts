@@ -301,6 +301,12 @@ export const AUDIT_ACTIONS = [
   'commented',
   'reviewed',
   'submitted',
+  // A project's evidence: photos and documents are added and removed one at
+  // a time, apart from edits to the project itself.
+  'media-added',
+  'media-removed',
+  'document-added',
+  'document-removed',
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 

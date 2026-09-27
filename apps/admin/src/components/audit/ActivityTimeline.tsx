@@ -34,6 +34,10 @@ const ACTION_LABELS: Record<AuditAction, string> = {
   commented: 'Commented',
   reviewed: 'Reviewed',
   submitted: 'Submitted',
+  'media-added': 'Photo added',
+  'media-removed': 'Photo removed',
+  'document-added': 'Document added',
+  'document-removed': 'Document removed',
 };
 
 // The trail stores actions as plain text so a newer API can add one; an
