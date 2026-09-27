@@ -4,6 +4,8 @@
   "outputDirectory": "dist",
   "rewrites": [
     { "source": "/events/:id", "destination": "/api/event-meta?id=:id" },
+    { "source": "/impact/stories/preview", "destination": "/index.html" },
+    { "source": "/impact/stories/:slug", "destination": "/api/story-meta?slug=:slug" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [

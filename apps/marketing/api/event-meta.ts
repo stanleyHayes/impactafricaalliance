@@ -1,5 +1,18 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 
+// `.js` because Vercel runs these functions as Node ES modules, which need the
+// extension; TypeScript maps it to the `.ts` file.
+import {
+  fetchRecord,
+  fetchShell,
+  FALLBACK_IMAGE,
+  sendHtml,
+  sendUnavailable,
+  SITE_URL,
+  summarise,
+  withMeta,
+} from './_lib/preview.js';
+
 /**
  * Server-rendered link previews for a single event.
  *
@@ -10,15 +23,6 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
  * WhatsApp, LinkedIn, X, Facebook, Slack and Google see the event itself.
  */
 
-const API_URL = (
-  process.env.API_URL ??
-  process.env.VITE_API_URL ??
-  'https://iaa-api.onrender.com/api'
-).replace(/\/$/, '');
-
-const SITE_URL = 'https://www.impactafricaalliance.org';
-const FALLBACK_IMAGE = `${SITE_URL}/brand/og-image.png`;
-
 interface EventPreview {
   title?: string;
   description?: string;
@@ -27,16 +31,8 @@ interface EventPreview {
   location?: string;
 }
 
-const escapeAttribute = (value: string): string =>
-  value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-
-/** One clean sentence-ish summary; crawlers truncate well past this anyway. */
-const summarise = (event: EventPreview): string => {
-  const text = (event.description ?? '').replace(/\s+/g, ' ').trim();
+/** When and where, then what. */
+const describe = (event: EventPreview): string => {
   const when = event.startAt
     ? new Date(event.startAt).toLocaleDateString('en-GB', {
         day: 'numeric',
@@ -46,44 +42,8 @@ const summarise = (event: EventPreview): string => {
       })
     : '';
   const prefix = [when, event.location].filter(Boolean).join(' · ');
-  const body = text.length > 180 ? `${text.slice(0, 177)}…` : text;
+  const body = summarise(event.description);
   return prefix ? `${prefix} — ${body}` : body;
-};
-
-/** Drop the tags we are about to replace, wherever they sit in the head. */
-const stripTag = (html: string, pattern: RegExp): string => html.replace(pattern, '');
-
-const withPreview = (html: string, event: EventPreview, canonical: string): string => {
-  const title = `${event.title ?? 'Event'} | Impact Africa Alliance`;
-  const description = summarise(event);
-  const image = event.image?.url ?? FALLBACK_IMAGE;
-  const imageAlt = event.image?.alt ?? event.title ?? 'Impact Africa Alliance';
-
-  const cleaned = [
-    /<title>[\s\S]*?<\/title>/i,
-    /<link\s+rel="canonical"[^>]*>/gi,
-    /<meta\s[^>]*name="description"[^>]*>/gi,
-    /<meta\s[^>]*property="og:(title|description|url|image|image:alt|image:width|image:height|type)"[^>]*>/gi,
-    /<meta\s[^>]*name="twitter:(title|description|image|image:alt|card)"[^>]*>/gi,
-  ].reduce(stripTag, html);
-
-  const tags = [
-    `<title>${escapeAttribute(title)}</title>`,
-    `<link rel="canonical" href="${escapeAttribute(canonical)}" />`,
-    `<meta name="description" content="${escapeAttribute(description)}" />`,
-    `<meta property="og:type" content="article" />`,
-    `<meta property="og:title" content="${escapeAttribute(title)}" />`,
-    `<meta property="og:description" content="${escapeAttribute(description)}" />`,
-    `<meta property="og:url" content="${escapeAttribute(canonical)}" />`,
-    `<meta property="og:image" content="${escapeAttribute(image)}" />`,
-    `<meta property="og:image:alt" content="${escapeAttribute(imageAlt)}" />`,
-    `<meta name="twitter:card" content="summary_large_image" />`,
-    `<meta name="twitter:title" content="${escapeAttribute(title)}" />`,
-    `<meta name="twitter:description" content="${escapeAttribute(description)}" />`,
-    `<meta name="twitter:image" content="${escapeAttribute(image)}" />`,
-  ].join('\n    ');
-
-  return cleaned.replace('</head>', `  ${tags}\n  </head>`);
 };
 
 export default async function handler(
@@ -94,21 +54,24 @@ export default async function handler(
   const requested = new URL(req.url ?? '/', `https://${host}`);
   const id = req.query?.id ?? requested.searchParams.get('id') ?? '';
 
-  // The shell is a real static file, so this does not re-enter the rewrite.
-  const shell = await fetch(`https://${host}/index.html`).then((response) => response.text());
-
-  let html = shell;
+  let shell: string;
   try {
-    const response = await fetch(`${API_URL}/events/${encodeURIComponent(id)}`);
-    if (response.ok) {
-      const event = (await response.json()) as EventPreview;
-      html = withPreview(shell, event, `${SITE_URL}/events/${id}`);
-    }
+    shell = await fetchShell(host);
   } catch {
-    // A preview is a nicety; never let it stop the page from rendering.
+    sendUnavailable(res);
+    return;
   }
 
-  res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=86400');
-  res.end(html);
+  const event = await fetchRecord<EventPreview>(`/events/${encodeURIComponent(id)}`);
+  const html = event
+    ? withMeta(shell, {
+        title: `${event.title ?? 'Event'} | Impact Africa Alliance`,
+        description: describe(event),
+        canonical: `${SITE_URL}/events/${id}`,
+        image: event.image?.url ?? FALLBACK_IMAGE,
+        imageAlt: event.image?.alt ?? event.title ?? 'Impact Africa Alliance',
+      })
+    : shell;
+
+  sendHtml(res, html);
 }

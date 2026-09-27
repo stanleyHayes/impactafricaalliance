@@ -5,11 +5,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useImpactStats, useReports } from '../lib/content-hooks';
 import { renderWithProviders } from '../test/test-utils';
 
-import { ImpactNumbersSection, ReportsSection, SdgSection } from './Impact';
+import { ImpactNumbersSection, ReportsSection, SdgSection, VoicesBand } from './Impact';
 
 vi.mock('../lib/content-hooks', () => ({
   useImpactStats: vi.fn(),
   useReports: vi.fn(),
+  useSiteImages: vi.fn(() => ({ data: undefined })),
 }));
 
 vi.mock('react-intersection-observer', () => ({
@@ -172,6 +173,17 @@ describe('ReportsSection', () => {
     expect(screen.getByRole('link', { name: 'Download report' })).toHaveAttribute(
       'href',
       'https://example.com/report.pdf',
+    );
+  });
+});
+
+describe('VoicesBand', () => {
+  it('sends readers on to the impact stories', () => {
+    renderWithProviders(<VoicesBand />);
+
+    expect(screen.getByRole('link', { name: 'Read their stories' })).toHaveAttribute(
+      'href',
+      '/impact/stories',
     );
   });
 });

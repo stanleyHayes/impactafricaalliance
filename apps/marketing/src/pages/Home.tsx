@@ -294,7 +294,7 @@ export const HomeImpactSection = (): JSX.Element => (
   </Box>
 );
 
-const StoriesSection = (): JSX.Element => {
+export const StoriesSection = (): JSX.Element => {
   const { data, isLoading } = useStories();
   if (!isLoading && (!data || data.items.length === 0)) {
     return <></>;
@@ -390,7 +390,7 @@ const StoriesSection = (): JSX.Element => {
                   </Box>
                   <Button
                     component={RouterLink}
-                    to="/news"
+                    to="/impact/stories"
                     variant="contained"
                     color="secondary"
                     endIcon={<EastIcon />}

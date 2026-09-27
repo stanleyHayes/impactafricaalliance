@@ -1,3 +1,4 @@
+import AutoStoriesRoundedIcon from '@mui/icons-material/AutoStoriesRounded';
 import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import InsightsRoundedIcon from '@mui/icons-material/InsightsRounded';
@@ -33,6 +34,11 @@ interface Destination {
   path: string;
   description: string;
   Icon: ComponentType<SvgIconProps>;
+  /**
+   * Match this path only, not the pages under it: Impact sits above Impact
+   * stories, and only one of the two should be marked as the current page.
+   */
+  end?: boolean;
 }
 
 type NavigationItem =
@@ -56,6 +62,13 @@ const NAVIGATION: NavigationItem[] = [
         path: '/impact',
         description: 'See the progress our communities are making.',
         Icon: InsightsRoundedIcon,
+        end: true,
+      },
+      {
+        label: 'Impact stories',
+        path: '/impact/stories',
+        description: 'Read how our projects changed lives, in the words of the people involved.',
+        Icon: AutoStoriesRoundedIcon,
       },
     ],
   },
@@ -239,6 +252,7 @@ const Dropdown = ({
             key={destination.path}
             component={NavLink}
             to={destination.path}
+            end={destination.end}
             aria-label={destination.label}
             onClick={() => setAnchor(null)}
             sx={destinationSx}
@@ -382,6 +396,7 @@ export const MobileNavigationLinks = ({ onClose }: { onClose: () => void }): JSX
                   key={destination.path}
                   component={NavLink}
                   to={destination.path}
+                  end={destination.end}
                   aria-label={destination.label}
                   onClick={onClose}
                   sx={destinationSx}

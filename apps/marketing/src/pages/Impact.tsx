@@ -574,7 +574,7 @@ const AgendaSection = (): JSX.Element => (
   </Section>
 );
 
-const VoicesBand = (): JSX.Element => {
+export const VoicesBand = (): JSX.Element => {
   const banner = useSiteImage('impact-voices-band');
   return (
   <Box sx={{ position: 'relative', overflow: 'hidden', color: 'common.white' }}>
@@ -609,7 +609,7 @@ const VoicesBand = (): JSX.Element => {
       </Typography>
       <Button
         component={RouterLink}
-        to="/news"
+        to="/impact/stories"
         variant="contained"
         color="secondary"
         size="large"

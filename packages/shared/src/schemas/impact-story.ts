@@ -81,6 +81,17 @@ export const canTransitionImpactStory = (
   IMPACT_STORY_TRANSITIONS[from].includes(to) &&
   (isAdmin || !isAdminStoryMove(from, to));
 
+/**
+ * Addresses a story may not take, because the public site already uses them
+ * under `/impact/stories/`: a story called "preview" would sit behind the
+ * staff preview page and the preview API, and no visitor could ever open it.
+ */
+export const RESERVED_STORY_SLUGS = ['preview'] as const;
+
+/** True when `slug` is one of `RESERVED_STORY_SLUGS`. */
+export const isReservedStorySlug = (slug: string): boolean =>
+  (RESERVED_STORY_SLUGS as readonly string[]).includes(slug.trim().toLowerCase());
+
 /** Version of the block format. Raised if a block's data ever changes shape. */
 export const IMPACT_STORY_SCHEMA_VERSION = 1;
 
@@ -387,8 +398,18 @@ export const impactStoryStatusChangeSchema = z.object({
 });
 export type ImpactStoryStatusChange = z.infer<typeof impactStoryStatusChangeSchema>;
 
-/** The dashboard's tabs over stories. Drafts include those in review. */
-export const IMPACT_STORY_VIEWS = ['drafts', 'published', 'archived', 'all'] as const;
+/**
+ * The dashboard's tabs over stories. Drafts include those in review.
+ * `published-and-archived` is the Published tab with "Include archived" on:
+ * everything that is, or once was, on the website.
+ */
+export const IMPACT_STORY_VIEWS = [
+  'drafts',
+  'published',
+  'archived',
+  'all',
+  'published-and-archived',
+] as const;
 export type ImpactStoryView = (typeof IMPACT_STORY_VIEWS)[number];
 
 /** The statuses each view shows. */
@@ -397,6 +418,7 @@ export const IMPACT_STORY_VIEW_STATUSES: Record<ImpactStoryView, readonly Impact
   published: ['published'],
   archived: ['archived'],
   all: IMPACT_STORY_STATUSES,
+  'published-and-archived': ['published', 'archived'],
 };
 
 /** `GET /api/admin/impact-stories`. A `status` narrows the view further. */
@@ -491,6 +513,8 @@ export interface PublicImpactStoryListItem {
   country?: string;
   programme?: ProgrammeKey;
   publishedAt: string;
+  /** The last edit, for the sitemap's `lastmod`. */
+  updatedAt: string;
 }
 
 /** What `storyPublishProblems` reads. Blocks may come straight from storage, so they are checked in full. */

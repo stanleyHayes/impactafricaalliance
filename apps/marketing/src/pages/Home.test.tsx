@@ -1,11 +1,11 @@
-import type { ImpactStat, Paginated } from '@iaa/shared';
+import type { ImpactStat, Paginated, Story } from '@iaa/shared';
 import { screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useImpactStats } from '../lib/content-hooks';
+import { useImpactStats, useStories } from '../lib/content-hooks';
 import { renderWithProviders } from '../test/test-utils';
 
-import { HomeImpactSection } from './Home';
+import { HomeImpactSection, StoriesSection } from './Home';
 
 vi.mock('../lib/content-hooks', () => ({
   useArticles: vi.fn(),
@@ -122,5 +122,29 @@ describe('HomeImpactSection', () => {
 
     expect(screen.getByText('Impact updates are on the way.')).toBeInTheDocument();
     expect(screen.queryByRole('article')).not.toBeInTheDocument();
+  });
+});
+
+describe('StoriesSection', () => {
+  it('sends readers on to the impact stories', () => {
+    const story = {
+      id: 'story-1',
+      slug: 'amara',
+      name: 'Amara',
+      country: 'Ghana',
+      program: 'Digital Skills',
+      quote: 'The course gave me the confidence to apply.',
+    } as Story;
+    vi.mocked(useStories).mockReturnValue({
+      data: { items: [story], page: 1, pageSize: 12, total: 1, totalPages: 1 },
+      isLoading: false,
+    } as ReturnType<typeof useStories>);
+
+    renderWithProviders(<StoriesSection />);
+
+    expect(screen.getByRole('link', { name: 'Read more stories' })).toHaveAttribute(
+      'href',
+      '/impact/stories',
+    );
   });
 });

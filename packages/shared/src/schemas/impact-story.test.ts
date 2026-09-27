@@ -10,6 +10,7 @@ import {
   impactStoryListQuerySchema,
   impactStoryUpdateSchema,
   isAdminStoryMove,
+  isReservedStorySlug,
   safeLinkSchema,
   STORY_BLOCK_TYPES,
   storyBlockSchema,
@@ -176,6 +177,7 @@ describe('story status changes', () => {
   it('shows stories in review among the drafts', () => {
     expect(IMPACT_STORY_VIEW_STATUSES.drafts).toEqual(['draft', 'in-review']);
     expect(IMPACT_STORY_VIEW_STATUSES.all).toEqual(IMPACT_STORY_STATUSES);
+    expect(IMPACT_STORY_VIEW_STATUSES['published-and-archived']).toEqual(['published', 'archived']);
   });
 });
 
@@ -313,6 +315,13 @@ describe('story schemas', () => {
     expect(
       impactStoryUpdateSchema.parse({ seo: null, country: '', cover: null, projectId: null }),
     ).toEqual({ seo: null, country: null, cover: null, projectId: null });
+  });
+
+  it('keeps a story off the addresses the site already uses', () => {
+    expect(isReservedStorySlug('preview')).toBe(true);
+    expect(isReservedStorySlug(' Preview ')).toBe(true);
+    expect(isReservedStorySlug('preview-day')).toBe(false);
+    expect(isReservedStorySlug('girls-in-code')).toBe(false);
   });
 
   it('opens the dashboard on drafts', () => {

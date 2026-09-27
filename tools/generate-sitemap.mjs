@@ -47,6 +47,7 @@ const STATIC_ROUTES = [
   { path: '/our-work', priority: '0.9' },
   ...PILLARS.map((pillar) => ({ path: pillar.path, priority: '0.8' })),
   { path: '/impact', priority: '0.9' },
+  { path: '/impact/stories', priority: '0.8' },
   { path: '/get-involved', priority: '0.9' },
   { path: '/events', priority: '0.9' },
   { path: '/news', priority: '0.8' },
@@ -90,10 +91,14 @@ const escapeXml = (value) =>
 const run = async () => {
   console.log(`Sitemap: ${SITE}\n  API: ${API}`);
 
-  const [events, articles, team] = await Promise.all([
+  const [events, articles, team, stories] = await Promise.all([
     fetchList('events'),
     fetchList('articles'),
     fetchList('team'),
+    // The public endpoint returns published stories only, so no draft can
+    // leak into the sitemap. An API deployed before this route existed
+    // answers 404, which counts as a failed fetch and keeps the old file.
+    fetchList('impact-stories'),
   ]);
 
   const entries = [
@@ -115,6 +120,14 @@ const run = async () => {
       priority: '0.5',
       lastmod: member.updatedAt,
     })),
+    ...stories
+      .filter((story) => story.slug)
+      .map((story) => ({
+        path: `/impact/stories/${story.slug}`,
+        priority: '0.7',
+        // The last edit, or when it went live on an API that does not send one.
+        lastmod: story.updatedAt ?? story.publishedAt,
+      })),
   ];
 
   const body = entries
@@ -132,7 +145,7 @@ const run = async () => {
     .join('\n');
 
   console.log(
-    `  ${STATIC_ROUTES.length} static, ${events.length} events, ${articles.length} articles, ${team.length} team`,
+    `  ${STATIC_ROUTES.length} static, ${events.length} events, ${articles.length} articles, ${team.length} team, ${stories.length} impact stories`,
   );
 
   // A short sitemap must never overwrite a complete one. `prebuild` runs this
