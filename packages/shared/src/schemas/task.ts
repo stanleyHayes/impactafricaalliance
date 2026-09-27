@@ -59,6 +59,9 @@ export const TASK_BOARD_COLUMN_LIMIT = 100;
 /** Most documents one task can carry. */
 export const TASK_ATTACHMENT_LIMIT = 20;
 
+/** Most checklist lines one task can carry. */
+export const TASK_CHECKLIST_LIMIT = 50;
+
 /** True while a task still needs doing. */
 export const isTaskOpen = (status: TaskStatus): boolean => status !== 'done';
 
@@ -136,7 +139,7 @@ export const taskInputSchema = z.object({
   labels: z.array(z.string().trim().min(1).max(40)).max(12).default([]),
   checklist: z
     .array(checklistItemSchema)
-    .max(50)
+    .max(TASK_CHECKLIST_LIMIT)
     .refine(hasUniqueIds, 'Each checklist item needs its own id')
     .default([]),
   /** Makes this a subtask of another task. */
@@ -164,11 +167,76 @@ export const taskMoveSchema = z.object({
 });
 export type TaskMove = z.infer<typeof taskMoveSchema>;
 
-/** A comment. `@name` mentions are found and resolved by the API. */
+/**
+ * A comment. Mentions are written as tokens, `@[Ama Mensah](<user id>)`, which
+ * the dashboard's mention picker inserts; the API finds them with
+ * `extractMentionIds`, checks each person is an active colleague and stores
+ * their ids. See `TASK_MENTION_PATTERN`.
+ */
 export const taskCommentInputSchema = z.object({
   body: z.string().trim().min(1).max(5000),
 });
 export type TaskCommentInput = z.infer<typeof taskCommentInputSchema>;
+
+/** Most colleagues one comment can mention. */
+export const TASK_MENTION_LIMIT = 20;
+
+/**
+ * A mention token inside a comment: `@[Display Name](64b7f0c2a1b2c3d4e5f60718)`.
+ *
+ * A token rather than a bare `@name`, because names are not unique and change:
+ * the id says exactly who was meant, and the name keeps the text readable in
+ * an email or an export that does not resolve it. The name may not hold
+ * brackets or a line break, so a token always ends where it seems to.
+ */
+export const TASK_MENTION_PATTERN = /@\[([^[\]\n]{1,100})\]\(([a-f\d]{24})\)/gi;
+
+// A fresh copy each time: a global pattern keeps its position between calls,
+// so sharing one would make every other search start half-way through.
+const mentionPattern = (): RegExp =>
+  new RegExp(TASK_MENTION_PATTERN.source, TASK_MENTION_PATTERN.flags);
+
+/** Characters a display name cannot carry inside a token. */
+const MENTION_NAME_UNSAFE = /[[\]()\n\r]+/g;
+
+/**
+ * The token that mentions `person`. Brackets and line breaks in the name are
+ * dropped, so an unusual name can never end the token early.
+ */
+export const mentionToken = (person: { id: string; name: string }): string => {
+  const name = person.name.replace(MENTION_NAME_UNSAFE, ' ').replace(/\s+/g, ' ').trim();
+  return `@[${(name || 'colleague').slice(0, 100)}](${person.id.toLowerCase()})`;
+};
+
+/**
+ * The ids mentioned in a comment, lower-cased, each once, in the order they
+ * first appear. Only well-formed tokens count; typing `@Ama` names nobody.
+ */
+export const extractMentionIds = (body: string): string[] => {
+  const ids = new Set<string>();
+  for (const match of body.matchAll(mentionPattern())) {
+    const id = match[2];
+    if (id) ids.add(id.toLowerCase());
+  }
+  return [...ids];
+};
+
+/**
+ * A comment with each token replaced by `@Display Name`, for anywhere the
+ * text is shown without the dashboard's mention styling: an activity line, a
+ * notification, a plain-text preview.
+ */
+export const mentionsToText = (body: string): string =>
+  body.replace(mentionPattern(), (_token, name: string) => `@${name}`);
+
+/**
+ * `PATCH /api/admin/tasks/:id/archive`. Archiving hides a task from every list
+ * and the board without deleting it; restoring brings it back as it was.
+ */
+export const taskArchiveSchema = z.object({
+  archived: z.boolean(),
+});
+export type TaskArchive = z.infer<typeof taskArchiveSchema>;
 
 /** Attaching a document to a task. */
 export const taskAttachmentInputSchema = fileAttachmentInputSchema;
@@ -311,8 +379,9 @@ export interface TaskComment {
   taskId: string;
   /** Null when the author's account has since been removed. */
   author: PersonSummary | null;
+  /** Markdown, with mentions as tokens; see `TASK_MENTION_PATTERN` and `mentionsToText`. */
   body: string;
-  /** Ids of the colleagues mentioned with `@name`. */
+  /** Ids of the colleagues mentioned in the text, checked as active when it was saved. */
   mentions: string[];
   createdAt: string;
   updatedAt: string;

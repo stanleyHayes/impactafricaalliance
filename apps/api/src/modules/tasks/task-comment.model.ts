@@ -13,7 +13,10 @@ export interface TaskCommentDocument {
   authorId: Types.ObjectId;
   /** Markdown. */
   body: string;
-  /** Colleagues named with `@name`, resolved to user ids when the comment was saved. */
+  /**
+   * Colleagues mentioned with a token (`@[Name](<id>)`, see `TASK_MENTION_PATTERN`),
+   * checked as active when the comment was saved.
+   */
   mentions: Types.ObjectId[];
   /** Set when the author edits the text, so the page can say "edited". */
   editedAt?: Date | null;

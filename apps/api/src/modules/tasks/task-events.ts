@@ -28,7 +28,11 @@ export interface TaskCommentedEvent extends TaskEventBase {
   commentId: string;
 }
 
-/** Colleagues named with `@name` in a comment, resolved to user ids by the tasks service. */
+/**
+ * Colleagues mentioned in a comment (tokens such as `@[Name](<id>)`), checked
+ * as active by the tasks service. On an edit, only those mentioned for the
+ * first time.
+ */
 export interface TaskMentionedEvent extends TaskEventBase {
   type: 'task.mentioned';
   commentId: string;
@@ -97,3 +101,28 @@ export class LoggingTaskEventPublisher implements TaskEventPublisher {
     this.logger.debug({ taskEvent: event }, 'Task event');
   }
 }
+
+/**
+ * Hand events to the publisher without waiting and without letting a failure
+ * reach the caller.
+ *
+ * The change each event describes is already saved, so a publisher that
+ * throws (in spite of the rule above), rejects or hangs must never fail or
+ * slow the request. Failures are logged with the task they were about.
+ */
+export const announceTaskEvents = (
+  publisher: TaskEventPublisher,
+  logger: AppLogger,
+  events: readonly TaskEvent[],
+): void => {
+  for (const event of events) {
+    Promise.resolve()
+      .then(() => publisher.publish(event))
+      .catch((err: unknown) => {
+        logger.error(
+          { err, module: 'tasks', entityId: event.taskId, eventType: event.type },
+          'Failed to publish task event',
+        );
+      });
+  }
+};

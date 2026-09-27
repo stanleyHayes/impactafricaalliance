@@ -3,12 +3,16 @@ import { describe, expect, it } from 'vitest';
 import {
   canTransitionTask,
   checklistItemPatchSchema,
+  extractMentionIds,
   formatTaskKey,
   isTaskOpen,
+  mentionsToText,
+  mentionToken,
   parseTaskKey,
   TASK_BOARD_COLUMNS,
   TASK_KEY_PATTERN,
   TASK_STATUSES,
+  taskArchiveSchema,
   taskBoardQuerySchema,
   taskCommentInputSchema,
   taskInputSchema,
@@ -218,5 +222,40 @@ describe('task list query', () => {
   it("takes the caller's own day for the summary", () => {
     expect(taskSummaryQuerySchema.parse({ today: '2026-10-05' })).toEqual({ today: '2026-10-05' });
     expect(taskSummaryQuerySchema.parse({})).toEqual({});
+  });
+});
+
+describe('comment mentions', () => {
+  const ama = { id: '64B7F0C2A1B2C3D4E5F60718', name: 'Ama Mensah' };
+  const kofi = { id: '64b7f0c2a1b2c3d4e5f60720', name: 'Kofi (Finance) [Accra]' };
+
+  it('writes a token that names the person and carries their id', () => {
+    expect(mentionToken(ama)).toBe('@[Ama Mensah](64b7f0c2a1b2c3d4e5f60718)');
+    // Brackets would end the token early, so they are dropped from the name.
+    expect(mentionToken(kofi)).toBe('@[Kofi Finance Accra](64b7f0c2a1b2c3d4e5f60720)');
+  });
+
+  it('finds each mentioned id once, in order, and ignores bare @names', () => {
+    const body = `${mentionToken(kofi)} and ${mentionToken(ama)}, then ${mentionToken(kofi)} again. @Ama too.`;
+    expect(extractMentionIds(body)).toEqual([
+      '64b7f0c2a1b2c3d4e5f60720',
+      '64b7f0c2a1b2c3d4e5f60718',
+    ]);
+    // A second search starts from the beginning, not where the last one stopped.
+    expect(extractMentionIds(body)).toHaveLength(2);
+    expect(extractMentionIds('@[Ama](not-an-id) and @[](64b7f0c2a1b2c3d4e5f60718)')).toEqual([]);
+  });
+
+  it('turns tokens into plain names for text shown without styling', () => {
+    expect(mentionsToText(`Thanks ${mentionToken(ama)}!`)).toBe('Thanks @Ama Mensah!');
+    expect(mentionsToText('No mentions here.')).toBe('No mentions here.');
+  });
+});
+
+describe('archiving a task', () => {
+  it('takes an explicit yes or no', () => {
+    expect(taskArchiveSchema.parse({ archived: true })).toEqual({ archived: true });
+    expect(taskArchiveSchema.safeParse({}).success).toBe(false);
+    expect(taskArchiveSchema.safeParse({ archived: 'yes' }).success).toBe(false);
   });
 });
