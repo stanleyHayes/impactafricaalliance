@@ -11,6 +11,7 @@ import {
 } from './form.js';
 import {
   calendarDateSchema,
+  commaList,
   optionalTextField,
   SORT_ORDERS,
   stableIdSchema,
@@ -143,11 +144,16 @@ export type ApplicationSort = (typeof APPLICATION_SORTS)[number];
 /**
  * `GET /api/admin/applications`. Drafts are never listed. `q` matches the
  * applicant's name, email or the reference; `from` and `to` are calendar days
- * of submission, both inclusive.
+ * of submission, both inclusive. `statuses` takes a comma list, for the review
+ * queue's "new and in review"; `status`, when given, wins over it.
  */
 export const applicationListQuerySchema = paginationQuerySchema.extend({
   formId: objectIdSchema.optional(),
   status: z.enum(REVIEWABLE_APPLICATION_STATUSES).optional(),
+  statuses: commaList(
+    z.enum(REVIEWABLE_APPLICATION_STATUSES),
+    REVIEWABLE_APPLICATION_STATUSES.length,
+  ).optional(),
   q: optionalTextField(120),
   from: calendarDateSchema.optional(),
   to: calendarDateSchema.optional(),
@@ -281,6 +287,16 @@ export interface AdminApplication extends Timestamped {
   consent?: { version: string; at: string };
   reviews: ApplicationReview[];
   statusHistory: ApplicationStatusChange[];
+}
+
+/**
+ * `GET /api/admin/applications/export`. The CSV comes back inside JSON rather
+ * than as a download, because the dashboard sends its token in a header and a
+ * plain link cannot; the browser turns `csv` into a file named `filename`.
+ */
+export interface ApplicationExport {
+  filename: string;
+  csv: string;
 }
 
 /** How many applications sit in each reviewable status, for tabs and the nav badge. */

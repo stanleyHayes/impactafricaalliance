@@ -122,6 +122,17 @@ export type VisibilityMatch = (typeof VISIBILITY_MATCHES)[number];
 export const APPLICANT_MAPPINGS = ['applicant-name', 'applicant-email', 'applicant-phone'] as const;
 export type ApplicantMapping = (typeof APPLICANT_MAPPINGS)[number];
 
+/**
+ * Addresses a form may not take, because the public site already uses them
+ * under `/apply/`: a form called "preview" would sit behind the staff preview
+ * page and `GET /api/forms/preview`, and no applicant could ever open it.
+ */
+export const RESERVED_FORM_SLUGS = ['preview'] as const;
+
+/** True when `slug` is one of `RESERVED_FORM_SLUGS`. */
+export const isReservedFormSlug = (slug: string): boolean =>
+  (RESERVED_FORM_SLUGS as readonly string[]).includes(slug.trim().toLowerCase());
+
 /** Ready-made forms an editor can start from. */
 export const FORM_TEMPLATE_KEYS = ['speaker-application'] as const;
 export type FormTemplateKey = (typeof FORM_TEMPLATE_KEYS)[number];
@@ -287,12 +298,17 @@ export const formArchiveSchema = z.object({
 });
 export type FormArchiveInput = z.infer<typeof formArchiveSchema>;
 
-/** `GET /api/admin/forms`. */
+/**
+ * `GET /api/admin/forms`. Archived forms are left out unless
+ * `includeArchived` is set; `archived` lists only the archived ones, which is
+ * what the Archived tab shows.
+ */
 export const formListQuerySchema = paginationQuerySchema.extend({
   q: optionalTextField(80),
   status: z.enum(FORM_STATUSES).optional(),
   type: z.enum(FORM_TYPES).optional(),
   includeArchived: booleanQueryParam,
+  archived: booleanQueryParam,
 });
 export type FormListQuery = z.infer<typeof formListQuerySchema>;
 

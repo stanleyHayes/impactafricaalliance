@@ -138,6 +138,16 @@ describe('application list query', () => {
     });
   });
 
+  it('takes several statuses as a comma list, never a draft', () => {
+    expect(
+      applicationListQuerySchema.parse({ statuses: 'submitted,under-review' }).statuses,
+    ).toEqual(['submitted', 'under-review']);
+    expect(applicationListQuerySchema.safeParse({ statuses: 'submitted,draft' }).success).toBe(
+      false,
+    );
+    expect(applicationListQuerySchema.parse({}).statuses).toBeUndefined();
+  });
+
   it('never lists drafts and refuses dates that are not days', () => {
     expect(applicationListQuerySchema.safeParse({ status: 'draft' }).success).toBe(false);
     expect(applicationListQuerySchema.safeParse({ from: '1 October' }).success).toBe(false);

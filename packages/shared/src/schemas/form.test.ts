@@ -11,11 +11,13 @@ import {
   formCreateSchema,
   formDefinitionProblems,
   formInputSchema,
+  formListQuerySchema,
   formPublishProblems,
   formTemplate,
   formUpdateSchema,
   formWindowState,
   isAcceptedFilename,
+  isReservedFormSlug,
   isRuleMet,
   isVisible,
   maxFileBytesFor,
@@ -872,6 +874,21 @@ describe('form schemas', () => {
       intro: null,
       description: null,
     });
+  });
+
+  it('keeps addresses the public site already uses under /apply/', () => {
+    expect(isReservedFormSlug('preview')).toBe(true);
+    expect(isReservedFormSlug(' Preview ')).toBe(true);
+    expect(isReservedFormSlug('preview-2027')).toBe(false);
+  });
+
+  it('reads the archive filters from the query string', () => {
+    expect(formListQuerySchema.parse({})).toMatchObject({ page: 1 });
+    expect(formListQuerySchema.parse({}).archived).toBeUndefined();
+    expect(formListQuerySchema.parse({ archived: 'true', includeArchived: 'false' })).toMatchObject(
+      { archived: true, includeArchived: false },
+    );
+    expect(formListQuerySchema.safeParse({ archived: 'yes' }).success).toBe(false);
   });
 
   it('accepts each answer once, and files only over https', () => {
