@@ -1,38 +1,48 @@
 import Box from '@mui/material/Box';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
+import { useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 
 import { Seo } from '../components/Seo';
+import { ApplicantFlow } from '../features/applications/ApplicantFlow';
+import { PreviewRibbon } from '../features/applications/chrome/PreviewRibbon';
+import type { FormSource } from '../features/applications/queries';
+import { StatusScreen } from '../features/applications/screens/StatusScreen';
 
 /**
- * Staff preview of a form's applicant flow (`/apply/preview#<token>`).
- *
- * A placeholder that holds the route until the applications module replaces
- * it. Previews are never indexed, placeholder or not (plan D10). The route
- * sits outside `Layout`, so this page supplies its own `main` landmark.
+ * A staff preview of a form's applicant flow (`/apply/preview#<token>`, plan
+ * D10). The token sits in the fragment, so it never reaches a server log or
+ * analytics; it is sent to the API only as a header. The flow renders exactly
+ * as applicants see it, but writes nothing: no draft, upload or submission.
+ * Previews are never indexed and record no page view.
  */
-const ApplyPreview = (): JSX.Element => (
-  <Box
-    component="main"
-    sx={{
-      display: 'grid',
-      minHeight: '100vh',
-      placeItems: 'center',
-      px: 2,
-      py: 8,
-      bgcolor: 'background.default',
-    }}
-  >
-    <Seo title="Form preview" noindex />
-    <Stack spacing={2} alignItems="center" sx={{ maxWidth: 560, textAlign: 'center' }}>
-      <Typography variant="h2" component="h1">
-        Form preview
-      </Typography>
-      <Typography sx={{ color: 'text.secondary', lineHeight: 1.75 }}>
-        Form previews open from the admin console.
-      </Typography>
-    </Stack>
-  </Box>
-);
+const Page = (): JSX.Element => {
+  const { hash } = useLocation();
+  // A JWT, which is URL-safe as it stands, so nothing needs decoding.
+  const token = hash.replace(/^#/, '').trim();
+  const source = useMemo<FormSource>(() => ({ kind: 'preview', token }), [token]);
 
-export default ApplyPreview;
+  return (
+    <>
+      <Seo title="Form preview" noindex />
+      {token ? (
+        <ApplicantFlow key={token} source={source} />
+      ) : (
+        <Box
+          sx={{
+            display: 'flex',
+            minHeight: '100vh',
+            flexDirection: 'column',
+            bgcolor: 'background.default',
+          }}
+        >
+          <PreviewRibbon />
+          <Box component="main" sx={{ display: 'flex', flex: 1, flexDirection: 'column' }}>
+            <StatusScreen kind="preview-missing" />
+          </Box>
+        </Box>
+      )}
+    </>
+  );
+};
+
+export default Page;
