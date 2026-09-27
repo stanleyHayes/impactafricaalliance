@@ -1,5 +1,6 @@
 import type { PublicImpactStory, StoryBlock } from '@iaa/shared';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
+import EastIcon from '@mui/icons-material/East';
 import EmailRoundedIcon from '@mui/icons-material/EmailRounded';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
@@ -93,24 +94,66 @@ const ShareLinks = ({ story }: { story: PublicImpactStory }): JSX.Element => {
 const StoryDetails = ({ story }: { story: PublicImpactStory }): JSX.Element => {
   const programme = programmeLabel(story.programme);
   return (
-    <Container>
-      <Stack
-        direction="row"
-        useFlexGap
-        flexWrap="wrap"
-        alignItems="center"
-        gap={1.25}
-        sx={{ py: 3, borderBottom: 1, borderColor: 'divider' }}
-      >
-        <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 650, mr: 1 }}>
-          <Box component="time" dateTime={story.publishedAt}>
-            {formatStoryDate(story.publishedAt)}
+    <Box sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'background.paper' }}>
+      <Container>
+        <Box
+          component="dl"
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1.6fr 0.8fr' },
+            m: 0,
+            py: { xs: 3, md: 4 },
+            gap: { xs: 2.5, md: 5 },
+          }}
+        >
+          <Box>
+            <Typography
+              component="dt"
+              variant="overline"
+              color="text.secondary"
+              sx={{ letterSpacing: 1.5 }}
+            >
+              Published
+            </Typography>
+            <Typography component="dd" sx={{ m: 0, mt: 0.75, fontWeight: 650 }}>
+              <Box component="time" dateTime={story.publishedAt}>
+                {formatStoryDate(story.publishedAt)}
+              </Box>
+            </Typography>
           </Box>
-        </Typography>
-        {programme && <Chip size="small" label={programme} variant="outlined" />}
-        {story.country && <Chip size="small" label={story.country} variant="outlined" />}
-      </Stack>
-    </Container>
+          {programme && (
+            <Box>
+              <Typography
+                component="dt"
+                variant="overline"
+                color="text.secondary"
+                sx={{ letterSpacing: 1.5 }}
+              >
+                Programme
+              </Typography>
+              <Typography component="dd" sx={{ m: 0, mt: 0.75, fontWeight: 650 }}>
+                {programme}
+              </Typography>
+            </Box>
+          )}
+          {story.country && (
+            <Box>
+              <Typography
+                component="dt"
+                variant="overline"
+                color="text.secondary"
+                sx={{ letterSpacing: 1.5 }}
+              >
+                Location
+              </Typography>
+              <Typography component="dd" sx={{ m: 0, mt: 0.75, fontWeight: 650 }}>
+                {story.country}
+              </Typography>
+            </Box>
+          )}
+        </Box>
+      </Container>
+    </Box>
   );
 };
 
@@ -122,7 +165,7 @@ const StoryFooter = ({
   preview: boolean;
 }): JSX.Element => (
   <Container>
-    <Stack spacing={4} sx={{ maxWidth: 760, mx: 'auto' }}>
+    <Stack spacing={4}>
       {story.tags.length > 0 && (
         <Stack direction="row" useFlexGap flexWrap="wrap" gap={0.8} aria-label="Topics">
           {story.tags.map((tag) => (
@@ -131,27 +174,51 @@ const StoryFooter = ({
         </Stack>
       )}
       {!preview && (
-        <Box>
-          <Typography sx={{ mb: 1.5, fontSize: '0.85rem', fontWeight: 700 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 2,
+            pt: 3,
+            borderTop: 1,
+            borderColor: 'divider',
+          }}
+        >
+          <Typography sx={{ mb: 0, fontSize: '0.85rem', fontWeight: 700 }}>
             Share this story
           </Typography>
           <ShareLinks story={story} />
         </Box>
       )}
-      <MintSurface sx={{ p: { xs: 3.5, md: 5 }, borderRadius: 4 }}>
-        <Typography variant="overline" sx={{ fontWeight: 700, letterSpacing: 1.5 }}>
-          Keep reading
-        </Typography>
-        <Typography variant="h4" component="p" sx={{ mt: 1, maxWidth: 560 }}>
-          More stories of what the work has changed.
-        </Typography>
+      <MintSurface
+        sx={{
+          p: { xs: 3, md: 5 },
+          borderRadius: 2,
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: '1fr auto' },
+          gap: 3,
+          alignItems: 'center',
+        }}
+      >
+        <Box>
+          <Typography variant="overline" sx={{ fontWeight: 700, letterSpacing: 1.5 }}>
+            Keep reading
+          </Typography>
+          <Typography variant="h4" component="p" sx={{ mt: 1, maxWidth: 560 }}>
+            More stories of what the work has changed.
+          </Typography>
+        </Box>
         <Button
           component={RouterLink}
           to="/impact/stories"
           variant="contained"
           color="secondary"
-          startIcon={<ArrowBackRoundedIcon />}
-          sx={{ mt: 3 }}
+          endIcon={<EastIcon />}
+          sx={{
+            justifySelf: 'start',
+          }}
         >
           More stories
         </Button>
@@ -196,7 +263,13 @@ export const StoryArticle = ({
     <Box component="article">
       <HeroBlock data={opening} lead meta={<BackLink />} />
       <StoryDetails story={story} />
-      <Box sx={{ py: { xs: 7, md: 10 } }}>
+      <Box
+        sx={{
+          py: { xs: 6, md: 9 },
+          '& h2': { letterSpacing: '-0.035em', lineHeight: 1.2 },
+          '& blockquote': { borderRadius: 2 },
+        }}
+      >
         <StoryBlocks blocks={rest} />
       </Box>
       <Box sx={{ pb: { xs: 8, md: 12 } }}>

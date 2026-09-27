@@ -1,10 +1,11 @@
-import type { Paginated, PublicImpactStoryListItem } from '@iaa/shared';
+import { brandColors, type Paginated, type PublicImpactStoryListItem } from '@iaa/shared';
 import AutoStoriesRoundedIcon from '@mui/icons-material/AutoStoriesRounded';
 import EastIcon from '@mui/icons-material/East';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
 import Chip from '@mui/material/Chip';
+import Container from '@mui/material/Container';
 import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
@@ -12,7 +13,6 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { Link as RouterLink, useSearchParams } from 'react-router-dom';
 
 import { PageHero } from '../components/PageHero';
-import { Section } from '../components/Section';
 import { Seo } from '../components/Seo';
 import {
   STORIES_PAGE_SIZE,
@@ -29,7 +29,7 @@ const GRID_SX = {
   gridTemplateColumns: {
     xs: 'minmax(0, 1fr)',
     sm: 'repeat(2, minmax(0, 1fr))',
-    md: 'repeat(3, minmax(0, 1fr))',
+    md: 'repeat(2, minmax(0, 1fr))',
   },
   m: 0,
   p: 0,
@@ -51,13 +51,13 @@ const CardSkeleton = (): JSX.Element => (
 const Message = ({ title, children }: { title: string; children: ReactNode }): JSX.Element => (
   <Box
     sx={{
-      maxWidth: 640,
-      mx: 'auto',
+      width: '100%',
+      boxSizing: 'border-box',
       px: { xs: 3, md: 5 },
       py: 7,
       border: 1,
       borderColor: 'divider',
-      borderRadius: 4,
+      borderRadius: 2,
       bgcolor: 'background.paper',
       textAlign: 'center',
     }}
@@ -175,21 +175,94 @@ const NoStories = ({
       </Button>
     </Message>
   ) : (
-    <Message title="Stories are on their way">
-      <Typography>
-        Stories appear here once they are published. Until then, you can see what the work has
-        achieved so far.
-      </Typography>
-      <Button
-        component={RouterLink}
-        to="/impact"
-        variant="contained"
-        endIcon={<EastIcon />}
-        sx={{ mt: 2.5 }}
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: { xs: '1fr', md: '0.8fr 1.2fr' },
+        overflow: 'hidden',
+        borderRadius: 2,
+        border: 1,
+        borderColor: 'divider',
+      }}
+    >
+      <Box
+        sx={{
+          bgcolor: brandColors.mint,
+          color: brandColors.deepForest,
+          p: { xs: 3, md: 5 },
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          gap: 4,
+        }}
       >
-        See our impact
-      </Button>
-    </Message>
+        <Stack direction="row" justifyContent="space-between" alignItems="center">
+          <Typography variant="overline" sx={{ letterSpacing: 2, fontWeight: 700 }}>
+            The story continues
+          </Typography>
+          <AutoStoriesRoundedIcon sx={{ fontSize: 30 }} />
+        </Stack>
+        <Typography
+          sx={{
+            maxWidth: 340,
+            fontSize: { xs: '2.4rem', md: '3.6rem' },
+            fontWeight: 700,
+            lineHeight: 1.05,
+            letterSpacing: '-0.045em',
+            textWrap: 'balance',
+          }}
+        >
+          People.
+          <br />
+          Progress.
+          <br />
+          Possibility.
+        </Typography>
+        <Typography variant="body2" sx={{ maxWidth: 300 }}>
+          From our programmes, in the words of the people who shape them.
+        </Typography>
+      </Box>
+      <Box
+        sx={{
+          bgcolor: 'background.paper',
+          p: { xs: 3, sm: 4, md: 6 },
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'flex-start',
+        }}
+      >
+        <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1.5 }}>
+          More to share soon
+        </Typography>
+        <Typography
+          component="h3"
+          sx={{
+            mt: 2,
+            maxWidth: 430,
+            fontSize: { xs: '1.8rem', md: '2.5rem' },
+            fontWeight: 700,
+            lineHeight: 1.15,
+            letterSpacing: '-0.035em',
+          }}
+        >
+          Stories are on their way
+        </Typography>
+        <Typography sx={{ mt: 2, maxWidth: 450, color: 'text.secondary', lineHeight: 1.8 }}>
+          Stories appear here once they are published. Until then, explore the programmes,
+          partnerships and progress behind our work.
+        </Typography>
+        <Button
+          component={RouterLink}
+          to="/impact"
+          variant="contained"
+          endIcon={<EastIcon />}
+          sx={{ mt: 3.5 }}
+        >
+          See our impact
+        </Button>
+      </Box>
+    </Box>
   );
 
 /**
@@ -332,39 +405,58 @@ const ImpactStories = (): JSX.Element => {
         title="Impact stories"
         subtitle="The people behind the numbers, and what the work changed for them."
       />
-      <Section watermark="contours" watermarkPosition="bottom-right">
-        <Stack spacing={{ xs: 4, md: 5 }}>
-          <Typography
-            color="text.secondary"
-            sx={{ maxWidth: 720, fontSize: '1.08rem', lineHeight: 1.8 }}
-          >
-            Every story here is written with the people it is about, from projects we run with
-            partners across the continent. Read how a programme started, what it achieved and who
-            made it happen.
-          </Typography>
-          {(options.programmes.length > 0 || options.countries.length > 0) && (
-            <Stack spacing={1.5}>
-              <FilterChips
-                label="Programme"
-                options={options.programmes}
-                value={filters.programme ?? ''}
-                onChange={(value) => setFilter('programme', value)}
-              />
-              <FilterChips
-                label="Country"
-                options={options.countries}
-                value={filters.country ?? ''}
-                onChange={(value) => setFilter('country', value)}
-              />
-            </Stack>
-          )}
-          <StoryList
-            key={`${filters.programme ?? ''}|${filters.country ?? ''}`}
-            filters={filters}
-            onClear={() => setParams(new URLSearchParams(), { replace: true })}
-          />
-        </Stack>
-      </Section>
+      <Box component="section" aria-labelledby="latest-stories-title" sx={{ py: { xs: 5, md: 8 } }}>
+        <Container>
+          <Stack spacing={{ xs: 4, md: 5 }}>
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', md: '0.8fr 1.2fr' },
+                gap: { xs: 2, md: 6 },
+                alignItems: 'start',
+              }}
+            >
+              <Typography
+                id="latest-stories-title"
+                component="h2"
+                sx={{
+                  fontSize: { xs: '1.8rem', md: '2.3rem' },
+                  fontWeight: 700,
+                  letterSpacing: '-0.035em',
+                }}
+              >
+                Stories from the work
+              </Typography>
+              <Typography color="text.secondary" sx={{ maxWidth: 620, lineHeight: 1.8 }}>
+                Every story here is written with the people it is about, from projects we run with
+                partners across the continent. Read how a programme started, what it achieved and
+                who made it happen.
+              </Typography>
+            </Box>
+            {(options.programmes.length > 0 || options.countries.length > 0) && (
+              <Stack spacing={1.5}>
+                <FilterChips
+                  label="Programme"
+                  options={options.programmes}
+                  value={filters.programme ?? ''}
+                  onChange={(value) => setFilter('programme', value)}
+                />
+                <FilterChips
+                  label="Country"
+                  options={options.countries}
+                  value={filters.country ?? ''}
+                  onChange={(value) => setFilter('country', value)}
+                />
+              </Stack>
+            )}
+            <StoryList
+              key={`${filters.programme ?? ''}|${filters.country ?? ''}`}
+              filters={filters}
+              onClear={() => setParams(new URLSearchParams(), { replace: true })}
+            />
+          </Stack>
+        </Container>
+      </Box>
     </>
   );
 };
