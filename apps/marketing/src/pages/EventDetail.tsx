@@ -64,6 +64,56 @@ const eventSchedule = (event: Event): string => {
     : start;
 };
 
+/**
+ * The artwork's own proportions when the upload recorded them, so a phone shows
+ * the whole flyer and reserves its space before it loads. Portrait 4:5 is the
+ * shape most event flyers are made in, and the frame the desktop layout uses.
+ */
+const artworkRatio = (event: Event): string => {
+  const { width, height } = event.image ?? {};
+  return width && height ? `${width} / ${height}` : '4 / 5';
+};
+
+const EventArtworkFrame = ({ event }: { event: Event }): JSX.Element => (
+  <Box
+    data-testid="event-artwork-frame"
+    sx={{
+      position: 'relative',
+      overflow: 'hidden',
+      // A flyer is read, not glanced at, so the frame takes the artwork's own
+      // shape rather than cropping it to 4:5. Below md the page is one column
+      // and the artwork runs edge to edge, cancelling the Container gutters;
+      // the old phone height cap shrank it to a third of the screen's width.
+      mx: { xs: -2, sm: -3, md: 0 },
+      borderRadius: { xs: 0, md: 4 },
+      aspectRatio: artworkRatio(event),
+      maxHeight: { md: 650 },
+    }}
+  >
+    <EventArtwork src={event.image?.url} />
+    {/* The strapline only dresses the stand-in artwork. An event's own image is
+        usually a flyer carrying its own venue, date and QR code, and a card laid
+        over its corner hid exactly those. */}
+    {!event.image && (
+      <Box
+        sx={{
+          position: 'absolute',
+          left: 24,
+          bottom: 24,
+          p: 2,
+          borderRadius: 2,
+          bgcolor: brandColors.deepForest,
+        }}
+      >
+        <Typography variant="overline" sx={{ color: brandColors.gold }}>
+          Meet. Learn. Build.
+        </Typography>
+        <Typography sx={{ color: 'white', fontWeight: 650 }}>Impact Africa Alliance</Typography>
+      </Box>
+    )}
+  </Box>
+);
+
 const EventBody = ({ event }: { event: Event }): JSX.Element => {
   const [registering, setRegistering] = useState(false);
   const canRegister = isRegistrationOpen(event, new Date());
@@ -108,34 +158,7 @@ const EventBody = ({ event }: { event: Event }): JSX.Element => {
               alignItems: 'center',
             }}
           >
-            <Box
-              sx={{
-                position: 'relative',
-                borderRadius: 4,
-                overflow: 'hidden',
-                aspectRatio: '4 / 5',
-                maxHeight: { xs: 420, md: 650 },
-              }}
-            >
-              <EventArtwork src={event.image?.url} />
-              <Box
-                sx={{
-                  position: 'absolute',
-                  left: 24,
-                  bottom: 24,
-                  p: 2,
-                  borderRadius: 2,
-                  bgcolor: brandColors.deepForest,
-                }}
-              >
-                <Typography variant="overline" sx={{ color: brandColors.gold }}>
-                  Meet. Learn. Build.
-                </Typography>
-                <Typography sx={{ color: 'white', fontWeight: 650 }}>
-                  Impact Africa Alliance
-                </Typography>
-              </Box>
-            </Box>
+            <EventArtworkFrame event={event} />
             <Box>
               <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
                 <Chip
