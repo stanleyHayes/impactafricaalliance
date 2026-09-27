@@ -14,6 +14,7 @@ import Stack from '@mui/material/Stack';
 import { useTheme } from '@mui/material/styles';
 import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useEffect, useRef, useState } from 'react';
 
@@ -126,9 +127,14 @@ const StatusFilter = ({
       select: {
         multiple: true,
         displayEmpty: true,
+        // Drawn like OptionSelect's value, so the row of filters reads alike.
         renderValue: (selected) => {
           const statuses = selected as TaskStatus[];
-          return statuses.length === 0 ? 'Any status' : statuses.map(taskStatusLabel).join(', ');
+          return (
+            <Typography component="span" sx={{ fontWeight: 600 }} noWrap>
+              {statuses.length === 0 ? 'Any status' : statuses.map(taskStatusLabel).join(', ')}
+            </Typography>
+          );
         },
       },
       inputLabel: { shrink: true },

@@ -1,7 +1,10 @@
+import FirstPageRoundedIcon from '@mui/icons-material/FirstPageRounded';
 import Pagination from '@mui/material/Pagination';
 import type { SxProps, Theme } from '@mui/material/styles';
 import type { RefObject } from 'react';
 import { useSearchParams } from 'react-router-dom';
+
+import { EmptyState } from '../EmptyState';
 
 /**
  * The page number held in the address, 1 when it is missing or not a whole
@@ -77,6 +80,51 @@ export const ServerPagination = ({
         { mt: 3, '& .MuiPagination-ul': { justifyContent: 'center' } },
         ...(Array.isArray(sx) ? sx : [sx]),
       ]}
+    />
+  );
+};
+
+export interface OutOfRangePageProps {
+  /** Records in the whole view, from the `Paginated` envelope. */
+  total: number;
+  /** What the list holds, one of them: "task", "application". */
+  noun: string;
+  /** More than one, when it is not the noun with an "s": "stories". */
+  plural?: string;
+  /** The search parameter that holds the page. */
+  param?: string;
+  compact?: boolean;
+}
+
+/**
+ * What a paged list shows when the address is past its last page: an old
+ * link, or the last item on the last page moved away by a status change or a
+ * delete. The API answers such a page with no items and the true total, so
+ * the list's own "nothing here yet" state would claim there is nothing at all
+ * under a header counting dozens. Render this first, whenever a page has no
+ * items but the total is not zero.
+ */
+export const OutOfRangePage = ({
+  total,
+  noun,
+  plural = `${noun}s`,
+  param = 'page',
+  compact = true,
+}: OutOfRangePageProps): JSX.Element => {
+  const [, setSearchParams] = useSearchParams();
+  const firstPage = (): void =>
+    setSearchParams((current) => {
+      const updated = new URLSearchParams(current);
+      updated.delete(param);
+      return updated;
+    });
+  return (
+    <EmptyState
+      compact={compact}
+      icon={<FirstPageRoundedIcon />}
+      title="Nothing on this page"
+      description={`There ${total === 1 ? `is 1 ${noun}` : `are ${total.toLocaleString()} ${plural}`} in this view, on earlier pages.`}
+      primaryAction={{ label: 'Go to the first page', onClick: firstPage, variant: 'outlined' }}
     />
   );
 };

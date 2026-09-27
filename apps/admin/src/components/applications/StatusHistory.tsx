@@ -44,13 +44,16 @@ export const StatusHistory = ({
               borderRadius: '50%',
               bgcolor: index === 0 ? 'primary.main' : 'action.disabled',
             },
+            // The rail from one dot to the next, centred under the 9px dot
+            // (6 + 4.5). A pixel string, because `sx` reads a bare 1 as 100%:
+            // the rail then covered each entry's time and note.
             '&:not(:last-of-type)::after': {
               content: '""',
               position: 'absolute',
               left: 10,
               top: 18,
               bottom: 0,
-              width: 1,
+              width: '1px',
               bgcolor: 'divider',
             },
           }}

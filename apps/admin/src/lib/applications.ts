@@ -28,21 +28,38 @@ import { queryString } from './forms';
  */
 export const APPLICATIONS_KEY = ['applications'] as const;
 
+/** The list's form, search and date filters, which the status tabs count within. */
+export interface ApplicationCountsParams {
+  formId?: string;
+  q?: string;
+  /** Calendar days of submission, `YYYY-MM-DD`, both inclusive. */
+  from?: string;
+  to?: string;
+}
+
 /**
  * How many applications sit in each reviewable status. The sidebar badge shows
- * the `submitted` count: applications nobody has started reviewing.
+ * the `submitted` count: applications nobody has started reviewing. The status
+ * tabs pass the list's filters, so each tab counts what the list beside it
+ * shows; with none, the counts cover everything and share the badge's cache.
  *
  * Polled for the same reason as the submissions badge: the app otherwise never
  * refetches on its own, so a new application would stay invisible until reload.
  */
-export const useApplicationCounts = (enabled = true): UseQueryResult<ApplicationCounts> =>
+export const useApplicationCounts = (
+  enabled = true,
+  params?: ApplicationCountsParams,
+): UseQueryResult<ApplicationCounts> =>
   useQuery({
-    queryKey: [...APPLICATIONS_KEY, 'counts'],
+    queryKey: params ? [...APPLICATIONS_KEY, 'counts', params] : [...APPLICATIONS_KEY, 'counts'],
     enabled,
-    queryFn: () => api.get<ApplicationCounts>('/admin/applications/counts'),
+    queryFn: () =>
+      api.get<ApplicationCounts>(`/admin/applications/counts${queryString({ ...params })}`),
     refetchInterval: 60_000,
     refetchOnWindowFocus: true,
     staleTime: 30_000,
+    // A new filter keeps the old numbers on the tabs until the new ones arrive.
+    placeholderData: keepPreviousData,
   });
 
 export interface ApplicationListParams {
@@ -72,6 +89,14 @@ export const useApplications = (
     placeholderData: keepPreviousData,
   });
 
+/**
+ * How often an open application is read again. Its file links expire an hour
+ * after they are made (the API's `DELIVERY_LINK_SECONDS`), so a page left open
+ * renews them well before then, and again whenever the reviewer comes back
+ * to the tab.
+ */
+export const APPLICATION_LINK_REFRESH_MS = 30 * 60_000;
+
 export const useApplication = (
   id: string | undefined,
 ): UseQueryResult<AdminApplication, ApiError> =>
@@ -79,6 +104,9 @@ export const useApplication = (
     queryKey: [...APPLICATIONS_KEY, 'detail', id],
     queryFn: () => api.get<AdminApplication>(`/admin/applications/${id}`),
     enabled: Boolean(id),
+    staleTime: 30_000,
+    refetchOnWindowFocus: true,
+    refetchInterval: APPLICATION_LINK_REFRESH_MS,
   });
 
 const useInvalidateApplications = (): (() => Promise<void>) => {

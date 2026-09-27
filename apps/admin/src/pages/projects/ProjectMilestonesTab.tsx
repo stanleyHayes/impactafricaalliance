@@ -16,7 +16,7 @@ import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { DetailSection } from '../../components/detail/DetailSection';
 import { ConfirmDialog } from '../../components/dialogs/ConfirmDialog';
@@ -39,6 +39,34 @@ import { MILESTONE_STATUS_OPTIONS } from '../../lib/select-options';
 
 type Editing = { id: string | null; draft: MilestoneDraft } | null;
 
+type Offset = -1 | 1;
+
+/** A move whose arrow had focus, to put focus back once the new order is on screen. */
+interface Refocus {
+  id: string;
+  offset: Offset;
+  /** The list the move was made from; focus is restored once it has been replaced. */
+  from: Milestone[];
+}
+
+const arrowKey = (id: string, offset: Offset): string => `${id}:${offset === -1 ? 'up' : 'down'}`;
+
+const opposite = (offset: Offset): Offset => (offset === -1 ? 1 : -1);
+
+/**
+ * How a row control looks while a change is saving. It is marked
+ * `aria-disabled` rather than disabled: a disabled button drops keyboard focus
+ * to the page, so someone moving an item two places would have to tab back
+ * from the top after every step. This keeps the look of a disabled control.
+ */
+const BUSY_SX = {
+  '&[aria-disabled="true"]': {
+    color: 'action.disabled',
+    cursor: 'default',
+    '&:hover': { backgroundColor: 'transparent' },
+  },
+} as const;
+
 const statusText = (milestone: Milestone): string =>
   MILESTONE_STATUS_OPTIONS.find((option) => option.value === milestone.status)?.label ??
   milestone.status;
@@ -50,29 +78,99 @@ const dueText = (milestone: Milestone): string => {
   return milestone.dueDate ? `Due ${formatDay(milestone.dueDate)}` : 'No due date';
 };
 
-interface MilestoneRowProps {
+interface MilestoneActionsProps {
   milestone: Milestone;
   index: number;
   count: number;
-  canUpdate: boolean;
   busy: boolean;
-  onToggle: () => void;
   onEdit: () => void;
-  onMove: (offset: -1 | 1) => void;
+  onMove: (offset: Offset) => void;
   onRemove: () => void;
+  arrowRef: (offset: Offset) => (node: HTMLButtonElement | null) => void;
 }
 
-const MilestoneRow = ({
+/**
+ * Move, edit and remove for one row. While a change saves they stay focusable
+ * and do nothing (see `BUSY_SX`). Only the arrows at the ends of the list are
+ * truly disabled, as in the other ordered lists in the console; the tab moves
+ * focus to the row's other arrow when a move lands an item at an end.
+ */
+const MilestoneActions = ({
   milestone,
   index,
   count,
-  canUpdate,
   busy,
-  onToggle,
   onEdit,
   onMove,
   onRemove,
-}: MilestoneRowProps): JSX.Element => {
+  arrowRef,
+}: MilestoneActionsProps): JSX.Element => {
+  const busyProps = { 'aria-disabled': busy || undefined, sx: BUSY_SX };
+  return (
+    <Stack
+      direction="row"
+      spacing={0.25}
+      sx={{ gridColumn: { xs: '2', md: 'auto' }, justifySelf: { xs: 'start', md: 'end' } }}
+    >
+      <Tooltip title="Move up">
+        <span>
+          <IconButton
+            ref={arrowRef(-1)}
+            size="small"
+            aria-label={`Move ${milestone.title} up`}
+            onClick={() => onMove(-1)}
+            disabled={index === 0}
+            {...busyProps}
+          >
+            <ArrowUpwardRoundedIcon fontSize="small" />
+          </IconButton>
+        </span>
+      </Tooltip>
+      <Tooltip title="Move down">
+        <span>
+          <IconButton
+            ref={arrowRef(1)}
+            size="small"
+            aria-label={`Move ${milestone.title} down`}
+            onClick={() => onMove(1)}
+            disabled={index === count - 1}
+            {...busyProps}
+          >
+            <ArrowDownwardRoundedIcon fontSize="small" />
+          </IconButton>
+        </span>
+      </Tooltip>
+      <Tooltip title="Edit">
+        <IconButton
+          size="small"
+          aria-label={`Edit ${milestone.title}`}
+          onClick={onEdit}
+          {...busyProps}
+        >
+          <EditOutlinedIcon fontSize="small" />
+        </IconButton>
+      </Tooltip>
+      <Tooltip title="Remove">
+        <IconButton
+          size="small"
+          aria-label={`Remove ${milestone.title}`}
+          onClick={onRemove}
+          {...busyProps}
+        >
+          <DeleteOutlineRoundedIcon fontSize="small" />
+        </IconButton>
+      </Tooltip>
+    </Stack>
+  );
+};
+
+interface MilestoneRowProps extends MilestoneActionsProps {
+  canUpdate: boolean;
+  onToggle: () => void;
+}
+
+const MilestoneRow = ({ canUpdate, onToggle, ...actions }: MilestoneRowProps): JSX.Element => {
+  const { milestone, busy } = actions;
   const done = milestone.status === 'done';
   const kind = milestone.kind === 'activity' ? 'Activity' : 'Milestone';
   return (
@@ -93,11 +191,16 @@ const MilestoneRow = ({
       <Checkbox
         checked={done}
         onChange={onToggle}
-        disabled={!canUpdate || busy}
+        // Read-only people cannot tick at all. While a save runs the box stays
+        // focusable and ignores presses, like the row's buttons.
+        disabled={!canUpdate}
         slotProps={{
-          input: { 'aria-label': `${done ? 'Reopen' : 'Mark done'}: ${milestone.title}` },
+          input: {
+            'aria-label': `${done ? 'Reopen' : 'Mark done'}: ${milestone.title}`,
+            'aria-disabled': busy || undefined,
+          },
         }}
-        sx={{ mt: -0.5 }}
+        sx={busy ? { mt: -0.5, cursor: 'default' } : { mt: -0.5 }}
       />
       <Box sx={{ minWidth: 0 }}>
         <Stack direction="row" spacing={1} alignItems="center" useFlexGap flexWrap="wrap">
@@ -127,58 +230,7 @@ const MilestoneRow = ({
           </Typography>
         )}
       </Box>
-      {canUpdate && (
-        <Stack
-          direction="row"
-          spacing={0.25}
-          sx={{ gridColumn: { xs: '2', md: 'auto' }, justifySelf: { xs: 'start', md: 'end' } }}
-        >
-          <Tooltip title="Move up">
-            <span>
-              <IconButton
-                size="small"
-                aria-label={`Move ${milestone.title} up`}
-                onClick={() => onMove(-1)}
-                disabled={busy || index === 0}
-              >
-                <ArrowUpwardRoundedIcon fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
-          <Tooltip title="Move down">
-            <span>
-              <IconButton
-                size="small"
-                aria-label={`Move ${milestone.title} down`}
-                onClick={() => onMove(1)}
-                disabled={busy || index === count - 1}
-              >
-                <ArrowDownwardRoundedIcon fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
-          <Tooltip title="Edit">
-            <IconButton
-              size="small"
-              aria-label={`Edit ${milestone.title}`}
-              onClick={onEdit}
-              disabled={busy}
-            >
-              <EditOutlinedIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Remove">
-            <IconButton
-              size="small"
-              aria-label={`Remove ${milestone.title}`}
-              onClick={onRemove}
-              disabled={busy}
-            >
-              <DeleteOutlineRoundedIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </Stack>
-      )}
+      {canUpdate && <MilestoneActions {...actions} />}
     </Box>
   );
 };
@@ -198,6 +250,36 @@ const ProjectMilestonesTab = (): JSX.Element => {
   const manual = project.progress.source === 'manual';
   const counted = `${project.progress.done} of ${project.progress.total} done`;
 
+  // Set the moment a quick change starts, before `saving` reaches the screen,
+  // so a second press in the same instant is ignored too.
+  const inFlight = useRef(false);
+  const arrows = useRef(new Map<string, HTMLButtonElement>());
+  const [refocus, setRefocus] = useState<Refocus | null>(null);
+
+  // A move re-renders the list in its new order, and a row React moves in
+  // the page loses focus; a row moved to an end also has its arrow that way
+  // disabled. Either way focus goes back to the moved row's arrows.
+  useEffect(() => {
+    if (!refocus || refocus.from === milestones) return;
+    setRefocus(null);
+    const own = arrows.current.get(arrowKey(refocus.id, refocus.offset));
+    const target =
+      own && !own.disabled
+        ? own
+        : arrows.current.get(arrowKey(refocus.id, opposite(refocus.offset)));
+    target?.focus();
+  }, [milestones, refocus]);
+
+  const arrowRef =
+    (id: string) =>
+    (offset: Offset) =>
+    (node: HTMLButtonElement | null): void => {
+      if (node) arrows.current.set(arrowKey(id, offset), node);
+      else arrows.current.delete(arrowKey(id, offset));
+    };
+
+  const isBusy = (): boolean => saving || inFlight.current;
+
   const apply = async (body: ProjectUpdate): Promise<void> => {
     setError(null);
     try {
@@ -207,9 +289,33 @@ const ProjectMilestonesTab = (): JSX.Element => {
       throw cause;
     }
   };
-  // For quick actions whose failure is shown in the tab rather than a dialog.
-  const quick = (body: ProjectUpdate): void => {
-    void apply(body).catch(() => undefined);
+  /**
+   * For quick actions whose failure is shown in the tab rather than a dialog.
+   * Ignored while another change saves: each one is worked out from the list
+   * on screen, so a second press would overwrite the first. Resolves to
+   * whether the change was saved.
+   */
+  const quick = async (body: ProjectUpdate): Promise<boolean> => {
+    if (isBusy()) return false;
+    inFlight.current = true;
+    try {
+      await apply(body);
+      return true;
+    } catch {
+      return false;
+    } finally {
+      inFlight.current = false;
+    }
+  };
+
+  const move = (milestone: Milestone, offset: Offset): void => {
+    if (isBusy()) return;
+    const focused = document.activeElement === arrows.current.get(arrowKey(milestone.id, offset));
+    if (focused) setRefocus({ id: milestone.id, offset, from: milestones });
+    void quick({ milestones: moveMilestone(milestones, milestone.id, offset) }).then((saved) => {
+      // Nothing moved, so focus never left the arrow.
+      if (!saved) setRefocus(null);
+    });
   };
 
   return (
@@ -264,15 +370,17 @@ const ProjectMilestonesTab = (): JSX.Element => {
                 canUpdate={canUpdate}
                 busy={saving}
                 onToggle={() =>
-                  quick({ milestones: toggleMilestoneDone(milestones, milestone.id) })
+                  void quick({ milestones: toggleMilestoneDone(milestones, milestone.id) })
                 }
-                onEdit={() =>
-                  setEditing({ id: milestone.id, draft: draftFromMilestone(milestone) })
-                }
-                onMove={(offset) =>
-                  quick({ milestones: moveMilestone(milestones, milestone.id, offset) })
-                }
-                onRemove={() => setRemoving(milestone)}
+                onEdit={() => {
+                  if (!isBusy())
+                    setEditing({ id: milestone.id, draft: draftFromMilestone(milestone) });
+                }}
+                onMove={(offset) => move(milestone, offset)}
+                onRemove={() => {
+                  if (!isBusy()) setRemoving(milestone);
+                }}
+                arrowRef={arrowRef(milestone.id)}
               />
             ))}
           </Box>
@@ -300,7 +408,7 @@ const ProjectMilestonesTab = (): JSX.Element => {
                 {manual ? 'Change the figure' : 'Set progress by hand'}
               </Button>
               {manual && (
-                <Button onClick={() => quick({ progressOverride: null })} disabled={saving}>
+                <Button onClick={() => void quick({ progressOverride: null })} disabled={saving}>
                   Go back to counting work
                 </Button>
               )}

@@ -8,7 +8,9 @@ import {
   type MediaFolder,
 } from '@iaa/shared';
 
-import { api } from './api-client';
+import { UPLOAD_PERMISSION_NOTE } from '../components/files/upload-permission';
+
+import { ApiError, api } from './api-client';
 import { registerMediaItem } from './media-library';
 
 interface SignedUpload {
@@ -199,6 +201,22 @@ const toFileAsset = (data: CloudinaryUploadResponse, file: File): FileAsset => {
 };
 
 /**
+ * The API's signature for one upload. Signing needs `media:create`, which a
+ * custom grant can leave out even where the record can be edited; its bare
+ * "Missing required permission" becomes a sentence that says who can help.
+ */
+const requestSignature = async (profile: UploadProfile): Promise<SignedUpload> => {
+  try {
+    return await api.post<SignedUpload>(SIGN_PATHS[profile], {});
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 403) {
+      throw new Error(UPLOAD_PERMISSION_NOTE);
+    }
+    throw error;
+  }
+};
+
+/**
  * Upload a file directly to Cloudinary using a server-issued signature, so the
  * API secret never reaches the browser.
  *
@@ -224,7 +242,7 @@ export async function uploadToCloudinary(
 ): Promise<MediaAsset | FileAsset> {
   checkFile(file, profile);
 
-  const signature = await api.post<SignedUpload>(SIGN_PATHS[profile], {});
+  const signature = await requestSignature(profile);
   if (file.size > signature.maxFileSize) {
     throw tooLarge(signature.maxFileSize);
   }

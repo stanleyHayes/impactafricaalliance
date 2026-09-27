@@ -61,9 +61,15 @@ const tileSurface = {
 const TileHeading = ({ tile }: { tile: WorkTile }): JSX.Element => {
   const Icon = tile.icon;
   return (
-    <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
-      <Icon aria-hidden fontSize="small" sx={{ color: 'text.secondary', flexShrink: 0 }} />
-      <Typography variant="body2" sx={{ fontWeight: 600, minWidth: 0 }} noWrap>
+    // The label wraps rather than being cut to "New applicatio…" in a narrow
+    // tile, as the dashboard's stat cards do; the icon stays on its first line.
+    <Stack direction="row" spacing={1} alignItems="flex-start" sx={{ minWidth: 0 }}>
+      <Icon
+        aria-hidden
+        fontSize="small"
+        sx={{ color: 'text.secondary', flexShrink: 0, mt: '1px' }}
+      />
+      <Typography variant="body2" sx={{ fontWeight: 600, minWidth: 0, overflowWrap: 'anywhere' }}>
         {tile.label}
       </Typography>
     </Stack>

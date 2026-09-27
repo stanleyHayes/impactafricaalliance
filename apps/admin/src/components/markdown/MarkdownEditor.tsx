@@ -15,7 +15,7 @@ import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import { useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 
 import { AiAssistButton } from '../ai/AiAssistButton';
 
@@ -29,7 +29,13 @@ interface MarkdownEditorProps {
   minRows?: number;
 }
 
-/** A markdown rich-text editor: formatting toolbar + a write/preview switch. */
+/**
+ * A markdown rich-text editor: formatting toolbar + a write/preview switch.
+ *
+ * The text box is named by the label and described by the caption under it,
+ * which holds the error when there is one, so a screen reader announces
+ * "Description" and the problem rather than the placeholder.
+ */
 export const MarkdownEditor = ({
   label,
   value,
@@ -40,6 +46,8 @@ export const MarkdownEditor = ({
   const theme = useTheme();
   const ref = useRef<HTMLTextAreaElement>(null);
   const [mode, setMode] = useState<'write' | 'preview'>('write');
+  const labelId = useId();
+  const helpId = useId();
 
   const restore = (start: number, end: number): void => {
     requestAnimationFrame(() => {
@@ -83,14 +91,54 @@ export const MarkdownEditor = ({
   };
 
   const tools = [
-    { key: 'bold', title: 'Bold', icon: <FormatBoldIcon fontSize="small" />, run: () => wrap('**', '**', 'bold text') },
-    { key: 'italic', title: 'Italic', icon: <FormatItalicIcon fontSize="small" />, run: () => wrap('_', '_', 'italic text') },
-    { key: 'heading', title: 'Heading', icon: <TitleIcon fontSize="small" />, run: () => prefixLines('## ') },
-    { key: 'quote', title: 'Quote', icon: <FormatQuoteIcon fontSize="small" />, run: () => prefixLines('> ') },
-    { key: 'code', title: 'Inline code', icon: <CodeIcon fontSize="small" />, run: () => wrap('`', '`', 'code') },
-    { key: 'link', title: 'Link', icon: <LinkIcon fontSize="small" />, run: () => wrap('[', '](https://)', 'link text') },
-    { key: 'ul', title: 'Bulleted list', icon: <FormatListBulletedIcon fontSize="small" />, run: () => prefixLines('- ') },
-    { key: 'ol', title: 'Numbered list', icon: <FormatListNumberedIcon fontSize="small" />, run: () => prefixLines('1. ') },
+    {
+      key: 'bold',
+      title: 'Bold',
+      icon: <FormatBoldIcon fontSize="small" />,
+      run: () => wrap('**', '**', 'bold text'),
+    },
+    {
+      key: 'italic',
+      title: 'Italic',
+      icon: <FormatItalicIcon fontSize="small" />,
+      run: () => wrap('_', '_', 'italic text'),
+    },
+    {
+      key: 'heading',
+      title: 'Heading',
+      icon: <TitleIcon fontSize="small" />,
+      run: () => prefixLines('## '),
+    },
+    {
+      key: 'quote',
+      title: 'Quote',
+      icon: <FormatQuoteIcon fontSize="small" />,
+      run: () => prefixLines('> '),
+    },
+    {
+      key: 'code',
+      title: 'Inline code',
+      icon: <CodeIcon fontSize="small" />,
+      run: () => wrap('`', '`', 'code'),
+    },
+    {
+      key: 'link',
+      title: 'Link',
+      icon: <LinkIcon fontSize="small" />,
+      run: () => wrap('[', '](https://)', 'link text'),
+    },
+    {
+      key: 'ul',
+      title: 'Bulleted list',
+      icon: <FormatListBulletedIcon fontSize="small" />,
+      run: () => prefixLines('- '),
+    },
+    {
+      key: 'ol',
+      title: 'Numbered list',
+      icon: <FormatListNumberedIcon fontSize="small" />,
+      run: () => prefixLines('1. '),
+    },
   ];
 
   const accent = error ? theme.palette.error.main : theme.palette.primary.main;
@@ -100,6 +148,7 @@ export const MarkdownEditor = ({
     <Box>
       {label && (
         <Typography
+          id={labelId}
           variant="body2"
           sx={{ fontWeight: 600, mb: 0.75, color: error ? 'error.main' : 'text.secondary' }}
         >
@@ -160,7 +209,10 @@ export const MarkdownEditor = ({
                   textTransform: 'none',
                   fontWeight: 600,
                   color: 'text.secondary',
-                  '&.Mui-selected': { color: 'text.primary', bgcolor: alpha(theme.palette.primary.main, 0.1) },
+                  '&.Mui-selected': {
+                    color: 'text.primary',
+                    bgcolor: alpha(theme.palette.primary.main, 0.1),
+                  },
                 },
               }}
             >
@@ -179,6 +231,11 @@ export const MarkdownEditor = ({
             minRows={minRows}
             fullWidth
             placeholder="Write in markdown…"
+            inputProps={{
+              'aria-labelledby': label ? labelId : undefined,
+              'aria-describedby': helpId,
+              'aria-invalid': Boolean(error) || undefined,
+            }}
             sx={{
               display: 'block',
               p: 1.75,
@@ -201,6 +258,7 @@ export const MarkdownEditor = ({
         )}
       </Box>
       <Typography
+        id={helpId}
         variant="caption"
         sx={{ display: 'block', mt: 0.5, px: 0.5, color: error ? 'error.main' : 'text.secondary' }}
       >

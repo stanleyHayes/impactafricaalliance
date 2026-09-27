@@ -9,8 +9,9 @@ import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
-import { alpha } from '@mui/material/styles';
+import { alpha, type Theme } from '@mui/material/styles';
 import Tooltip from '@mui/material/Tooltip';
+import type { SystemStyleObject } from '@mui/system';
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 
@@ -36,6 +37,24 @@ interface SidebarNavProps {
  */
 const SPINE_LEFT = 22;
 const TICK_WIDTH = 12;
+
+/** Black or white, whichever the palette says reads on the primary fill. */
+const onPrimary = (theme: Theme): string =>
+  theme.palette.getContrastText(theme.palette.primary.main);
+
+/**
+ * The current page's row: a primary pill. Its text and icon take whichever of
+ * black and white the palette says contrasts with the fill, rather than
+ * always black, which read at only 3.7:1 on Aura's violet. The same colour
+ * holds on the darker hover fill (checked for every preset in theme.test).
+ */
+const ACTIVE_ROW: SystemStyleObject<Theme> = {
+  bgcolor: 'primary.main',
+  color: onPrimary,
+  boxShadow: `0 6px 16px -8px ${alpha(brandColors.forest, 0.7)}`,
+  '& .MuiListItemIcon-root': { color: onPrimary },
+  '&:hover': { bgcolor: 'primary.dark', color: onPrimary },
+};
 
 /**
  * Collapsed icon-rail link: icon-only ListItemButton wrapped in a right-placed
@@ -69,13 +88,7 @@ const RailNavLink = ({
           justifyContent: 'center',
         },
         '&:hover': { bgcolor: 'action.hover', color: 'text.primary' },
-        '&.active': {
-          bgcolor: 'primary.main',
-          color: 'common.black',
-          boxShadow: `0 6px 16px -8px ${alpha(brandColors.forest, 0.7)}`,
-          '& .MuiListItemIcon-root': { color: 'common.black' },
-          '&:hover': { bgcolor: 'primary.dark', color: 'common.black' },
-        },
+        '&.active': ACTIVE_ROW,
       }}
     >
       <ListItemIcon>
@@ -188,13 +201,7 @@ const ThreadedNavLink = ({
           '& .MuiSvgIcon-root': { fontSize: 20 },
         },
         '&:hover': { bgcolor: 'action.hover', color: 'text.primary' },
-        '&.active': {
-          bgcolor: 'primary.main',
-          color: 'common.black',
-          boxShadow: `0 6px 16px -8px ${alpha(brandColors.forest, 0.7)}`,
-          '& .MuiListItemIcon-root': { color: 'common.black' },
-          '&:hover': { bgcolor: 'primary.dark', color: 'common.black' },
-        },
+        '&.active': ACTIVE_ROW,
       }}
     >
       <ListItemIcon>{item.icon}</ListItemIcon>

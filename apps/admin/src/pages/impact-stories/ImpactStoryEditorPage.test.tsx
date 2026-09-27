@@ -1,7 +1,7 @@
 import type { ImpactStory, Permission, PublicUser } from '@iaa/shared';
 import { ThemeProvider } from '@mui/material/styles';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -172,6 +172,18 @@ describe('ImpactStoryEditorPage', () => {
     expect(
       screen.getByText('Add a cover image, or an image to the hero block.'),
     ).toBeInTheDocument();
+  });
+
+  it('reviews with the shared summary: Not set for gaps, and an Edit button per step', async () => {
+    vi.mocked(api.get).mockResolvedValue(story);
+    mount({ pathname: `/impact-stories/${story.id}/edit`, state: { step: 4 } });
+    await waitFor(() => expect(stepHeading('Review')).toBeInTheDocument());
+    const classification = screen.getByRole('region', { name: 'Classification' });
+    // No project, programme, country or tags: said in words, not a dash.
+    expect(within(classification).getAllByText('Not set')).toHaveLength(4);
+    expect(screen.queryByText('—')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Edit classification' }));
+    await waitFor(() => expect(stepHeading('Classification')).toBeInTheDocument());
   });
 
   it('shows a published story read-only to an editor', async () => {

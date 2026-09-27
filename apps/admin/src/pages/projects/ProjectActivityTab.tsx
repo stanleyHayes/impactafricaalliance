@@ -4,6 +4,7 @@ import { ActivityTimeline } from '../../components/audit/ActivityTimeline';
 import { DetailSection } from '../../components/detail/DetailSection';
 import { useProjectOutlet } from '../../components/projects/useProjectOutlet';
 import { projectActivity } from '../../lib/projects';
+import { projectChangeLabel } from '../../lib/select-options';
 
 /**
  * The project's Activity tab: who changed what, and when, newest first. Read
@@ -19,7 +20,7 @@ const ProjectActivityTab = (): JSX.Element => {
       icon={<HistoryRoundedIcon />}
       description="Every change to the project, its evidence and its status."
     >
-      <ActivityTimeline endpoint={endpoint} queryKey={queryKey} />
+      <ActivityTimeline endpoint={endpoint} queryKey={queryKey} formatValue={projectChangeLabel} />
     </DetailSection>
   );
 };

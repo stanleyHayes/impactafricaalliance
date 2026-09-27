@@ -1,5 +1,5 @@
 import type { Permission } from '@iaa/shared';
-import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -49,7 +49,22 @@ describe('ProjectsPage', () => {
     expect(await screen.findByRole('link', { name: 'Digital Skills Hub, Tamale' })).toBeVisible();
     expect(screen.getByText('42% · 5 of 12 done')).toBeInTheDocument();
     expect(screen.getByText('2 tasks overdue')).toBeInTheDocument();
-    expect(requestedPaths()[0]).toBe('/admin/projects?page=1&pageSize=12&sort=updated');
+    const first = new URL(requestedPaths()[0] ?? '', 'http://localhost');
+    expect(first.pathname).toBe('/admin/projects');
+    // The device's day goes with it, so "overdue" is the reader's (plan D6).
+    expect(Object.fromEntries(first.searchParams)).toEqual({
+      page: '1',
+      pageSize: '12',
+      sort: 'updated',
+      today: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+    });
+  });
+
+  it('shows how many projects there are beside the title, as every list page does', async () => {
+    get.mockResolvedValue(page([listItemFixture()], 3));
+    setup();
+    const title = await screen.findByRole('heading', { level: 1, name: 'Projects' });
+    expect(await within(title.parentElement as HTMLElement).findByText('3')).toBeVisible();
   });
 
   it('switches between all, my and archived projects through the address', async () => {

@@ -12,6 +12,7 @@ import { Link as RouterLink, useNavigate } from 'react-router-dom';
 
 import { useHasPermission } from '../../auth/useCan';
 import { useProjectImpactStories } from '../../lib/impact-stories';
+import { DetailSection } from '../detail/DetailSection';
 import { EmptyState } from '../EmptyState';
 
 import { updatedLabel } from './story-format';
@@ -141,35 +142,30 @@ export const ProjectStoriesPanel = ({ projectId }: ProjectStoriesPanelProps): JS
   };
 
   return (
-    <Stack spacing={2} data-project-id={projectId}>
-      <Stack
-        direction={{ xs: 'column', sm: 'row' }}
-        spacing={1.5}
-        justifyContent="space-between"
-        alignItems={{ xs: 'flex-start', sm: 'center' }}
-      >
-        <Box>
-          <Typography component="h2" variant="h6">
-            Impact stories
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Public accounts of what this project achieved.
-          </Typography>
-        </Box>
-        {mayStart && items.length > 0 && (
-          <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={startStory}>
+    // The same card section as Impact numbers and Risks above it on the tab.
+    <DetailSection
+      title="Impact stories"
+      icon={<AutoStoriesOutlinedIcon />}
+      description="Public accounts of what this project achieved."
+      action={
+        mayStart && items.length > 0 ? (
+          <Button startIcon={<AddRoundedIcon />} onClick={startStory}>
             Create impact story
           </Button>
-        )}
+        ) : undefined
+      }
+    >
+      <Stack spacing={2}>
+        {body()}
+        <Stack direction="row" spacing={1} alignItems="flex-start" sx={{ color: 'text.secondary' }}>
+          <InfoOutlinedIcon fontSize="small" sx={{ mt: 0.25 }} aria-hidden />
+          <Typography variant="body2">
+            Completing a project never publishes anything by itself. A story reaches the website
+            only when an administrator publishes it, and later changes to the project never change a
+            story.
+          </Typography>
+        </Stack>
       </Stack>
-      {body()}
-      <Stack direction="row" spacing={1} alignItems="flex-start" sx={{ color: 'text.secondary' }}>
-        <InfoOutlinedIcon fontSize="small" sx={{ mt: 0.25 }} aria-hidden />
-        <Typography variant="body2">
-          Completing a project never publishes anything by itself. A story reaches the website only
-          when an administrator publishes it, and later changes to the project never change a story.
-        </Typography>
-      </Stack>
-    </Stack>
+    </DetailSection>
   );
 };

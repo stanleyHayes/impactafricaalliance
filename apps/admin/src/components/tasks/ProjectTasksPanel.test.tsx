@@ -65,9 +65,18 @@ describe('ProjectTasksPanel', () => {
     );
   });
 
+  it('sits in the same titled section card as the other project tabs', async () => {
+    renderPanel();
+    await screen.findByText('Survey the schools');
+    const section = screen.getByRole('region', { name: 'Tasks' });
+    expect(within(section).getByRole('heading', { level: 2, name: 'Tasks' })).toBeInTheDocument();
+    expect(within(section).getByRole('button', { name: 'Add task' })).toBeInTheDocument();
+    expect(within(section).getByRole('region', { name: 'To do' })).toBeInTheDocument();
+  });
+
   it('opens a task in the drawer on the project tab', async () => {
     renderPanel();
-    fireEvent.click(await screen.findByRole('button', { name: `Open ${kit.key}: ${kit.title}` }));
+    fireEvent.click(await screen.findByRole('button', { name: `${kit.key} ${kit.title}` }));
     expect(screen.getByTestId('location')).toHaveTextContent(
       `/projects/${projectId}/tasks?task=${kit.key}`,
     );

@@ -13,6 +13,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useRef } from 'react';
 
 import { api } from '../../lib/api-client';
+import { formatInstant } from '../../lib/forms';
 import { initials } from '../../lib/initials';
 import { ServerPagination, usePageParam } from '../data/ServerPagination';
 import { EmptyState } from '../EmptyState';
@@ -58,8 +59,8 @@ const fieldLabel = (field: string): string => {
   return `${words.charAt(0).toUpperCase()}${words.slice(1)}`;
 };
 
-const absoluteTime = (iso: string): string =>
-  new Date(iso).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
+/** On the 12-hour clock the rest of the console uses: "27 Sept 2026, 4:48 pm". */
+const absoluteTime = (iso: string): string => formatInstant(iso);
 
 const RELATIVE = new Intl.RelativeTimeFormat('en-GB', { numeric: 'auto' });
 const MINUTE = 60_000;
@@ -80,23 +81,38 @@ export const relativeTime = (iso: string, now: number = Date.now()): string | nu
   return RELATIVE.format(-Math.floor(elapsed / DAY), 'day');
 };
 
-const ChangeList = ({ changes }: { changes: AuditChange[] }): JSX.Element => (
-  <Box component="ul" sx={{ m: 0, mt: 1, pl: 2.25, display: 'grid', gap: 0.5 }}>
-    {changes.map((change) => (
-      <Typography key={change.field} component="li" variant="body2" color="text.secondary">
-        <Box component="span" sx={{ fontWeight: 650, color: 'text.primary' }}>
-          {fieldLabel(change.field)}
-        </Box>
-        {change.from !== undefined || change.to !== undefined ? (
-          <>
-            {': '}
-            {change.from || 'empty'} → {change.to || 'empty'}
-          </>
-        ) : null}
-      </Typography>
-    ))}
-  </Box>
-);
+/** How a stored value reads in the log: the value itself unless the caller knows better. */
+export type ChangeValueFormatter = (field: string, value: string) => string;
+
+const asStored: ChangeValueFormatter = (_field, value) => value;
+
+const ChangeList = ({
+  changes,
+  formatValue,
+}: {
+  changes: AuditChange[];
+  formatValue: ChangeValueFormatter;
+}): JSX.Element => {
+  const shown = (field: string, value: string | null | undefined): string =>
+    value ? formatValue(field, value) : 'empty';
+  return (
+    <Box component="ul" sx={{ m: 0, mt: 1, pl: 2.25, display: 'grid', gap: 0.5 }}>
+      {changes.map((change) => (
+        <Typography key={change.field} component="li" variant="body2" color="text.secondary">
+          <Box component="span" sx={{ fontWeight: 650, color: 'text.primary' }}>
+            {fieldLabel(change.field)}
+          </Box>
+          {change.from !== undefined || change.to !== undefined ? (
+            <>
+              {': '}
+              {shown(change.field, change.from)} → {shown(change.field, change.to)}
+            </>
+          ) : null}
+        </Typography>
+      ))}
+    </Box>
+  );
+};
 
 const EntryTime = ({ at }: { at: string }): JSX.Element => {
   const relative = relativeTime(at);
@@ -110,7 +126,15 @@ const EntryTime = ({ at }: { at: string }): JSX.Element => {
   );
 };
 
-const Entry = ({ event, last }: { event: AuditEvent; last: boolean }): JSX.Element => {
+const Entry = ({
+  event,
+  last,
+  formatValue,
+}: {
+  event: AuditEvent;
+  last: boolean;
+  formatValue: ChangeValueFormatter;
+}): JSX.Element => {
   const who = event.actor?.name ?? event.actorEmail ?? 'Someone';
   return (
     <Box
@@ -158,7 +182,9 @@ const Entry = ({ event, last }: { event: AuditEvent; last: boolean }): JSX.Eleme
         <Typography variant="body2" sx={{ mt: 0.5 }}>
           {event.summary}
         </Typography>
-        {event.changes && event.changes.length > 0 && <ChangeList changes={event.changes} />}
+        {event.changes && event.changes.length > 0 && (
+          <ChangeList changes={event.changes} formatValue={formatValue} />
+        )}
         <Box sx={{ mt: 0.75 }}>
           <EntryTime at={event.at} />
         </Box>
@@ -192,6 +218,12 @@ export interface ActivityTimelineProps {
    * timeline inside a drawer does not move the list behind it.
    */
   pageParam?: string;
+  /**
+   * Turns a stored value into the words the screens use, so a status change
+   * reads "Planned → Active" under a summary that says the same, rather than
+   * "planned → active". Values it does not know are shown as stored.
+   */
+  formatValue?: ChangeValueFormatter;
 }
 
 /**
@@ -205,6 +237,7 @@ export const ActivityTimeline = ({
   endpoint,
   queryKey,
   pageParam = 'activityPage',
+  formatValue = asStored,
 }: ActivityTimelineProps): JSX.Element => {
   const page = usePageParam(pageParam);
   const listRef = useRef<HTMLOListElement | null>(null);
@@ -262,7 +295,12 @@ export const ActivityTimeline = ({
         sx={{ listStyle: 'none', m: 0, p: 0, '&:focus-visible': { outline: 'none' } }}
       >
         {data.items.map((event, index) => (
-          <Entry key={event.id} event={event} last={index === data.items.length - 1} />
+          <Entry
+            key={event.id}
+            event={event}
+            last={index === data.items.length - 1}
+            formatValue={formatValue}
+          />
         ))}
       </Box>
       <ServerPagination

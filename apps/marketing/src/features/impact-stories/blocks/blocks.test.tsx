@@ -3,6 +3,7 @@ import { fireEvent, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { renderWithProviders } from '../../../test/test-utils';
+import { galleryTileSpans } from '../story-utils';
 import { StoryBlocks } from '../StoryBlocks';
 
 import { HeroBlock } from './HeroBlock';
@@ -167,6 +168,26 @@ describe('story block renderers', () => {
       'noopener noreferrer',
     );
   });
+
+  it.each(Array.from({ length: 12 }, (_, index) => index + 1))(
+    'fills every gallery row of %i photos, leaving no empty cells',
+    (count) => {
+      const spans = galleryTileSpans(count);
+      expect(spans).toHaveLength(count);
+      // Walk the tiles into rows as the grid would, and check each row is full.
+      const rows = (tracks: number, key: 'md' | 'sm'): number[] =>
+        spans.reduce<number[]>((sums, span) => {
+          const last = sums.length - 1;
+          const current = sums[last] ?? tracks;
+          if (current + span[key] > tracks) return [...sums, span[key]];
+          return [...sums.slice(0, last), current + span[key]];
+        }, []);
+      expect(rows(6, 'md').every((sum) => sum === 6)).toBe(true);
+      expect(rows(2, 'sm').every((sum) => sum === 2)).toBe(true);
+      // The first photo leads wider than the rest once it has a partner.
+      if (count > 1) expect(spans[0]).toEqual({ md: 4, sm: 2 });
+    },
+  );
 
   it('gives a leading hero the page heading', () => {
     renderWithProviders(

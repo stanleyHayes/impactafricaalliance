@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import type * as Router from 'react-router-dom';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -100,9 +100,10 @@ describe('work module routes', () => {
     ['/impact-stories/new', 'ImpactStoryEditorPage'],
     ['/impact-stories/from-project/p1', 'StoryFromProjectPage'],
     ['/impact-stories/s1/edit', 'ImpactStoryEditorPage'],
-  ])('opens %s on %s', (path, page) => {
+  ])('opens %s on %s', async (path, page) => {
     visit(path);
-    expect(screen.getByText(page)).toBeInTheDocument();
+    // The work pages load on first visit, so they arrive a moment later.
+    expect(await screen.findByText(page)).toBeInTheDocument();
   });
 
   it.each([
@@ -113,9 +114,25 @@ describe('work module routes', () => {
     ['/projects/p1/impact', 'ProjectImpactTab'],
     ['/projects/p1/documents', 'ProjectDocumentsTab'],
     ['/projects/p1/activity', 'ProjectActivityTab'],
-  ])('opens %s inside the project layout', (path, tab) => {
+  ])('opens %s inside the project layout', async (path, tab) => {
     visit(path);
-    expect(screen.getByText(/ProjectDetailLayout/)).toHaveTextContent(tab);
+    await waitFor(() => expect(screen.getByText(/ProjectDetailLayout/)).toHaveTextContent(tab));
+  });
+
+  it('shows the page’s shape while its code loads, not an empty screen', async () => {
+    // A fresh copy of the routes, whose pages have not been loaded yet by the
+    // tests above (a lazy page, once loaded, renders at once from then on).
+    vi.resetModules();
+    const { App: FreshApp } = await import('./App');
+    auth.user.permissions = ALL_WORK_PERMISSIONS;
+    render(
+      <MemoryRouter initialEntries={['/tasks/all']}>
+        <FreshApp />
+      </MemoryRouter>,
+    );
+    expect(document.querySelector('[aria-busy="true"][aria-label="Loading"]')).not.toBeNull();
+    expect(screen.queryByText('AllTasksPage')).not.toBeInTheDocument();
+    expect(await screen.findByText('AllTasksPage')).toBeInTheDocument();
   });
 
   it('says so when the read permission is missing', () => {

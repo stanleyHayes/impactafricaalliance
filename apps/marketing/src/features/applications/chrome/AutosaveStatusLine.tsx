@@ -16,8 +16,15 @@ const WAKING_AFTER_ATTEMPTS = 2;
 
 const WAKING = 'Waking the server. Your answers are safe on this device.';
 
+/**
+ * "3:10 PM", the 12-hour clock the rest of the site reads (see
+ * `formatEventTime`). Unlike a deadline it carries no zone: it reports a
+ * moment ago, so the applicant's own clock is the right one.
+ */
 const savedTime = (at: Date): string =>
-  at.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  at
+    .toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit', hour12: true })
+    .replace(/\b(am|pm)\b/i, (match) => match.toUpperCase());
 
 interface StatusView {
   icon: ReactNode;

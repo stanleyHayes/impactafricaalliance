@@ -195,6 +195,44 @@ describe('ProjectEditorPage', () => {
     expect(body).not.toHaveProperty('progressOverride');
   });
 
+  it('will not move on from, or save, an end date that is only half typed', async () => {
+    setup(`/projects/${projectFixture().id}/edit`);
+    await screen.findByRole('textbox', { name: /^Title/ });
+    next();
+    await heading('People');
+    next();
+    await heading('Schedule & place');
+    const end = screen.getByRole('group', { name: /End date/ });
+    const day = within(end).getByRole('spinbutton', { name: 'Day' });
+    fireEvent.mouseDown(day);
+    fireEvent.keyDown(day, { key: 'Delete' });
+    await screen.findByText('Finish typing the date, or clear the field.');
+
+    // Enter, Continue and a jump to Review from the step rail all stay put.
+    fireEvent.submit(form());
+    expect(
+      await screen.findByText('Finish typing the date, or clear it, before continuing.'),
+    ).toBeInTheDocument();
+    next();
+    fireEvent.change(screen.getByRole('combobox', { name: 'Go to step' }), {
+      target: { value: '5' },
+    });
+    expect(screen.getByRole('heading', { level: 2, name: 'Schedule & place' })).toBeInTheDocument();
+    expect(patch).not.toHaveBeenCalled();
+  });
+
+  it('reviews with the shared summary, with an Edit button per section', async () => {
+    setup(`/projects/${projectFixture().id}/edit`);
+    await screen.findByRole('textbox', { name: /^Title/ });
+    fireEvent.change(screen.getByRole('combobox', { name: 'Go to step' }), {
+      target: { value: '5' },
+    });
+    await heading('Review');
+    expect(screen.getByRole('region', { name: 'Schedule & place' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Edit scope' }));
+    expect(await heading('Scope')).toBeInTheDocument();
+  });
+
   it('keeps what you typed when the project is refreshed behind the form', async () => {
     patch.mockResolvedValue(projectFixture());
     setup(`/projects/${projectFixture().id}/edit`);

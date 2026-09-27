@@ -177,4 +177,26 @@ describe('ImpactStoriesPage', () => {
     ).toBeInTheDocument();
     expect(screen.getByRole('switch', { name: 'Include archived stories' })).toBeInTheDocument();
   });
+
+  it('lifts the programme filter’s label clear of “All programmes”', async () => {
+    vi.mocked(api.get).mockResolvedValue(page([item({})]));
+    mount('drafts', ['impact-stories:read'], 'editor');
+    await screen.findByText('Girls in code');
+    const combobox = screen.getByRole('combobox', { name: 'Programme' });
+    expect(combobox).toHaveTextContent('All programmes');
+    // A browser leaves the label inside the field, over the text, while the
+    // select's value is empty (jsdom does not show it), so "all" needs a value.
+    expect(combobox.parentElement?.querySelector('input')).not.toHaveValue('');
+    expect(vi.mocked(api.get).mock.calls[0]?.[0]).not.toContain('programme=');
+  });
+
+  it('keeps the hidden list heading one pixel wide so the page never scrolls sideways', async () => {
+    vi.mocked(api.get).mockResolvedValue(page([item({})]));
+    mount('drafts', ['impact-stories:read'], 'editor');
+    await screen.findByText('Girls in code');
+    // MUI reads a bare `width: 1` as 100%, which stretched the page past the viewport.
+    const heading = screen.getByRole('heading', { level: 2, name: 'Drafts' });
+    expect(heading).toHaveStyle({ width: '1px', height: '1px', position: 'absolute' });
+    expect(heading).toHaveAttribute('tabindex', '-1');
+  });
 });

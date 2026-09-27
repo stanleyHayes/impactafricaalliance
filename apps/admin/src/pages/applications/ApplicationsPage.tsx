@@ -9,11 +9,13 @@ import {
 } from '@iaa/shared';
 import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
+import FilterAltOffIcon from '@mui/icons-material/FilterAltOff';
 import InboxOutlinedIcon from '@mui/icons-material/InboxOutlined';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
 import InputAdornment from '@mui/material/InputAdornment';
 import Stack from '@mui/material/Stack';
 import Tab from '@mui/material/Tab';
@@ -29,7 +31,11 @@ import {
   ApplicationList,
   ApplicationListSkeleton,
 } from '../../components/applications/ApplicationList';
-import { ServerPagination, usePageParam } from '../../components/data/ServerPagination';
+import {
+  OutOfRangePage,
+  ServerPagination,
+  usePageParam,
+} from '../../components/data/ServerPagination';
 import { EmptyState } from '../../components/EmptyState';
 import { DateField } from '../../components/fields/DateField';
 import { OptionSelect, type SelectChoice } from '../../components/fields/OptionSelect';
@@ -38,11 +44,13 @@ import {
   useApplicationCounts,
   useApplications,
   useExportApplications,
+  type ApplicationCountsParams,
   type ApplicationListParams,
 } from '../../lib/applications';
 import { useForms } from '../../lib/forms';
 import { pageGuides } from '../../lib/page-guides';
 import { useDebouncedValue } from '../../lib/use-debounced-value';
+import { VISUALLY_HIDDEN } from '../../lib/visually-hidden';
 
 const PAGE_SIZE = 20;
 
@@ -120,10 +128,12 @@ const Results = ({
   query,
   filtered,
   status,
+  onClearFilters,
 }: {
   query: ReturnType<typeof useApplications>;
   filtered: boolean;
   status: string;
+  onClearFilters: () => void;
 }): JSX.Element => {
   if (query.isPending) return <ApplicationListSkeleton />;
   if (query.isError) {
@@ -132,6 +142,10 @@ const Results = ({
         {query.error.message || 'The applications could not be loaded.'}
       </Alert>
     );
+  }
+  // Past the last page: a status change can move the last one on it away.
+  if (query.data.items.length === 0 && query.data.total > 0) {
+    return <OutOfRangePage total={query.data.total} noun="application" compact={false} />;
   }
   if (query.data.items.length === 0) {
     return (
@@ -142,6 +156,11 @@ const Results = ({
           filtered
             ? 'Try another form, search or date range, or clear the filters.'
             : `Applications people submit through your published forms appear here${status ? ` once they are ${status.toLowerCase()}` : ''}. Unfinished drafts never do.`
+        }
+        primaryAction={
+          filtered
+            ? { label: 'Clear filters', onClick: onClearFilters, icon: <FilterAltOffIcon /> }
+            : undefined
         }
       />
     );
@@ -157,6 +176,8 @@ interface Filters {
   page: number;
   /** Change one filter in the address, going back to the first page. */
   setParam: (key: string, value: string) => void;
+  /** Drop the form and date filters and the page, keeping the status tab. */
+  clear: () => void;
 }
 
 /** The filters kept in the address, so a filtered list can be bookmarked and shared. */
@@ -171,6 +192,13 @@ const useAddressFilters = (): Filters => {
       next.delete('page');
       return next;
     });
+  const clear = (): void =>
+    setParams((current) => {
+      const next = new URLSearchParams();
+      const status = current.get('status');
+      if (status) next.set('status', status);
+      return next;
+    });
   return {
     ...(isStatus(rawStatus) ? { status: rawStatus } : {}),
     formId: formParam(params.get('formId')),
@@ -178,6 +206,7 @@ const useAddressFilters = (): Filters => {
     to: dayParam(params.get('to')),
     page: usePageParam(),
     setParam,
+    clear,
   };
 };
 
@@ -191,9 +220,26 @@ const listParamsOf = (filters: Filters, q: string): ApplicationListParams => ({
   pageSize: PAGE_SIZE,
 });
 
-/** One tab per status, each with how many applications it holds. */
-const StatusTabs = ({ filters }: { filters: Filters }): JSX.Element => {
-  const counts = useApplicationCounts();
+/**
+ * The list's form, search and date filters for the tab counts, or nothing when
+ * there are none, so the tabs share the sidebar badge's request.
+ */
+const countParamsOf = (filters: Filters, q: string): ApplicationCountsParams | undefined => {
+  const params: ApplicationCountsParams = {
+    ...(filters.formId ? { formId: filters.formId } : {}),
+    ...(q ? { q } : {}),
+    ...(filters.from ? { from: filters.from } : {}),
+    ...(filters.to ? { to: filters.to } : {}),
+  };
+  return Object.keys(params).length > 0 ? params : undefined;
+};
+
+/**
+ * One tab per status, each with how many applications it holds among those
+ * the other filters select, so a tab never disagrees with the list under it.
+ */
+const StatusTabs = ({ filters, q }: { filters: Filters; q: string }): JSX.Element => {
+  const counts = useApplicationCounts(true, countParamsOf(filters, q));
   return (
     <Tabs
       value={filters.status ?? ''}
@@ -220,64 +266,85 @@ const FilterBar = ({
   formChoices,
   search,
   onSearch,
+  onClear,
 }: {
   filters: Filters;
   formChoices: SelectChoice[];
   search: string;
   onSearch: (text: string) => void;
-}): JSX.Element => (
-  <Box
-    sx={{
-      display: 'grid',
-      gap: 2,
-      mb: 3,
-      gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: '1.3fr 1.3fr 1fr 1fr' },
-    }}
-  >
-    <OptionSelect
-      label="Form"
-      options={formChoices}
-      value={filters.formId}
-      onChange={(value) => filters.setParam('formId', value)}
-      placeholder="Every form"
-    />
-    <TextField
-      label="Search"
-      value={search}
-      onChange={(event) => onSearch(event.target.value)}
-      placeholder="Name, email or reference"
-      slotProps={{
-        input: {
-          startAdornment: (
-            <InputAdornment position="start">
-              <SearchRoundedIcon />
-            </InputAdornment>
-          ),
+  onClear: () => void;
+}): JSX.Element => {
+  const hasFilters = Boolean(filters.formId || search.trim() || filters.from || filters.to);
+  return (
+    <Box
+      sx={{
+        display: 'grid',
+        gap: 2,
+        mb: 3,
+        gridTemplateColumns: {
+          xs: '1fr',
+          sm: '1fr 1fr',
+          lg: hasFilters ? '1.3fr 1.3fr 1fr 1fr auto' : '1.3fr 1.3fr 1fr 1fr',
         },
       }}
-    />
-    <DateField
-      label="Submitted from"
-      value={toFieldValue(filters.from)}
-      onChange={(value) => filters.setParam('from', toKey(value))}
-      maxDate={toFieldValue(filters.to)}
-    />
-    <DateField
-      label="Submitted to"
-      value={toFieldValue(filters.to)}
-      onChange={(value) => filters.setParam('to', toKey(value))}
-      minDate={toFieldValue(filters.from)}
-    />
-  </Box>
-);
-
-const HIDDEN_HEADING_SX = {
-  position: 'absolute',
-  width: 1,
-  height: 1,
-  overflow: 'hidden',
-  clip: 'rect(0 0 0 0)',
-} as const;
+    >
+      {/* Small fields, as on the Projects, Stories and Submissions toolbars. */}
+      <OptionSelect
+        size="small"
+        label="Form"
+        options={formChoices}
+        value={filters.formId}
+        onChange={(value) => filters.setParam('formId', value)}
+        placeholder="Every form"
+      />
+      <TextField
+        size="small"
+        label="Search"
+        value={search}
+        onChange={(event) => onSearch(event.target.value)}
+        placeholder="Name, email or reference"
+        slotProps={{
+          input: {
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchRoundedIcon />
+              </InputAdornment>
+            ),
+          },
+        }}
+      />
+      <DateField
+        size="small"
+        label="Submitted from"
+        value={toFieldValue(filters.from)}
+        onChange={(value) => filters.setParam('from', toKey(value))}
+        maxDate={toFieldValue(filters.to)}
+      />
+      <DateField
+        size="small"
+        label="Submitted to"
+        value={toFieldValue(filters.to)}
+        onChange={(value) => filters.setParam('to', toKey(value))}
+        minDate={toFieldValue(filters.from)}
+      />
+      {hasFilters && (
+        <Chip
+          label="Clear filters"
+          onClick={onClear}
+          onDelete={onClear}
+          deleteIcon={<FilterAltOffIcon />}
+          variant="outlined"
+          sx={{
+            borderRadius: 2,
+            alignSelf: 'center',
+            justifySelf: 'start',
+            gridColumn: { sm: '1 / -1', lg: 'auto' },
+          }}
+        />
+      )}
+    </Box>
+  );
+};
 
 /**
  * Every submitted application (plan §4.3): one tab per status with its count,
@@ -292,6 +359,10 @@ const ApplicationsPage = (): JSX.Element => {
   const query = useApplications(listParamsOf(filters, q));
   const formChoices = useFormChoices(query.data?.items, filters.formId);
   const statusLabel = filters.status ? applicationStatusLabel(filters.status) : '';
+  const clearFilters = (): void => {
+    setSearch('');
+    filters.clear();
+  };
 
   return (
     <>
@@ -303,7 +374,7 @@ const ApplicationsPage = (): JSX.Element => {
         count={query.data?.total}
         action={<ExportButton formId={filters.formId} />}
       />
-      <StatusTabs filters={filters} />
+      <StatusTabs filters={filters} q={q} />
       <FilterBar
         filters={filters}
         formChoices={formChoices}
@@ -312,14 +383,16 @@ const ApplicationsPage = (): JSX.Element => {
           setSearch(text);
           if (filters.page !== 1) filters.setParam('page', '');
         }}
+        onClear={clearFilters}
       />
-      <Typography ref={heading} tabIndex={-1} component="h2" sx={HIDDEN_HEADING_SX}>
+      <Typography ref={heading} tabIndex={-1} component="h2" sx={VISUALLY_HIDDEN}>
         {statusLabel || 'All'} applications
       </Typography>
       <Results
         query={query}
         filtered={Boolean(filters.formId || q || filters.from || filters.to)}
         status={statusLabel}
+        onClearFilters={clearFilters}
       />
       <ServerPagination
         totalPages={query.data?.totalPages ?? 1}

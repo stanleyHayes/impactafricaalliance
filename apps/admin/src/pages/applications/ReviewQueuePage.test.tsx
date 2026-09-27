@@ -50,20 +50,24 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
+const setup = (): void => {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  clients.push(client);
+  render(
+    <QueryClientProvider client={client}>
+      <ThemeProvider theme={theme}>
+        <MemoryRouter>
+          <ReviewQueuePage />
+        </MemoryRouter>
+      </ThemeProvider>
+    </QueryClientProvider>,
+  );
+};
+
 describe('ReviewQueuePage', () => {
   it('asks for new and in-review applications, oldest first, and can start a review', async () => {
     vi.mocked(api.patch).mockResolvedValue({ ...item, status: 'under-review' });
-    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    clients.push(client);
-    render(
-      <QueryClientProvider client={client}>
-        <ThemeProvider theme={theme}>
-          <MemoryRouter>
-            <ReviewQueuePage />
-          </MemoryRouter>
-        </ThemeProvider>
-      </QueryClientProvider>,
-    );
+    setup();
     expect(await screen.findByText('Ama Mensah')).toBeInTheDocument();
     expect(api.get).toHaveBeenCalledWith(
       '/admin/applications?statuses=submitted%2Cunder-review&sort=submitted&order=asc&page=1&pageSize=12',
@@ -75,5 +79,24 @@ describe('ReviewQueuePage', () => {
         status: 'under-review',
       }),
     );
+  });
+
+  it('names each Open link after its applicant, and opens it in the same tab', async () => {
+    setup();
+    const open = await screen.findByRole('link', { name: 'Open Ama Mensah (APP-7K2Q9M)' });
+    expect(open).toHaveAttribute('href', '/applications/app-1');
+    expect(open).not.toHaveAttribute('target');
+    // The new-tab icon is kept for links that leave the console.
+    expect(open.querySelector('[data-testid="OpenInNewRoundedIcon"]')).toBeNull();
+    expect(open.querySelector('[data-testid="ArrowForwardRoundedIcon"]')).not.toBeNull();
+  });
+
+  it('keeps the hidden list heading one pixel wide so the page never scrolls sideways', async () => {
+    setup();
+    await screen.findByText('Ama Mensah');
+    // MUI reads a bare `width: 1` as 100%, which stretched the page past the viewport.
+    const heading = screen.getByRole('heading', { level: 2, name: 'Waiting for a decision' });
+    expect(heading).toHaveStyle({ width: '1px', height: '1px', position: 'absolute' });
+    expect(heading).toHaveAttribute('tabindex', '-1');
   });
 });

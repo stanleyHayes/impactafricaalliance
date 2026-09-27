@@ -1,6 +1,6 @@
 import type { FormField, FormStep } from '@iaa/shared';
 import { ThemeProvider } from '@mui/material/styles';
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -177,5 +177,46 @@ describe('FormBuilder', () => {
     expect(
       screen.getByText('"Colour" needs at least one option to choose from.'),
     ).toBeInTheDocument();
+  });
+
+  // The console's Stack once dropped a whole-`sx` function, leaving the step
+  // header with no padding, tint or divider.
+  it("gives each step's header its padding and divider", () => {
+    setup([{ id: 'about', title: 'About you', fields: [field('name', 'Name')] }]);
+    const heading = screen.getByRole('heading', { level: 3, name: 'Step 1 of 1: About you' });
+    expect(heading.parentElement).toHaveStyle({ paddingTop: '12px', borderBottomWidth: '1px' });
+  });
+
+  it('names questions, not their internal ids, while one is moved with the keyboard', async () => {
+    setup([
+      {
+        id: 'about',
+        title: 'About you',
+        fields: [field('short-text-k2x9q', 'Full name'), field('email-p4v7m', 'Email')],
+      },
+    ]);
+    const handle = screen.getByRole('button', { name: 'Drag to reorder Full name' });
+    handle.focus();
+    fireEvent.keyDown(handle, { code: 'Space', key: ' ' });
+    await waitFor(() =>
+      expect(
+        screen
+          .getAllByRole('status')
+          .some((region) => region.textContent?.includes('Picked up question 1 of 2, Full name.')),
+      ).toBe(true),
+    );
+    const spoken = screen
+      .getAllByRole('status')
+      .map((region) => region.textContent ?? '')
+      .join(' ');
+    expect(spoken).not.toContain('short-text-k2x9q');
+    fireEvent.keyDown(handle, { code: 'Escape', key: 'Escape' });
+    await waitFor(() =>
+      expect(
+        screen
+          .getAllByRole('status')
+          .some((region) => region.textContent?.includes('Move cancelled. Full name stays')),
+      ).toBe(true),
+    );
   });
 });

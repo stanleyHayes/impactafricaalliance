@@ -75,6 +75,28 @@ describe('QuickCreateTaskDialog', () => {
     await waitFor(() => expect(onCreated).toHaveBeenCalledWith(created));
   });
 
+  it('does not create the task while the due date is only half typed', async () => {
+    renderTaskUi(<QuickCreateTaskDialog open onClose={vi.fn()} onCreated={vi.fn()} />);
+    fireEvent.change(titleField(), { target: { value: 'Order the banners' } });
+    const day = screen.getByRole('spinbutton', { name: 'Day' });
+    fireEvent.mouseDown(day);
+    for (const digit of ['1', '5']) {
+      day.textContent = digit;
+      fireEvent.input(day);
+    }
+    // Leaving the field for the title, where Enter is pressed.
+    fireEvent.blur(day);
+    expect(
+      await screen.findByText('Finish typing the date, or clear the field.'),
+    ).toBeInTheDocument();
+
+    submitWithEnter();
+    fireEvent.click(screen.getByRole('button', { name: 'Create task' }));
+    // Neither Enter nor the button creates it, with or without a due date.
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(api.post).not.toHaveBeenCalled();
+  });
+
   it('keeps what was typed when the save fails', async () => {
     vi.mocked(api.post).mockRejectedValue(new Error('The server is asleep.'));
     renderTaskUi(<QuickCreateTaskDialog open onClose={vi.fn()} onCreated={vi.fn()} />);

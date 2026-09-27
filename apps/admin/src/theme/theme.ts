@@ -168,6 +168,19 @@ export const THEME_PRESETS = Object.values(PRESETS);
 export const isThemePresetKey = (value: unknown): value is ThemePresetKey =>
   typeof value === 'string' && value in PRESETS;
 
+/**
+ * Warning and info for light mode, deeper than MUI's defaults. White on MUI's
+ * orange (#ED6C02) is 3.1:1 and on its blue (#0288D1) 3.9:1, short of the
+ * 4.5:1 a 13px chip label needs, and every status chip in the console ("Under
+ * review", "Submitted", a draft event) is drawn in one of them. These are
+ * 5.0:1 and 5.9:1. Dark mode keeps MUI's lighter shades, whose text is already
+ * dark.
+ */
+const LIGHT_STATUS_COLOURS = {
+  warning: { main: '#B45309', light: '#D97706', dark: '#92400E', contrastText: '#FFFFFF' },
+  info: { main: '#0369A1', light: '#0284C7', dark: '#075985', contrastText: '#FFFFFF' },
+} as const;
+
 const baseOptions = (palette: PresetPalette): ThemeOptions => ({
   palette: {
     mode: palette.mode,
@@ -176,6 +189,7 @@ const baseOptions = (palette: PresetPalette): ThemeOptions => ({
     background: palette.background,
     text: palette.text,
     divider: palette.divider,
+    ...(palette.mode === 'light' ? LIGHT_STATUS_COLOURS : {}),
   },
   shape: { borderRadius: 4 },
   typography: {

@@ -1,7 +1,7 @@
 import type { ImpactStoryListItem, Permission, PublicUser } from '@iaa/shared';
 import { ThemeProvider } from '@mui/material/styles';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -80,6 +80,33 @@ describe('ProjectStoriesPanel', () => {
     expect(
       screen.getByText(/Completing a project never publishes anything by itself/),
     ).toBeInTheDocument();
+  });
+
+  it('is a card section like Impact numbers and Risks, with its action in the header', async () => {
+    vi.mocked(api.get).mockResolvedValue({
+      items: [story],
+      page: 1,
+      pageSize: 50,
+      total: 1,
+      totalPages: 1,
+    });
+    mount([
+      'impact-stories:read',
+      'impact-stories:create',
+      'impact-stories:update',
+      'projects:read',
+    ]);
+
+    const section = screen.getByRole('region', { name: 'Impact stories' });
+    expect(section.tagName).toBe('SECTION');
+    expect(
+      within(section).getByRole('heading', { level: 2, name: 'Impact stories' }),
+    ).toBeInTheDocument();
+    expect(await within(section).findByText('Coding clubs, year one')).toBeInTheDocument();
+    // A text button, as the other sections' Add buttons are, not a filled one.
+    const create = within(section).getByRole('button', { name: 'Create impact story' });
+    expect(create.className).toContain('MuiButton-text');
+    expect(create.className).not.toContain('MuiButton-contained');
   });
 
   it('says who can grant access when stories cannot be read', () => {

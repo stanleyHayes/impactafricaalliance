@@ -3,9 +3,9 @@ import { ThemeProvider } from '@mui/material/styles';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import 'dayjs/locale/en-gb';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useAuth } from '../../auth/AuthContext';
@@ -51,7 +51,17 @@ beforeEach(() => {
     } as unknown as PublicUser,
   } as ReturnType<typeof useAuth>);
   vi.mocked(api.get).mockImplementation((path: string) => {
-    if (path === '/admin/applications/counts') {
+    // One form's counts when the tabs ask within a form, everyone's otherwise.
+    if (path.startsWith(`/admin/applications/counts?formId=${FORM_ID}`)) {
+      return Promise.resolve({
+        submitted: 1,
+        'under-review': 0,
+        shortlisted: 0,
+        accepted: 1,
+        rejected: 0,
+      }) as never;
+    }
+    if (path.startsWith('/admin/applications/counts')) {
       return Promise.resolve({
         submitted: 3,
         'under-review': 1,
@@ -86,6 +96,9 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+/** The address's query string, so a test can see which filters it holds. */
+const Search = (): JSX.Element => <output data-testid="search">{useLocation().search}</output>;
+
 const setup = (url = '/applications'): void => {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   clients.push(client);
@@ -95,7 +108,15 @@ const setup = (url = '/applications'): void => {
         <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="en-gb">
           <MemoryRouter initialEntries={[url]}>
             <Routes>
-              <Route path="/applications" element={<ApplicationsPage />} />
+              <Route
+                path="/applications"
+                element={
+                  <>
+                    <ApplicationsPage />
+                    <Search />
+                  </>
+                }
+              />
             </Routes>
           </MemoryRouter>
         </LocalizationProvider>
@@ -180,5 +201,88 @@ describe('ApplicationsPage', () => {
     setup();
     expect(await screen.findByText('No applications here yet')).toBeInTheDocument();
     expect(screen.getByText(/Unfinished drafts never do/)).toBeInTheDocument();
+  });
+
+  // The tabs sit beside a filtered list, so they count what it shows.
+  it('counts each status within the chosen form, not across every form', async () => {
+    setup(`/applications?formId=${FORM_ID}`);
+    expect(await screen.findByRole('tab', { name: 'Submitted (1)' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'All (2)' })).toBeInTheDocument();
+    expect(api.get).toHaveBeenCalledWith(`/admin/applications/counts?formId=${FORM_ID}`);
+  });
+
+  it('keeps the hidden list heading one pixel wide so the page never scrolls sideways', async () => {
+    setup('/applications?status=under-review');
+    expect((await screen.findAllByText('Ama Mensah')).length).toBeGreaterThan(0);
+    // MUI reads a bare `width: 1` as 100%, which stretched the page past the viewport.
+    const heading = screen.getByRole('heading', { level: 2, name: 'Under review applications' });
+    expect(heading).toHaveStyle({ width: '1px', height: '1px', position: 'absolute' });
+    expect(heading).toHaveAttribute('tabindex', '-1');
+  });
+
+  it('offers to clear the filters when nothing matches, keeping the status tab', async () => {
+    vi.mocked(api.get).mockImplementation(
+      (path: string) =>
+        Promise.resolve(
+          path.startsWith('/admin/applications/counts')
+            ? { submitted: 0, 'under-review': 0, shortlisted: 0, accepted: 0, rejected: 0 }
+            : page([]),
+        ) as never,
+    );
+    setup(`/applications?status=submitted&formId=${FORM_ID}&from=2026-09-01&to=2026-09-30&page=2`);
+    const search = screen.getByRole('textbox', { name: 'Search' });
+    fireEvent.change(search, { target: { value: 'nobody' } });
+    expect(await screen.findByText('No applications match')).toBeInTheDocument();
+    // One in the empty state, one beside the filters.
+    const clear = screen.getAllByRole('button', { name: 'Clear filters' });
+    expect(clear).toHaveLength(2);
+
+    fireEvent.click(clear[1]!);
+
+    expect(search).toHaveValue('');
+    expect(screen.getByTestId('search')).toHaveTextContent(/^\?status=submitted$/);
+    await waitFor(() =>
+      expect(listCalls().at(-1)).toBe('/admin/applications?status=submitted&page=1&pageSize=20'),
+    );
+    expect(screen.queryByRole('button', { name: 'Clear filters' })).not.toBeInTheDocument();
+  });
+
+  it('says the page is past the end, rather than that there are no applications', async () => {
+    vi.mocked(api.get).mockImplementation(
+      (path: string) =>
+        Promise.resolve(
+          path.startsWith('/admin/applications/counts')
+            ? { submitted: 30, 'under-review': 0, shortlisted: 0, accepted: 0, rejected: 0 }
+            : { ...page([]), page: 3, total: 30, totalPages: 2 },
+        ) as never,
+    );
+    setup('/applications?page=3');
+    expect(await screen.findByText('Nothing on this page')).toBeInTheDocument();
+    expect(screen.getByText(/There are 30 applications in this view/)).toBeInTheDocument();
+    expect(screen.queryByText('No applications here yet')).not.toBeInTheDocument();
+  });
+
+  it('draws its filters at the small size the other list toolbars use', async () => {
+    setup();
+    expect((await screen.findAllByText('Ama Mensah')).length).toBeGreaterThan(0);
+    expect(
+      screen.getByRole('textbox', { name: 'Search' }).closest('.MuiInputBase-root'),
+    ).toHaveClass('MuiInputBase-sizeSmall');
+    expect(
+      screen.getByRole('combobox', { name: 'Form' }).closest('.MuiInputBase-root'),
+    ).toHaveClass('MuiInputBase-sizeSmall');
+    expect(screen.getByRole('group', { name: /Submitted from/ })).toHaveClass(
+      'MuiPickersInputBase-inputSizeSmall',
+    );
+  });
+
+  it('keeps the table frame, with its column heads, while the list loads', () => {
+    vi.mocked(api.get).mockImplementation(() => new Promise(() => undefined) as never);
+    setup();
+    const loading = screen.getByLabelText('Loading applications');
+    expect(loading).toHaveAttribute('aria-busy', 'true');
+    for (const column of ['Applicant', 'Form', 'Submitted', 'Status', 'Reviews']) {
+      expect(within(loading).getByText(column)).toBeInTheDocument();
+    }
   });
 });

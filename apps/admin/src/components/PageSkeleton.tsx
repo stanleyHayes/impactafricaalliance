@@ -2,6 +2,8 @@ import Box from '@mui/material/Box';
 import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
 
+import { TableLoadingSkeleton } from './data/TableLoadingSkeleton';
+
 /** One labelled input, the height a filled MUI text field occupies. */
 const FieldSkeleton = ({ width = '100%' }: { width?: string }): JSX.Element => (
   <Box sx={{ width }}>
@@ -119,3 +121,72 @@ export const MediaLibrarySkeleton = ({ tiles = 10 }: { tiles?: number }): JSX.El
     </Box>
   </Box>
 );
+
+/**
+ * What a page shows while its code is still arriving. The work modules
+ * (projects, tasks, forms, applications, stories) load on first visit rather
+ * than in the console's first download, so for a moment the page is not yet
+ * known: unlike the skeletons above, this one stands in for the header too.
+ *
+ * - `list`: a header and a table, for list and detail pages.
+ * - `form`: a header and the stepwise form's shape, for new and edit pages.
+ * - `section`: one bordered panel, for a tab inside a page whose header is
+ *   already on screen.
+ */
+export const RouteSkeleton = ({
+  variant = 'list',
+}: {
+  variant?: 'list' | 'form' | 'section';
+}): JSX.Element => {
+  if (variant === 'section') {
+    return (
+      <Box
+        aria-busy="true"
+        aria-label="Loading"
+        sx={{
+          p: { xs: 2.5, md: 3 },
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: 3,
+          bgcolor: 'background.paper',
+        }}
+      >
+        <Skeleton variant="text" width={180} sx={{ fontSize: '1.25rem', mb: 1 }} />
+        <Skeleton variant="text" width="70%" />
+        <Skeleton variant="text" width="55%" sx={{ mb: 2 }} />
+        <Skeleton variant="rounded" height={120} sx={{ borderRadius: 2 }} />
+      </Box>
+    );
+  }
+  return (
+    <Box aria-busy="true" aria-label="Loading">
+      <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 3 }}>
+        <Skeleton
+          variant="rounded"
+          width={48}
+          height={48}
+          sx={{ borderRadius: 2.5, flexShrink: 0 }}
+        />
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Skeleton variant="text" width={220} sx={{ fontSize: '1.75rem' }} />
+          <Skeleton variant="text" width="min(420px, 80%)" />
+        </Box>
+      </Stack>
+      {variant === 'form' ? (
+        <FormPageSkeleton steps fields={4} />
+      ) : (
+        <Box
+          sx={{
+            border: 1,
+            borderColor: 'divider',
+            borderRadius: 3,
+            overflow: 'hidden',
+            bgcolor: 'background.paper',
+          }}
+        >
+          <TableLoadingSkeleton rows={6} columns={5} />
+        </Box>
+      )}
+    </Box>
+  );
+};

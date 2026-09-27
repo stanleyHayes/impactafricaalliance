@@ -103,4 +103,14 @@ describe('YourWorkPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(refetch).toHaveBeenCalledTimes(1);
   });
+
+  it('lets long tile titles wrap instead of cutting them off', () => {
+    renderPanel(EVERYTHING);
+    for (const name of ['New applications', 'Stories in review', 'Active projects']) {
+      const title = within(tile(new RegExp(name))).getByText(name);
+      // noWrap would add this class and an ellipsis ("New applicatio…").
+      expect(title).not.toHaveClass('MuiTypography-noWrap');
+      expect(title.closest('.MuiTypography-noWrap')).toBeNull();
+    }
+  });
 });

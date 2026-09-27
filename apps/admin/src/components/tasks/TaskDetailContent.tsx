@@ -25,6 +25,7 @@ import { Link as RouterLink, useNavigate } from 'react-router-dom';
 
 import { useHasPermission } from '../../auth/useCan';
 import { ApiError } from '../../lib/api-client';
+import { taskChangeLabel } from '../../lib/select-options';
 import {
   useAddTaskAttachment,
   useArchiveTask,
@@ -159,8 +160,9 @@ const TaskTitle = ({
   }
   return (
     <Stack direction="row" spacing={1} alignItems="flex-start">
+      {/* The sans record title, as EventDetail's is: the serif h2 face is for page titles. */}
       <Typography
-        variant="h2"
+        variant="h3"
         component="h2"
         sx={{
           fontSize: { xs: '1.35rem', sm: variant === 'page' ? '1.8rem' : '1.5rem' },
@@ -442,16 +444,31 @@ const TaskDetailBody = ({
 
   const header = (
     <Stack spacing={1}>
-      <Stack direction="row" spacing={1} alignItems="center" useFlexGap flexWrap="wrap">
-        <Chip size="small" label={task.key} sx={{ fontWeight: 750 }} />
-        <TaskStatusChip status={inline.current.status} />
-        {task.archivedAt && <Chip size="small" variant="outlined" label="Archived" />}
-        {task.project && (
-          <Link component={RouterLink} to={`/projects/${task.project.id}`} variant="body2" noWrap>
-            {task.project.title}
-          </Link>
-        )}
-        <Box sx={{ flexGrow: 1 }} />
+      {/* The chips wrap in their own cell, so Close stays at the top right on a phone. */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: 'minmax(0, 1fr) auto',
+          alignItems: 'center',
+          columnGap: 1,
+        }}
+      >
+        <Stack direction="row" spacing={1} alignItems="center" useFlexGap flexWrap="wrap">
+          <Chip size="small" label={task.key} sx={{ fontWeight: 750 }} />
+          <TaskStatusChip status={inline.current.status} />
+          {task.archivedAt && <Chip size="small" variant="outlined" label="Archived" />}
+          {task.project && (
+            <Link
+              component={RouterLink}
+              to={`/projects/${task.project.id}`}
+              variant="body2"
+              noWrap
+              sx={{ maxWidth: '100%' }}
+            >
+              {task.project.title}
+            </Link>
+          )}
+        </Stack>
         {onClose && (
           <Tooltip title="Close">
             <IconButton aria-label="Close task" onClick={onClose} edge="end">
@@ -459,7 +476,7 @@ const TaskDetailBody = ({
             </IconButton>
           </Tooltip>
         )}
-      </Stack>
+      </Box>
       <TaskTitle
         title={inline.current.title}
         canEdit={canEdit}
@@ -480,7 +497,7 @@ const TaskDetailBody = ({
 
   const details = (
     <Section title="Details">
-      <TaskFields task={task} inline={inline} canEdit={canEdit} />
+      <TaskFields task={task} inline={inline} canEdit={canEdit} narrow={variant === 'page'} />
     </Section>
   );
   const activity = (
@@ -488,6 +505,7 @@ const TaskDetailBody = ({
       <ActivityTimeline
         endpoint={`/admin/tasks/${task.id}/activity`}
         queryKey={['tasks', 'activity', task.id]}
+        formatValue={taskChangeLabel}
       />
     </Section>
   );

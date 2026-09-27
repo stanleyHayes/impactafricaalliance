@@ -1,7 +1,5 @@
 import type { ProjectStatus } from '@iaa/shared';
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
@@ -19,6 +17,7 @@ import { DateField } from '../fields/DateField';
 import { MediaUploadField } from '../fields/MediaUploadField';
 import { OptionSelect } from '../fields/OptionSelect';
 import { TagsField } from '../fields/TagsField';
+import { ReviewSummary } from '../forms/ReviewSummary';
 import { Markdown } from '../markdown/Markdown';
 import { MarkdownEditor } from '../markdown/MarkdownEditor';
 import { UserPicker } from '../people/UserPicker';
@@ -43,11 +42,19 @@ export type SetProjectField = <K extends keyof ProjectFormState>(
   value: ProjectFormState[K],
 ) => void;
 
+export type ProjectDateField = 'startDate' | 'endDate';
+
 export interface ProjectStepProps {
   form: ProjectFormState;
   setField: SetProjectField;
   errors: FieldErrors;
   disabled: boolean;
+  /**
+   * A date field's own objection (half typed, impossible, out of order), or
+   * null. The editor holds the step while one is set, since the field keeps
+   * the old date rather than pass such a day on.
+   */
+  onDateProblem?: (field: ProjectDateField, problem: string | null) => void;
 }
 
 const SUMMARY_MAX = 400;
@@ -185,6 +192,7 @@ export const ScheduleStep = ({
   setField,
   errors,
   disabled,
+  onDateProblem,
 }: ProjectStepProps): JSX.Element => (
   <>
     <Pair>
@@ -192,6 +200,7 @@ export const ScheduleStep = ({
         label="Start date"
         value={form.startDate}
         onChange={(value) => setField('startDate', value)}
+        onProblemChange={(problem) => onDateProblem?.('startDate', problem)}
         error={errors.startDate}
         maxDate={form.endDate}
         disabled={disabled}
@@ -200,6 +209,7 @@ export const ScheduleStep = ({
         label="End date"
         value={form.endDate}
         onChange={(value) => setField('endDate', value)}
+        onProblemChange={(problem) => onDateProblem?.('endDate', problem)}
         error={errors.endDate}
         minDate={form.startDate}
         disabled={disabled}
@@ -314,71 +324,8 @@ export const StoryStep = ({
   </>
 );
 
-const Fact = ({ label, children }: { label: string; children: ReactNode }): JSX.Element => (
-  <Box sx={{ minWidth: 0 }}>
-    <Typography component="dt" variant="caption" color="text.secondary" sx={{ fontWeight: 650 }}>
-      {label}
-    </Typography>
-    <Typography component="dd" variant="body2" sx={{ m: 0, overflowWrap: 'anywhere' }}>
-      {children}
-    </Typography>
-  </Box>
-);
-
-const ReviewSection = ({
-  step,
-  onEdit,
-  disabled,
-  children,
-}: {
-  step: number;
-  onEdit: (step: number) => void;
-  disabled: boolean;
-  children: ReactNode;
-}): JSX.Element => {
-  const title = PROJECT_FORM_STEPS[step] ?? '';
-  return (
-    <Box
-      component="section"
-      aria-label={title}
-      sx={{ p: 2.5, border: 1, borderColor: 'divider', borderRadius: 2.5 }}
-    >
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.5 }}>
-        <Typography component="h3" variant="subtitle1" sx={{ fontWeight: 700 }}>
-          {title}
-        </Typography>
-        <Button
-          size="small"
-          startIcon={<EditOutlinedIcon />}
-          onClick={() => onEdit(step)}
-          disabled={disabled}
-          aria-label={`Edit ${title.toLowerCase()}`}
-        >
-          Edit
-        </Button>
-      </Stack>
-      <Box
-        component="dl"
-        sx={{
-          m: 0,
-          display: 'grid',
-          gap: 1.75,
-          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' },
-        }}
-      >
-        {children}
-      </Box>
-    </Box>
-  );
-};
-
-const NONE = (
-  <Box component="span" sx={{ color: 'text.secondary' }}>
-    Not set
-  </Box>
-);
-
-const or = (value: ReactNode): ReactNode => (value ? value : NONE);
+/** A step's name, as the step rail shows it, for its section of the review. */
+const stepTitle = (step: number): string => PROJECT_FORM_STEPS[step] ?? '';
 
 export const ReviewStep = ({
   form,
@@ -398,93 +345,124 @@ export const ReviewStep = ({
   };
   const partners = form.partners.filter((row) => row.name.trim());
   const objectives = form.objectives.map((line) => line.trim()).filter(Boolean);
+  const sdgs = [...form.sdgs].sort((a, b) => a - b);
   return (
     <Stack spacing={2}>
       <Typography variant="body2" color="text.secondary">
         Check the details below. Nothing is saved until you choose the button at the bottom.
       </Typography>
-      <ReviewSection step={0} onEdit={onEdit} disabled={disabled}>
-        <Fact label="Title">{form.title}</Fact>
-        <Fact label="Slug">{form.slug}</Fact>
-        <Fact label="Status">{statusLabel(form.status)}</Fact>
-        <Fact label="Priority">{priorityLabel(form.priority)}</Fact>
-        <Box sx={{ gridColumn: '1 / -1' }}>
-          <Fact label="Summary">{form.summary}</Fact>
-        </Box>
-      </ReviewSection>
-      <ReviewSection step={1} onEdit={onEdit} disabled={disabled}>
-        <Fact label="Lead">{form.leadId ? nameOf(form.leadId) : NONE}</Fact>
-        <Fact label="Members">
-          {form.memberIds.length > 0 ? form.memberIds.map(nameOf).join(', ') : NONE}
-        </Fact>
-      </ReviewSection>
-      <ReviewSection step={2} onEdit={onEdit} disabled={disabled}>
-        <Fact label="Dates">{formatDateRange(form.startDate, form.endDate)}</Fact>
-        <Fact label="Country">{or(form.country.trim())}</Fact>
-        <Fact label="Region">{or(form.region.trim())}</Fact>
-        <Fact label="Where">{or(form.locationText.trim())}</Fact>
-      </ReviewSection>
-      <ReviewSection step={3} onEdit={onEdit} disabled={disabled}>
-        <Fact label="Programme">{or(programmeLabel(form.programme))}</Fact>
-        <Fact label="Tags">{or(form.tags.join(', '))}</Fact>
-        <Fact label="Objectives">
-          {objectives.length > 0 ? (
-            <Box component="ol" sx={{ m: 0, pl: 2.5 }}>
-              {objectives.map((line, index) => (
-                <li key={index}>{line}</li>
-              ))}
-            </Box>
-          ) : (
-            NONE
-          )}
-        </Fact>
-        <Fact label="Partners">
-          {or(
-            partners.map((row) => (row.role ? `${row.name} (${row.role})` : row.name)).join(', '),
-          )}
-        </Fact>
-        <Box sx={{ gridColumn: '1 / -1' }}>
-          <Fact label="Sustainable Development Goals">
-            {form.sdgs.length > 0 ? (
-              <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap" component="span">
-                {[...form.sdgs]
-                  .sort((a, b) => a - b)
-                  .map((goal) => (
-                    <Chip key={goal} size="small" label={sdgLabel(goal)} component="span" />
-                  ))}
-              </Stack>
-            ) : (
-              NONE
-            )}
-          </Fact>
-        </Box>
-      </ReviewSection>
-      <ReviewSection step={4} onEdit={onEdit} disabled={disabled}>
-        <Fact label="Reference code">{or(form.code.trim())}</Fact>
-        <Fact label="Cover image">
-          {form.cover ? (
-            <Box
-              component="img"
-              src={form.cover.url}
-              alt={form.cover.alt ?? 'Cover image'}
-              sx={{ display: 'block', width: '100%', maxWidth: 280, borderRadius: 2, mt: 0.5 }}
-            />
-          ) : (
-            NONE
-          )}
-        </Fact>
-        <Box sx={{ gridColumn: '1 / -1' }}>
-          <Fact label="Description">
-            {form.description.trim() ? (
-              <Box sx={{ maxHeight: 280, overflow: 'auto' }}>
-                <Markdown>{form.description}</Markdown>
-              </Box>
-            ) : (
-              NONE
-            )}
-          </Fact>
-        </Box>
-      </ReviewSection>
+      <ReviewSummary
+        onEdit={onEdit}
+        disabled={disabled}
+        sections={[
+          {
+            title: stepTitle(0),
+            step: 0,
+            items: [
+              { label: 'Title', value: form.title },
+              { label: 'Slug', value: form.slug },
+              { label: 'Status', value: statusLabel(form.status) },
+              { label: 'Priority', value: priorityLabel(form.priority) },
+              { label: 'Summary', value: form.summary, fullRow: true },
+            ],
+          },
+          {
+            title: stepTitle(1),
+            step: 1,
+            items: [
+              { label: 'Lead', value: form.leadId ? nameOf(form.leadId) : '' },
+              { label: 'Members', value: form.memberIds.map(nameOf).join(', '), fullRow: true },
+            ],
+          },
+          {
+            title: stepTitle(2),
+            step: 2,
+            items: [
+              { label: 'Dates', value: formatDateRange(form.startDate, form.endDate) },
+              { label: 'Country', value: form.country.trim() },
+              { label: 'Region', value: form.region.trim() },
+              { label: 'Where', value: form.locationText.trim() },
+            ],
+          },
+          {
+            title: stepTitle(3),
+            step: 3,
+            items: [
+              { label: 'Programme', value: programmeLabel(form.programme) },
+              { label: 'Tags', value: form.tags.join(', ') },
+              {
+                label: 'Objectives',
+                fullRow: true,
+                value:
+                  objectives.length > 0 ? (
+                    <Box component="ol" sx={{ m: 0, pl: 2.5 }}>
+                      {objectives.map((line, index) => (
+                        <li key={index}>{line}</li>
+                      ))}
+                    </Box>
+                  ) : null,
+              },
+              {
+                label: 'Partners',
+                value: partners
+                  .map((row) => (row.role ? `${row.name} (${row.role})` : row.name))
+                  .join(', '),
+              },
+              {
+                label: 'Sustainable Development Goals',
+                fullRow: true,
+                value:
+                  sdgs.length > 0 ? (
+                    <Stack
+                      direction="row"
+                      spacing={0.75}
+                      useFlexGap
+                      flexWrap="wrap"
+                      component="span"
+                    >
+                      {sdgs.map((goal) => (
+                        <Chip key={goal} size="small" label={sdgLabel(goal)} component="span" />
+                      ))}
+                    </Stack>
+                  ) : null,
+              },
+            ],
+          },
+          {
+            title: stepTitle(4),
+            step: 4,
+            items: [
+              { label: 'Reference code', value: form.code.trim() },
+              {
+                label: 'Cover image',
+                value: form.cover ? (
+                  <Box
+                    component="img"
+                    src={form.cover.url}
+                    alt={form.cover.alt ?? 'Cover image'}
+                    sx={{
+                      display: 'block',
+                      width: '100%',
+                      maxWidth: 280,
+                      borderRadius: 2,
+                      mt: 0.5,
+                    }}
+                  />
+                ) : null,
+              },
+              {
+                label: 'Description',
+                fullRow: true,
+                value: form.description.trim() ? (
+                  <Box sx={{ maxHeight: 280, overflow: 'auto', fontWeight: 400 }}>
+                    <Markdown>{form.description}</Markdown>
+                  </Box>
+                ) : null,
+              },
+            ],
+          },
+        ]}
+      />
     </Stack>
   );
 };

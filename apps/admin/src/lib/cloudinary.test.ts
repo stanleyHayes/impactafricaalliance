@@ -1,9 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { api } from './api-client';
+import { UPLOAD_PERMISSION_NOTE } from '../components/files/upload-permission';
+
+import type * as ApiClient from './api-client';
+import { ApiError, api } from './api-client';
 import { DOCUMENT_ACCEPT, uploadToCloudinary } from './cloudinary';
 
-vi.mock('./api-client', () => ({ api: { post: vi.fn() } }));
+vi.mock('./api-client', async (importOriginal) => ({
+  ...(await importOriginal<typeof ApiClient>()),
+  api: { post: vi.fn() },
+}));
 const signed = {
   cloudName: 'demo',
   apiKey: 'public-key',
@@ -71,6 +77,29 @@ describe('signed media upload', () => {
     });
     expect(api.post).toHaveBeenCalledTimes(1);
     expect(api.post).toHaveBeenCalledWith('/admin/media/sign', {});
+  });
+
+  it('says who can help when the signature is refused for want of permission', async () => {
+    vi.mocked(api.post).mockRejectedValue(
+      new ApiError(403, 'FORBIDDEN', 'Missing required permission'),
+    );
+    const fetchMock = vi.spyOn(globalThis, 'fetch');
+    await expect(
+      uploadToCloudinary(new File(['doc'], 'minutes.docx'), 'documents', {
+        register: false,
+        profile: 'document',
+      }),
+    ).rejects.toThrow(UPLOAD_PERMISSION_NOTE);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('passes other signing failures on as they are', async () => {
+    vi.mocked(api.post).mockRejectedValue(
+      new ApiError(503, 'UNAVAILABLE', 'Cloudinary is not configured'),
+    );
+    await expect(
+      uploadToCloudinary(new File(['image'], 'event.png', { type: 'image/png' })),
+    ).rejects.toThrow('Cloudinary is not configured');
   });
 
   it('rejects unsupported files before requesting a signature', async () => {

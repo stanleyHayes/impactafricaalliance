@@ -93,6 +93,55 @@ describe('TaskBoardPage', () => {
     expect(screen.getByText(/It is back where it was/)).toBeInTheDocument();
   });
 
+  /** The status line the board reads moves out on (dnd-kit keeps its own). */
+  const announced = (text: string): HTMLElement => {
+    const line = screen.getByText(text);
+    expect(line).toHaveAttribute('role', 'status');
+    expect(line).toHaveAttribute('aria-live', 'polite');
+    return line;
+  };
+
+  it('keeps focus on a card moved from its menu, and says where it went', async () => {
+    let stored = venue;
+    vi.mocked(api.get).mockImplementation(async (path: string) =>
+      path.startsWith('/admin/tasks/board') ? boardOf([stored, brief], { done: 140 }) : paged([]),
+    );
+    vi.mocked(api.patch).mockImplementation(async (_path: string, body: unknown) => {
+      stored = { ...venue, ...(body as Partial<typeof venue>) };
+      return stored;
+    });
+    renderTaskUi(<TaskBoardPage />, { route: '/tasks/board' });
+    await screen.findByText('Book the venue');
+
+    const moveButton = screen.getByRole('button', { name: 'Move IAA-11' });
+    moveButton.focus();
+    fireEvent.click(moveButton);
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'In progress' }));
+
+    await waitFor(() =>
+      expect(within(column('In progress')).getByText('Book the venue')).toBeInTheDocument(),
+    );
+    await waitFor(() => announced('IAA-11 moved to In progress'));
+    // Drawn afresh in its new column, and focus went with it.
+    const moved = screen.getByRole('button', { name: 'Move IAA-11' });
+    expect(within(column('In progress')).getByRole('button', { name: 'Move IAA-11' })).toBe(moved);
+    expect(moved).toHaveFocus();
+  });
+
+  it('says so when a card is moved down from its menu', async () => {
+    const second = listItem({ id: 'c3', number: 13, status: 'todo', title: 'Hire the chairs' });
+    vi.mocked(api.get).mockImplementation(async (path: string) =>
+      path.startsWith('/admin/tasks/board') ? boardOf([venue, second]) : paged([]),
+    );
+    vi.mocked(api.patch).mockImplementation(async () => venue);
+    renderTaskUi(<TaskBoardPage />, { route: '/tasks/board' });
+    await screen.findByText('Book the venue');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Move IAA-11' }));
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Move down' }));
+    await waitFor(() => announced('IAA-11 moved down'));
+  });
+
   it('opens a card in the drawer by its key', async () => {
     renderTaskUi(<TaskBoardPage />, { route: '/tasks/board' });
     fireEvent.click(await screen.findByText('Book the venue'));

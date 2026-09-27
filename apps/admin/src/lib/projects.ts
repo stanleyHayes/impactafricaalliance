@@ -1,17 +1,18 @@
-import type {
-  FileAttachment,
-  FileAttachmentInput,
-  Paginated,
-  Project,
-  ProjectInput,
-  ProjectListItem,
-  ProjectMediaInput,
-  ProjectMediaItem,
-  ProjectMediaUpdate,
-  ProjectSort,
-  ProjectStatus,
-  ProjectUpdate,
-  WorkPriority,
+import {
+  localDateKey,
+  type FileAttachment,
+  type FileAttachmentInput,
+  type Paginated,
+  type Project,
+  type ProjectInput,
+  type ProjectListItem,
+  type ProjectMediaInput,
+  type ProjectMediaItem,
+  type ProjectMediaUpdate,
+  type ProjectSort,
+  type ProjectStatus,
+  type ProjectUpdate,
+  type WorkPriority,
 } from '@iaa/shared';
 import {
   keepPreviousData,
@@ -29,6 +30,14 @@ const PATH = '/admin/projects';
 
 /** Prefix for every project query, so one invalidation refreshes lists and pages alike. */
 export const PROJECTS_QUERY_KEY = ['projects'] as const;
+
+/**
+ * The tasks module's prefix. Its forms keep their own copy of a project's
+ * milestones and of the project picker, and its rows carry the milestone the
+ * server may have just unlinked, so a project write refreshes them too. Kept
+ * here rather than imported, as `lib/tasks` keeps its own copy of ours.
+ */
+const TASKS_QUERY_KEY = ['tasks'] as const;
 
 /** The three views of the list, chosen by the tabs on the Projects page. */
 export const PROJECT_VIEWS = ['all', 'mine', 'archived'] as const;
@@ -53,6 +62,11 @@ export const PROJECT_PAGE_SIZE = 12;
  * The API address for one page of the list. "My projects" is the `mine`
  * filter; "Archived" is the archived status; "All" leaves archived out,
  * which is also the API's default.
+ *
+ * `today` is this device's calendar day, so "N tasks overdue" means overdue
+ * for the reader rather than by the server's UTC clock, and agrees with My
+ * tasks (plan D6). It is worked out per request and kept out of the query
+ * key, so a console left open overnight moves on at its next refresh.
  */
 export const projectListPath = (params: ProjectListParams): string => {
   const search = new URLSearchParams({
@@ -67,6 +81,7 @@ export const projectListPath = (params: ProjectListParams): string => {
   else if (params.status) search.set('status', params.status);
   if (params.priority) search.set('priority', params.priority);
   if (params.programme) search.set('programme', params.programme);
+  search.set('today', localDateKey());
   return `${PATH}?${search.toString()}`;
 };
 
@@ -103,21 +118,35 @@ export const useActiveProjectCount = (enabled = true): UseQueryResult<number> =>
 /** The key of one project's detail, for reading and replacing it in the cache. */
 export const projectKey = (id: string): readonly unknown[] => [...PROJECTS_QUERY_KEY, 'detail', id];
 
+/** The API address of one project, with this device's day for its overdue count. */
+export const projectPath = (id: string): string =>
+  `${PATH}/${encodeURIComponent(id)}?today=${localDateKey()}`;
+
 /** One project with everything its pages show. */
 export const useProject = (id: string | undefined): UseQueryResult<Project> =>
   useQuery({
     queryKey: projectKey(id ?? ''),
-    queryFn: () => api.get<Project>(`${PATH}/${encodeURIComponent(id ?? '')}`),
+    queryFn: () => api.get<Project>(projectPath(id ?? '')),
     enabled: Boolean(id),
   });
 
 /**
  * After any change: the saved project replaces the cached one at once, and
  * every other project query (lists, counts) is marked stale by prefix.
+ *
+ * The task views are marked stale as well. A task form offers the project's
+ * milestones and the projects to choose from out of its own cache, and saving
+ * the plan can unlink tasks from a milestone taken off it, so without this a
+ * task opened within the minute would still offer a removed milestone or an
+ * archived project, and the API would refuse the save. Only queries on screen
+ * refetch, so this costs little.
  */
-const settle = (client: QueryClient, project?: Project): Promise<void> => {
+const settle = async (client: QueryClient, project?: Project): Promise<void> => {
   if (project) client.setQueryData(projectKey(project.id), project);
-  return client.invalidateQueries({ queryKey: PROJECTS_QUERY_KEY });
+  await Promise.all([
+    client.invalidateQueries({ queryKey: PROJECTS_QUERY_KEY }),
+    client.invalidateQueries({ queryKey: TASKS_QUERY_KEY }),
+  ]);
 };
 
 /** Creates a project and returns it as saved. */
@@ -164,14 +193,19 @@ export const useChangeProjectStatus = (): UseMutationResult<
   });
 };
 
-/** Deletes a project. The API refuses (409) while tasks or stories point at it. */
+/**
+ * Deletes a project. The API refuses (409) while tasks or stories point at it.
+ * The tasks module's copy of the project goes too, and its project picker is
+ * refreshed, so a task form no longer offers a project that is gone.
+ */
 export const useDeleteProject = (): UseMutationResult<void, Error, string> => {
   const client = useQueryClient();
   return useMutation({
     mutationFn: (id) => api.delete<void>(`${PATH}/${encodeURIComponent(id)}`),
-    onSuccess: (_result, id) => {
+    onSuccess: async (_result, id) => {
       client.removeQueries({ queryKey: projectKey(id) });
-      return client.invalidateQueries({ queryKey: PROJECTS_QUERY_KEY });
+      client.removeQueries({ queryKey: [...TASKS_QUERY_KEY, 'project', id] });
+      await settle(client);
     },
   });
 };

@@ -69,6 +69,9 @@ const QuickCreateForm = ({
     priority: 'medium',
   });
   const [showErrors, setShowErrors] = useState(false);
+  // The due date field's own objection: it never passes on a half-typed day,
+  // so without this Enter would create the task with no due date at all.
+  const [dateProblem, setDateProblem] = useState<string | null>(null);
   const problem = titleProblem(form.title);
   const busy = create.isPending;
   useEffect(() => {
@@ -87,6 +90,8 @@ const QuickCreateForm = ({
       setShowErrors(true);
       return;
     }
+    // The field already says what is wrong, under itself.
+    if (dateProblem) return;
     create.mutate(
       {
         title: form.title.trim(),
@@ -143,6 +148,7 @@ const QuickCreateForm = ({
               label="Due date"
               value={form.dueDate}
               onChange={(value) => set('dueDate', value)}
+              onProblemChange={setDateProblem}
               disabled={busy}
             />
             <OptionSelect

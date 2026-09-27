@@ -1026,3 +1026,25 @@ export const withAnyOption = (
   label: string,
   description: string,
 ): SelectChoice[] => [{ value: '', label, description }, ...options];
+
+/**
+ * Reads a stored value as the menus name it, field by field: `in-progress`
+ * under `status` reads "In progress". Anything it has no options for is
+ * returned as stored. For activity logs, which keep the stored values.
+ */
+const labelsByField =
+  (options: Record<string, readonly SelectChoice[]>) =>
+  (field: string, value: string): string =>
+    options[field]?.find((option) => option.value === value)?.label ?? value;
+
+/** A project's logged status and priority changes, in the words its screens use. */
+export const projectChangeLabel = labelsByField({
+  status: PROJECT_STATUS_OPTIONS,
+  priority: WORK_PRIORITY_OPTIONS,
+});
+
+/** A task's logged status and priority changes, in the words its screens use. */
+export const taskChangeLabel = labelsByField({
+  status: TASK_STATUS_OPTIONS,
+  priority: WORK_PRIORITY_OPTIONS,
+});

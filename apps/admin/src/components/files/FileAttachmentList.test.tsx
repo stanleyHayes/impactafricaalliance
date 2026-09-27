@@ -8,6 +8,11 @@ import { theme } from '../../theme/theme';
 
 import { FileAttachmentList, type FileAttachmentListProps } from './FileAttachmentList';
 
+const { auth } = vi.hoisted(() => ({
+  auth: { user: { role: 'editor', permissions: ['tasks:update', 'media:create'] as string[] } },
+}));
+
+vi.mock('../../auth/AuthContext', () => ({ useAuth: () => auth }));
 vi.mock('../../lib/cloudinary', () => ({
   uploadToCloudinary: vi.fn(),
   DOCUMENT_ACCEPT: '.pdf,.docx',
@@ -34,6 +39,7 @@ const onUploadingChange = vi.fn();
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
+  auth.user.permissions = ['tasks:update', 'media:create'];
 });
 
 const setup = (props: Partial<FileAttachmentListProps> = {}): void => {
@@ -109,6 +115,26 @@ describe('FileAttachmentList', () => {
     setup({ canEdit: false });
     expect(screen.queryByRole('button', { name: /Remove/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Upload document' })).not.toBeInTheDocument();
+  });
+
+  it('says who can help when this person may edit the record but not upload', () => {
+    // Signing an upload needs media:create; a custom grant can leave it out.
+    auth.user.permissions = ['tasks:update'];
+    setup();
+    expect(screen.getByRole('button', { name: 'Upload document' })).toBeDisabled();
+    expect(
+      screen.getByText(
+        'Uploading files needs Media library access. An administrator can grant it under Users.',
+      ),
+    ).toBeInTheDocument();
+    // Removing is part of editing the record, so it stays.
+    expect(screen.getByRole('button', { name: 'Remove Budget 2026.xlsx' })).toBeEnabled();
+  });
+
+  it('offers uploads to someone with media access, without the note', () => {
+    setup();
+    expect(screen.getByRole('button', { name: 'Upload document' })).toBeEnabled();
+    expect(screen.queryByText(/needs Media library access/)).not.toBeInTheDocument();
   });
 
   it('stops offering uploads at the limit', () => {

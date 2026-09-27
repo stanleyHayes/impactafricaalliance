@@ -1,5 +1,6 @@
 import type { FileAttachmentInput, MediaFolder } from '@iaa/shared';
 import UploadFileRoundedIcon from '@mui/icons-material/UploadFileRounded';
+import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -7,6 +8,8 @@ import Typography from '@mui/material/Typography';
 import { useRef, useState, type ChangeEvent } from 'react';
 
 import { DOCUMENT_ACCEPT, DOCUMENT_MAX_BYTES, uploadToCloudinary } from '../../lib/cloudinary';
+
+import { UPLOAD_PERMISSION_NOTE, useCanUploadFiles } from './upload-permission';
 
 export interface FileUploadButtonProps {
   /**
@@ -35,7 +38,8 @@ const messageOf = (cause: unknown): string =>
  *
  * Uses the document signing profile and stays out of the media library, which
  * is for pictures that appear on the site. Locked while a file is on its way,
- * so a second pick cannot race the first.
+ * so a second pick cannot race the first, and for anyone who may edit the
+ * record but not upload, with a note saying who can change that.
  */
 export const FileUploadButton = ({
   onAdd,
@@ -47,6 +51,7 @@ export const FileUploadButton = ({
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const mayUpload = useCanUploadFiles();
 
   const setUploading = (uploading: boolean): void => {
     setBusy(uploading);
@@ -57,7 +62,7 @@ export const FileUploadButton = ({
     const file = event.target.files?.[0];
     // Cleared at once so picking the same file again after a failure still fires a change.
     event.target.value = '';
-    if (!file || busy) return;
+    if (!file || busy || !mayUpload) return;
     setError(null);
     setUploading(true);
     try {
@@ -90,14 +95,21 @@ export const FileUploadButton = ({
           busy ? <CircularProgress size={16} color="inherit" /> : <UploadFileRoundedIcon />
         }
         onClick={() => inputRef.current?.click()}
-        disabled={disabled || busy}
+        disabled={disabled || busy || !mayUpload}
       >
         {busy ? 'Uploading…' : label}
       </Button>
-      <Typography variant="caption" color="text.secondary" component="p" sx={{ mt: 0.75 }}>
-        PDF, Word, Excel, PowerPoint, CSV, text or an image, up to{' '}
-        {Math.round(DOCUMENT_MAX_BYTES / 1024 / 1024)} MB.
-      </Typography>
+      {mayUpload ? (
+        <Typography variant="caption" color="text.secondary" component="p" sx={{ mt: 0.75 }}>
+          PDF, Word, Excel, PowerPoint, CSV, text or an image, up to{' '}
+          {Math.round(DOCUMENT_MAX_BYTES / 1024 / 1024)} MB.
+        </Typography>
+      ) : (
+        // A standing note, not news: "note" rather than Alert's own "alert" role.
+        <Alert severity="info" role="note" sx={{ mt: 1 }}>
+          {UPLOAD_PERMISSION_NOTE}
+        </Alert>
+      )}
       {error && (
         <Typography variant="body2" color="error" role="alert" sx={{ mt: 0.75 }}>
           {error}

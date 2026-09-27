@@ -1,11 +1,13 @@
 import type { AdminResource, PermissionAction } from '@iaa/shared';
 import Alert from '@mui/material/Alert';
+import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 
 import { RequireAuth } from '../auth/RequireAuth';
 import { RequirePermission } from '../auth/RequirePermission';
 import { RequireRole } from '../auth/RequireRole';
 import { AppShell } from '../components/layout/AppShell';
+import { RouteSkeleton } from '../components/PageSkeleton';
 import AcceptInvitation from '../pages/AcceptInvitation';
 import AccountLayout from '../pages/account/AccountLayout';
 import EditProfile from '../pages/account/EditProfile';
@@ -16,33 +18,14 @@ import Settings from '../pages/account/Settings';
 import UpdatePassword from '../pages/account/UpdatePassword';
 import UserGuide from '../pages/account/UserGuide';
 import Analytics from '../pages/Analytics';
-import ApplicationDetailPage from '../pages/applications/ApplicationDetailPage';
-import ApplicationsPage from '../pages/applications/ApplicationsPage';
-import ReviewQueuePage from '../pages/applications/ReviewQueuePage';
 import Dashboard from '../pages/Dashboard';
 import Donations from '../pages/Donations';
 import EventDetail from '../pages/EventDetail';
 import EventEditor from '../pages/EventEditor';
 import Events from '../pages/Events';
-import FormDetailPage from '../pages/forms/FormDetailPage';
-import FormEditorPage from '../pages/forms/FormEditorPage';
-import FormsPage from '../pages/forms/FormsPage';
-import ImpactStoriesPage from '../pages/impact-stories/ImpactStoriesPage';
-import ImpactStoryEditorPage from '../pages/impact-stories/ImpactStoryEditorPage';
-import StoryFromProjectPage from '../pages/impact-stories/StoryFromProjectPage';
 import Login from '../pages/Login';
 import MediaLibrary from '../pages/MediaLibrary';
 import PrivacyRequests from '../pages/PrivacyRequests';
-import ProjectActivityTab from '../pages/projects/ProjectActivityTab';
-import ProjectDetailLayout from '../pages/projects/ProjectDetailLayout';
-import ProjectDocumentsTab from '../pages/projects/ProjectDocumentsTab';
-import ProjectEditorPage from '../pages/projects/ProjectEditorPage';
-import ProjectImpactTab from '../pages/projects/ProjectImpactTab';
-import ProjectMediaTab from '../pages/projects/ProjectMediaTab';
-import ProjectMilestonesTab from '../pages/projects/ProjectMilestonesTab';
-import ProjectOverviewTab from '../pages/projects/ProjectOverviewTab';
-import ProjectsPage from '../pages/projects/ProjectsPage';
-import ProjectTasksTab from '../pages/projects/ProjectTasksTab';
 import ResetPassword from '../pages/ResetPassword';
 import ResourceFormPage from '../pages/ResourceFormPage';
 import ResourcePage from '../pages/ResourcePage';
@@ -52,13 +35,49 @@ import SocialConnections from '../pages/SocialConnections';
 import SubmissionDetail from '../pages/SubmissionDetail';
 import Submissions from '../pages/Submissions';
 import Subscribers from '../pages/Subscribers';
-import AllTasksPage from '../pages/tasks/AllTasksPage';
-import MyTasksPage from '../pages/tasks/MyTasksPage';
-import TaskBoardPage from '../pages/tasks/TaskBoardPage';
-import TaskDetailPage from '../pages/tasks/TaskDetailPage';
-import TaskEditorPage from '../pages/tasks/TaskEditorPage';
 import UserAccessEditor from '../pages/UserAccessEditor';
 import Users from '../pages/Users';
+
+/*
+ * The work modules load on first visit rather than in the console's first
+ * download: together they made the one bundle nearly a quarter larger, and
+ * most sessions open only one of them, if any. Each page is its own chunk.
+ * Keep these imports dynamic; a static import from one of these folders here
+ * pulls it, and the drag and drop library the board uses, back into the
+ * entry chunk (app/lazy-routes.test.ts checks).
+ */
+
+// Projects
+const ProjectsPage = lazy(() => import('../pages/projects/ProjectsPage'));
+const ProjectEditorPage = lazy(() => import('../pages/projects/ProjectEditorPage'));
+const ProjectDetailLayout = lazy(() => import('../pages/projects/ProjectDetailLayout'));
+const ProjectOverviewTab = lazy(() => import('../pages/projects/ProjectOverviewTab'));
+const ProjectTasksTab = lazy(() => import('../pages/projects/ProjectTasksTab'));
+const ProjectMilestonesTab = lazy(() => import('../pages/projects/ProjectMilestonesTab'));
+const ProjectMediaTab = lazy(() => import('../pages/projects/ProjectMediaTab'));
+const ProjectImpactTab = lazy(() => import('../pages/projects/ProjectImpactTab'));
+const ProjectDocumentsTab = lazy(() => import('../pages/projects/ProjectDocumentsTab'));
+const ProjectActivityTab = lazy(() => import('../pages/projects/ProjectActivityTab'));
+
+// Tasks
+const MyTasksPage = lazy(() => import('../pages/tasks/MyTasksPage'));
+const AllTasksPage = lazy(() => import('../pages/tasks/AllTasksPage'));
+const TaskBoardPage = lazy(() => import('../pages/tasks/TaskBoardPage'));
+const TaskEditorPage = lazy(() => import('../pages/tasks/TaskEditorPage'));
+const TaskDetailPage = lazy(() => import('../pages/tasks/TaskDetailPage'));
+
+// Forms and applications
+const FormsPage = lazy(() => import('../pages/forms/FormsPage'));
+const FormEditorPage = lazy(() => import('../pages/forms/FormEditorPage'));
+const FormDetailPage = lazy(() => import('../pages/forms/FormDetailPage'));
+const ApplicationsPage = lazy(() => import('../pages/applications/ApplicationsPage'));
+const ReviewQueuePage = lazy(() => import('../pages/applications/ReviewQueuePage'));
+const ApplicationDetailPage = lazy(() => import('../pages/applications/ApplicationDetailPage'));
+
+// Impact stories
+const ImpactStoriesPage = lazy(() => import('../pages/impact-stories/ImpactStoriesPage'));
+const ImpactStoryEditorPage = lazy(() => import('../pages/impact-stories/ImpactStoryEditorPage'));
+const StoryFromProjectPage = lazy(() => import('../pages/impact-stories/StoryFromProjectPage'));
 
 // Says who can fix it, so a missing permission reads as a next step rather
 // than a dead end.
@@ -67,6 +86,20 @@ const NO_PERMISSION = (
     You do not have permission to view this page. An administrator can grant access under Users.
   </Alert>
 );
+
+/**
+ * A page whose code loads on first visit, with its shape on screen meanwhile.
+ * Navigation runs in a transition, so moving from one loaded page to another
+ * keeps the old page up until the new one is ready; the skeleton shows on a
+ * first visit or a reload.
+ */
+const deferred = (
+  page: JSX.Element,
+  variant: 'list' | 'form' | 'section' = 'list',
+): JSX.Element => <Suspense fallback={<RouteSkeleton variant={variant} />}>{page}</Suspense>;
+
+/** A project tab: loads inside the project's page, under its header and tabs. */
+const tab = (page: JSX.Element): JSX.Element => deferred(page, 'section');
 
 /**
  * A page behind one permission. Says so when the permission is missing
@@ -88,7 +121,9 @@ const editPage = (
   action: PermissionAction,
   page: JSX.Element,
 ): JSX.Element => (
-  <RequireRole roles={['admin', 'editor']}>{guarded(resource, action, page)}</RequireRole>
+  <RequireRole roles={['admin', 'editor']}>
+    {guarded(resource, action, deferred(page, 'form'))}
+  </RequireRole>
 );
 
 /** Admin route table: a public login and an authenticated console shell. */
@@ -321,7 +356,7 @@ export const App = (): JSX.Element => (
       />
       {/* Work: projects and tasks. The first path segment is the permission
           key, which is how the sidebar decides what to show (nav-config). */}
-      <Route path="projects" element={guarded('projects', 'read', <ProjectsPage />)} />
+      <Route path="projects" element={guarded('projects', 'read', deferred(<ProjectsPage />))} />
       <Route path="projects/new" element={editPage('projects', 'create', <ProjectEditorPage />)} />
       <Route
         path="projects/:projectId/edit"
@@ -329,47 +364,60 @@ export const App = (): JSX.Element => (
       />
       <Route
         path="projects/:projectId"
-        element={guarded('projects', 'read', <ProjectDetailLayout />)}
+        element={guarded('projects', 'read', deferred(<ProjectDetailLayout />))}
       >
-        <Route index element={<ProjectOverviewTab />} />
-        <Route path="tasks" element={<ProjectTasksTab />} />
-        <Route path="milestones" element={<ProjectMilestonesTab />} />
-        <Route path="media" element={<ProjectMediaTab />} />
-        <Route path="impact" element={<ProjectImpactTab />} />
-        <Route path="documents" element={<ProjectDocumentsTab />} />
-        <Route path="activity" element={<ProjectActivityTab />} />
+        <Route index element={tab(<ProjectOverviewTab />)} />
+        <Route path="tasks" element={tab(<ProjectTasksTab />)} />
+        <Route path="milestones" element={tab(<ProjectMilestonesTab />)} />
+        <Route path="media" element={tab(<ProjectMediaTab />)} />
+        <Route path="impact" element={tab(<ProjectImpactTab />)} />
+        <Route path="documents" element={tab(<ProjectDocumentsTab />)} />
+        <Route path="activity" element={tab(<ProjectActivityTab />)} />
       </Route>
       {/* The fixed task paths come before :taskKey. The router ranks a fixed
           segment above a parameter anyway; the order is for the reader. */}
-      <Route path="tasks" element={guarded('tasks', 'read', <MyTasksPage />)} />
-      <Route path="tasks/all" element={guarded('tasks', 'read', <AllTasksPage />)} />
-      <Route path="tasks/board" element={guarded('tasks', 'read', <TaskBoardPage />)} />
+      <Route path="tasks" element={guarded('tasks', 'read', deferred(<MyTasksPage />))} />
+      <Route path="tasks/all" element={guarded('tasks', 'read', deferred(<AllTasksPage />))} />
+      <Route path="tasks/board" element={guarded('tasks', 'read', deferred(<TaskBoardPage />))} />
       <Route path="tasks/new" element={editPage('tasks', 'create', <TaskEditorPage />)} />
-      <Route path="tasks/:taskKey" element={guarded('tasks', 'read', <TaskDetailPage />)} />
+      <Route
+        path="tasks/:taskKey"
+        element={guarded('tasks', 'read', deferred(<TaskDetailPage />))}
+      />
       <Route path="tasks/:taskKey/edit" element={editPage('tasks', 'update', <TaskEditorPage />)} />
       {/* Applications: the form builder and what people send through it. */}
-      <Route path="forms" element={guarded('forms', 'read', <FormsPage />)} />
+      <Route path="forms" element={guarded('forms', 'read', deferred(<FormsPage />))} />
       <Route path="forms/new" element={editPage('forms', 'create', <FormEditorPage />)} />
-      <Route path="forms/:formId" element={guarded('forms', 'read', <FormDetailPage />)} />
+      <Route
+        path="forms/:formId"
+        element={guarded('forms', 'read', deferred(<FormDetailPage />))}
+      />
       <Route path="forms/:formId/edit" element={editPage('forms', 'update', <FormEditorPage />)} />
-      <Route path="applications" element={guarded('applications', 'read', <ApplicationsPage />)} />
+      <Route
+        path="applications"
+        element={guarded('applications', 'read', deferred(<ApplicationsPage />))}
+      />
       <Route
         path="applications/review"
-        element={guarded('applications', 'read', <ReviewQueuePage />)}
+        element={guarded('applications', 'read', deferred(<ReviewQueuePage />))}
       />
       <Route
         path="applications/:applicationId"
-        element={guarded('applications', 'read', <ApplicationDetailPage />)}
+        element={guarded('applications', 'read', deferred(<ApplicationDetailPage />))}
       />
       {/* Impact stories. Drafts and Published are separate addresses so the
           tab survives a reload and can be linked to. */}
       <Route
         path="impact-stories"
-        element={guarded('impact-stories', 'read', <ImpactStoriesPage view="drafts" />)}
+        element={guarded('impact-stories', 'read', deferred(<ImpactStoriesPage view="drafts" />))}
       />
       <Route
         path="impact-stories/published"
-        element={guarded('impact-stories', 'read', <ImpactStoriesPage view="published" />)}
+        element={guarded(
+          'impact-stories',
+          'read',
+          deferred(<ImpactStoriesPage view="published" />),
+        )}
       />
       <Route
         path="impact-stories/new"

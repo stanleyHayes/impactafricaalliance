@@ -16,6 +16,8 @@ import {
   type FormStep,
 } from '@iaa/shared';
 
+import { formatEventTime } from '../../lib/event-utils';
+
 import type { ServerAnswerProblem } from './errors';
 
 /**
@@ -110,13 +112,24 @@ export const formatCalendarDate = (key: string): string => {
   return new Intl.DateTimeFormat('en-GB', { dateStyle: 'long', timeZone: 'UTC' }).format(date);
 };
 
-/** An instant in the reader's own time zone, such as "12 October 2026 at 17:00". */
+const instantDateFormatter = new Intl.DateTimeFormat('en-GB', {
+  dateStyle: 'long',
+  timeZone: 'UTC',
+});
+
+/**
+ * An instant on the house clock, such as "6 November 2026 at 12:00 PM GMT".
+ * Opening and closing times are deadlines read in both Ghana (GMT) and
+ * Nigeria (WAT), so they follow the events pages: a 12-hour time labelled
+ * GMT, never an unlabelled local time. The day is taken in UTC as well, so it
+ * always agrees with the time beside it.
+ */
 export const formatInstant = (iso: string): string => {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) {
     return iso;
   }
-  return new Intl.DateTimeFormat('en-GB', { dateStyle: 'long', timeStyle: 'short' }).format(date);
+  return `${instantDateFormatter.format(date)} at ${formatEventTime(iso)} GMT`;
 };
 
 /** A file size a person can read: "820 KB", "2.4 MB". */

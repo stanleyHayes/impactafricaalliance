@@ -17,7 +17,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { uploadToCloudinary } from '../../lib/cloudinary';
 import { theme } from '../../theme/theme';
 
-import { BlockEditor } from './BlockEditor';
+import { BlockEditor, blockAnnouncements } from './BlockEditor';
 import type { StoryBlockDraft } from './story-form';
 
 vi.mock('../../lib/cloudinary', () => ({ uploadToCloudinary: vi.fn() }));
@@ -60,7 +60,55 @@ const quote = (id: string, text: string): StoryBlockDraft => ({
 
 const order = (): string => screen.getByTestId('order').textContent ?? '';
 
+describe('blockAnnouncements', () => {
+  const blocks = [quote('quote-3f9a01', 'First words'), quote('quote-77c2b4', 'Second words')];
+  const announce = blockAnnouncements(blocks);
+  const active = { id: 'quote-77c2b4' } as never;
+  const over = { id: 'quote-3f9a01' } as never;
+
+  it('names the block and its position, never its id', () => {
+    const picked = announce.onDragStart({ active });
+    expect(picked).toContain('Block 2 (Quote)');
+    expect(picked).not.toContain('quote-77c2b4');
+    expect(announce.onDragOver({ active, over })).toBe('Block 2 (Quote) is over position 1 of 2.');
+    expect(announce.onDragEnd({ active, over })).toBe(
+      'Block 2 (Quote) dropped at position 1 of 2.',
+    );
+    expect(announce.onDragEnd({ active, over: null })).toBe(
+      'Block 2 (Quote) dropped where it was.',
+    );
+    expect(announce.onDragCancel({ active, over: null })).toBe(
+      'Moving Block 2 (Quote) was cancelled.',
+    );
+  });
+});
+
 describe('BlockEditor', () => {
+  it('tells a keyboard user how to drag, and names the block it picks up', async () => {
+    mount([quote('quote-3f9a01', 'First words'), quote('quote-77c2b4', 'Second words')]);
+    const handle = screen.getByRole('button', { name: 'Drag Block 2 (Quote) to reorder' });
+    expect(handle).toHaveAccessibleDescription(/To move a block, press Space to pick it up/);
+
+    handle.focus();
+    fireEvent.keyDown(handle, { code: 'Space', key: ' ' });
+    // jsdom lays every block out at 0,0, so the pick-up message is followed at
+    // once by an "is over" one; either way it names the block, not its id.
+    const live = await waitFor(() => {
+      const region = screen
+        .getAllByRole('status')
+        .find((node) => node.textContent?.includes('Block 2 (Quote)'));
+      expect(region).toBeDefined();
+      return region as HTMLElement;
+    });
+    expect(live).not.toHaveTextContent('quote-77c2b4');
+
+    // The sensor listens on the document a tick after the drag starts.
+    await act(() => new Promise((resolve) => setTimeout(resolve, 0)));
+    fireEvent.keyDown(handle, { code: 'Escape', key: 'Escape' });
+    await waitFor(() => expect(live).toHaveTextContent('Moving Block 2 (Quote) was cancelled.'));
+    expect(order()).toBe('quote-3f9a01,quote-77c2b4');
+  });
+
   it('adds a block of the chosen type from the menu', () => {
     mount([]);
     expect(screen.getByText(/No blocks yet/)).toBeInTheDocument();

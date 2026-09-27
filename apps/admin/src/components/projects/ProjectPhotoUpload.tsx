@@ -11,6 +11,7 @@ import { useRef, useState, type DragEvent } from 'react';
 
 import { uploadToCloudinary } from '../../lib/cloudinary';
 import { downscaleImage } from '../../lib/downscale-image';
+import { UPLOAD_PERMISSION_NOTE, useCanUploadFiles } from '../files/upload-permission';
 
 /** The image profile's limit; bigger photos are shrunk first and only refused if still too big. */
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -52,7 +53,9 @@ export const ProjectPhotoUpload = ({
   const [problems, setProblems] = useState<string[]>([]);
   const [dragging, setDragging] = useState(false);
   const uploading = progress !== null;
-  const locked = disabled || uploading || remaining <= 0;
+  // Editing the project does not imply media:create, which signing needs.
+  const mayUpload = useCanUploadFiles();
+  const locked = disabled || uploading || remaining <= 0 || !mayUpload;
 
   const uploadAll = async (files: File[]): Promise<void> => {
     if (locked || files.length === 0) return;
@@ -149,6 +152,11 @@ export const ProjectPhotoUpload = ({
           </Typography>
         )}
       </Box>
+      {!mayUpload && (
+        <Alert severity="info" role="note">
+          {UPLOAD_PERMISSION_NOTE}
+        </Alert>
+      )}
       {progress && (
         <Box role="status" aria-live="polite">
           <Typography variant="body2" sx={{ mb: 0.75 }}>

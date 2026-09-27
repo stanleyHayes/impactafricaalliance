@@ -2,24 +2,24 @@ import { STORY_BLOCK_LABELS } from '@iaa/shared';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import InputAdornment from '@mui/material/InputAdornment';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import type { ReactNode } from 'react';
 
 import { PROGRAMME_OPTIONS, withAnyOption } from '../../lib/select-options';
 import { slugify } from '../../lib/slug';
 import { OptionSelect } from '../fields/OptionSelect';
 import { TagsField } from '../fields/TagsField';
+import { ReviewSummary } from '../forms/ReviewSummary';
 
 import { ImageWithAltField } from './blocks/fields';
 import { ProjectPicker } from './ProjectPicker';
 import {
   SEO_DESCRIPTION_LIMIT,
   SEO_TITLE_LIMIT,
+  STORY_FORM_STEPS,
   type StoryFieldErrors,
   type StoryFormState,
 } from './story-form';
@@ -225,48 +225,6 @@ export const StorySearchStep = ({
   );
 };
 
-const ReviewRow = ({ label, children }: { label: string; children: ReactNode }): JSX.Element => (
-  <Box
-    sx={{
-      display: 'grid',
-      gridTemplateColumns: { xs: '1fr', sm: '160px minmax(0, 1fr)' },
-      gap: { xs: 0.25, sm: 2 },
-      py: 1,
-    }}
-  >
-    <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
-      {label}
-    </Typography>
-    <Box sx={{ minWidth: 0, overflowWrap: 'anywhere' }}>{children}</Box>
-  </Box>
-);
-
-const ReviewSection = ({
-  title,
-  onEdit,
-  disabled,
-  children,
-}: {
-  title: string;
-  onEdit: () => void;
-  disabled: boolean;
-  children: ReactNode;
-}): JSX.Element => (
-  <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 2, p: { xs: 1.5, sm: 2 } }}>
-    <Stack direction="row" justifyContent="space-between" alignItems="center">
-      <Typography component="h3" variant="subtitle1" sx={{ fontWeight: 700 }}>
-        {title}
-      </Typography>
-      <Button size="small" onClick={onEdit} disabled={disabled}>
-        Edit {title.toLowerCase()}
-      </Button>
-    </Stack>
-    {children}
-  </Box>
-);
-
-const dash = (value: string | undefined | null): string => (value?.trim() ? value : '—');
-
 /** Everything on one screen before saving, with a link back to each step. */
 export const StoryReviewSummary = ({
   form,
@@ -279,58 +237,81 @@ export const StoryReviewSummary = ({
 }): JSX.Element => {
   const programme = PROGRAMME_OPTIONS.find((option) => option.value === form.programme)?.label;
   return (
-    <Stack spacing={2}>
-      <ReviewSection title="Basics" onEdit={() => goTo(0)} disabled={disabled}>
-        <ReviewRow label="Title">{dash(form.title)}</ReviewRow>
-        <ReviewRow label="Web address">/impact/stories/{form.slug}</ReviewRow>
-        <ReviewRow label="Excerpt">{dash(form.excerpt)}</ReviewRow>
-        <ReviewRow label="Cover">
-          {form.cover ? (
-            <Stack direction="row" spacing={1.5} alignItems="center">
-              <Box
-                component="img"
-                src={form.cover.url}
-                alt=""
-                sx={{ width: 72, height: 48, objectFit: 'cover', borderRadius: 1 }}
-              />
-              <Typography variant="body2">{form.cover.alt?.trim() || 'No alt text yet'}</Typography>
-            </Stack>
-          ) : (
-            '—'
-          )}
-        </ReviewRow>
-      </ReviewSection>
-      <ReviewSection title="Classification" onEdit={() => goTo(1)} disabled={disabled}>
-        <ReviewRow label="Project">{dash(form.project?.title)}</ReviewRow>
-        <ReviewRow label="Programme">{dash(programme)}</ReviewRow>
-        <ReviewRow label="Country">{dash(form.country)}</ReviewRow>
-        <ReviewRow label="Tags">{form.tags.length > 0 ? form.tags.join(', ') : '—'}</ReviewRow>
-      </ReviewSection>
-      <ReviewSection title="Blocks" onEdit={() => goTo(2)} disabled={disabled}>
-        {form.blocks.length === 0 ? (
-          <Typography variant="body2" sx={{ py: 1 }}>
-            No blocks yet.
-          </Typography>
-        ) : (
-          <Stack direction="row" useFlexGap flexWrap="wrap" gap={0.75} sx={{ py: 1 }}>
-            {form.blocks.map((block, index) => (
-              <Chip
-                key={block.id}
-                size="small"
-                label={`${index + 1}. ${STORY_BLOCK_LABELS[block.type]}`}
-              />
-            ))}
-          </Stack>
-        )}
-      </ReviewSection>
-      <ReviewSection title="Search & sharing" onEdit={() => goTo(3)} disabled={disabled}>
-        <ReviewRow label="Search title">{form.seoTitle.trim() || 'Uses the title'}</ReviewRow>
-        <ReviewRow label="Search description">
-          {form.seoDescription.trim() ? form.seoDescription : 'Uses the excerpt'}
-        </ReviewRow>
-        <ReviewRow label="Share image">{form.seoImage ? 'Set' : 'Uses the cover'}</ReviewRow>
-      </ReviewSection>
-    </Stack>
+    <ReviewSummary
+      onEdit={goTo}
+      disabled={disabled}
+      sections={[
+        {
+          title: STORY_FORM_STEPS[0],
+          step: 0,
+          items: [
+            { label: 'Title', value: form.title.trim() },
+            { label: 'Web address', value: `/impact/stories/${form.slug}` },
+            { label: 'Excerpt', value: form.excerpt.trim(), fullRow: true },
+            {
+              label: 'Cover',
+              value: form.cover ? (
+                <Stack direction="row" spacing={1.5} alignItems="center" component="span">
+                  <Box
+                    component="img"
+                    src={form.cover.url}
+                    alt=""
+                    sx={{ width: 72, height: 48, objectFit: 'cover', borderRadius: 1 }}
+                  />
+                  <span>{form.cover.alt?.trim() || 'No alt text yet'}</span>
+                </Stack>
+              ) : null,
+            },
+          ],
+        },
+        {
+          title: STORY_FORM_STEPS[1],
+          step: 1,
+          items: [
+            { label: 'Project', value: form.project?.title },
+            { label: 'Programme', value: programme },
+            { label: 'Country', value: form.country.trim() },
+            { label: 'Tags', value: form.tags.join(', ') },
+          ],
+        },
+        {
+          title: STORY_FORM_STEPS[2],
+          step: 2,
+          items: [
+            {
+              label: 'Blocks',
+              fullRow: true,
+              value:
+                form.blocks.length > 0 ? (
+                  <Stack direction="row" useFlexGap flexWrap="wrap" gap={0.75} component="span">
+                    {form.blocks.map((block, index) => (
+                      <Chip
+                        key={block.id}
+                        size="small"
+                        component="span"
+                        label={`${index + 1}. ${STORY_BLOCK_LABELS[block.type]}`}
+                      />
+                    ))}
+                  </Stack>
+                ) : null,
+            },
+          ],
+        },
+        {
+          title: STORY_FORM_STEPS[3],
+          step: 3,
+          items: [
+            { label: 'Search title', value: form.seoTitle.trim() || 'Uses the title' },
+            {
+              label: 'Search description',
+              value: form.seoDescription.trim() || 'Uses the excerpt',
+              fullRow: true,
+            },
+            { label: 'Share image', value: form.seoImage ? 'Set' : 'Uses the cover' },
+          ],
+        },
+      ]}
+    />
   );
 };
 

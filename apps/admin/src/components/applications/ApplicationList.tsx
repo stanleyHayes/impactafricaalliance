@@ -26,28 +26,37 @@ const reviewText = (item: ApplicationListItem): string =>
     ? 'No reviews yet'
     : `${item.reviewCount} ${item.reviewCount === 1 ? 'review' : 'reviews'}`;
 
+/**
+ * The table's frame: bordered and on paper, like the submissions and project
+ * tables, rather than showing the page's canvas through it.
+ */
+const TABLE_FRAME_SX = {
+  display: { xs: 'none', md: 'block' },
+  border: 1,
+  borderColor: 'divider',
+  borderRadius: 3,
+  bgcolor: 'background.paper',
+} as const;
+
+const COLUMNS = ['Applicant', 'Form', 'Submitted', 'Status', 'Reviews'] as const;
+
+const ColumnHeads = (): JSX.Element => (
+  <TableHead>
+    <TableRow>
+      {COLUMNS.map((column) => (
+        <TableCell key={column}>{column}</TableCell>
+      ))}
+    </TableRow>
+  </TableHead>
+);
+
 /** Wide screens: a table, each row opening the application. */
 const ApplicationTable = ({ items }: { items: ApplicationListItem[] }): JSX.Element => {
   const navigate = useNavigate();
   return (
-    <TableContainer
-      sx={{
-        display: { xs: 'none', md: 'block' },
-        border: 1,
-        borderColor: 'divider',
-        borderRadius: 3,
-      }}
-    >
+    <TableContainer sx={TABLE_FRAME_SX}>
       <Table aria-label="Applications">
-        <TableHead>
-          <TableRow>
-            <TableCell>Applicant</TableCell>
-            <TableCell>Form</TableCell>
-            <TableCell>Submitted</TableCell>
-            <TableCell>Status</TableCell>
-            <TableCell>Reviews</TableCell>
-          </TableRow>
-        </TableHead>
+        <ColumnHeads />
         <TableBody>
           {items.map((item) => (
             <TableRow
@@ -145,19 +154,76 @@ export const ApplicationList = ({ items }: { items: ApplicationListItem[] }): JS
   </>
 );
 
-/** The list's shape while it loads: rows on wide screens, cards on narrow ones. */
-export const ApplicationListSkeleton = ({ rows = 6 }: { rows?: number }): JSX.Element => (
+/** One card's shape while it loads. */
+const CardSkeleton = (): JSX.Element => (
+  <Card variant="outlined" sx={{ borderRadius: 3, p: 2 }}>
+    <Stack spacing={1}>
+      <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+        <Skeleton variant="text" width="45%" />
+        <Skeleton variant="rounded" width={84} height={24} sx={{ borderRadius: 99 }} />
+      </Stack>
+      <Skeleton variant="text" width="70%" />
+      <Skeleton variant="text" width="50%" sx={{ fontSize: '0.75rem' }} />
+    </Stack>
+  </Card>
+);
+
+/**
+ * The list's shape while it loads: on wide screens the same paper table with
+ * its real column heads and placeholder rows, on narrow ones the cards. The
+ * review queue, which shows cards at every width, asks for `cards`.
+ */
+export const ApplicationListSkeleton = ({
+  rows = 6,
+  layout = 'table',
+}: {
+  rows?: number;
+  layout?: 'table' | 'cards';
+}): JSX.Element => (
   <Box aria-busy="true" aria-label="Loading applications">
-    <Stack spacing={1} sx={{ display: { xs: 'none', md: 'flex' } }}>
-      <Skeleton variant="rounded" height={48} />
-      {Array.from({ length: rows }, (_, index) => (
-        <Skeleton key={index} variant="rounded" height={64} />
-      ))}
-    </Stack>
-    <Stack spacing={1.5} sx={{ display: { xs: 'flex', md: 'none' } }}>
+    {layout === 'table' && (
+      <TableContainer sx={TABLE_FRAME_SX}>
+        <Table aria-hidden>
+          <ColumnHeads />
+          <TableBody>
+            {Array.from({ length: rows }, (_, index) => (
+              <TableRow key={index}>
+                <TableCell>
+                  <Skeleton variant="text" width="60%" />
+                  <Skeleton variant="text" width="85%" sx={{ fontSize: '0.875rem' }} />
+                </TableCell>
+                <TableCell>
+                  <Skeleton variant="text" width="70%" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton variant="text" width={120} />
+                </TableCell>
+                <TableCell>
+                  <Skeleton variant="rounded" width={84} height={24} sx={{ borderRadius: 99 }} />
+                </TableCell>
+                <TableCell>
+                  <Skeleton variant="text" width={90} />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    )}
+    <Box
+      sx={{
+        display: layout === 'table' ? { xs: 'grid', md: 'none' } : 'grid',
+        gap: layout === 'table' ? 1.5 : 2,
+        gridTemplateColumns: {
+          xs: '1fr',
+          md: layout === 'table' ? '1fr' : 'repeat(2, minmax(0, 1fr))',
+        },
+      }}
+      aria-hidden
+    >
       {Array.from({ length: Math.min(rows, 4) }, (_, index) => (
-        <Skeleton key={index} variant="rounded" height={112} sx={{ borderRadius: 3 }} />
+        <CardSkeleton key={index} />
       ))}
-    </Stack>
+    </Box>
   </Box>
 );

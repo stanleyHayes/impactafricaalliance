@@ -1,6 +1,6 @@
 import type { ApplicationListItem } from '@iaa/shared';
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import FactCheckIcon from '@mui/icons-material/FactCheck';
-import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded';
 import Alert from '@mui/material/Alert';
@@ -17,12 +17,17 @@ import {
   ApplicationListSkeleton,
 } from '../../components/applications/ApplicationList';
 import { relativeTime } from '../../components/audit/ActivityTimeline';
-import { ServerPagination, usePageParam } from '../../components/data/ServerPagination';
+import {
+  OutOfRangePage,
+  ServerPagination,
+  usePageParam,
+} from '../../components/data/ServerPagination';
 import { EmptyState } from '../../components/EmptyState';
 import { PageHeader } from '../../components/PageHeader';
 import { useApplications, useChangeApplicationStatus } from '../../lib/applications';
 import { formatInstant } from '../../lib/forms';
 import { pageGuides } from '../../lib/page-guides';
+import { VISUALLY_HIDDEN } from '../../lib/visually-hidden';
 
 const PAGE_SIZE = 12;
 
@@ -57,12 +62,16 @@ const QuickActions = ({ item }: { item: ApplicationListItem }): JSX.Element => {
           {change.isPending ? 'Starting…' : 'Start review'}
         </Button>
       )}
+      {/* Opens in this tab, so not the new-tab icon the rest of the console
+          keeps for links that leave it; and named, so a list of links does
+          not read "Open, Open, Open". */}
       <Button
         size="small"
         variant="contained"
         component={RouterLink}
         to={`/applications/${item.id}`}
-        startIcon={<OpenInNewRoundedIcon />}
+        endIcon={<ArrowForwardRoundedIcon />}
+        aria-label={`Open ${item.applicant.name ?? 'the application'} (${item.reference})`}
       >
         Open
       </Button>
@@ -91,7 +100,7 @@ const ReviewQueuePage = (): JSX.Element => {
   });
 
   const body = (): JSX.Element => {
-    if (query.isPending) return <ApplicationListSkeleton rows={4} />;
+    if (query.isPending) return <ApplicationListSkeleton rows={4} layout="cards" />;
     if (query.isError) {
       return (
         <Alert
@@ -101,6 +110,10 @@ const ReviewQueuePage = (): JSX.Element => {
           {query.error.message || 'The review queue could not be loaded.'}
         </Alert>
       );
+    }
+    // Past the last page: deciding the last one on it moves it out of the queue.
+    if (query.data.items.length === 0 && query.data.total > 0) {
+      return <OutOfRangePage total={query.data.total} noun="application" compact={false} />;
     }
     if (query.data.items.length === 0) {
       return (
@@ -135,18 +148,7 @@ const ReviewQueuePage = (): JSX.Element => {
         help={pageGuides['review-queue']}
         count={query.data?.total}
       />
-      <Typography
-        ref={heading}
-        tabIndex={-1}
-        component="h2"
-        sx={{
-          position: 'absolute',
-          width: 1,
-          height: 1,
-          overflow: 'hidden',
-          clip: 'rect(0 0 0 0)',
-        }}
-      >
+      <Typography ref={heading} tabIndex={-1} component="h2" sx={VISUALLY_HIDDEN}>
         Waiting for a decision
       </Typography>
       {body()}

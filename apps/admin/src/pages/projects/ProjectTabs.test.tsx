@@ -1,4 +1,4 @@
-import type { Permission } from '@iaa/shared';
+import type { Milestone, Permission } from '@iaa/shared';
 import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -87,6 +87,74 @@ describe('project tabs', () => {
       ['cohort', 'done'],
     ]);
     expect(body.milestones.every((item) => !('completedAt' in item))).toBe(true);
+  });
+
+  describe('while a milestone change saves', () => {
+    const [launch, cohort] = project.milestones as [Milestone, Milestone];
+
+    // Holds the PATCH open until the test lets it finish, as a slow server would.
+    const holdSave = (): (() => void) => {
+      let finish = (): void => undefined;
+      patch.mockImplementation(
+        (_path: string, body: unknown) =>
+          new Promise((resolve) => {
+            finish = () => resolve({ ...projectFixture(), ...(body as object) });
+          }),
+      );
+      return () => finish();
+    };
+
+    it('keeps focus on the arrow, ignores a second press, and keeps focus on the moved row', async () => {
+      const finish = holdSave();
+      setup('milestones');
+      const up = await screen.findByRole('button', { name: 'Move First cohort up' });
+      up.focus();
+      // Enter on a focused button is a click.
+      fireEvent.click(up);
+      await waitFor(() => expect(up).toHaveAttribute('aria-disabled', 'true'));
+      // Disabling it would drop focus to the page; it stays put and does nothing.
+      expect(up).toHaveFocus();
+      expect(up).not.toBeDisabled();
+      fireEvent.click(up);
+      fireEvent.click(screen.getByRole('checkbox', { name: 'Mark done: First cohort' }));
+      expect(patch).toHaveBeenCalledTimes(1);
+
+      // What the server holds once the move is saved.
+      serve({ milestones: [cohort, launch] });
+      finish();
+      // First cohort is now first, so its up arrow is off; focus moves to its down arrow.
+      await waitFor(() =>
+        expect(screen.getByRole('button', { name: 'Move First cohort up' })).toBeDisabled(),
+      );
+      await waitFor(() =>
+        expect(screen.getByRole('button', { name: 'Move First cohort down' })).toHaveFocus(),
+      );
+      await waitFor(() =>
+        expect(screen.getByRole('button', { name: 'Move First cohort down' })).not.toHaveAttribute(
+          'aria-disabled',
+        ),
+      );
+      expect(patch).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps focus on the tick box while the tick saves', async () => {
+      const finish = holdSave();
+      setup('milestones');
+      const box = await screen.findByRole('checkbox', { name: 'Mark done: First cohort' });
+      box.focus();
+      fireEvent.click(box);
+      await waitFor(() => expect(box).toHaveAttribute('aria-disabled', 'true'));
+      expect(box).toHaveFocus();
+      expect(box).not.toBeDisabled();
+      fireEvent.click(box);
+      expect(patch).toHaveBeenCalledTimes(1);
+
+      serve({ milestones: [launch, { ...cohort, status: 'done' }] });
+      finish();
+      const reopen = await screen.findByRole('checkbox', { name: 'Reopen: First cohort' });
+      expect(reopen).toHaveFocus();
+      await waitFor(() => expect(reopen).not.toHaveAttribute('aria-disabled'));
+    });
   });
 
   it('marks a hand-set figure and offers to go back to counting', async () => {

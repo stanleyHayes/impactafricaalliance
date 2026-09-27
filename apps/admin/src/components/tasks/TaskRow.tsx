@@ -7,8 +7,12 @@ import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
 import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
+import { useId } from 'react';
+
+import { VISUALLY_HIDDEN } from '../../lib/visually-hidden';
 
 import { PersonAvatars } from './PersonAvatars';
+import { dueState, taskPriorityLabel, taskStatusLabel } from './task-display';
 import { TaskDueChip } from './TaskDueChip';
 import { TaskPriorityChip } from './TaskPriorityChip';
 import { TaskStatusChip } from './TaskStatusChip';
@@ -30,10 +34,39 @@ export const ChecklistCount = ({ task }: { task: TaskListItem }): JSX.Element | 
     </Stack>
   ) : null;
 
+const plural = (count: number, one: string, many: string): string =>
+  `${count} ${count === 1 ? one : many}`;
+
+/**
+ * What a row shows besides its key and title, in words, for screen readers:
+ * a button's content is not read out, so the chips and counts would otherwise
+ * be heard by nobody. The status is always said, even in a list grouped by it.
+ */
+export const taskRowSummary = (task: TaskListItem): string =>
+  [
+    taskStatusLabel(task.status),
+    `${taskPriorityLabel(task.priority)} priority`,
+    dueState(task.dueDate, task.status).label,
+    task.project?.title,
+    task.checklistTotal > 0
+      ? `${task.checklistDone} of ${task.checklistTotal} checklist items done`
+      : null,
+    task.commentCount > 0 ? plural(task.commentCount, 'comment', 'comments') : null,
+    task.assignees.length > 0
+      ? `Assigned to ${task.assignees.map((person) => person.name).join(', ')}`
+      : 'Unassigned',
+  ]
+    .filter(Boolean)
+    .join('. ');
+
 /**
  * One task in a compact list: My tasks, a project's Tasks tab. The whole row
  * opens the task; on a phone the chips wrap under the title rather than
  * pushing the page sideways.
+ *
+ * Named by its key and title, and described by the rest (`taskRowSummary`).
+ * Finished work is struck through and quieter in colour, never faded as a
+ * whole: faded, the small text fell below the contrast it needs to be read.
  */
 export const TaskRow = ({
   task,
@@ -43,93 +76,99 @@ export const TaskRow = ({
   task: TaskListItem;
   onOpen: (key: string) => void;
   showStatus?: boolean;
-}): JSX.Element => (
-  <Box component="li" sx={{ listStyle: 'none' }}>
-    <ButtonBase
-      onClick={() => onOpen(task.key)}
-      aria-label={`Open ${task.key}: ${task.title}`}
-      sx={{
-        width: '100%',
-        display: 'grid',
-        gridTemplateColumns: { xs: 'minmax(0, 1fr) auto', md: 'minmax(0, 1fr) auto auto' },
-        alignItems: 'center',
-        gap: { xs: 1, md: 2 },
-        px: { xs: 1.5, md: 2 },
-        py: 1.25,
-        textAlign: 'left',
-        borderRadius: 2,
-        opacity: task.status === 'done' ? 0.72 : 1,
-        '&:hover': { bgcolor: (theme) => alpha(theme.palette.primary.main, 0.06) },
-        '&.Mui-focusVisible': {
-          outline: '2px solid',
-          outlineColor: 'primary.main',
-          outlineOffset: -2,
-        },
-      }}
-    >
-      <Box sx={{ minWidth: 0 }}>
-        <Stack direction="row" spacing={1} alignItems="baseline" sx={{ minWidth: 0 }}>
-          <Typography
-            variant="caption"
-            sx={{ fontWeight: 750, color: 'text.secondary', flexShrink: 0 }}
-          >
-            {task.key}
-          </Typography>
-          <Typography
-            variant="body2"
-            sx={{
-              fontWeight: 650,
-              minWidth: 0,
-              textDecoration: task.status === 'done' ? 'line-through' : 'none',
-            }}
-            noWrap
-          >
-            {task.title}
-          </Typography>
-        </Stack>
-        <Stack
-          direction="row"
-          spacing={0.75}
-          useFlexGap
-          flexWrap="wrap"
-          alignItems="center"
-          sx={{ mt: 0.75 }}
-        >
-          {showStatus && <TaskStatusChip status={task.status} />}
-          <TaskPriorityChip priority={task.priority} />
-          <TaskDueChip dueDate={task.dueDate} status={task.status} />
-          {task.project && (
-            <Typography variant="caption" color="text.secondary" noWrap sx={{ maxWidth: 220 }}>
-              {task.project.title}
-            </Typography>
-          )}
-        </Stack>
-      </Box>
-      <Stack
-        direction="row"
-        spacing={1.25}
-        alignItems="center"
-        sx={{ display: { xs: 'none', md: 'flex' }, color: 'text.secondary' }}
+}): JSX.Element => {
+  const id = useId();
+  const done = task.status === 'done';
+  return (
+    <Box component="li" sx={{ listStyle: 'none' }}>
+      <ButtonBase
+        onClick={() => onOpen(task.key)}
+        aria-labelledby={`${id}-key ${id}-title`}
+        aria-describedby={`${id}-summary`}
+        sx={{
+          width: '100%',
+          display: 'grid',
+          gridTemplateColumns: { xs: 'minmax(0, 1fr) auto', md: 'minmax(0, 1fr) auto auto' },
+          alignItems: 'center',
+          gap: { xs: 1, md: 2 },
+          px: { xs: 1.5, md: 2 },
+          py: 1.25,
+          textAlign: 'left',
+          borderRadius: 2,
+          '&:hover': { bgcolor: (theme) => alpha(theme.palette.primary.main, 0.06) },
+          '&.Mui-focusVisible': {
+            outline: '2px solid',
+            outlineColor: 'primary.main',
+            outlineOffset: -2,
+          },
+        }}
       >
-        <ChecklistCount task={task} />
-        {task.commentCount > 0 && (
-          <Stack
-            direction="row"
-            spacing={0.5}
-            alignItems="center"
-            aria-label={`${task.commentCount} comments`}
-          >
-            <ChatBubbleOutlineRoundedIcon sx={{ fontSize: 15 }} aria-hidden />
-            <Typography variant="caption" sx={{ fontWeight: 650 }} aria-hidden>
-              {task.commentCount}
+        <Box sx={{ minWidth: 0 }}>
+          <Stack direction="row" spacing={1} alignItems="baseline" sx={{ minWidth: 0 }}>
+            <Typography
+              id={`${id}-key`}
+              variant="caption"
+              sx={{ fontWeight: 750, color: 'text.secondary', flexShrink: 0 }}
+            >
+              {task.key}
+            </Typography>
+            <Typography
+              id={`${id}-title`}
+              variant="body2"
+              sx={{
+                fontWeight: 650,
+                minWidth: 0,
+                color: done ? 'text.secondary' : 'text.primary',
+                textDecoration: done ? 'line-through' : 'none',
+              }}
+              noWrap
+            >
+              {task.title}
             </Typography>
           </Stack>
-        )}
-      </Stack>
-      <PersonAvatars people={task.assignees} />
-    </ButtonBase>
-  </Box>
-);
+          <Stack
+            direction="row"
+            spacing={0.75}
+            useFlexGap
+            flexWrap="wrap"
+            alignItems="center"
+            sx={{ mt: 0.75 }}
+          >
+            {showStatus && <TaskStatusChip status={task.status} />}
+            <TaskPriorityChip priority={task.priority} />
+            <TaskDueChip dueDate={task.dueDate} status={task.status} />
+            {task.project && (
+              <Typography variant="caption" color="text.secondary" noWrap sx={{ maxWidth: 220 }}>
+                {task.project.title}
+              </Typography>
+            )}
+          </Stack>
+        </Box>
+        <Stack
+          direction="row"
+          spacing={1.25}
+          alignItems="center"
+          sx={{ display: { xs: 'none', md: 'flex' }, color: 'text.secondary' }}
+        >
+          <ChecklistCount task={task} />
+          {task.commentCount > 0 && (
+            <Stack direction="row" spacing={0.5} alignItems="center">
+              <ChatBubbleOutlineRoundedIcon sx={{ fontSize: 15 }} aria-hidden />
+              <Typography variant="caption" sx={{ fontWeight: 650 }} aria-hidden>
+                {task.commentCount}
+              </Typography>
+            </Stack>
+          )}
+        </Stack>
+        <PersonAvatars people={task.assignees} />
+        {/* Absolutely placed, so it takes no cell in the row's grid. */}
+        <Box component="span" id={`${id}-summary`} sx={VISUALLY_HIDDEN}>
+          {taskRowSummary(task)}
+        </Box>
+      </ButtonBase>
+    </Box>
+  );
+};
 
 /** The loading shape of a compact list: rows the height a task row takes. */
 export const TaskRowsSkeleton = ({ rows = 3 }: { rows?: number }): JSX.Element => (

@@ -25,7 +25,7 @@ import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
 import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { taskStatusLabel } from '../task-display';
 import { TaskStatusChip } from '../TaskStatusChip';
@@ -172,6 +172,38 @@ export interface TaskBoardViewProps {
 }
 
 /**
+ * Keeps focus with a card whose Move button had it when the card was drawn
+ * afresh: a card the Move menu sends to another column is a new card there,
+ * and without this focus would fall to the page, leaving a keyboard user to
+ * find their place again. Each button registers itself, and says when it goes.
+ */
+const useMoveButtonFocus = (): CardActions['registerMoveButton'] => {
+  const buttons = useRef(new Map<string, HTMLButtonElement>());
+  // The card whose focused button has just gone, waiting for its new one.
+  const following = useRef<string | null>(null);
+
+  return useCallback((taskId: string, button: HTMLButtonElement) => {
+    buttons.current.set(taskId, button);
+    if (following.current === taskId) {
+      following.current = null;
+      button.focus();
+    }
+    // Runs while the old button is still in the page, so it can tell whether
+    // it has focus to hand on.
+    return () => {
+      const hadFocus = document.activeElement === button;
+      if (buttons.current.get(taskId) === button) {
+        buttons.current.delete(taskId);
+        if (hadFocus) following.current = taskId;
+      } else if (hadFocus) {
+        // The new button arrived first: hand focus straight to it.
+        buttons.current.get(taskId)?.focus();
+      }
+    };
+  }, []);
+};
+
+/**
  * The Kanban board: a column per status in `TASK_BOARD_COLUMNS` order.
  *
  * Built on dnd-kit, which handles mouse, touch and keyboard dragging and
@@ -225,7 +257,8 @@ export const TaskBoardView = ({
     if (position) onMove(active, position);
   };
 
-  const actions: CardActions = { onOpen, onMoveTo, onStep };
+  const registerMoveButton = useMoveButtonFocus();
+  const actions: CardActions = { onOpen, onMoveTo, onStep, registerMoveButton };
 
   return (
     <DndContext
@@ -238,7 +271,7 @@ export const TaskBoardView = ({
         announcements,
         screenReaderInstructions: {
           draggable:
-            'To move a card, press Space to pick it up, the arrow keys to move it, and Space again to drop it. The More button on each card offers the same moves as a menu.',
+            'To move a card, press Space to pick it up, the arrow keys to move it, and Space again to drop it. The Move button on each card offers the same moves as a menu.',
         },
       }}
     >

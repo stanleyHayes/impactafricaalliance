@@ -2,10 +2,12 @@ import type { AuditEvent, Paginated } from '@iaa/shared';
 import { ThemeProvider } from '@mui/material/styles';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import type { ComponentProps } from 'react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { api } from '../../lib/api-client';
+import { projectChangeLabel, taskChangeLabel } from '../../lib/select-options';
 import { theme } from '../../theme/theme';
 
 import { ActivityTimeline, relativeTime } from './ActivityTimeline';
@@ -44,7 +46,10 @@ afterEach(() => {
 
 const Address = (): JSX.Element => <output>{useLocation().search}</output>;
 
-const setup = (path = '/projects/p1/activity'): void => {
+const setup = (
+  path = '/projects/p1/activity',
+  formatValue?: ComponentProps<typeof ActivityTimeline>['formatValue'],
+): void => {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   clients.push(client);
   render(
@@ -59,6 +64,7 @@ const setup = (path = '/projects/p1/activity'): void => {
                   <ActivityTimeline
                     endpoint="/admin/projects/p1/activity"
                     queryKey={['projects', 'p1', 'activity']}
+                    formatValue={formatValue}
                   />
                   <Address />
                 </>
@@ -80,6 +86,39 @@ describe('ActivityTimeline', () => {
     expect(screen.getByText('Status changed')).toBeInTheDocument();
     expect(screen.getByText(/planned → active/)).toBeInTheDocument();
     expect(api.get).toHaveBeenCalledWith('/admin/projects/p1/activity?page=1&pageSize=20');
+  });
+
+  it('gives the time on the 12-hour clock the rest of the console uses', async () => {
+    vi.mocked(api.get).mockResolvedValue(page([event()]));
+    setup();
+    await screen.findByText('Moved the project to Active');
+    const time = document.querySelector('time');
+    expect(time).toHaveAttribute('dateTime', '2026-09-20T10:00:00.000Z');
+    // Whatever the machine's zone, the clock reads "h:mm am|pm", never "10:00".
+    expect(time?.getAttribute('title')).toMatch(/, \d{1,2}:\d{2}\s?(am|pm)$/i);
+  });
+
+  it('shows changed values in the words the screens use when given a formatter', async () => {
+    vi.mocked(api.get).mockResolvedValue(
+      page([
+        event({
+          summary: 'Moved the project from Planned to Active',
+          changes: [
+            { field: 'status', from: 'planned', to: 'active' },
+            { field: 'priority', from: 'low', to: '' },
+            { field: 'title', from: 'planned', to: 'Clinic' },
+          ],
+        }),
+      ]),
+    );
+    setup('/projects/p1/activity', projectChangeLabel);
+    await screen.findByText('Moved the project from Planned to Active');
+    const changes = screen.getAllByRole('listitem').map((item) => item.textContent);
+    expect(changes).toContain('Status: Planned → Active');
+    expect(changes).toContain('Priority: Low → empty');
+    // Only the fields the formatter knows are relabelled.
+    expect(changes).toContain('Title: planned → Clinic');
+    expect(screen.queryByText(/planned → active/)).not.toBeInTheDocument();
   });
 
   it('names a removed colleague by the email recorded at the time', async () => {
@@ -123,6 +162,14 @@ describe('ActivityTimeline', () => {
 
 describe('relativeTime', () => {
   const now = Date.parse('2026-09-27T12:00:00.000Z');
+
+  it('reads task statuses as the board names them', () => {
+    expect(taskChangeLabel('status', 'in-progress')).toBe('In progress');
+    expect(taskChangeLabel('status', 'review')).toBe('In review');
+    expect(taskChangeLabel('priority', 'urgent')).not.toBe('');
+    expect(taskChangeLabel('title', 'in-progress')).toBe('in-progress');
+    expect(projectChangeLabel('status', 'something-new')).toBe('something-new');
+  });
 
   it('counts recent moments in words', () => {
     expect(relativeTime('2026-09-27T11:59:30.000Z', now)).toBe('just now');

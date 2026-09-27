@@ -6,7 +6,7 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 
 import { FormStepNavigation } from '../../components/forms/FormStepNavigation';
@@ -28,11 +28,17 @@ import {
 } from '../../components/projects/project-form';
 import {
   ProjectStepContent,
+  type ProjectDateField,
   type SetProjectField,
 } from '../../components/projects/ProjectFormSteps';
 import { ApiError } from '../../lib/api-client';
 import { pageGuides } from '../../lib/page-guides';
 import { useCreateProject, useProject, useUpdateProject } from '../../lib/projects';
+
+/** The Schedule & place step, where the date fields are. */
+const SCHEDULE_STEP = 2;
+
+const DATE_PROBLEM = 'Finish typing the date, or clear it, before continuing.';
 
 const DESCRIPTION =
   'Set the project out step by step: basics, people, schedule and place, scope, story and cover.';
@@ -150,6 +156,12 @@ const ProjectEditorForm = ({ project: loaded }: { project?: Project }): JSX.Elem
   const [errors, setErrors] = useState<FieldErrors>({});
   const [notice, setNotice] = useState('');
   const [uploading, setUploading] = useState(false);
+  // What the date fields object to. They keep the old day rather than pass on
+  // a half-typed or impossible one, so without this Continue and Save would
+  // go ahead with it (AGENTS.md: an invalid date is never a removal).
+  const [dateProblems, setDateProblems] = useState<
+    Partial<Record<ProjectDateField, string | null>>
+  >({});
   const heading = useRef<HTMLHeadingElement>(null);
   const opened = useRef(false);
   const saving = create.isPending || update.isPending;
@@ -183,8 +195,19 @@ const ProjectEditorForm = ({ project: loaded }: { project?: Project }): JSX.Elem
     setMaxStep((previous) => Math.max(previous, index));
   };
 
+  const onDateProblem = useCallback((field: ProjectDateField, found: string | null) => {
+    setDateProblems((previous) =>
+      previous[field] === found ? previous : { ...previous, [field]: found },
+    );
+  }, []);
+  const hasDateProblem = Boolean(dateProblems.startDate || dateProblems.endDate);
+
   const changeStep = (next: number): void => {
     if (busy || next === step) return;
+    if (next > step && step <= SCHEDULE_STEP && next > SCHEDULE_STEP && hasDateProblem) {
+      goTo(SCHEDULE_STEP, {}, DATE_PROBLEM);
+      return;
+    }
     // Moving forward checks every step being passed, so the stepper cannot
     // skip over a problem that Continue would have caught.
     for (let index = step; index < next; index += 1) {
@@ -203,6 +226,10 @@ const ProjectEditorForm = ({ project: loaded }: { project?: Project }): JSX.Elem
   };
 
   const save = (): void => {
+    if (hasDateProblem) {
+      goTo(SCHEDULE_STEP, {}, DATE_PROBLEM);
+      return;
+    }
     const invalid = firstInvalidStep(form);
     if (invalid !== null) {
       goTo(
@@ -235,7 +262,7 @@ const ProjectEditorForm = ({ project: loaded }: { project?: Project }): JSX.Elem
     else save();
   };
 
-  const stepProps = { form, setField, errors, disabled: busy };
+  const stepProps = { form, setField, errors, disabled: busy, onDateProblem };
   // A refusal the editor could place on a step is shown there instead.
   const unmapped = saveError !== null && serverProblem(saveError) === null;
 

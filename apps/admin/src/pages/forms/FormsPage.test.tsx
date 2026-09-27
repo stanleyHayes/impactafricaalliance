@@ -2,7 +2,7 @@ import type { FormListItem, Paginated, Permission, PublicUser } from '@iaa/share
 import { ThemeProvider } from '@mui/material/styles';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useAuth } from '../../auth/AuthContext';
@@ -56,15 +56,26 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-const setup = (): void => {
+/** The address's query string, so a test can see which filters it holds. */
+const Search = (): JSX.Element => <output data-testid="search">{useLocation().search}</output>;
+
+const setup = (url = '/forms'): void => {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   clients.push(client);
   render(
     <QueryClientProvider client={client}>
       <ThemeProvider theme={theme}>
-        <MemoryRouter initialEntries={['/forms']}>
+        <MemoryRouter initialEntries={[url]}>
           <Routes>
-            <Route path="/forms" element={<FormsPage />} />
+            <Route
+              path="/forms"
+              element={
+                <>
+                  <FormsPage />
+                  <Search />
+                </>
+              }
+            />
             <Route path="/forms/new" element={<p>New form page</p>} />
           </Routes>
         </MemoryRouter>
@@ -104,5 +115,63 @@ describe('FormsPage', () => {
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole('menuitem', { name: /Blank form/ }));
     expect(await screen.findByText('New form page')).toBeInTheDocument();
+  });
+
+  it('puts each form under the list heading, which stays one pixel wide', async () => {
+    vi.mocked(api.get).mockResolvedValue(
+      page([item, { ...item, id: 'form-2', title: 'Mentor call', slug: 'mentor-call' }]),
+    );
+    setup();
+    await screen.findByText('Speaker call');
+    // The cards sit one level under the list's own heading.
+    expect(
+      screen.getAllByRole('heading', { level: 3 }).map((heading) => heading.textContent),
+    ).toEqual(['Speaker call', 'Mentor call']);
+    const lists = screen.getAllByRole('heading', { level: 2 });
+    expect(lists.map((heading) => heading.textContent)).toEqual(['All forms']);
+    // MUI reads a bare `width: 1` as 100%, which stretched the page past the viewport.
+    expect(lists[0]).toHaveStyle({ width: '1px', height: '1px', position: 'absolute' });
+    expect(lists[0]).toHaveAttribute('tabindex', '-1');
+  });
+
+  it('says the page is past the end, rather than that there are no forms', async () => {
+    vi.mocked(api.get).mockResolvedValue({ ...page([]), page: 3, total: 13, totalPages: 2 });
+    setup('/forms?page=3');
+    expect(await screen.findByText('Nothing on this page')).toBeInTheDocument();
+    expect(screen.queryByText('No forms')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Go to the first page' }));
+    await waitFor(() => expect(screen.getByTestId('search')).toHaveTextContent(/^$/));
+  });
+
+  it('draws its filters at the small size the other list toolbars use', async () => {
+    vi.mocked(api.get).mockResolvedValue(page([item]));
+    setup();
+    await screen.findByText('Speaker call');
+    expect(
+      screen.getByRole('textbox', { name: 'Search forms' }).closest('.MuiInputBase-root'),
+    ).toHaveClass('MuiInputBase-sizeSmall');
+    expect(
+      screen.getByRole('combobox', { name: 'Type' }).closest('.MuiInputBase-root'),
+    ).toHaveClass('MuiInputBase-sizeSmall');
+  });
+
+  it('offers to clear the filters when nothing matches, keeping the status tab', async () => {
+    vi.mocked(api.get).mockResolvedValue(page([]));
+    setup('/forms?status=published&type=general&page=2');
+    const search = screen.getByRole('textbox', { name: 'Search forms' });
+    fireEvent.change(search, { target: { value: 'nothing like this' } });
+    expect(await screen.findByText('No forms match')).toBeInTheDocument();
+    // One in the empty state, one beside the filters.
+    const clear = screen.getAllByRole('button', { name: 'Clear filters' });
+    expect(clear).toHaveLength(2);
+
+    fireEvent.click(clear[0]!);
+
+    expect(search).toHaveValue('');
+    expect(screen.getByTestId('search')).toHaveTextContent(/^\?status=published$/);
+    await waitFor(() =>
+      expect(api.get).toHaveBeenLastCalledWith('/admin/forms?status=published&page=1&pageSize=12'),
+    );
+    expect(screen.queryByRole('button', { name: 'Clear filters' })).not.toBeInTheDocument();
   });
 });

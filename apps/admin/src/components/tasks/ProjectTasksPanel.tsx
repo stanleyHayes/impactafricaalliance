@@ -1,5 +1,6 @@
 import type { Task, TaskBoardColumn } from '@iaa/shared';
 import AddTaskRoundedIcon from '@mui/icons-material/AddTaskRounded';
+import AssignmentTurnedInOutlinedIcon from '@mui/icons-material/AssignmentTurnedInOutlined';
 import ChecklistRoundedIcon from '@mui/icons-material/ChecklistRounded';
 import ViewKanbanOutlinedIcon from '@mui/icons-material/ViewKanbanOutlined';
 import Alert from '@mui/material/Alert';
@@ -14,6 +15,7 @@ import { Link as RouterLink } from 'react-router-dom';
 
 import { useHasPermission } from '../../auth/useCan';
 import { useTaskBoard } from '../../lib/tasks';
+import { DetailSection } from '../detail/DetailSection';
 import { EmptyState } from '../EmptyState';
 
 import { QuickCreateTaskDialog, TaskCreatedSnackbar } from './QuickCreateTaskDialog';
@@ -83,7 +85,8 @@ const StatusGroup = ({
 
 /**
  * The tasks linked to one project, grouped by status with a count on each
- * group, on the project's Tasks tab.
+ * group, on the project's Tasks tab, in the same tinted-header section card
+ * as the project's other tabs.
  *
  * Owned by the tasks module, so a task looks and behaves the same here as on
  * the task pages: a row opens it in the drawer, "Add task" opens the quick
@@ -136,7 +139,7 @@ export const ProjectTasksPanel = ({ projectId }: ProjectTasksPanelProps): JSX.El
           primaryAction={
             canCreate
               ? {
-                  label: 'Add task',
+                  label: 'Add the first task',
                   icon: <AddTaskRoundedIcon />,
                   onClick: () => setCreating(true),
                 }
@@ -158,33 +161,45 @@ export const ProjectTasksPanel = ({ projectId }: ProjectTasksPanelProps): JSX.El
 
   return (
     <Box>
-      <Stack
-        direction={{ xs: 'column', sm: 'row' }}
-        spacing={1.5}
-        alignItems={{ xs: 'stretch', sm: 'center' }}
-        sx={{ mb: 2 }}
+      <DetailSection
+        title="Tasks"
+        icon={<AssignmentTurnedInOutlinedIcon />}
+        description="Work on this project, grouped by status."
+        action={
+          canCreate ? (
+            <Button startIcon={<AddTaskRoundedIcon />} onClick={() => setCreating(true)}>
+              Add task
+            </Button>
+          ) : undefined
+        }
       >
-        <Typography variant="body2" color="text.secondary" sx={{ flexGrow: 1 }} aria-live="polite">
-          {board.data ? `${total} ${total === 1 ? 'task' : 'tasks'}, ${done} done` : 'Tasks'}
-        </Typography>
-        <Button
-          component={RouterLink}
-          to={`/tasks/board?project=${projectId}`}
-          startIcon={<ViewKanbanOutlinedIcon />}
-        >
-          Open on the board
-        </Button>
-        {canCreate && (
-          <Button
-            variant="contained"
-            startIcon={<AddTaskRoundedIcon />}
-            onClick={() => setCreating(true)}
+        {total > 0 && (
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={1}
+            alignItems={{ xs: 'flex-start', sm: 'center' }}
+            sx={{ mb: 2 }}
           >
-            Add task
-          </Button>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ flexGrow: 1 }}
+              aria-live="polite"
+            >
+              {`${total} ${total === 1 ? 'task' : 'tasks'}, ${done} done`}
+            </Typography>
+            <Button
+              component={RouterLink}
+              to={`/tasks/board?project=${projectId}`}
+              size="small"
+              startIcon={<ViewKanbanOutlinedIcon />}
+            >
+              Open on the board
+            </Button>
+          </Stack>
         )}
-      </Stack>
-      {renderBody()}
+        {renderBody()}
+      </DetailSection>
       <QuickCreateTaskDialog
         open={creating}
         onClose={() => setCreating(false)}

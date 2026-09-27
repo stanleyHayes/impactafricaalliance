@@ -108,7 +108,7 @@ const STEP_BODIES: ((props: StepBodyProps) => JSX.Element)[] = [
   ({ state, setField, busy }) => (
     <ConfirmationStep form={state} setField={setField} disabled={busy} />
   ),
-  ({ state, goTo }) => <ReviewStep form={state} goTo={goTo} />,
+  ({ state, goTo, busy }) => <ReviewStep form={state} goTo={goTo} disabled={busy} />,
 ];
 
 const StepBody = (props: StepBodyProps): JSX.Element | null =>

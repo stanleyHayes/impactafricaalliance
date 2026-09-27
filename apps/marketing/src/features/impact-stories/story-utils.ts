@@ -54,3 +54,42 @@ export const storyLinkTarget = (
   if (!link || !isSafeLink(link)) return null;
   return link.startsWith('/') ? { kind: 'internal', to: link } : { kind: 'external', href: link };
 };
+
+/** How many grid tracks one gallery tile covers: of six at md and up, of two at sm. */
+export interface GalleryTileSpan {
+  md: number;
+  sm: number;
+}
+
+/**
+ * Lays the tiles after `start` into rows of `perRow`, sharing a row's
+ * `tracks` equally, and widens a short last row so it reaches the edge: one
+ * tile left over takes the whole row, two share it.
+ */
+const fillRows = (
+  count: number,
+  start: number,
+  row: { tracks: number; perRow: number },
+): number[] => {
+  const rest = Math.max(count - start, 0);
+  const leftover = rest % row.perRow;
+  const full = rest - leftover;
+  const span = row.tracks / row.perRow;
+  return Array.from({ length: rest }, (_, index) => (index < full ? span : row.tracks / leftover));
+};
+
+/**
+ * Each gallery tile's column span, so every row of a story gallery is full.
+ *
+ * The first photo leads at two-thirds width (the whole row on a tablet) with
+ * a partner beside it, the rest follow three to a row (two on a tablet), and
+ * a short last row widens to fill the space rather than leaving empty cells.
+ * A single photo simply takes the row.
+ */
+export const galleryTileSpans = (count: number): GalleryTileSpan[] => {
+  if (count <= 0) return [];
+  if (count === 1) return [{ md: 6, sm: 2 }];
+  const md = [4, 2, ...fillRows(count, 2, { tracks: 6, perRow: 3 })];
+  const sm = [2, ...fillRows(count, 1, { tracks: 2, perRow: 2 })];
+  return md.map((span, index) => ({ md: span, sm: sm[index] ?? 2 }));
+};

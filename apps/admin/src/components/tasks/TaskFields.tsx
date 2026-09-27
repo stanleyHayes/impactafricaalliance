@@ -108,6 +108,10 @@ const ReadOnlyLabels = ({ labels }: { labels: string[] }): JSX.Element => (
   </Box>
 );
 
+/** A date's cell: a whole row in the task page's narrow side column, else half of one. */
+const dateCellSxFor = (narrow: boolean | undefined) =>
+  narrow ? { gridColumn: { lg: '1 / -1' } } : undefined;
+
 const dateProblem = (start: string | null | undefined, due: string | null | undefined) =>
   start && due && due < start ? 'The due date cannot be before the start date.' : undefined;
 
@@ -115,15 +119,26 @@ const dateProblem = (start: string | null | undefined, due: string | null | unde
  * The task's properties, each saved the moment it changes: status, priority,
  * people, dates, labels, project, milestone, estimate, parent and
  * dependencies. Read-only without `tasks:update`.
+ *
+ * Dates are saved once settled (the field left, Enter, or a day picked from
+ * the calendar), never on each keystroke, for the same reason as the
+ * estimate: typing "25" over the 15th passes through the 2nd.
  */
 export const TaskFields = ({
   task,
   inline,
   canEdit,
+  narrow,
 }: {
   task: Task;
   inline: InlineSave;
   canEdit: boolean;
+  /**
+   * Laid out in the task page's side column, which is only 380px wide from
+   * the `lg` breakpoint: there each date takes a whole row, because half of
+   * it cannot show "24 Sept 2026" beside the calendar and clear buttons.
+   */
+  narrow?: boolean;
 }): JSX.Element => {
   const { current, save } = inline;
   const disabled = !canEdit;
@@ -136,6 +151,8 @@ export const TaskFields = ({
       label: milestone.title,
     })),
   ];
+
+  const dateCellSx = dateCellSxFor(narrow);
 
   const saveDate = (field: 'startDate' | 'dueDate', value: string | null): void => {
     const start = field === 'startDate' ? value : current.startDate;
@@ -177,19 +194,25 @@ export const TaskFields = ({
           disabled={disabled}
         />
       </Box>
-      <DateField
-        label="Start date"
-        value={current.startDate}
-        onChange={(value) => saveDate('startDate', value)}
-        disabled={disabled}
-      />
-      <DateField
-        label="Due date"
-        value={current.dueDate}
-        onChange={(value) => saveDate('dueDate', value)}
-        error={dateError}
-        disabled={disabled}
-      />
+      <Box sx={dateCellSx}>
+        <DateField
+          label="Start date"
+          commit="settled"
+          value={current.startDate}
+          onChange={(value) => saveDate('startDate', value)}
+          disabled={disabled}
+        />
+      </Box>
+      <Box sx={dateCellSx}>
+        <DateField
+          label="Due date"
+          commit="settled"
+          value={current.dueDate}
+          onChange={(value) => saveDate('dueDate', value)}
+          error={dateError}
+          disabled={disabled}
+        />
+      </Box>
       <Box sx={{ gridColumn: '1 / -1' }}>
         <ProjectPicker
           label="Project"

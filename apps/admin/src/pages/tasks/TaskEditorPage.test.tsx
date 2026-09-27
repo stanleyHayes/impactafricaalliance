@@ -1,5 +1,5 @@
 import type { Task } from '@iaa/shared';
-import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { fullTask, paged, renderTaskUi } from '../../components/tasks/task-test-fixtures';
@@ -150,6 +150,60 @@ describe('TaskEditorPage', () => {
     );
   });
 
+  it('sends only what was edited, even after a refetch brings a colleague’s change', async () => {
+    const { client } = renderTaskUi(<TaskEditorPage />, {
+      route: '/tasks/IAA-7/edit',
+      path: '/tasks/:taskKey/edit',
+    });
+    await heading('Basics');
+    // A colleague moves the due date; a write in this tab refreshes every task.
+    const colleagues = { ...existing, dueDate: '2026-11-01T12:00:00.000Z' };
+    vi.mocked(api.get).mockImplementation(async (path: string) =>
+      path === '/admin/tasks/IAA-7' ? colleagues : paged([]),
+    );
+    await act(async () => {
+      await client.invalidateQueries({ queryKey: ['tasks'] });
+    });
+    await waitFor(() =>
+      expect(client.getQueryData(['tasks', 'detail', 'IAA-7'])).toMatchObject({
+        dueDate: colleagues.dueDate,
+      }),
+    );
+
+    fireEvent.change(title(), { target: { value: 'New title' } });
+    fireEvent.change(screen.getByRole('combobox', { name: 'Go to step' }), {
+      target: { value: '4' },
+    });
+    await heading('Review');
+    fireEvent.click(screen.getByRole('button', { name: 'Update task' }));
+
+    await waitFor(() => expect(api.patch).toHaveBeenCalled());
+    expect(api.patch).toHaveBeenCalledWith(`/admin/tasks/${existing.id}`, { title: 'New title' });
+  });
+
+  it('keeps the form and what was typed when a refetch behind it fails', async () => {
+    const { ApiError } = await import('../../lib/api-client');
+    const { client } = renderTaskUi(<TaskEditorPage />, {
+      route: '/tasks/IAA-7/edit',
+      path: '/tasks/:taskKey/edit',
+    });
+    await heading('Basics');
+    fireEvent.change(title(), { target: { value: 'Print 300 programmes' } });
+
+    vi.mocked(api.get).mockRejectedValue(new ApiError(500, 'X', 'down'));
+    await act(async () => {
+      await client.invalidateQueries({ queryKey: ['tasks'] });
+    });
+
+    expect(
+      await screen.findByText(/The latest copy of this task could not be loaded/),
+    ).toBeInTheDocument();
+    expect(title()).toHaveValue('Print 300 programmes');
+    expect(screen.queryByText('This task could not be loaded.')).not.toBeInTheDocument();
+    expect(screen.queryByText('down')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
+  });
+
   it('goes back to the step the API refused, with the field marked', async () => {
     const refusal = Object.assign(
       new Error('Choose assignees who are active members of the team'),
@@ -206,6 +260,61 @@ describe('TaskEditorPage', () => {
     });
     await heading('Review');
     expect(await screen.findByText('Ama Mensah')).toBeInTheDocument();
+  });
+
+  it('will not move on from, or save, a due date that is only half typed', async () => {
+    vi.mocked(api.get).mockImplementation(async (path: string) =>
+      path === '/admin/tasks/IAA-7'
+        ? { ...existing, dueDate: '2026-10-15T12:00:00.000Z' }
+        : paged([]),
+    );
+    renderTaskUi(<TaskEditorPage />, { route: '/tasks/IAA-7/edit', path: '/tasks/:taskKey/edit' });
+    await heading('Basics');
+    fireEvent.change(screen.getByRole('combobox', { name: 'Go to step' }), {
+      target: { value: '2' },
+    });
+    await heading('Schedule');
+    const due = screen.getByRole('group', { name: /Due date/ });
+    const day = within(due).getByRole('spinbutton', { name: 'Day' });
+    fireEvent.mouseDown(day);
+    fireEvent.keyDown(day, { key: 'Delete' });
+    expect(
+      await within(due.parentElement ?? due).findByText(
+        'Finish typing the date, or clear the field.',
+      ),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(
+      await screen.findByText('Finish typing the date, or clear it, before continuing.'),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Schedule', level: 2 })).toBeInTheDocument();
+    // Jumping ahead from the step rail is held back the same way.
+    fireEvent.change(screen.getByRole('combobox', { name: 'Go to step' }), {
+      target: { value: '4' },
+    });
+    expect(screen.getByRole('heading', { name: 'Schedule', level: 2 })).toBeInTheDocument();
+    expect(api.patch).not.toHaveBeenCalled();
+  });
+
+  it('names the description box, so it is announced as Description', async () => {
+    renderTaskUi(<TaskEditorPage />, { route: '/tasks/new' });
+    await heading('Basics');
+    expect(screen.getByRole('textbox', { name: 'Description' })).toBeInTheDocument();
+  });
+
+  it('reviews with the shared summary: Edit per section, and Not set for empty values', async () => {
+    renderTaskUi(<TaskEditorPage />, { route: '/tasks/IAA-7/edit', path: '/tasks/:taskKey/edit' });
+    await heading('Basics');
+    fireEvent.change(screen.getByRole('combobox', { name: 'Go to step' }), {
+      target: { value: '4' },
+    });
+    await heading('Review');
+    const schedule = screen.getByRole('region', { name: 'Schedule' });
+    expect(within(schedule).getAllByText('Not set').length).toBe(3);
+    expect(screen.queryByText('None')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Edit schedule' }));
+    await heading('Schedule');
   });
 
   it('says so when the task to edit does not exist', async () => {

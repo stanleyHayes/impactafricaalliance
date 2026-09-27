@@ -2,9 +2,10 @@ import type { ProjectStatus, WorkPriority } from '@iaa/shared';
 import Chip, { type ChipProps } from '@mui/material/Chip';
 import { isValidElement, type ReactElement } from 'react';
 
-import { PROJECT_STATUS_OPTIONS, WORK_PRIORITY_OPTIONS } from '../../lib/select-options';
+import { PROJECT_STATUS_OPTIONS } from '../../lib/select-options';
+import { WorkPriorityChip } from '../tasks/TaskPriorityChip';
 
-import { priorityLabel, statusLabel } from './project-format';
+import { statusLabel } from './project-format';
 
 type Tone = NonNullable<ChipProps['color']>;
 
@@ -16,14 +17,6 @@ const STATUS_TONE: Record<ProjectStatus, Tone> = {
   'on-hold': 'warning',
   completed: 'primary',
   archived: 'default',
-};
-
-/** Chip colour for each priority. Medium is the norm, so it carries no colour. */
-const PRIORITY_TONE: Record<WorkPriority, Tone> = {
-  low: 'default',
-  medium: 'default',
-  high: 'warning',
-  urgent: 'error',
 };
 
 // Chip clones its icon to add a class, so it must be the element itself, never
@@ -54,7 +47,11 @@ export const ProjectStatusChip = ({
   />
 );
 
-/** A project's priority, spelt out so it does not rely on colour alone. */
+/**
+ * A project's priority, spelt out so it does not rely on colour alone. Drawn
+ * by `WorkPriorityChip`, as a task's is, so the same level looks the same on
+ * a project and on its tasks.
+ */
 export const ProjectPriorityChip = ({
   priority,
   size = 'small',
@@ -65,12 +62,5 @@ export const ProjectPriorityChip = ({
   /** Just the level, for a column already headed "Priority". */
   short?: boolean;
 }): JSX.Element => (
-  <Chip
-    size={size}
-    variant="outlined"
-    color={PRIORITY_TONE[priority]}
-    icon={iconFor(WORK_PRIORITY_OPTIONS, priority)}
-    label={short ? priorityLabel(priority) : `${priorityLabel(priority)} priority`}
-    sx={{ fontWeight: 600, '& .MuiChip-icon': { fontSize: 17 } }}
-  />
+  <WorkPriorityChip priority={priority} size={size} wording={short ? 'short' : 'long'} />
 );

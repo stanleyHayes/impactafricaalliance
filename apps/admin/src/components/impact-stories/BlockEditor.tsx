@@ -6,7 +6,9 @@ import {
   TouchSensor,
   useSensor,
   useSensors,
+  type Announcements,
   type DragEndEvent,
+  type UniqueIdentifier,
 } from '@dnd-kit/core';
 import {
   arrayMove,
@@ -66,6 +68,41 @@ export interface BlockEditorProps {
 
 // The shared schema's limit on blocks in one story.
 const MAX_BLOCKS = 60;
+
+/**
+ * What a screen reader hears while a block is dragged from the keyboard.
+ *
+ * Left to itself dnd-kit announces the raw ids ("Picked up draggable item
+ * rich-text-3f9a…"), which are random and mean nothing to the listener. This
+ * names the block as the rest of the editor does and says where it is going
+ * as a position, the same as the task board speaks of its cards.
+ */
+export const blockAnnouncements = (blocks: readonly StoryBlockDraft[]): Announcements => {
+  const count = blocks.length;
+  const indexOf = (id: UniqueIdentifier): number => blocks.findIndex((block) => block.id === id);
+  const nameOf = (id: UniqueIdentifier): string => {
+    const index = indexOf(id);
+    const block = blocks[index];
+    return block ? blockName(block, index) : 'The block';
+  };
+  const positionOf = (id: UniqueIdentifier): string => `position ${indexOf(id) + 1} of ${count}`;
+  return {
+    onDragStart: ({ active }) =>
+      `Picked up ${nameOf(active.id)}. Use the arrow keys to move it, Space to drop it, Escape to cancel.`,
+    onDragOver: ({ active, over }) =>
+      over ? `${nameOf(active.id)} is over ${positionOf(over.id)}.` : undefined,
+    onDragEnd: ({ active, over }) =>
+      over
+        ? `${nameOf(active.id)} dropped at ${positionOf(over.id)}.`
+        : `${nameOf(active.id)} dropped where it was.`,
+    onDragCancel: ({ active }) => `Moving ${nameOf(active.id)} was cancelled.`,
+  };
+};
+
+const DRAG_INSTRUCTIONS = {
+  draggable:
+    'To move a block, press Space to pick it up, the arrow keys to move it, and Space again to drop it. The Move up and Move down buttons do the same.',
+};
 
 const plural = (count: number, noun: string): string => `${count} ${noun}${count === 1 ? '' : 's'}`;
 
@@ -470,7 +507,15 @@ export const BlockEditor = ({
           </Typography>
         </Box>
       ) : (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={dragEnd}>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={dragEnd}
+          accessibility={{
+            announcements: blockAnnouncements(blocks),
+            screenReaderInstructions: DRAG_INSTRUCTIONS,
+          }}
+        >
           <SortableContext
             items={blocks.map((block) => block.id)}
             strategy={verticalListSortingStrategy}

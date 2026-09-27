@@ -66,7 +66,7 @@ export const pageGuides: Record<string, PageGuide> = {
     steps: [
       'Use the tabs to move between the overview, tasks, milestones, media, impact, documents and activity.',
       'Progress counts finished tasks and milestones against all of them. A figure set by hand says so, with the reason.',
-      'Mark a photo as shareable only when the people in it have agreed to public use. Only shareable photos can go into an impact story.',
+      'Mark a photo Cleared for public use only when the people in it have agreed to it. Only photos cleared for public use can go into an impact story.',
       'Create impact story on the Impact tab starts a story from this project. It is a copy: later changes here do not alter it.',
       'Activity records who changed what, and when.',
     ],
@@ -83,9 +83,9 @@ export const pageGuides: Record<string, PageGuide> = {
   'my-tasks': {
     title: 'My tasks',
     steps: [
-      'Tasks assigned to you, grouped into Overdue, Today, Upcoming and No date.',
-      '"Today" follows the calendar on this device, not the server.',
-      'Finished tasks leave this list. The Tasks badge in the sidebar counts what is overdue or due today.',
+      'Tasks assigned to you, grouped into Overdue, Due today, Upcoming and No due date.',
+      '"Due today" follows the calendar on this device, not the server.',
+      'Finished tasks leave this list unless you turn on Show completed. The Tasks badge in the sidebar counts what is overdue or due today.',
       'Open a task to comment, tick its checklist or change its status.',
     ],
   },
@@ -102,7 +102,7 @@ export const pageGuides: Record<string, PageGuide> = {
     title: 'Task board',
     steps: [
       'Each column is a status. Drag a card to another column or up and down within one.',
-      'On a keyboard, or where dragging is awkward, use the move buttons on each card instead.',
+      'On a keyboard, or where dragging is awkward, use the Move menu (…) on each card instead.',
       'A move is saved at once. If the save fails, the card goes back and the board says so.',
       'Each column shows its first 100 cards; use the filters to find the rest.',
     ],
@@ -112,7 +112,7 @@ export const pageGuides: Record<string, PageGuide> = {
     steps: [
       'Give the task a title that says what done looks like.',
       'Assign up to ten people, and link it to a project and one of its milestones if it belongs to one.',
-      'Start and due dates are calendar days. A task without a due date appears under No date.',
+      'Start and due dates are calendar days. A task without a due date appears under No due date.',
       'Nothing is saved until you choose Create or Update on the Review step.',
     ],
   },

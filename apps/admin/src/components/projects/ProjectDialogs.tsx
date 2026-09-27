@@ -159,6 +159,9 @@ export const MilestoneDialog = ({
 }: MilestoneDialogProps): JSX.Element => {
   const [draft, setDraft] = useState(initial);
   const [errors, setErrors] = useState<MilestoneDraftErrors>({});
+  // The due date field's own objection; it keeps the old day rather than pass
+  // on a half-typed one, so Enter must wait rather than save that old day.
+  const [dateProblem, setDateProblem] = useState<string | null>(null);
   const save = useDialogSave('The milestone could not be saved. Try again.');
   const set = <K extends keyof MilestoneDraft>(key: K, value: MilestoneDraft[K]): void => {
     setDraft((previous) => ({ ...previous, [key]: value }));
@@ -167,7 +170,9 @@ export const MilestoneDialog = ({
   const submit = (): void => {
     const problems = milestoneDraftErrors(draft);
     setErrors(problems);
-    if (Object.keys(problems).length === 0) void save.run(() => onSave(draft), onClose);
+    if (Object.keys(problems).length === 0 && !dateProblem) {
+      void save.run(() => onSave(draft), onClose);
+    }
   };
   return (
     <FormDialog
@@ -203,6 +208,7 @@ export const MilestoneDialog = ({
         label="Due date"
         value={draft.dueDate}
         onChange={(value) => set('dueDate', value)}
+        onProblemChange={setDateProblem}
         disabled={save.pending}
       />
       <OptionSelect
@@ -500,8 +506,11 @@ export const MediaItemDialog = ({
   onClose,
 }: MediaItemDialogProps): JSX.Element => {
   const [draft, setDraft] = useState(initial);
+  // As in MilestoneDialog: a half-typed day holds the save.
+  const [dateProblem, setDateProblem] = useState<string | null>(null);
   const save = useDialogSave('The photo could not be saved. Try again.');
   const submit = (): void => {
+    if (dateProblem) return;
     const caption = draft.caption.trim();
     void save.run(
       () =>
@@ -543,6 +552,7 @@ export const MediaItemDialog = ({
         label="Taken on"
         value={draft.takenOn}
         onChange={(value) => setDraft((previous) => ({ ...previous, takenOn: value }))}
+        onProblemChange={setDateProblem}
         disabled={save.pending}
       />
       <Box>

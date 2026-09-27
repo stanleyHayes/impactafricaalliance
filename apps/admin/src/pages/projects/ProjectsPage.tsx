@@ -315,6 +315,7 @@ const ProjectsPage = (): JSX.Element => {
         description="Initiatives the team is delivering: who leads them, when they run, and how far along they are."
         icon={<AccountTreeIcon />}
         help={pageGuides['projects']}
+        count={query.data?.total}
         action={
           canCreate ? (
             <Button

@@ -1,26 +1,23 @@
 import type { FormStep } from '@iaa/shared';
 import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded';
-import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import Alert from '@mui/material/Alert';
 import AlertTitle from '@mui/material/AlertTitle';
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
-import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import type { ReactNode } from 'react';
 
 import { MediaUploadField } from '../../components/fields/MediaUploadField';
 import { OptionSelect } from '../../components/fields/OptionSelect';
 import { TagsField } from '../../components/fields/TagsField';
 import { InstantField } from '../../components/form-builder/InstantField';
+import { ReviewSummary } from '../../components/forms/ReviewSummary';
 import { formatInstant, publicFormUrl } from '../../lib/forms';
 import { FORM_TYPE_OPTIONS } from '../../lib/select-options';
 
@@ -241,38 +238,6 @@ export const ConfirmationStep = ({ form, setField, disabled }: StepProps): JSX.E
   </>
 );
 
-const SummaryRow = ({
-  label,
-  children,
-  onEdit,
-}: {
-  label: string;
-  children: ReactNode;
-  onEdit: () => void;
-}): JSX.Element => (
-  <Stack
-    direction="row"
-    spacing={2}
-    alignItems="flex-start"
-    sx={{ py: 1.5, borderBottom: 1, borderColor: 'divider' }}
-  >
-    <Box sx={{ flex: 1, minWidth: 0 }}>
-      <Typography variant="overline" color="text.secondary" sx={{ lineHeight: 1.6 }}>
-        {label}
-      </Typography>
-      <Box sx={{ overflowWrap: 'anywhere' }}>{children}</Box>
-    </Box>
-    <Button
-      size="small"
-      startIcon={<EditRoundedIcon />}
-      onClick={onEdit}
-      aria-label={`Edit ${label.toLowerCase()}`}
-    >
-      Edit
-    </Button>
-  </Stack>
-);
-
 const questionCount = (steps: readonly FormStep[]): number =>
   steps.reduce((total, step) => total + step.fields.length, 0);
 
@@ -326,55 +291,97 @@ const PublishChecklist = ({
 export const ReviewStep = ({
   form,
   goTo,
+  disabled = false,
 }: {
   form: FormEditorState;
   goTo: (step: number) => void;
+  /** True while saving or uploading: the Edit buttons wait. */
+  disabled?: boolean;
 }): JSX.Element => {
   const checklist = publishChecklist(form);
   const type = FORM_TYPE_OPTIONS.find((option) => option.value === form.type)?.label;
+  const limit = form.submissionLimit.trim();
   return (
     <>
-      <Box>
-        <SummaryRow label={FORM_EDITOR_STEPS[0]} onEdit={() => goTo(0)}>
-          <Typography sx={{ fontWeight: 600 }}>{form.title || 'No title yet'}</Typography>
-          <Typography variant="body2" color="text.secondary">
-            {type} · {publicFormUrl(form.slug)}
-          </Typography>
-        </SummaryRow>
-        <SummaryRow label={FORM_EDITOR_STEPS[1]} onEdit={() => goTo(1)}>
-          <Typography variant="body2">
-            {form.introHeading.trim() || `No cover heading: “${form.title}” stands in.`}
-          </Typography>
-        </SummaryRow>
-        <SummaryRow label={FORM_EDITOR_STEPS[2]} onEdit={() => goTo(2)}>
-          <Typography variant="body2">
-            {form.steps.length} {form.steps.length === 1 ? 'step' : 'steps'},{' '}
-            {questionCount(form.steps)} questions:{' '}
-            {form.steps.map((step) => step.title).join(' · ')}
-          </Typography>
-        </SummaryRow>
-        <SummaryRow label={FORM_EDITOR_STEPS[3]} onEdit={() => goTo(3)}>
-          <Typography variant="body2">{scheduleText(form)}</Typography>
-          <Typography variant="body2" color="text.secondary">
-            {form.submissionLimit.trim()
-              ? `Up to ${form.submissionLimit.trim()} applications.`
-              : 'No limit on applications.'}{' '}
-            {form.allowDrafts
-              ? 'Applicants can save and come back.'
-              : 'Nothing is kept until Submit.'}
-          </Typography>
-        </SummaryRow>
-        <SummaryRow label={FORM_EDITOR_STEPS[4]} onEdit={() => goTo(4)}>
-          <Typography variant="body2">
-            {form.acknowledgeApplicant
-              ? 'Applicants are emailed their reference.'
-              : 'Applicants are not emailed.'}{' '}
-            {form.notifyEmails.length > 0
-              ? `Notifies ${form.notifyEmails.join(', ')}.`
-              : "Notifies the site's notification address."}
-          </Typography>
-        </SummaryRow>
-      </Box>
+      <ReviewSummary
+        onEdit={goTo}
+        disabled={disabled}
+        sections={[
+          {
+            title: FORM_EDITOR_STEPS[0],
+            step: 0,
+            items: [
+              { label: 'Title', value: form.title.trim() },
+              { label: 'Type', value: type },
+              { label: 'Public address', value: publicFormUrl(form.slug), fullRow: true },
+            ],
+          },
+          {
+            title: FORM_EDITOR_STEPS[1],
+            step: 1,
+            items: [
+              {
+                label: 'Cover heading',
+                value:
+                  form.introHeading.trim() ||
+                  (form.title.trim() ? `Not set: “${form.title.trim()}” stands in.` : ''),
+                fullRow: true,
+              },
+            ],
+          },
+          {
+            title: FORM_EDITOR_STEPS[2],
+            step: 2,
+            items: [
+              {
+                label: 'Steps and questions',
+                value: `${form.steps.length} ${form.steps.length === 1 ? 'step' : 'steps'}, ${questionCount(form.steps)} questions`,
+              },
+              {
+                label: 'Step titles',
+                value: form.steps.map((step) => step.title).join(' · '),
+                fullRow: true,
+              },
+            ],
+          },
+          {
+            title: FORM_EDITOR_STEPS[3],
+            step: 3,
+            items: [
+              { label: 'Schedule', value: scheduleText(form), fullRow: true },
+              {
+                label: 'Application limit',
+                value: limit ? `Up to ${limit} applications` : 'No limit',
+              },
+              {
+                label: 'Saving and returning',
+                value: form.allowDrafts
+                  ? 'Applicants can save and come back'
+                  : 'Nothing is kept until Submit',
+              },
+            ],
+          },
+          {
+            title: FORM_EDITOR_STEPS[4],
+            step: 4,
+            items: [
+              {
+                label: 'Applicant email',
+                value: form.acknowledgeApplicant
+                  ? 'Applicants are emailed their reference'
+                  : 'Applicants are not emailed',
+              },
+              {
+                label: 'Colleagues notified',
+                value:
+                  form.notifyEmails.length > 0
+                    ? form.notifyEmails.join(', ')
+                    : "The site's notification address",
+              },
+            ],
+          },
+        ]}
+      />
       <PublishChecklist checklist={checklist} live={Boolean(form.live)} />
       {!form.live && (
         <Typography variant="body2" color="text.secondary">

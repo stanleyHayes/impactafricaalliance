@@ -13,6 +13,7 @@ import Typography from '@mui/material/Typography';
 import { useRef, useState } from 'react';
 
 import { useAuth } from '../../auth/AuthContext';
+import { formatInstant } from '../../lib/forms';
 import { initials } from '../../lib/initials';
 import {
   TASK_COMMENTS_PAGE_SIZE,
@@ -48,8 +49,8 @@ export const renderMentions = (body: string): string =>
     (_token, name: string) => `**@${name.replace(MARKDOWN_SPECIAL, '\\$1')}**`,
   );
 
-const postedOn = (iso: string): string =>
-  new Date(iso).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
+/** On the 12-hour clock the rest of the console uses: "27 Sept 2026, 4:48 pm". */
+const postedOn = (iso: string): string => formatInstant(iso);
 
 const whenPosted = (iso: string): string => relativeTime(iso) ?? postedOn(iso);
 
@@ -184,32 +185,48 @@ const CommentItem = ({
         {initials(author)}
       </Avatar>
       <Box sx={commentBoxSx}>
-        <Stack direction="row" alignItems="center" spacing={1} useFlexGap flexWrap="wrap">
-          <Typography variant="body2" sx={{ fontWeight: 700 }}>
-            {author}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            <Box component="time" dateTime={comment.createdAt} title={postedOn(comment.createdAt)}>
-              {whenPosted(comment.createdAt)}
-            </Box>
-            {comment.editedAt ? ' · edited' : ''}
-          </Typography>
-          <Box sx={{ flexGrow: 1 }} />
-          {canEdit && !editing && (
-            <ActionIcon label="Edit your comment" onClick={() => setEditing(true)}>
-              <EditOutlinedIcon fontSize="small" />
-            </ActionIcon>
-          )}
-          {canDelete && !editing && (
-            <ActionIcon
-              label={mine ? 'Delete your comment' : `Delete ${author}'s comment`}
-              color="error"
-              onClick={() => setConfirming(true)}
-            >
-              <DeleteOutlineRoundedIcon fontSize="small" />
-            </ActionIcon>
-          )}
-        </Stack>
+        {/* Name and time wrap in their own cell on a phone, so Edit and
+            Delete stay together at the top right rather than splitting up. */}
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: 'minmax(0, 1fr) auto',
+            alignItems: 'center',
+            columnGap: 1,
+          }}
+        >
+          <Stack direction="row" alignItems="center" spacing={1} useFlexGap flexWrap="wrap">
+            <Typography variant="body2" sx={{ fontWeight: 700 }}>
+              {author}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              <Box
+                component="time"
+                dateTime={comment.createdAt}
+                title={postedOn(comment.createdAt)}
+              >
+                {whenPosted(comment.createdAt)}
+              </Box>
+              {comment.editedAt ? ' · edited' : ''}
+            </Typography>
+          </Stack>
+          <Stack direction="row" spacing={0.25} alignItems="center">
+            {canEdit && !editing && (
+              <ActionIcon label="Edit your comment" onClick={() => setEditing(true)}>
+                <EditOutlinedIcon fontSize="small" />
+              </ActionIcon>
+            )}
+            {canDelete && !editing && (
+              <ActionIcon
+                label={mine ? 'Delete your comment' : `Delete ${author}'s comment`}
+                color="error"
+                onClick={() => setConfirming(true)}
+              >
+                <DeleteOutlineRoundedIcon fontSize="small" />
+              </ActionIcon>
+            )}
+          </Stack>
+        </Box>
         {editing ? (
           <CommentEditor comment={comment} taskId={task.id} onDone={() => setEditing(false)} />
         ) : (

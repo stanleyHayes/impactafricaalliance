@@ -226,7 +226,7 @@ describe('autosave', () => {
       answers: [{ fieldId: 'full-name', value: 'Ama Mensah' }],
       currentStepId: 'about',
     });
-    expect(await screen.findByText(/^Saved at /)).toBeInTheDocument();
+    expect(await screen.findByText(/^Saved at \d{1,2}:\d{2} (AM|PM)$/)).toBeInTheDocument();
   });
 
   it('saves straight away on a step change', async () => {
@@ -516,7 +516,9 @@ describe('when the form cannot be filled in', () => {
     renderApplyRoute('/apply/speakers');
 
     await findScreenHeading('This form is not open yet');
-    expect(screen.getByText(/Applications open on 5 October 2026/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Applications open on 5 October 2026 at 9:00 AM GMT\./),
+    ).toBeInTheDocument();
   });
 
   it('says it cannot find an unknown or unpublished form', async () => {

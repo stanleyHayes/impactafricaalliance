@@ -33,10 +33,7 @@ const Leading = ({ option }: { option: SelectChoice }): JSX.Element | null => {
     );
   if (option.icon)
     return (
-      <Box
-        aria-hidden
-        sx={{ display: 'flex', color: 'text.secondary', '& svg': { fontSize: 19 } }}
-      >
+      <Box aria-hidden sx={{ display: 'flex', color: 'text.secondary', '& svg': { fontSize: 19 } }}>
         {option.icon}
       </Box>
     );
@@ -91,6 +88,10 @@ export const OptionSelect = ({
     helperText={error ?? helperText}
     sx={sx}
     slotProps={{
+      // With displayEmpty the field always shows something, the placeholder
+      // at least, so the label must sit in the outline's notch. Left to MUI it
+      // stays inside the box on top of "Any priority" when nothing is chosen.
+      ...(label ? { inputLabel: { shrink: true } } : {}),
       select: {
         displayEmpty: true,
         // Without this the closed field would show the description too, which
@@ -147,7 +148,10 @@ export const OptionSelect = ({
           <Leading option={option} />
         </Box>
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography component="span" sx={{ display: 'block', fontWeight: 600, fontSize: '0.85rem' }}>
+          <Typography
+            component="span"
+            sx={{ display: 'block', fontWeight: 600, fontSize: '0.85rem' }}
+          >
             {option.label}
           </Typography>
           {option.description && (

@@ -2,6 +2,7 @@ import type { FormListItem, FormStatus, FormType } from '@iaa/shared';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
 import DynamicFormIcon from '@mui/icons-material/DynamicForm';
+import FilterAltOffIcon from '@mui/icons-material/FilterAltOff';
 import InboxOutlinedIcon from '@mui/icons-material/InboxOutlined';
 import RecordVoiceOverOutlinedIcon from '@mui/icons-material/RecordVoiceOverOutlined';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
@@ -10,6 +11,7 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
 import CardActionArea from '@mui/material/CardActionArea';
+import Chip from '@mui/material/Chip';
 import InputAdornment from '@mui/material/InputAdornment';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
@@ -25,7 +27,11 @@ import { useRef, useState } from 'react';
 import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useCan } from '../../auth/useCan';
-import { ServerPagination, usePageParam } from '../../components/data/ServerPagination';
+import {
+  OutOfRangePage,
+  ServerPagination,
+  usePageParam,
+} from '../../components/data/ServerPagination';
 import { EmptyState } from '../../components/EmptyState';
 import { OptionSelect } from '../../components/fields/OptionSelect';
 import { PageHeader } from '../../components/PageHeader';
@@ -33,6 +39,7 @@ import { formatInstant, useForms, type FormListParams } from '../../lib/forms';
 import { pageGuides } from '../../lib/page-guides';
 import { FORM_TYPE_OPTIONS, withAnyOption } from '../../lib/select-options';
 import { useDebouncedValue } from '../../lib/use-debounced-value';
+import { VISUALLY_HIDDEN } from '../../lib/visually-hidden';
 
 import { FormStatusChip } from './FormStatusChip';
 
@@ -158,8 +165,9 @@ const FormCard = ({ form }: { form: FormListItem }): JSX.Element => {
             </Typography>
           </Stack>
           <Box sx={{ minWidth: 0 }}>
+            {/* One level under the list's own heading, as on the other card lists. */}
             <Typography
-              component="h2"
+              component="h3"
               variant="h6"
               sx={{ fontWeight: 700, overflowWrap: 'anywhere' }}
             >
@@ -219,11 +227,13 @@ const FormsResults = ({
   tab,
   filtered,
   canCreate,
+  onClearFilters,
 }: {
   query: ReturnType<typeof useForms>;
   tab: TabInfo;
   filtered: boolean;
   canCreate: boolean;
+  onClearFilters: () => void;
 }): JSX.Element => {
   const navigate = useNavigate();
   if (query.isPending) return <FormGridSkeleton />;
@@ -234,17 +244,24 @@ const FormsResults = ({
       </Alert>
     );
   }
+  // Past the last page: an old link, or the last form on it deleted or moved.
+  if (query.data.items.length === 0 && query.data.total > 0) {
+    return <OutOfRangePage total={query.data.total} noun="form" compact={false} />;
+  }
   if (query.data.items.length === 0) {
     const label = tab.value ? `${tab.label.toLowerCase()} ` : '';
+    const newForm = canCreate
+      ? { label: 'New form', onClick: () => navigate('/forms/new'), icon: <AddRoundedIcon /> }
+      : undefined;
     return (
       <EmptyState
         icon={<InboxOutlinedIcon />}
         title={filtered ? 'No forms match' : `No ${label}forms`}
         description={filtered ? 'Try another search or type, or clear the filters.' : tab.empty}
         primaryAction={
-          canCreate && !filtered
-            ? { label: 'New form', onClick: () => navigate('/forms/new'), icon: <AddRoundedIcon /> }
-            : undefined
+          filtered
+            ? { label: 'Clear filters', onClick: onClearFilters, icon: <FilterAltOffIcon /> }
+            : newForm
         }
       />
     );
@@ -289,6 +306,17 @@ const FormsPage = (): JSX.Element => {
     setSearch(text);
     if (page !== 1) setParam('page', '');
   };
+  // Search and type go; the status tab stays, since it is where you are.
+  const clearFilters = (): void => {
+    setSearch('');
+    setParams((current) => {
+      const next = new URLSearchParams();
+      const status = current.get('status');
+      if (status) next.set('status', status);
+      return next;
+    });
+  };
+  const hasFilters = Boolean(search.trim() || type);
 
   return (
     <>
@@ -317,10 +345,12 @@ const FormsPage = (): JSX.Element => {
           display: 'grid',
           gap: 2,
           mb: 3,
-          gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' },
+          gridTemplateColumns: { xs: '1fr', md: hasFilters ? '2fr 1fr auto' : '2fr 1fr' },
         }}
       >
+        {/* Small fields, as on the Projects, Stories and Submissions toolbars. */}
         <TextField
+          size="small"
           label="Search forms"
           value={search}
           onChange={(event) => changeSearch(event.target.value)}
@@ -336,25 +366,25 @@ const FormsPage = (): JSX.Element => {
           }}
         />
         <OptionSelect
+          size="small"
           label="Type"
           options={withAnyOption(FORM_TYPE_OPTIONS, 'Every type', 'Forms for any purpose.')}
           value={type}
           onChange={(value) => setParam('type', value)}
           placeholder="Every type"
         />
+        {hasFilters && (
+          <Chip
+            label="Clear filters"
+            onClick={clearFilters}
+            onDelete={clearFilters}
+            deleteIcon={<FilterAltOffIcon />}
+            variant="outlined"
+            sx={{ borderRadius: 2, alignSelf: 'center', justifySelf: 'start' }}
+          />
+        )}
       </Box>
-      <Typography
-        ref={heading}
-        tabIndex={-1}
-        component="h2"
-        sx={{
-          position: 'absolute',
-          width: 1,
-          height: 1,
-          overflow: 'hidden',
-          clip: 'rect(0 0 0 0)',
-        }}
-      >
+      <Typography ref={heading} tabIndex={-1} component="h2" sx={VISUALLY_HIDDEN}>
         {tabInfo.label} forms
       </Typography>
       <FormsResults
@@ -362,6 +392,7 @@ const FormsPage = (): JSX.Element => {
         tab={tabInfo}
         filtered={Boolean(q || type)}
         canCreate={canCreate}
+        onClearFilters={clearFilters}
       />
       <ServerPagination
         totalPages={query.data?.totalPages ?? 1}

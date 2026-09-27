@@ -92,10 +92,24 @@ describe('AllTasksPage', () => {
 
   it('opens a task in the drawer from its row', async () => {
     renderTaskUi(<AllTasksPage />, { route: '/tasks/all' });
-    fireEvent.click(
-      await screen.findByRole('button', { name: `Open ${report.key}: ${report.title}` }),
-    );
+    fireEvent.click(await screen.findByRole('button', { name: `${report.key} ${report.title}` }));
     expect(screen.getByTestId('location')).toHaveTextContent(`/tasks/all?task=${report.key}`);
+  });
+
+  it('says the page is past the end, rather than that there are no tasks', async () => {
+    vi.mocked(api.get).mockImplementation(async (path: string) =>
+      path.startsWith('/admin/tasks?')
+        ? { ...paged([], 41), page: 3, pageSize: 25, totalPages: 2 }
+        : paged([]),
+    );
+    renderTaskUi(<AllTasksPage />, { route: '/tasks/all?page=3' });
+    expect(await screen.findByText('Nothing on this page')).toBeInTheDocument();
+    expect(
+      screen.getByText('There are 41 tasks in this view, on earlier pages.'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('No open tasks')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Go to the first page' }));
+    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent(/^\/tasks\/all$/));
   });
 
   it('says what to do when the filters match nothing', async () => {

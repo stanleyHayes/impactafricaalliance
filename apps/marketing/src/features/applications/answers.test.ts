@@ -6,6 +6,7 @@ import {
   firstStepErrors,
   formatBytes,
   formatCalendarDate,
+  formatInstant,
   locateProblems,
   sameAnswer,
   savableAnswers,
@@ -155,6 +156,16 @@ describe('showing answers back', () => {
         field({ id: 'f', type: 'file', validation: { fileKinds: ['pdf', 'image'], maxFiles: 3 } }),
       ),
     ).toBe('Up to 3 files, 5 MB each. Accepted types: PDF, JPG, JPEG, PNG, WEBP, GIF.');
+  });
+
+  // Deadlines read the same in Accra and Lagos: 12-hour, labelled GMT, and
+  // the same words whatever time zone the test machine is in.
+  it('shows an instant on the 12-hour GMT clock the events pages use', () => {
+    expect(formatInstant('2026-11-06T12:00:00.000Z')).toBe('6 November 2026 at 12:00 PM GMT');
+    // Late in the evening the day stays the one the time belongs to.
+    expect(formatInstant('2026-11-06T23:30:00.000Z')).toBe('6 November 2026 at 11:30 PM GMT');
+    expect(formatInstant('2026-11-07T00:05:00.000Z')).toBe('7 November 2026 at 12:05 AM GMT');
+    expect(formatInstant('not a date')).toBe('not a date');
   });
 
   it('treats equal values as the same answer', () => {

@@ -1,11 +1,12 @@
-import type { Task, TaskUpdate } from '@iaa/shared';
+import type { Task, TaskComment, TaskUpdate } from '@iaa/shared';
 import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { api } from '../../lib/api-client';
+import { theme } from '../../theme/theme';
 
 import { forgetTaskDrafts } from './task-drafts';
-import { fullTask, paged, renderTaskUi } from './task-test-fixtures';
+import { esi, fullTask, paged, renderTaskUi } from './task-test-fixtures';
 import { renderMentions } from './TaskComments';
 import { TaskDrawerHost } from './TaskDrawer';
 
@@ -85,6 +86,50 @@ describe('TaskDrawer', () => {
     expect(await screen.findByText('Title saved')).toBeInTheDocument();
   });
 
+  it('typing a due date sends one PATCH, with the day finally typed', async () => {
+    // Desktop mode, where the date can be typed rather than only picked.
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: query.includes('pointer: fine'),
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }));
+    const dated = { ...task, dueDate: '2026-10-15T12:00:00.000Z' };
+    vi.mocked(api.get).mockImplementation(async (path: string) =>
+      path === '/admin/tasks/IAA-7' ? dated : paged([]),
+    );
+    vi.mocked(api.patch).mockImplementation(async (_path: string, body: unknown) => ({
+      ...dated,
+      ...(body as TaskUpdate),
+    }));
+    try {
+      await openDrawer();
+      const field = screen.getByRole('group', { name: /Due date/ });
+      const day = within(field).getByRole('spinbutton', { name: 'Day' });
+      fireEvent.mouseDown(day);
+      // "2" then "5": the 2nd is a whole day on the way to the 25th.
+      for (const digit of ['2', '5']) {
+        day.textContent = digit;
+        fireEvent.input(day);
+      }
+      expect(api.patch).not.toHaveBeenCalled();
+      fireEvent.blur(day);
+
+      await waitFor(() => expect(api.patch).toHaveBeenCalledTimes(1));
+      expect(api.patch).toHaveBeenCalledWith(`/admin/tasks/${task.id}`, {
+        dueDate: '2026-10-25T12:00:00.000Z',
+      });
+      expect(await screen.findByText('Due date saved')).toBeInTheDocument();
+      expect(api.patch).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('keeps a title that is too short from being saved', async () => {
     await openDrawer();
     fireEvent.click(screen.getByRole('button', { name: 'Edit title' }));
@@ -159,6 +204,48 @@ describe('TaskDrawer', () => {
     expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Close task' }));
     expect(screen.getByTestId('location')).toHaveTextContent(/^\/tasks\/all$/);
+  });
+
+  it('keeps Edit and Delete together, apart from the name and time that can wrap', async () => {
+    const comment: TaskComment = {
+      id: 'c'.repeat(24),
+      taskId: task.id,
+      author: esi,
+      body: 'The printer needs the final PDF by Friday.',
+      mentions: [],
+      createdAt: '2026-10-02T09:00:00.000Z',
+      updatedAt: '2026-10-02T09:00:00.000Z',
+    };
+    vi.mocked(api.get).mockImplementation(async (path: string) => {
+      if (path === '/admin/tasks/IAA-7') return task;
+      if (path.startsWith(`/admin/tasks/${task.id}/comments`)) return paged([comment]);
+      return paged([]);
+    });
+    await openDrawer();
+    const edit = await screen.findByRole('button', { name: 'Edit your comment' });
+    const remove = screen.getByRole('button', { name: 'Delete your comment' });
+    // Each button sits in its tooltip's span; the pair shares one group.
+    const group = edit.parentElement?.parentElement;
+    expect(group).toBeTruthy();
+    expect(remove.parentElement?.parentElement).toBe(group);
+    // The group holds the actions alone, so a wrapping name never splits them.
+    expect(group).not.toHaveTextContent('Esi Editor');
+  });
+
+  it('titles the task in the sans record face, as EventDetail does, under a level-2 heading', async () => {
+    await openDrawer();
+    expect(screen.getByRole('heading', { level: 2, name: 'Print the programmes' })).toHaveClass(
+      'MuiTypography-h3',
+    );
+  });
+
+  it('sits above the fixed top bar, so its Close button is never covered', async () => {
+    await openDrawer();
+    const root = document.querySelector('.MuiDrawer-root');
+    if (!root) throw new Error('No drawer');
+    // The app bar is at drawer + 1; the drawer must be above it.
+    expect(getComputedStyle(root).zIndex).toBe(String(theme.zIndex.modal));
+    expect(theme.zIndex.modal).toBeGreaterThan(theme.zIndex.drawer + 1);
   });
 
   it('closes by taking the task out of the address', async () => {

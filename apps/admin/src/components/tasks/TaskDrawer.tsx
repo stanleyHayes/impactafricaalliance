@@ -14,12 +14,19 @@ export interface TaskDrawerProps {
  * A task beside the list it was opened from: a right-hand panel over the
  * page, full width on a phone. Everything in it saves as it changes, so
  * closing it never loses work.
+ *
+ * It is a modal, so it sits at the modal layer rather than MUI's drawer layer:
+ * the fixed top bar is one above the drawer layer, and would otherwise cover
+ * the drawer's first row, Close button included, and stay clickable over it.
+ * What the drawer opens itself (menus, date pickers, confirmations) is
+ * portalled after it, so still stacks on top.
  */
 export const TaskDrawer = ({ taskKey, onClose }: TaskDrawerProps): JSX.Element => (
   <Drawer
     anchor="right"
     open={Boolean(taskKey)}
     onClose={onClose}
+    sx={{ zIndex: (theme) => theme.zIndex.modal }}
     slotProps={{
       paper: {
         'aria-label': taskKey ? `Task ${taskKey.toUpperCase()}` : 'Task',

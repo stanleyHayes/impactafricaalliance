@@ -35,7 +35,11 @@ import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router-d
 
 import { useAuth } from '../../auth/AuthContext';
 import { useHasPermission } from '../../auth/useCan';
-import { ServerPagination, usePageParam } from '../../components/data/ServerPagination';
+import {
+  OutOfRangePage,
+  ServerPagination,
+  usePageParam,
+} from '../../components/data/ServerPagination';
 import { ConfirmDialog } from '../../components/dialogs/ConfirmDialog';
 import { EmptyState } from '../../components/EmptyState';
 import { OptionSelect } from '../../components/fields/OptionSelect';
@@ -56,6 +60,7 @@ import {
 import { pageGuides } from '../../lib/page-guides';
 import { PROGRAMME_OPTIONS, withAnyOption } from '../../lib/select-options';
 import { useDebouncedValue } from '../../lib/use-debounced-value';
+import { VISUALLY_HIDDEN } from '../../lib/visually-hidden';
 
 export interface ImpactStoriesPageProps {
   /**
@@ -66,11 +71,19 @@ export interface ImpactStoriesPageProps {
   view?: 'drafts' | 'published';
 }
 
+/**
+ * The "all programmes" row of the filter. A real value rather than '', as on
+ * the projects list, because a select showing an empty value keeps its label
+ * inside the field, on top of the "All programmes" text; the address still
+ * holds nothing for it.
+ */
+const ANY_PROGRAMME = 'any';
+
 const PROGRAMME_FILTER = withAnyOption(
   PROGRAMME_OPTIONS,
   'All programmes',
   'Stories from every programme area.',
-);
+).map((option) => (option.value === '' ? { ...option, value: ANY_PROGRAMME } : option));
 
 /** The filters held in the address, so a filtered list can be shared and reloaded. */
 const useStoryFilters = (): {
@@ -121,16 +134,6 @@ const CardSkeleton = (): JSX.Element => (
     </Box>
   </Box>
 );
-
-// Named for screen readers and the pagination's focus target; the tabs already say it on screen.
-const VISUALLY_HIDDEN = {
-  position: 'absolute',
-  width: 1,
-  height: 1,
-  overflow: 'hidden',
-  clip: 'rect(0 0 0 0)',
-  whiteSpace: 'nowrap',
-} as const;
 
 const GRID_SX = {
   display: 'grid',
@@ -429,6 +432,12 @@ const StoriesResults = ({
     );
   }
   const items = stories.data.items;
+  // Past the last page: publishing or deleting the last story on it moves it away.
+  if (items.length === 0 && stories.data.total > 0) {
+    return (
+      <OutOfRangePage total={stories.data.total} noun="story" plural="stories" compact={false} />
+    );
+  }
   if (items.length === 0) {
     const empty = emptyCopy(view, filtered);
     const newStory = canCreate
@@ -555,8 +564,8 @@ const StoriesTab = ({ view }: { view: 'drafts' | 'published' }): JSX.Element => 
           label="Programme"
           size="small"
           options={PROGRAMME_FILTER}
-          value={filters.programme}
-          onChange={(value) => filters.set('programme', value)}
+          value={filters.programme || ANY_PROGRAMME}
+          onChange={(value) => filters.set('programme', value === ANY_PROGRAMME ? '' : value)}
         />
         {canReadProjects && (
           <ProjectPicker

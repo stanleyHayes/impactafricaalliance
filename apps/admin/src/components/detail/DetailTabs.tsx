@@ -34,19 +34,27 @@ export interface DetailTabsProps {
  * the current one (`aria-current="page"`), so the highlight always matches the
  * page. The caller renders the `<Outlet />` for the tab's content.
  *
- * On a phone the row scrolls sideways, and the current tab is scrolled into
- * view so a deep link to the last tab does not leave it off screen.
+ * On a phone the row scrolls sideways, and the row is scrolled to the current
+ * tab so a deep link to the last tab does not leave it off screen. The window
+ * itself never moves.
  */
 export const DetailTabs = ({ tabs, ariaLabel }: DetailTabsProps): JSX.Element => {
   const barRef = useRef<HTMLElement | null>(null);
   const { pathname } = useLocation();
 
   useEffect(() => {
-    const current = barRef.current?.querySelector<HTMLElement>('[aria-current="page"]');
-    // jsdom and older browsers lack scrollIntoView's options; skip rather than throw.
-    if (typeof current?.scrollIntoView === 'function') {
-      current.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-    }
+    const bar = barRef.current;
+    const current = bar?.querySelector<HTMLElement>('[aria-current="page"]');
+    if (!bar || !current) return;
+    // Only the strip scrolls, sideways, to centre the current tab. Not
+    // scrollIntoView: on a phone the strip starts below the fold, and that
+    // would scroll the window too, opening the page with its title under
+    // the app bar.
+    const offset = current.getBoundingClientRect().left - bar.getBoundingClientRect().left;
+    const left = Math.max(0, bar.scrollLeft + offset - (bar.clientWidth - current.offsetWidth) / 2);
+    // jsdom and some older browsers have no element scrollTo; set it directly.
+    if (typeof bar.scrollTo === 'function') bar.scrollTo({ left });
+    else bar.scrollLeft = left;
   }, [pathname]);
 
   return (
@@ -100,7 +108,9 @@ export const DetailTabs = ({ tabs, ariaLabel }: DetailTabsProps): JSX.Element =>
             },
             '&.active': {
               bgcolor: 'primary.main',
-              color: 'common.black',
+              // Black read well on the green presets but not on Aura's
+              // violet; the palette picks whichever contrasts, as the sidebar does.
+              color: (theme) => theme.palette.getContrastText(theme.palette.primary.main),
               boxShadow: '0 9px 20px -14px rgba(18,63,41,0.85)',
             },
           }}

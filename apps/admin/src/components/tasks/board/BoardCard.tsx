@@ -17,7 +17,7 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import { useState, type KeyboardEventHandler, type MouseEvent } from 'react';
+import { useCallback, useState, type KeyboardEventHandler, type MouseEvent } from 'react';
 
 import { TASK_STATUS_OPTIONS } from '../../../lib/select-options';
 import { PersonAvatars } from '../PersonAvatars';
@@ -30,6 +30,12 @@ export interface CardActions {
   onOpen: (key: string) => void;
   onMoveTo: (task: TaskListItem, status: TaskStatus) => void;
   onStep: (task: TaskListItem, direction: -1 | 1) => void;
+  /**
+   * Hands the board the card's Move button, and returns what to call when it
+   * goes, so focus can follow a card the menu moved to another column: that
+   * column draws the card afresh, and the button that had focus is gone.
+   */
+  registerMoveButton: (taskId: string, button: HTMLButtonElement) => () => void;
 }
 
 /** A card's face: what the board shows of a task, dragged or not. */
@@ -70,7 +76,7 @@ const cardSx = {
  *
  * Dragged with a mouse from anywhere on the card, or on a touch screen after a
  * short press so the column can still scroll. From the keyboard, the handle
- * picks the card up (Space), arrows move it and Space drops it; the "More"
+ * picks the card up (Space), arrows move it and Space drops it; the Move
  * menu offers the same moves as plain buttons (move up, move down, move to
  * another status) for anyone who would rather not drag at all.
  */
@@ -113,6 +119,13 @@ export const BoardCard = ({
     run();
   };
   const stop = (event: MouseEvent): void => event.stopPropagation();
+  const { registerMoveButton } = actions;
+  // Stable, so the board hears of the button only when it arrives or goes.
+  const moveButtonRef = useCallback(
+    (button: HTMLButtonElement | null) =>
+      button ? registerMoveButton(task.id, button) : undefined,
+    [registerMoveButton, task.id],
+  );
 
   return (
     <Box
@@ -169,6 +182,7 @@ export const BoardCard = ({
         </ButtonBase>
         {canMove && (
           <IconButton
+            ref={moveButtonRef}
             size="small"
             aria-label={`Move ${task.key}`}
             aria-haspopup="menu"

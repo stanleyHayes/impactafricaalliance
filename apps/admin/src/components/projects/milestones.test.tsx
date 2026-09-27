@@ -154,6 +154,30 @@ describe('MilestoneDialog', () => {
     await waitFor(() => expect(onClose).toHaveBeenCalled());
   });
 
+  it('does not save the old due date while a new one is only half typed', async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    withPickers(
+      <MilestoneDialog
+        open
+        initial={draftFromMilestone(milestones[0]!)}
+        editing
+        onSave={onSave}
+        onClose={vi.fn()}
+      />,
+    );
+    const day = screen.getByRole('spinbutton', { name: 'Day' });
+    fireEvent.mouseDown(day);
+    fireEvent.keyDown(day, { key: 'Delete' });
+    expect(
+      await screen.findByText('Finish typing the date, or clear the field.'),
+    ).toBeInTheDocument();
+    // Enter in the title, and the button, both wait for the date.
+    fireEvent.submit(screen.getByRole('textbox', { name: /^Title/ }).closest('form')!);
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
   it('stays open with the reason when the save is refused', async () => {
     const onSave = vi.fn().mockRejectedValue(new Error('Each milestone needs its own id'));
     const onClose = vi.fn();

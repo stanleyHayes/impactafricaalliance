@@ -221,7 +221,8 @@ describe('ApplicationDetailPage', () => {
     setup();
     await screen.findByRole('heading', { level: 1, name: 'Ama Mensah' });
     fireEvent.click(screen.getByRole('button', { name: 'Add review' }));
-    const dialog = screen.getByRole('dialog');
+    // Named, so a screen reader says which dialog has opened.
+    const dialog = screen.getByRole('dialog', { name: 'Add a review' });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Add review' }));
     expect(within(dialog).getByText('Write a few words on why.')).toBeInTheDocument();
     fireEvent.change(within(dialog).getByRole('textbox', { name: /Notes/ }), {

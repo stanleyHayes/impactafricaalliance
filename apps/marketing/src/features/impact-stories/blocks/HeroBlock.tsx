@@ -12,13 +12,20 @@ import { StoryImage } from '../StoryImage';
 import type { StoryBlockProps } from './frame';
 
 /**
+ * How tall the story's opening hero is. Exported so the page's loading
+ * skeleton takes the same space and the text below does not jump when the
+ * story arrives.
+ */
+export const LEAD_HERO_MIN_HEIGHT = { xs: 520, md: 640 } as const;
+
+/**
  * A full-bleed picture with a large heading over it. The one place a story
  * uses the site's animated heading, as page heroes do elsewhere; a hero later
  * in the story is a chapter break with a second-level heading.
  */
 export const HeroBlock = ({ data, lead = false, meta }: StoryBlockProps<'hero'>): JSX.Element => {
   const reduceMotion = useReducedMotion();
-  const height = lead ? { xs: 520, md: 640 } : { xs: 420, md: 520 };
+  const height = lead ? LEAD_HERO_MIN_HEIGHT : { xs: 420, md: 520 };
   return (
     <Box
       component={lead ? 'header' : 'section'}

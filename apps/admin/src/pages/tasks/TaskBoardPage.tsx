@@ -2,6 +2,7 @@ import type { Task, TaskListItem, TaskStatus } from '@iaa/shared';
 import AddTaskRoundedIcon from '@mui/icons-material/AddTaskRounded';
 import ViewKanbanIcon from '@mui/icons-material/ViewKanban';
 import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Snackbar from '@mui/material/Snackbar';
 import useMediaQuery from '@mui/material/useMediaQuery';
@@ -24,6 +25,7 @@ import { useTaskDrawer } from '../../components/tasks/use-task-drawer';
 import { useTaskFilters } from '../../components/tasks/use-task-filters';
 import { pageGuides } from '../../lib/page-guides';
 import { useMoveTask, useTaskBoard } from '../../lib/tasks';
+import { VISUALLY_HIDDEN } from '../../lib/visually-hidden';
 
 /**
  * Tasks as cards in status columns. Moving a card changes its status and
@@ -39,15 +41,25 @@ const TaskBoardPage = (): JSX.Element => {
   const move = useMoveTask();
   const { open } = useTaskDrawer();
   const [failure, setFailure] = useState<string | null>(null);
+  // Read out once a menu move is saved; drags are announced by the board itself.
+  const [announcement, setAnnouncement] = useState('');
   const [creating, setCreating] = useState(false);
   const [created, setCreated] = useState<Task | null>(null);
 
-  const send = (task: TaskListItem, position: BoardPosition | null): void => {
-    if (!position) return;
+  /** Sends a move. Resolves once the server has answered, whatever it said. */
+  const send = (
+    task: TaskListItem,
+    position: BoardPosition | null,
+    done?: string,
+  ): Promise<void> => {
+    if (!position) return Promise.resolve();
     // The promise rather than mutate's callbacks, which only fire for the
     // latest move: a quick second move must not hide the first one's failure.
-    move
+    return move
       .mutateAsync({ task, ...position })
+      .then(() => {
+        if (done) setAnnouncement(done);
+      })
       .catch((error: unknown) =>
         setFailure(
           `${task.key} could not be moved to ${taskStatusLabel(position.status)}. ${
@@ -57,10 +69,18 @@ const TaskBoardPage = (): JSX.Element => {
       );
   };
 
-  const moveTo = (task: TaskListItem, status: TaskStatus): void =>
-    send(task, board.data ? planMoveTo(board.data, task.id, status) : null);
-  const step = (task: TaskListItem, direction: -1 | 1): void =>
-    send(task, board.data ? planStep(board.data, task.id, direction) : null);
+  const moveTo = (task: TaskListItem, status: TaskStatus): Promise<void> =>
+    send(
+      task,
+      board.data ? planMoveTo(board.data, task.id, status) : null,
+      `${task.key} moved to ${taskStatusLabel(status)}`,
+    );
+  const step = (task: TaskListItem, direction: -1 | 1): Promise<void> =>
+    send(
+      task,
+      board.data ? planStep(board.data, task.id, direction) : null,
+      `${task.key} moved ${direction < 0 ? 'up' : 'down'}`,
+    );
 
   const renderBoard = (): JSX.Element => {
     if (board.isPending) return <TaskBoardSkeleton />;
@@ -123,7 +143,7 @@ const TaskBoardPage = (): JSX.Element => {
           canMove={canMove}
           reducedMotion={reducedMotion}
           onOpen={open}
-          onMove={send}
+          onMove={(task, position) => void send(task, position)}
           onMoveTo={moveTo}
           onStep={step}
         />
@@ -154,6 +174,9 @@ const TaskBoardPage = (): JSX.Element => {
       <TaskViewTabs />
       <TaskFilters controls={controls} showDoneToggle={false} />
       {renderBoard()}
+      <Box role="status" aria-live="polite" sx={VISUALLY_HIDDEN}>
+        {announcement}
+      </Box>
       <Snackbar
         open={failure !== null}
         autoHideDuration={8000}

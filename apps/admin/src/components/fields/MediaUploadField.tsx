@@ -19,6 +19,7 @@ import { useRef, useState } from 'react';
 
 import { uploadToCloudinary } from '../../lib/cloudinary';
 import { downscaleImage } from '../../lib/downscale-image';
+import { UPLOAD_PERMISSION_NOTE, useCanUploadFiles } from '../files/upload-permission';
 import { MediaPickerDialog } from '../media/MediaPickerDialog';
 
 interface MediaUploadFieldProps {
@@ -55,6 +56,98 @@ const uploadPrompt = (uploading: boolean, hasValue: boolean): string => {
   return 'Click to upload or drag & drop';
 };
 
+interface DropZoneProps {
+  accept: string;
+  uploading: boolean;
+  /** False without media:create: the zone stays in place, dimmed, and takes nothing. */
+  mayUpload: boolean;
+  prompt: string;
+  detail: string;
+  onFile: (file: File | undefined) => void;
+}
+
+/** The dashed area a file is dropped on or chosen from. */
+const DropZone = ({
+  accept,
+  uploading,
+  mayUpload,
+  prompt,
+  detail,
+  onFile,
+}: DropZoneProps): JSX.Element => {
+  const theme = useTheme();
+  const green = theme.palette.primary.main;
+  const [dragging, setDragging] = useState(false);
+  const locked = uploading || !mayUpload;
+  return (
+    <Box
+      component="label"
+      aria-disabled={!mayUpload || undefined}
+      onDragOver={(event) => {
+        event.preventDefault();
+        if (mayUpload) setDragging(true);
+      }}
+      onDragLeave={() => setDragging(false)}
+      onDrop={(event) => {
+        event.preventDefault();
+        setDragging(false);
+        onFile(event.dataTransfer.files?.[0]);
+      }}
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 0.5,
+        textAlign: 'center',
+        px: 2,
+        py: 2.5,
+        borderRadius: 2,
+        cursor: locked ? 'default' : 'pointer',
+        opacity: mayUpload ? 1 : 0.6,
+        border: `1.5px dashed ${dragging ? green : theme.palette.divider}`,
+        bgcolor: dragging ? alpha(green, 0.06) : 'transparent',
+        transition: theme.transitions.create(['border-color', 'background-color']),
+        '&:hover': mayUpload ? { borderColor: green, bgcolor: alpha(green, 0.04) } : {},
+      }}
+    >
+      <input
+        hidden
+        type="file"
+        accept={accept}
+        disabled={locked}
+        onChange={(event) => {
+          onFile(event.target.files?.[0]);
+          event.target.value = '';
+        }}
+      />
+      {uploading ? (
+        <CircularProgress size={26} color="primary" />
+      ) : (
+        <Box
+          sx={{
+            width: 40,
+            height: 40,
+            borderRadius: '50%',
+            display: 'grid',
+            placeItems: 'center',
+            color: 'text.primary',
+            bgcolor: alpha(green, 0.1),
+          }}
+        >
+          <CloudUploadOutlinedIcon fontSize="small" />
+        </Box>
+      )}
+      <Typography variant="body2" sx={{ fontWeight: 600, mt: 0.5 }}>
+        {prompt}
+      </Typography>
+      <Typography variant="caption" color="text.secondary">
+        {detail}
+      </Typography>
+    </Box>
+  );
+};
+
 /** Polished media upload: a drag-and-drop zone with format + size guidance and a preview. */
 export const MediaUploadField = ({
   label,
@@ -74,11 +167,14 @@ export const MediaUploadField = ({
   const uploadLock = useRef(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [dragging, setDragging] = useState(false);
   const [picking, setPicking] = useState(false);
+  // Uploading needs media:create; picking from the library does not, so
+  // someone without it can still choose a picture the site already has.
+  const mayUpload = useCanUploadFiles();
+  const locked = uploading || !mayUpload;
 
   const handleFile = async (chosen: File | undefined): Promise<void> => {
-    if (!chosen || uploadLock.current) {
+    if (!chosen || uploadLock.current || !mayUpload) {
       return;
     }
     const matches = accept.split(',').some((item) => {
@@ -192,70 +288,21 @@ export const MediaUploadField = ({
         </Stack>
       )}
 
-      {/* Dropzone */}
-      <Box
-        component="label"
-        onDragOver={(event) => {
-          event.preventDefault();
-          setDragging(true);
-        }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={(event) => {
-          event.preventDefault();
-          setDragging(false);
-          void handleFile(event.dataTransfer.files?.[0]);
-        }}
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 0.5,
-          textAlign: 'center',
-          px: 2,
-          py: 2.5,
-          borderRadius: 2,
-          cursor: uploading ? 'default' : 'pointer',
-          border: `1.5px dashed ${dragging ? green : theme.palette.divider}`,
-          bgcolor: dragging ? alpha(green, 0.06) : 'transparent',
-          transition: theme.transitions.create(['border-color', 'background-color']),
-          '&:hover': { borderColor: green, bgcolor: alpha(green, 0.04) },
-        }}
-      >
-        <input
-          hidden
-          type="file"
-          accept={accept}
-          disabled={uploading}
-          onChange={(event) => {
-            void handleFile(event.target.files?.[0]);
-            event.target.value = '';
-          }}
-        />
-        {uploading ? (
-          <CircularProgress size={26} color="primary" />
-        ) : (
-          <Box
-            sx={{
-              width: 40,
-              height: 40,
-              borderRadius: '50%',
-              display: 'grid',
-              placeItems: 'center',
-              color: 'text.primary',
-              bgcolor: alpha(green, 0.1),
-            }}
-          >
-            <CloudUploadOutlinedIcon fontSize="small" />
-          </Box>
-        )}
-        <Typography variant="body2" sx={{ fontWeight: 600, mt: 0.5 }}>
-          {uploadPrompt(uploading, Boolean(value))}
-        </Typography>
-        <Typography variant="caption" color="text.secondary">
-          {acceptedFormats(accept)} · up to {sizeLimit}MB
-        </Typography>
-      </Box>
+      <DropZone
+        accept={accept}
+        uploading={uploading}
+        mayUpload={mayUpload}
+        prompt={uploadPrompt(uploading, Boolean(value))}
+        detail={`${acceptedFormats(accept)} · up to ${sizeLimit}MB`}
+        onFile={(file) => void handleFile(file)}
+      />
+
+      {!mayUpload && (
+        // A standing note, not news: "note" rather than Alert's own "alert" role.
+        <Alert severity="info" role="note" sx={{ borderRadius: 2 }}>
+          {UPLOAD_PERMISSION_NOTE}
+        </Alert>
+      )}
 
       {error && (
         <Alert severity="error" onClose={() => setError(null)} sx={{ borderRadius: 2 }}>
@@ -278,7 +325,7 @@ export const MediaUploadField = ({
           </Button>
         )}
         {value && (
-          <Button component="label" size="small" variant="text" disabled={uploading}>
+          <Button component="label" size="small" variant="text" disabled={locked}>
             Choose a different file
             <input
               hidden

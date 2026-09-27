@@ -1,6 +1,5 @@
 import type { PersonSummary, Task, TaskStatus, WorkPriority } from '@iaa/shared';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import TaskAltIcon from '@mui/icons-material/TaskAlt';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
@@ -9,13 +8,14 @@ import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { Link as RouterLink, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { DateField } from '../../components/fields/DateField';
 import { OptionSelect, type SelectChoice } from '../../components/fields/OptionSelect';
 import { TagsField } from '../../components/fields/TagsField';
 import { FormStepNavigation } from '../../components/forms/FormStepNavigation';
+import { ReviewSummary } from '../../components/forms/ReviewSummary';
 import { MarkdownEditor } from '../../components/markdown/MarkdownEditor';
 import { PageHeader } from '../../components/PageHeader';
 import { FormPageSkeleton } from '../../components/PageSkeleton';
@@ -48,12 +48,21 @@ import { useCreateTask, useTask, useTaskProject, useUpdateTask } from '../../lib
 
 type SetField = <K extends keyof TaskFormState>(key: K, value: TaskFormState[K]) => void;
 
+type TaskDateField = 'startDate' | 'dueDate';
+
+/** The Schedule step's index, where the date fields are. */
+const SCHEDULE_STEP = 2;
+
+const DATE_PROBLEM = 'Finish typing the date, or clear it, before continuing.';
+
 interface StepProps {
   form: TaskFormState;
   set: SetField;
   errors: TaskFormErrors;
   disabled: boolean;
   taskId?: string;
+  /** A date field's own objection (half typed, impossible, before the start), or null. */
+  onDateProblem: (field: TaskDateField, problem: string | null) => void;
 }
 
 const BasicsStep = ({ form, set, errors, disabled }: StepProps): JSX.Element => (
@@ -72,17 +81,13 @@ const BasicsStep = ({ form, set, errors, disabled }: StepProps): JSX.Element => 
       }
       slotProps={{ htmlInput: { maxLength: 200 } }}
     />
-    <Box>
-      <Typography variant="subtitle2" sx={{ mb: 1 }}>
-        Description
-      </Typography>
-      <MarkdownEditor
-        value={form.description}
-        onChange={(value) => set('description', value)}
-        error={errors.description}
-        minRows={8}
-      />
-    </Box>
+    <MarkdownEditor
+      label="Description"
+      value={form.description}
+      onChange={(value) => set('description', value)}
+      error={errors.description}
+      minRows={8}
+    />
   </Stack>
 );
 
@@ -148,13 +153,14 @@ const AssignmentStep = ({ form, set, errors, disabled, taskId }: StepProps): JSX
   );
 };
 
-const ScheduleStep = ({ form, set, errors, disabled }: StepProps): JSX.Element => (
+const ScheduleStep = ({ form, set, errors, disabled, onDateProblem }: StepProps): JSX.Element => (
   <Stack spacing={3}>
     <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
       <DateField
         label="Start date"
         value={form.startDate}
         onChange={(value) => set('startDate', value)}
+        onProblemChange={(problem) => onDateProblem('startDate', problem)}
         error={errors.startDate}
         disabled={disabled}
       />
@@ -162,6 +168,7 @@ const ScheduleStep = ({ form, set, errors, disabled }: StepProps): JSX.Element =
         label="Due date"
         value={form.dueDate}
         onChange={(value) => set('dueDate', value)}
+        onProblemChange={(problem) => onDateProblem('dueDate', problem)}
         error={errors.dueDate}
         minDate={form.startDate}
         disabled={disabled}
@@ -221,66 +228,15 @@ const DetailsStep = ({ form, set, errors, disabled, taskId }: StepProps): JSX.El
   </Stack>
 );
 
-const ReviewRow = ({ label, children }: { label: string; children: ReactNode }): JSX.Element => (
-  <Box sx={{ minWidth: 0 }}>
-    <Typography variant="caption" color="text.secondary" component="p">
-      {label}
-    </Typography>
-    <Typography variant="body2" component="div" sx={{ fontWeight: 600, overflowWrap: 'anywhere' }}>
-      {children}
-    </Typography>
-  </Box>
-);
-
-const ReviewGroup = ({
-  title,
-  step,
-  onEdit,
-  disabled,
-  children,
-}: {
-  title: string;
-  step: number;
-  onEdit: (step: number) => void;
-  disabled: boolean;
-  children: ReactNode;
-}): JSX.Element => (
-  <Box sx={{ p: 2, border: 1, borderColor: 'divider', borderRadius: 2.5 }}>
-    <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.5 }}>
-      <Typography variant="subtitle2" component="h3">
-        {title}
-      </Typography>
-      <Button
-        size="small"
-        startIcon={<EditOutlinedIcon />}
-        onClick={() => onEdit(step)}
-        disabled={disabled}
-        aria-label={`Edit ${title.toLowerCase()}`}
-      >
-        Edit
-      </Button>
-    </Stack>
-    <Box
-      sx={{
-        display: 'grid',
-        gap: 2,
-        gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: 'repeat(2, minmax(0, 1fr))' },
-      }}
-    >
-      {children}
-    </Box>
-  </Box>
-);
-
 /** The first lines of the description, enough to recognise it. */
 const excerpt = (text: string, length = 160): string => {
   const trimmed = text.trim();
-  if (!trimmed) return 'None';
+  if (!trimmed) return '';
   return trimmed.length > length ? `${trimmed.slice(0, length)}…` : trimmed;
 };
 
-const orNone = (value: string | null | undefined, format = (text: string) => text): string =>
-  value ? format(value) : 'None';
+const calendarDay = (value: string | null | undefined): string =>
+  value ? formatCalendarDay(value) : '';
 
 /** The chosen people by name, in the order chosen; a count until their names arrive. */
 const assigneeSummary = (
@@ -308,49 +264,68 @@ const ReviewStep = ({
   const projectName = form.project?.title ?? project.data?.title;
   const milestone = project.data?.milestones.find((item) => item.id === form.milestoneId);
   return (
-    <Stack spacing={2}>
-      <ReviewGroup title="Basics" step={0} onEdit={onEdit} disabled={disabled}>
-        <ReviewRow label="Title">{form.title.trim()}</ReviewRow>
-        <ReviewRow label="Description">{excerpt(form.description)}</ReviewRow>
-      </ReviewGroup>
-      <ReviewGroup title="Assignment" step={1} onEdit={onEdit} disabled={disabled}>
-        <ReviewRow label="Assignees">{assigneeSummary(form.assigneeIds, people.data)}</ReviewRow>
-        <ReviewRow label="Project">
-          {form.projectId ? (projectName ?? 'Loading…') : 'None'}
-        </ReviewRow>
-        <ReviewRow label="Milestone">{milestone?.title ?? 'None'}</ReviewRow>
-        <ReviewRow label="Parent task">
-          {form.parent ? `${form.parent.key}: ${form.parent.title}` : 'None'}
-        </ReviewRow>
-      </ReviewGroup>
-      <ReviewGroup title="Schedule" step={2} onEdit={onEdit} disabled={disabled}>
-        <ReviewRow label="Start date">{orNone(form.startDate, formatCalendarDay)}</ReviewRow>
-        <ReviewRow label="Due date">{orNone(form.dueDate, formatCalendarDay)}</ReviewRow>
-        <ReviewRow label="Estimate">
-          {form.estimate.trim() ? `${form.estimate} hours` : 'None'}
-        </ReviewRow>
-      </ReviewGroup>
-      <ReviewGroup title="Details" step={3} onEdit={onEdit} disabled={disabled}>
-        <ReviewRow label="Status">{taskStatusLabel(form.status)}</ReviewRow>
-        <ReviewRow label="Priority">{taskPriorityLabel(form.priority)}</ReviewRow>
-        <ReviewRow label="Labels">
-          {form.labels.length === 0 ? (
-            'None'
-          ) : (
-            <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap">
-              {form.labels.map((label) => (
-                <Chip key={label} size="small" label={label} />
-              ))}
-            </Stack>
-          )}
-        </ReviewRow>
-        <ReviewRow label="Depends on">
-          {form.dependencies.length === 0
-            ? 'None'
-            : form.dependencies.map((task) => task.key).join(', ')}
-        </ReviewRow>
-      </ReviewGroup>
-    </Stack>
+    <ReviewSummary
+      onEdit={onEdit}
+      disabled={disabled}
+      sections={[
+        {
+          title: 'Basics',
+          step: 0,
+          items: [
+            { label: 'Title', value: form.title.trim() },
+            { label: 'Description', value: excerpt(form.description), fullRow: true },
+          ],
+        },
+        {
+          title: 'Assignment',
+          step: 1,
+          items: [
+            { label: 'Assignees', value: assigneeSummary(form.assigneeIds, people.data) },
+            { label: 'Project', value: form.projectId ? (projectName ?? 'Loading…') : '' },
+            { label: 'Milestone', value: milestone?.title },
+            {
+              label: 'Parent task',
+              value: form.parent ? `${form.parent.key}: ${form.parent.title}` : '',
+            },
+          ],
+        },
+        {
+          title: 'Schedule',
+          step: SCHEDULE_STEP,
+          items: [
+            { label: 'Start date', value: calendarDay(form.startDate) },
+            { label: 'Due date', value: calendarDay(form.dueDate) },
+            {
+              label: 'Estimate',
+              value: form.estimate.trim() ? `${form.estimate} hours` : '',
+            },
+          ],
+        },
+        {
+          title: 'Details',
+          step: 3,
+          items: [
+            { label: 'Status', value: taskStatusLabel(form.status) },
+            { label: 'Priority', value: taskPriorityLabel(form.priority) },
+            {
+              label: 'Labels',
+              value:
+                form.labels.length > 0 ? (
+                  <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap">
+                    {form.labels.map((label) => (
+                      <Chip key={label} size="small" label={label} />
+                    ))}
+                  </Stack>
+                ) : null,
+            },
+            {
+              label: 'Depends on',
+              value: form.dependencies.map((task) => task.key).join(', '),
+            },
+          ],
+        },
+      ]}
+    />
   );
 };
 
@@ -363,12 +338,20 @@ const submitLabel = (saving: boolean, step: number, editing: boolean): string =>
 const STEP_VIEWS = [BasicsStep, AssignmentStep, ScheduleStep, DetailsStep];
 
 const TaskEditorForm = ({
-  task,
+  task: loaded,
   initialProjectId,
+  notice,
 }: {
   task?: Task;
   initialProjectId: string | null;
+  /** Shown above the steps, such as a refresh that failed behind the form. */
+  notice?: ReactNode;
 }): JSX.Element => {
+  // The task as it was when the editor opened. What is sent is what differs
+  // from this, so a background refetch (any task write in this tab refreshes
+  // every task, the top bar's quick create included) cannot make a field the
+  // reader never touched look changed and put back a colleague's edit.
+  const [task] = useState(loaded);
   const navigate = useNavigate();
   const create = useCreateTask();
   const update = useUpdateTask();
@@ -379,6 +362,13 @@ const TaskEditorForm = ({
   const [maxStep, setMaxStep] = useState(task ? TASK_REVIEW_STEP : 0);
   const [errors, setErrors] = useState<TaskFormErrors>({});
   const [problem, setProblem] = useState<string | null>(null);
+  // What the date fields object to. They never pass a half-typed or
+  // impossible day on, so the form would otherwise carry on with the old one
+  // (AGENTS.md: check the step before continuing; an invalid date is never a
+  // removal).
+  const [dateProblems, setDateProblems] = useState<Partial<Record<TaskDateField, string | null>>>(
+    {},
+  );
   const heading = useRef<HTMLHeadingElement>(null);
   const saving = create.isPending || update.isPending;
   const saveError = create.error ?? update.error;
@@ -399,8 +389,19 @@ const TaskEditorForm = ({
     setProblem(null);
   };
 
+  const onDateProblem = useCallback((field: TaskDateField, found: string | null) => {
+    setDateProblems((current) =>
+      current[field] === found ? current : { ...current, [field]: found },
+    );
+  }, []);
+  const hasDateProblem = Boolean(dateProblems.startDate || dateProblems.dueDate);
+
   const changeStep = (next: number): void => {
     if (saving) return;
+    if (next > step && step === SCHEDULE_STEP && hasDateProblem) {
+      setProblem(DATE_PROBLEM);
+      return;
+    }
     if (next > step) {
       const found = taskStepErrors(form, step);
       if (Object.values(found).some(Boolean)) {
@@ -416,6 +417,11 @@ const TaskEditorForm = ({
   };
 
   const save = (): void => {
+    if (hasDateProblem) {
+      setStep(SCHEDULE_STEP);
+      setProblem(DATE_PROBLEM);
+      return;
+    }
     const found = wholeFormProblem(form);
     if (found) {
       setStep(found.step);
@@ -481,6 +487,7 @@ const TaskEditorForm = ({
         }
       />
       <Box sx={{ maxWidth: 1000, mx: 'auto' }}>
+        {notice}
         <FormStepNavigation
           steps={TASK_FORM_STEPS}
           activeStep={step}
@@ -518,6 +525,7 @@ const TaskEditorForm = ({
                   errors={errors}
                   disabled={saving}
                   taskId={task?.id}
+                  onDateProblem={onDateProblem}
                 />
               ) : (
                 <ReviewStep form={form} onEdit={changeStep} disabled={saving} />
@@ -613,16 +621,34 @@ const TaskEditorPage = (): JSX.Element => {
       </>
     );
   }
-  if (taskKey && (query.isError || !query.data)) {
+  // Only when there is nothing to edit: a refetch that fails behind an open
+  // form keeps the form, and everything typed into it.
+  if (taskKey && !query.data) {
     return (
       <TaskLoadProblem taskKey={taskKey} error={query.error} onRetry={() => void query.refetch()} />
     );
   }
+  const refreshFailed = Boolean(taskKey) && query.isError;
   return (
     <TaskEditorForm
       key={taskKey ?? `new-${params.get('projectId') ?? ''}`}
       task={taskKey ? query.data : undefined}
       initialProjectId={params.get('projectId')}
+      notice={
+        refreshFailed && (
+          <Alert
+            severity="warning"
+            sx={{ mb: 3 }}
+            action={
+              <Button color="inherit" size="small" onClick={() => void query.refetch()}>
+                Retry
+              </Button>
+            }
+          >
+            The latest copy of this task could not be loaded. Your changes are still here.
+          </Alert>
+        )
+      }
     />
   );
 };

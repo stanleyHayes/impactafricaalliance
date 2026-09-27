@@ -221,6 +221,19 @@ describe('FormEditorPage', () => {
     });
   });
 
+  it('reviews with the shared summary: an Edit button per step and Not set for gaps', async () => {
+    vi.mocked(api.get).mockResolvedValue(savedForm);
+    setup('/forms/form-1/edit');
+    await stepHeading('Basics');
+    fireEvent.change(screen.getByRole('combobox', { name: 'Go to step' }), {
+      target: { value: '5' },
+    });
+    await stepHeading('Review');
+    expect(screen.getByRole('region', { name: 'Basics' })).toHaveTextContent('Mentor call');
+    fireEvent.click(screen.getByRole('button', { name: 'Edit basics' }));
+    await stepHeading('Basics');
+  });
+
   it('holds a live form to the publishing checks, and returns to Questions instead of saving', async () => {
     vi.mocked(api.get).mockResolvedValue({
       ...savedForm,

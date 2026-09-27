@@ -20,7 +20,11 @@ import { useRef } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 
 import { useHasPermission } from '../../auth/useCan';
-import { ServerPagination, usePageParam } from '../../components/data/ServerPagination';
+import {
+  OutOfRangePage,
+  ServerPagination,
+  usePageParam,
+} from '../../components/data/ServerPagination';
 import { TableLoadingSkeleton } from '../../components/data/TableLoadingSkeleton';
 import { EmptyState } from '../../components/EmptyState';
 import { OptionSelect, type SelectChoice } from '../../components/fields/OptionSelect';
@@ -137,11 +141,9 @@ const TaskTable = ({
             key={task.id}
             hover
             onClick={() => onOpen(task.key)}
-            sx={{
-              cursor: 'pointer',
-              opacity: task.status === 'done' ? 0.75 : 1,
-              '& td': { py: 1.25 },
-            }}
+            // Finished rows are not faded: their small text would fall below AA
+            // contrast. The Done chip and the struck-through title say it.
+            sx={{ cursor: 'pointer', '& td': { py: 1.25 } }}
           >
             <TableCell sx={{ maxWidth: 420 }}>
               <Link
@@ -158,7 +160,17 @@ const TaskTable = ({
                 <Typography component="span" variant="caption" sx={{ fontWeight: 750, mr: 1 }}>
                   {task.key}
                 </Typography>
-                <Typography component="span" variant="body2" sx={{ fontWeight: 650 }}>
+                <Typography
+                  component="span"
+                  variant="body2"
+                  sx={{
+                    fontWeight: 650,
+                    ...(task.status === 'done' && {
+                      color: 'text.secondary',
+                      textDecoration: 'line-through',
+                    }),
+                  }}
+                >
                   {task.title}
                 </Typography>
               </Link>
@@ -233,6 +245,10 @@ const AllTasksPage = (): JSX.Element => {
           {query.error.message || 'The tasks could not be loaded.'}
         </Alert>
       );
+    }
+    // Past the last page (an old link, or the last task on it finished).
+    if (query.data.items.length === 0 && query.data.total > 0) {
+      return <OutOfRangePage total={query.data.total} noun="task" />;
     }
     if (query.data.items.length === 0) {
       return controls.activeCount > 0 ? (

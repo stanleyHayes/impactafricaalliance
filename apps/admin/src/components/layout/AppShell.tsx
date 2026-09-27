@@ -10,10 +10,11 @@ import { alpha } from '@mui/material/styles';
 import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 
 import { usePreferences } from '../../lib/preferences';
+import { RouteSkeleton } from '../PageSkeleton';
 import { QuickCreateTaskButton } from '../tasks/QuickCreateTaskButton';
 import { Tour } from '../tour';
 import { useTour } from '../tour/TourContext';
@@ -245,7 +246,12 @@ export const AppShell = (): JSX.Element => {
       >
         <Toolbar sx={{ minHeight: 72 }} />
         <Box sx={{ maxWidth: 1680, mx: 'auto' }}>
-          <Outlet />
+          {/* The work modules load on first visit (app/App.tsx). Each route
+              has its own boundary; this one keeps the shell on screen if a
+              page is ever added without one. */}
+          <Suspense fallback={<RouteSkeleton />}>
+            <Outlet />
+          </Suspense>
         </Box>
       </Box>
 

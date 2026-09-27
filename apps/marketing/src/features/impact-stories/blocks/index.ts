@@ -29,4 +29,4 @@ export const STORY_BLOCK_RENDERERS: {
 };
 
 export type { StoryBlockProps } from './frame';
-export { HeroBlock } from './HeroBlock';
+export { HeroBlock, LEAD_HERO_MIN_HEIGHT } from './HeroBlock';

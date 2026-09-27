@@ -96,7 +96,10 @@ describe('MyTasksPage', () => {
 
   it('opens a task in the drawer', async () => {
     renderTaskUi(<MyTasksPage />, { route: '/tasks' });
-    fireEvent.click(await screen.findByRole('button', { name: `Open ${late.key}: ${late.title}` }));
+    const row = await screen.findByRole('button', { name: `${late.key} ${late.title}` });
+    // What the row shows as chips is read out too, overdue above all.
+    expect(row).toHaveAccessibleDescription(/To do.*Medium priority.*Overdue/);
+    fireEvent.click(row);
     expect(screen.getByTestId('location')).toHaveTextContent(`/tasks?task=${late.key}`);
   });
 });

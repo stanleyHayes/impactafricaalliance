@@ -82,7 +82,12 @@ export const ReviewDialog = ({
       onClose={pending ? undefined : onClose}
       fullWidth
       maxWidth="sm"
-      slotProps={{ paper: { sx: dialogPaperSx }, transition: { onExited: reset } }}
+      // Named on the paper, as the other dialogs of the new modules are: the
+      // shared header's title carries no id for aria-labelledby to point at.
+      slotProps={{
+        paper: { sx: dialogPaperSx, 'aria-label': 'Add a review' },
+        transition: { onExited: reset },
+      }}
     >
       <form onSubmit={submit} noValidate>
         <DialogHeader

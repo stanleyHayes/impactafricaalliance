@@ -69,6 +69,23 @@ const renderPage = (): void => {
 const meta = (selector: string): string | null =>
   document.head.querySelector(selector)?.getAttribute('content') ?? null;
 
+/**
+ * Every value the stylesheets give `property` in rules aimed at one of the
+ * element's own classes, media rules included, as Emotion writes them.
+ */
+const declared = (element: Element, property: string): string[] => {
+  const selectors = new Set([...element.classList].map((name) => `.${name}`));
+  return [...document.styleSheets]
+    .flatMap((sheet) => [...sheet.cssRules])
+    .flatMap((rule) => (rule instanceof CSSMediaRule ? [...rule.cssRules] : [rule]))
+    .filter(
+      (rule): rule is CSSStyleRule =>
+        rule instanceof CSSStyleRule && selectors.has(rule.selectorText),
+    )
+    .map((rule) => rule.style.getPropertyValue(property))
+    .filter(Boolean);
+};
+
 afterEach(() => {
   vi.clearAllMocks();
   document.head.querySelector('meta[name="robots"]')?.remove();
@@ -145,5 +162,17 @@ describe('ImpactStory', () => {
     mockStory({ isPending: true });
     renderPage();
     expect(screen.getByRole('status', { name: 'Loading the story' })).toBeInTheDocument();
+  });
+
+  it('loads in the shape of the dark opening hero, so nothing jumps when the story arrives', () => {
+    mockStory({ isPending: true });
+    renderPage();
+    const band = screen.getByRole('status', { name: 'Loading the story' })
+      .firstElementChild as HTMLElement;
+    // The lead hero's deep forest colour and height, not a short mint band.
+    expect(band).toHaveStyle({ backgroundColor: 'rgb(14, 42, 34)' });
+    // jsdom ignores media rules, and MUI writes even the phone height inside
+    // one, so read the heights the stylesheet declares for the band.
+    expect(declared(band, 'min-height')).toEqual(['520px', '640px']);
   });
 });

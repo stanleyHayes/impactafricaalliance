@@ -6,7 +6,9 @@ import {
   TouchSensor,
   useSensor,
   useSensors,
+  type Announcements,
   type DragEndEvent,
+  type UniqueIdentifier,
 } from '@dnd-kit/core';
 import {
   SortableContext,
@@ -28,7 +30,7 @@ import Stack from '@mui/material/Stack';
 import { alpha } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import { useState } from 'react';
+import { useRef, useState, type MutableRefObject } from 'react';
 
 import { MediaUploadField } from '../fields/MediaUploadField';
 
@@ -60,19 +62,22 @@ const StepHeader = ({
   onRemoveStep: () => void;
   disabled: boolean;
 }): JSX.Element => (
+  // An object `sx`, with the theme read only for the tint: the console's
+  // Stack merges its layout props into `sx`, and a whole-`sx` function would
+  // lose every style here (padding, tint and divider alike).
   <Stack
     direction="row"
     alignItems="center"
     spacing={1}
-    sx={(theme) => ({
+    sx={{
       px: { xs: 2, md: 2.5 },
       py: 1.5,
       borderBottom: 1,
       borderColor: 'divider',
-      bgcolor: alpha(theme.palette.primary.main, 0.05),
+      bgcolor: (theme) => alpha(theme.palette.primary.main, 0.05),
       borderTopLeftRadius: 12,
       borderTopRightRadius: 12,
-    })}
+    }}
   >
     <Typography
       id={headingId}
@@ -109,6 +114,51 @@ const StepHeader = ({
     </IconButton>
   </Stack>
 );
+
+/** A question's name for a screen reader, never its internal id. */
+const questionLabel = (field: FormField | undefined): string =>
+  field?.label.trim() || 'Untitled question';
+
+/**
+ * What a screen reader hears while a question is moved with the keyboard.
+ * dnd-kit would otherwise read out each question's internal id, such as
+ * `short-text-lx2k…`, which means nothing to the person building the form.
+ *
+ * `lastOver` remembers where the question was last said to be: a pickup is
+ * at once "over" its own place, and announcing that would replace the
+ * pickup message in the live region before it was read.
+ */
+const reorderAnnouncements = (
+  fields: readonly FormField[],
+  lastOver: MutableRefObject<UniqueIdentifier | null>,
+): Announcements => {
+  const count = fields.length;
+  const positionOf = (id: UniqueIdentifier): number =>
+    fields.findIndex((field) => field.id === String(id)) + 1;
+  const labelOf = (id: UniqueIdentifier): string =>
+    questionLabel(fields.find((field) => field.id === String(id)));
+  const movedTo = (active: UniqueIdentifier, over: UniqueIdentifier | undefined): string =>
+    `Question ${labelOf(active)} moved to position ${positionOf(over ?? active)} of ${count}.`;
+  return {
+    onDragStart: ({ active }) => {
+      lastOver.current = active.id;
+      return `Picked up question ${positionOf(active.id)} of ${count}, ${labelOf(active.id)}.`;
+    },
+    onDragOver: ({ active, over }) => {
+      if (!over || over.id === lastOver.current) return undefined;
+      lastOver.current = over.id;
+      return movedTo(active.id, over.id);
+    },
+    onDragEnd: ({ active, over }) => {
+      lastOver.current = null;
+      return movedTo(active.id, over?.id);
+    },
+    onDragCancel: ({ active }) => {
+      lastOver.current = null;
+      return `Move cancelled. ${labelOf(active.id)} stays at position ${positionOf(active.id)}.`;
+    },
+  };
+};
 
 export interface StepSectionProps {
   steps: readonly FormStep[];
@@ -154,6 +204,7 @@ export const StepSection = ({
 }: StepSectionProps): JSX.Element => {
   const step = steps[stepIndex] as FormStep;
   const [settingsOpen, setSettingsOpen] = useState(Boolean(step.visibility || step.image));
+  const lastOver = useRef<UniqueIdentifier | null>(null);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 6 } }),
@@ -249,7 +300,12 @@ export const StepSection = ({
             ))}
           </Alert>
         )}
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+          accessibility={{ announcements: reorderAnnouncements(step.fields, lastOver) }}
+        >
           <SortableContext
             items={step.fields.map((field) => field.id)}
             strategy={verticalListSortingStrategy}
