@@ -4,20 +4,38 @@ import {
   updatePrivacyRequestSchema,
   PRIVACY_REQUEST_STATUSES,
   PRIVACY_REQUEST_TYPES,
+  UserRole,
   type PrivacyRequestStatus,
   type PrivacyRequestType,
 } from '@iaa/shared';
 import type { Request, Response } from 'express';
 import { inject, injectable } from 'tsyringe';
 
+import { UnauthorizedError } from '../../common/errors.js';
 import { pathParam } from '../../common/http.js';
 import { parseWith } from '../../common/validate.js';
 
 import type { PrivacyRequestListFilter } from './privacy-request.repository.js';
-import { PrivacyRequestService } from './privacy-request.service.js';
+import { PrivacyRequestService, type ApplicationRights } from './privacy-request.service.js';
 
 const asEnumValue = <T extends string>(allowed: readonly T[], raw: unknown): T | undefined =>
   typeof raw === 'string' && (allowed as readonly string[]).includes(raw) ? (raw as T) : undefined;
+
+/**
+ * What the signed-in caller may do with applications. Privacy requests only
+ * need `privacy-requests` rights, which editors hold, while applications need
+ * their own (plan D2), so the service is told which the caller has.
+ */
+const applicationRightsOf = (req: Request): ApplicationRights => {
+  if (!req.user) {
+    throw new UnauthorizedError();
+  }
+  const { role, permissions } = req.user;
+  return {
+    canReadApplications: permissions.includes('applications:read'),
+    canEraseApplications: role === UserRole.Admin || permissions.includes('applications:update'),
+  };
+};
 
 @injectable()
 export class PrivacyRequestController {
@@ -46,7 +64,7 @@ export class PrivacyRequestController {
 
   update = async (req: Request, res: Response): Promise<void> => {
     const input = parseWith(updatePrivacyRequestSchema, req.body);
-    res.json(await this.service.update(pathParam(req, 'id'), input));
+    res.json(await this.service.update(pathParam(req, 'id'), input, applicationRightsOf(req)));
   };
 
   exportData = async (req: Request, res: Response): Promise<void> => {
@@ -54,6 +72,6 @@ export class PrivacyRequestController {
       privacyRequestInputSchema.shape.email,
       req.query.email ?? req.body.email,
     );
-    res.json(await this.service.exportPersonalData(email));
+    res.json(await this.service.exportPersonalData(email, applicationRightsOf(req)));
   };
 }

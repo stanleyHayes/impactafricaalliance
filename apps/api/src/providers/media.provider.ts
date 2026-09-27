@@ -44,6 +44,13 @@ export interface ApplicationUploadTarget {
   formats: readonly string[];
   /** The question's size limit, passed back to the browser to check before uploading. */
   maxBytes: number;
+  /**
+   * The extension of the file being uploaded, lower case, as already checked
+   * against `formats`. Office and text files are stored as raw assets, whose
+   * extension is part of their id, so it goes on the end of the name; without
+   * it a reviewer's download would arrive with no extension at all.
+   */
+  extension?: string;
 }
 
 /** Enough to find a stored file on Cloudinary again. */
@@ -77,7 +84,11 @@ export interface MediaProvider {
    * the other signers do.
    */
   createSignedApplicationUpload(target: ApplicationUploadTarget): SignedApplicationUpload;
-  /** A signed link to an authenticated file, or null when Cloudinary is not configured. */
+  /**
+   * A signed download link to an authenticated file that expires after an
+   * hour (`DELIVERY_LINK_SECONDS`), or null when Cloudinary is not
+   * configured. Make one each time a record is read; never store it.
+   */
   signedDeliveryUrl(asset: StoredAssetRef): string | null;
   /**
    * The stored size and format of a file, or null when Cloudinary is not
@@ -87,6 +98,19 @@ export interface MediaProvider {
   inspectAsset(asset: StoredAssetRef): Promise<AssetFacts | null>;
   /** Delete a file. Best-effort: logs and carries on when it cannot. */
   destroyAsset(asset: StoredAssetRef): Promise<void>;
+  /**
+   * Every applicant file whose id starts with `prefix`, such as one draft's
+   * folder. Empty when Cloudinary is not configured; throws a 503 when
+   * Cloudinary cannot be asked.
+   */
+  listAssetsByPrefix(prefix: string): Promise<StoredAssetRef[]>;
+  /**
+   * Delete every applicant file whose id starts with `prefix`. Does nothing
+   * when Cloudinary is not configured; throws a 503 when Cloudinary cannot be
+   * asked, so a caller can keep the record that leads to the files and try
+   * again later.
+   */
+  destroyByPrefix(prefix: string): Promise<void>;
 }
 
 interface CloudinaryCredentials {
@@ -107,6 +131,44 @@ const SAFE_FORMAT = /^[a-z0-9]{1,10}$/;
 // Random part of an applicant file's name: 64 bits, so names cannot be guessed
 // from one another.
 const RANDOM_NAME_BYTES = 8;
+
+/**
+ * Formats Cloudinary stores as images (PDFs included), which keep their
+ * format apart from their id. Anything else an applicant may send (Word,
+ * Excel, PowerPoint, OpenDocument, text, CSV) is stored raw, with the
+ * extension in the id.
+ */
+const IMAGE_RESOURCE_FORMATS = new Set(['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'svg']);
+
+/**
+ * How long a link to an applicant's file works: an hour. Long enough to read
+ * an application, short enough that a link pasted into a chat, left in a
+ * history or kept by a reviewer who has since lost access stops working.
+ */
+export const DELIVERY_LINK_SECONDS = 60 * 60;
+
+/**
+ * The resource types an applicant file can be stored as. Photos and PDFs are
+ * `image`, office documents `raw`. Video is left out on purpose: the signed
+ * `allowed_formats` never admits a video or audio format, and every type
+ * asked about costs an Admin API call, which Cloudinary limits per hour.
+ */
+const APPLICANT_RESOURCE_TYPES = ['image', 'raw'] as const;
+
+// Enough for any one draft's folder; the loop stops long before on real data.
+const LIST_PAGE_SIZE = 500;
+const MAX_PAGES = 20;
+
+/**
+ * A prefix is only acted on when it names a folder at least three levels
+ * down and ends with a slash, so a slip in a caller can never list or delete
+ * the whole account, and `…/draft-1/` cannot reach `…/draft-10/`.
+ */
+const assertFolderPrefix = (prefix: string): void => {
+  if (!prefix.endsWith('/') || prefix.split('/').filter(Boolean).length < 3) {
+    throw new ValidationError('Refusing to act on so broad a folder');
+  }
+};
 
 /**
  * The HTTP status of a Cloudinary failure. Read from the error rather than
@@ -227,12 +289,19 @@ export class CloudinaryMediaProvider implements MediaProvider {
     if (
       !segments.every((segment) => SAFE_SEGMENT.test(segment)) ||
       target.formats.length === 0 ||
-      !target.formats.every((format) => SAFE_FORMAT.test(format))
+      !target.formats.every((format) => SAFE_FORMAT.test(format)) ||
+      (target.extension !== undefined && !SAFE_FORMAT.test(target.extension))
     ) {
       throw new ValidationError('This file cannot be uploaded here');
     }
     const folder = `${this.config.cloudinary.folder}/applications/${target.formId}/${target.draftId}`;
-    const name = `${target.fieldId}-${randomBytes(RANDOM_NAME_BYTES).toString('hex')}`;
+    const random = `${target.fieldId}-${randomBytes(RANDOM_NAME_BYTES).toString('hex')}`;
+    // A raw file's extension is part of its id, and is what names the file
+    // when a reviewer downloads it. Images and PDFs keep theirs as a format.
+    const name =
+      target.extension && !IMAGE_RESOURCE_FORMATS.has(target.extension)
+        ? `${random}.${target.extension}`
+        : random;
     const signed = {
       allowed_formats: target.formats.join(','),
       folder,
@@ -254,9 +323,16 @@ export class CloudinaryMediaProvider implements MediaProvider {
   }
 
   /**
-   * A signed link to a file stored as `authenticated`. The link is built
-   * locally, with no call to Cloudinary. Its signature does not expire, so
-   * links are generated when a record is read and never stored.
+   * A download link to a file stored as `authenticated`, which stops working
+   * after `DELIVERY_LINK_SECONDS`. Built locally, with no call to Cloudinary,
+   * each time a record is read, and never stored.
+   *
+   * Not a signed delivery URL: those never expire, so a link copied out of
+   * the dashboard, or kept by a reviewer whose access was removed, would open
+   * an applicant's CV for good. Cloudinary's private download link carries an
+   * `expires_at` covered by its signature instead. It is sent as an
+   * attachment, named after the file's id (with its extension, see
+   * `createSignedApplicationUpload`).
    */
   signedDeliveryUrl(asset: StoredAssetRef): string | null {
     const credentials = this.credentials();
@@ -264,17 +340,15 @@ export class CloudinaryMediaProvider implements MediaProvider {
       return null;
     }
     const resourceType = asset.resourceType ?? 'image';
-    return cloudinary.url(asset.publicId, {
+    // A raw file's extension is already part of its id; a format would ask
+    // Cloudinary for a conversion it cannot make.
+    const format = resourceType !== 'raw' && asset.format ? asset.format : '';
+    return cloudinary.utils.private_download_url(asset.publicId, format, {
       ...this.auth(credentials),
-      secure: true,
-      sign_url: true,
-      // Otherwise the SDK appends its own tracking query to every link.
-      urlAnalytics: false,
-      type: asset.type ?? 'authenticated',
       resource_type: resourceType,
-      // A raw file's extension is already part of its id; adding the format
-      // again would point at a file that does not exist.
-      ...(resourceType !== 'raw' && asset.format ? { format: asset.format } : {}),
+      type: asset.type ?? 'authenticated',
+      expires_at: Math.floor(Date.now() / 1000) + DELIVERY_LINK_SECONDS,
+      attachment: true,
     });
   }
 
@@ -353,6 +427,105 @@ export class CloudinaryMediaProvider implements MediaProvider {
         },
         'Could not delete a Cloudinary file',
       );
+    }
+  }
+
+  /**
+   * List one folder's authenticated files through the Admin API (plan D7 and
+   * the spec's privacy goals): how files an application no longer points at
+   * are found, since nothing else records them.
+   */
+  async listAssetsByPrefix(prefix: string): Promise<StoredAssetRef[]> {
+    assertFolderPrefix(prefix);
+    const credentials = this.credentials();
+    if (!credentials) {
+      return [];
+    }
+    const found: StoredAssetRef[] = [];
+    for (const resourceType of APPLICANT_RESOURCE_TYPES) {
+      found.push(...(await this.listType(credentials, prefix, resourceType)));
+    }
+    return found;
+  }
+
+  private async listType(
+    credentials: CloudinaryCredentials,
+    prefix: string,
+    resourceType: string,
+  ): Promise<StoredAssetRef[]> {
+    const found: StoredAssetRef[] = [];
+    let cursor: string | undefined;
+    for (let page = 0; page < MAX_PAGES; page += 1) {
+      let result: {
+        resources?: { public_id?: unknown; format?: unknown }[];
+        next_cursor?: unknown;
+      };
+      try {
+        result = (await cloudinary.api.resources({
+          ...this.auth(credentials),
+          type: 'authenticated',
+          resource_type: resourceType,
+          prefix,
+          max_results: LIST_PAGE_SIZE,
+          ...(cursor ? { next_cursor: cursor } : {}),
+        })) as typeof result;
+      } catch (error) {
+        this.logger.error(
+          { status: cloudinaryStatus(error), message: cloudinaryMessage(error), prefix },
+          'Could not list Cloudinary files',
+        );
+        throw new ServiceUnavailableError('Could not list stored files. Try again later.');
+      }
+      for (const resource of result.resources ?? []) {
+        if (typeof resource.public_id === 'string') {
+          found.push({
+            publicId: resource.public_id,
+            resourceType,
+            type: 'authenticated',
+            ...(typeof resource.format === 'string' ? { format: resource.format } : {}),
+          });
+        }
+      }
+      cursor = typeof result.next_cursor === 'string' ? result.next_cursor : undefined;
+      if (!cursor) {
+        break;
+      }
+    }
+    return found;
+  }
+
+  /**
+   * Delete a whole folder of authenticated files: an expired draft's, or an
+   * erased applicant's. Cloudinary deletes up to a thousand files a call and
+   * says when it stopped short, so the call is repeated until it has not.
+   */
+  async destroyByPrefix(prefix: string): Promise<void> {
+    assertFolderPrefix(prefix);
+    const credentials = this.credentials();
+    if (!credentials) {
+      return;
+    }
+    for (const resourceType of APPLICANT_RESOURCE_TYPES) {
+      for (let page = 0; page < MAX_PAGES; page += 1) {
+        let result: { partial?: unknown };
+        try {
+          result = ((await cloudinary.api.delete_resources_by_prefix(prefix, {
+            ...this.auth(credentials),
+            resource_type: resourceType,
+            type: 'authenticated',
+            invalidate: true,
+          })) ?? {}) as typeof result;
+        } catch (error) {
+          this.logger.error(
+            { status: cloudinaryStatus(error), message: cloudinaryMessage(error), prefix },
+            'Could not delete a Cloudinary folder',
+          );
+          throw new ServiceUnavailableError('Could not delete stored files. Try again later.');
+        }
+        if (result.partial !== true) {
+          break;
+        }
+      }
     }
   }
 }

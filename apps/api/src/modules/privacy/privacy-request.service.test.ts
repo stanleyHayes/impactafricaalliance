@@ -1,6 +1,8 @@
 import { Types } from 'mongoose';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { ForbiddenError } from '../../common/errors.js';
+import type { AppConfig } from '../../config/env.js';
 import type { AppLogger } from '../../config/logger.js';
 import type { MediaProvider } from '../../providers/media.provider.js';
 import { FormSubmissionModel } from '../forms/form-submission.model.js';
@@ -17,7 +19,7 @@ const formId = new Types.ObjectId();
 
 const query = (value: unknown) => {
   const chain: Record<string, unknown> = {};
-  for (const method of ['lean', 'select', 'sort']) {
+  for (const method of ['lean', 'select', 'sort', 'limit']) {
     chain[method] = () => chain;
   }
   chain.exec = () => Promise.resolve(value);
@@ -55,8 +57,14 @@ const applications = [
   },
 ];
 
+const READ = { canReadApplications: true };
+const ERASE = { canEraseApplications: true };
+
 const build = () => {
-  const media = { destroyAsset: vi.fn().mockResolvedValue(undefined) };
+  const media = {
+    destroyAsset: vi.fn().mockResolvedValue(undefined),
+    destroyByPrefix: vi.fn().mockResolvedValue(undefined),
+  };
   const logger = { error: vi.fn(), warn: vi.fn(), info: vi.fn() };
   const repo = {
     findById: vi
@@ -68,8 +76,9 @@ const build = () => {
     repo as unknown as PrivacyRequestRepository,
     media as unknown as MediaProvider,
     logger as unknown as AppLogger,
+    { cloudinary: { folder: 'iaa' } } as unknown as AppConfig,
   );
-  return { service, media, logger };
+  return { service, media, logger, repo };
 };
 
 const stubOtherData = () => {
@@ -116,7 +125,7 @@ describe('privacy requests and applications', () => {
       ]),
     );
 
-    const exported = await service.exportPersonalData('Ama@Example.org');
+    const exported = await service.exportPersonalData('Ama@Example.org', READ);
     expect(find).toHaveBeenCalledWith({ 'applicant.email': 'ama@example.org' });
     expect(exported.applications).toEqual([
       {
@@ -138,6 +147,25 @@ describe('privacy requests and applications', () => {
         createdAt: now.toISOString(),
       },
     ]);
+    expect(exported).not.toHaveProperty('applicationsWithheld');
+  });
+
+  // Plan D2: editors handle privacy requests but do not read applications.
+  it('leaves applications out of the export for someone who cannot read them, and says how many', async () => {
+    const { service } = build();
+    stubOtherData();
+    const find = vi.spyOn(FormSubmissionModel, 'find');
+    const count = vi.spyOn(FormSubmissionModel, 'countDocuments').mockReturnValue(query(2));
+
+    const exported = await service.exportPersonalData('Ama@Example.org', {
+      canReadApplications: false,
+    });
+
+    expect(find).not.toHaveBeenCalled();
+    expect(count).toHaveBeenCalledWith({ 'applicant.email': 'ama@example.org' });
+    expect(exported.applications).toEqual([]);
+    expect(exported.applicationsWithheld).toBe(2);
+    expect(JSON.stringify(exported)).not.toContain('Ama Mensah');
   });
 
   it('erases applications and their files, carrying on when a file will not go', async () => {
@@ -147,7 +175,7 @@ describe('privacy requests and applications', () => {
     const deleteMany = vi.spyOn(FormSubmissionModel, 'deleteMany').mockReturnValue(query({}));
     media.destroyAsset.mockRejectedValueOnce(new Error('Cloudinary down'));
 
-    await service.update('r1', { status: 'fulfilled' });
+    await service.update('r1', { status: 'fulfilled' }, ERASE);
 
     expect(deleteMany).toHaveBeenCalledWith({
       _id: { $in: applications.map((item) => item._id) },
@@ -160,13 +188,67 @@ describe('privacy requests and applications', () => {
     expect(logger.error).toHaveBeenCalledTimes(1);
   });
 
+  // A replaced CV, or a draft's file its answers dropped, is found only by its folder.
+  it('deletes every application and draft folder, whatever the answers still name', async () => {
+    const { service, media, logger } = build();
+    stubOtherData();
+    vi.spyOn(FormSubmissionModel, 'find').mockReturnValue(query(applications));
+    vi.spyOn(FormSubmissionModel, 'deleteMany').mockReturnValue(query({}));
+    media.destroyByPrefix.mockRejectedValueOnce(new Error('Cloudinary down'));
+
+    await service.update('r1', { status: 'fulfilled' }, ERASE);
+
+    expect(media.destroyByPrefix).toHaveBeenCalledTimes(2);
+    for (const item of applications) {
+      expect(media.destroyByPrefix).toHaveBeenCalledWith(
+        `iaa/applications/${formId.toString()}/${item._id.toString()}/`,
+      );
+    }
+    // One folder would not go; the erasure still finished.
+    expect(logger.error).toHaveBeenCalledTimes(1);
+  });
+
+  it('refuses to erase applications for someone who cannot, and erases nothing at all', async () => {
+    const { service, media, repo } = build();
+    stubOtherData();
+    vi.spyOn(FormSubmissionModel, 'exists').mockReturnValue(query({ _id: applications[0]!._id }));
+    const deleteMany = vi.spyOn(FormSubmissionModel, 'deleteMany');
+
+    await expect(
+      service.update('r1', { status: 'fulfilled' }, { canEraseApplications: false }),
+    ).rejects.toBeInstanceOf(ForbiddenError);
+
+    expect(deleteMany).not.toHaveBeenCalled();
+    expect(SubmissionModel.deleteMany).not.toHaveBeenCalled();
+    expect(SubscriberModel.deleteMany).not.toHaveBeenCalled();
+    expect(media.destroyAsset).not.toHaveBeenCalled();
+    expect(media.destroyByPrefix).not.toHaveBeenCalled();
+    expect(repo.update).not.toHaveBeenCalled();
+  });
+
+  it('lets someone without applications access fulfil a deletion that touches none', async () => {
+    const { service, repo } = build();
+    stubOtherData();
+    vi.spyOn(FormSubmissionModel, 'exists').mockReturnValue(query(null));
+    vi.spyOn(FormSubmissionModel, 'find').mockReturnValue(query([]));
+
+    await service.update('r1', { status: 'fulfilled' }, { canEraseApplications: false });
+
+    expect(SubmissionModel.deleteMany).toHaveBeenCalled();
+    expect(repo.update).toHaveBeenCalledWith(
+      'r1',
+      expect.objectContaining({ status: 'fulfilled' }),
+    );
+  });
+
   it('leaves applications alone when nobody with that address applied', async () => {
     const { service, media } = build();
     stubOtherData();
     vi.spyOn(FormSubmissionModel, 'find').mockReturnValue(query([]));
     const deleteMany = vi.spyOn(FormSubmissionModel, 'deleteMany');
-    await service.update('r1', { status: 'fulfilled' });
+    await service.update('r1', { status: 'fulfilled' }, ERASE);
     expect(deleteMany).not.toHaveBeenCalled();
     expect(media.destroyAsset).not.toHaveBeenCalled();
+    expect(media.destroyByPrefix).not.toHaveBeenCalled();
   });
 });

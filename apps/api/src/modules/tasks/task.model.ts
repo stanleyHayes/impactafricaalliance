@@ -104,8 +104,12 @@ const taskSchema = new Schema<TaskDocument>(
 taskSchema.index({ key: 1 }, { unique: true });
 // Sorting by key sorts by number; unique as a second guard on the counter.
 taskSchema.index({ number: 1 }, { unique: true });
-// Each board column: one status, in board order.
-taskSchema.index({ status: 1, boardOrder: 1 });
+// Each board column: one status, in board order, ties by id, which is the
+// board's whole sort, so a column's first page is read from the index
+// without sorting every card in it. Also finds a column's top and end.
+taskSchema.index({ status: 1, boardOrder: 1, _id: 1 });
+// The task list's default order, most recently updated first.
+taskSchema.index({ updatedAt: -1, _id: -1 });
 // "My tasks" and the nav badge: my work, by status (multikey).
 taskSchema.index({ assigneeIds: 1, status: 1 });
 // A project's Tasks tab and its progress counts.

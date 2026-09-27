@@ -10,7 +10,7 @@ import { CloudinaryMediaProvider, type MediaProvider } from '../../providers/med
 import type { AuditService } from '../audit/audit.service.js';
 
 import { ApplicantService, knownAnswers, mergeAnswers } from './applicant.service.js';
-import { newDraftToken } from './draft-token.js';
+import { hashDraftToken, newDraftToken } from './draft-token.js';
 import type { StoredForm, StoredSubmission } from './form-mappers.js';
 import { FormSubmissionModel } from './form-submission.model.js';
 import { FormModel } from './form.model.js';
@@ -142,6 +142,51 @@ describe('signing an applicant upload', () => {
     await expect(signing).rejects.toThrow('File uploads are not available at the moment');
   });
 
+  it('passes the file’s extension on, so a Word file keeps it when a reviewer downloads it', async () => {
+    const withDocuments: StoredForm = {
+      ...form,
+      steps: [
+        {
+          id: 'about',
+          title: 'About',
+          fields: [
+            {
+              id: 'cv',
+              type: 'file',
+              label: 'CV',
+              required: false,
+              options: [],
+              validation: { fileKinds: ['pdf', 'document'] },
+            },
+          ],
+        },
+      ],
+    };
+    const signed = {
+      uploadUrl: 'https://api.cloudinary.com/v1_1/demo/auto/upload',
+      fields: {},
+      publicId: 'iaa/applications/f/d/cv-0123456789abcdef.docx',
+      folder: 'iaa/applications/f/d',
+      maxBytes: 1,
+      allowedFormats: ['pdf', 'docx'],
+    };
+    const createSignedApplicationUpload = vi.fn().mockReturnValue(signed);
+    const { service } = build({ createSignedApplicationUpload } as unknown as MediaProvider);
+    vi.spyOn(FormModel, 'findOne').mockReturnValue(query(withDocuments));
+    vi.spyOn(FormSubmissionModel, 'findOne').mockReturnValue(query(draft));
+    vi.spyOn(FormSubmissionModel, 'updateOne').mockReturnValue(query({ modifiedCount: 1 }));
+
+    await service.signUpload('mentors', newDraftToken(), {
+      fieldId: 'cv',
+      filename: 'My CV.DOCX',
+      bytes: 100,
+    });
+
+    expect(createSignedApplicationUpload).toHaveBeenCalledWith(
+      expect.objectContaining({ fieldId: 'cv', extension: 'docx' }),
+    );
+  });
+
   it('never looks a draft up for a token that could not be one', async () => {
     const { service } = build({} as MediaProvider);
     vi.spyOn(FormModel, 'findOne').mockReturnValue(query(form));
@@ -178,19 +223,27 @@ describe('resume links', () => {
     expect(send).not.toHaveBeenCalled();
   });
 
-  it('adds a fresh token, keeping at most five, and never fails on a mail error', async () => {
+  it('adds a fresh token beside the one presented, keeping at most five, and never fails on a mail error', async () => {
     const { service, send } = build({} as MediaProvider);
     send.mockRejectedValue(new Error('mail down'));
     vi.spyOn(FormModel, 'findOne').mockReturnValue(query(form));
     const update = vi.spyOn(FormSubmissionModel, 'findOneAndUpdate').mockReturnValue(query(draft));
-    await service.requestResumeLink('mentors', newDraftToken(), { email: 'a@example.org' });
-    const change = update.mock.calls[0]?.[1] as {
-      $push: { tokenHashes: { $each: string[]; $slice: number } };
-      $set: Record<string, unknown>;
+    const token = newDraftToken();
+    await service.requestResumeLink('mentors', token, { email: 'a@example.org' });
+    const [filter, pipeline, options] = update.mock.calls[0] ?? [];
+    const stage = (pipeline as { $set: Record<string, unknown> }[])[0]?.$set ?? {};
+    const rotation = stage.tokenHashes as {
+      $slice: [{ $concatArrays: [unknown, string[]] }, number];
     };
-    expect(change.$push.tokenHashes.$slice).toBe(-5);
-    expect(change.$push.tokenHashes.$each[0]).toMatch(/^[a-f0-9]{64}$/);
-    expect(change.$set['applicant.email']).toBe('a@example.org');
+    // The presented hash is always kept, with the fresh one after it.
+    const [presented, added] = rotation.$slice[0].$concatArrays[1];
+    expect(filter).toMatchObject({ tokenHashes: hashDraftToken(token) });
+    expect(presented).toBe(hashDraftToken(token));
+    expect(added).toMatch(/^[a-f0-9]{64}$/);
+    expect(added).not.toBe(presented);
+    expect(rotation.$slice[1]).toBe(-5);
+    expect(stage['applicant.email']).toEqual({ $literal: 'a@example.org' });
+    expect(options).toMatchObject({ updatePipeline: true });
     expect(send).toHaveBeenCalledTimes(1);
     expect(send.mock.calls[0]?.[0].html).toMatch(/https:\/\/iaa\.example\/apply\/mentors#resume=/);
   });

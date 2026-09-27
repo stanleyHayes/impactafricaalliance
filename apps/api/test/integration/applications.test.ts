@@ -1,5 +1,6 @@
 import {
   DRAFT_TOKEN_HEADER,
+  REVIEWABLE_APPLICATION_STATUSES,
   ROLE_TEMPLATES,
   UserRole,
   type AdminApplication,
@@ -8,14 +9,17 @@ import {
   type FormStep,
   type Permission,
 } from '@iaa/shared';
+import { v2 as cloudinary } from 'cloudinary';
+import { Types } from 'mongoose';
 import request from 'supertest';
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AuditEventModel } from '../../src/modules/audit/audit.model.js';
 import { PasswordService } from '../../src/modules/auth/password.service.js';
 import { FormSubmissionModel } from '../../src/modules/forms/form-submission.model.js';
 import { FormVersionModel } from '../../src/modules/forms/form-version.model.js';
 import { FormModel } from '../../src/modules/forms/form.model.js';
+import { PrivacyRequestModel } from '../../src/modules/privacy/privacy-request.model.js';
 import { UserModel } from '../../src/modules/users/user.model.js';
 import { createTestContext, type TestContext } from '../harness.js';
 
@@ -283,6 +287,24 @@ describe('the application lists', () => {
       rejected: 0,
     });
   });
+
+  // The status tabs sit beside a filtered list, so they count what it shows.
+  it('counts only what the form, search and date filters select, when given them', async () => {
+    const submittedFor = async (query: string): Promise<number> => {
+      const counts = await call('get', `/api/admin/applications/counts?${query}`, readOnly);
+      expect(counts.status).toBe(200);
+      return counts.body.submitted as number;
+    };
+    expect(await submittedFor(`formId=${otherForm.id}`)).toBe(1);
+    expect(await submittedFor(`formId=${form.id}`)).toBe(2);
+    expect(await submittedFor('q=kofi')).toBe(1);
+    expect(await submittedFor('to=2020-01-01')).toBe(0);
+    const today = new Date().toISOString().slice(0, 10);
+    expect(await submittedFor(`from=${today}&formId=${form.id}`)).toBe(2);
+    expect((await call('get', '/api/admin/applications/counts?formId=nope', readOnly)).status).toBe(
+      400,
+    );
+  });
 });
 
 describe('one application', () => {
@@ -347,10 +369,21 @@ describe('one application', () => {
         },
       ],
     });
-    const detail = await call('get', `/api/admin/applications/${stored.id}`, readOnly);
-    const file = (detail.body.answers[0].value as { url: string }[])[0];
-    expect(file?.url).toContain('res.cloudinary.com/iaa-test-cloud/image/authenticated/s--');
-    await FormSubmissionModel.deleteOne({ _id: stored._id });
+    try {
+      const detail = await call('get', `/api/admin/applications/${stored.id}`, readOnly);
+      const file = (detail.body.answers[0].value as { url: string }[])[0];
+      // A link Cloudinary will check, made now, never the stored one: a signed
+      // delivery URL (`s--…`) or a signed, expiring download (`signature=`).
+      expect(file?.url).not.toBe(
+        'https://res.cloudinary.com/iaa-test-cloud/image/authenticated/v1/x.pdf',
+      );
+      expect(file?.url).toMatch(
+        /^https:\/\/(res|api)\.cloudinary\.com\/(v1_1\/)?iaa-test-cloud\/image\/.*(s--|signature=)/,
+      );
+    } finally {
+      // Removed whatever happens, so the counts and export below still hold.
+      await FormSubmissionModel.deleteOne({ _id: stored._id });
+    }
   });
 
   it('moves an application through its statuses and keeps the history', async () => {
@@ -493,5 +526,117 @@ describe('exporting applications', () => {
     );
     expect(ama).toContain(',Yes,');
     expect(exported.body.csv).not.toContain('Still Typing');
+  });
+});
+
+describe('the list indexes', () => {
+  /** Every stage named anywhere in a query plan. */
+  const stagesOf = (plan: unknown): string[] => {
+    if (Array.isArray(plan)) return plan.flatMap(stagesOf);
+    if (!plan || typeof plan !== 'object') return [];
+    const node = plan as Record<string, unknown>;
+    return [
+      ...(typeof node.stage === 'string' ? [node.stage] : []),
+      ...Object.values(node).flatMap(stagesOf),
+    ];
+  };
+
+  it('reads the list and export order from an index, never sorting every match in memory', async () => {
+    await FormSubmissionModel.syncIndexes();
+    const reviewable = { $in: [...REVIEWABLE_APPLICATION_STATUSES] };
+    const formId = new Types.ObjectId(form.id);
+    const cases = [
+      [{ status: reviewable }, { submittedAt: -1, _id: -1 }],
+      [{ status: reviewable }, { submittedAt: 1, _id: 1 }],
+      [{ status: 'submitted' }, { submittedAt: -1, _id: -1 }],
+      [
+        { formId, status: reviewable },
+        { submittedAt: -1, _id: -1 },
+      ],
+      // The CSV export: one form, oldest first.
+      [
+        { formId, status: reviewable },
+        { submittedAt: 1, _id: 1 },
+      ],
+    ] as const;
+    for (const [filter, sort] of cases) {
+      const explained: unknown = await FormSubmissionModel.find(filter)
+        .sort(sort)
+        .limit(5)
+        .explain('queryPlanner');
+      const winning = (Array.isArray(explained) ? explained[0] : explained) as {
+        queryPlanner: { winningPlan: unknown };
+      };
+      const stages = stagesOf(winning.queryPlanner.winningPlan);
+      expect(stages, JSON.stringify({ filter, sort })).toContain('IXSCAN');
+      expect(stages, JSON.stringify({ filter, sort })).not.toContain('SORT');
+    }
+  });
+});
+
+describe('privacy requests and applications (plan D2)', () => {
+  const address = 'privacy.person@example.org';
+  let applicationId = '';
+
+  beforeAll(async () => {
+    applicationId = await apply(otherForm, [
+      { fieldId: 'name', value: 'Abena Privacy' },
+      { fieldId: 'email', value: address },
+      { fieldId: 'pitch', value: 'A private pitch' },
+    ]);
+  });
+
+  it('leaves applications out of an editor export, saying how many were left out', async () => {
+    const byEditor = await call(
+      'get',
+      `/api/admin/privacy-requests/export?email=${encodeURIComponent('Privacy.Person@example.org')}`,
+      editor,
+    );
+    expect(byEditor.status).toBe(200);
+    expect(byEditor.body.applications).toEqual([]);
+    expect(byEditor.body.applicationsWithheld).toBe(1);
+    expect(JSON.stringify(byEditor.body)).not.toContain('A private pitch');
+
+    const byAdmin = await call('get', `/api/admin/privacy-requests/export?email=${address}`, admin);
+    expect(byAdmin.status).toBe(200);
+    expect(byAdmin.body.applications).toHaveLength(1);
+    expect(byAdmin.body.applications[0].answers).toContainEqual({
+      question: 'Your pitch',
+      value: 'A private pitch',
+    });
+    expect(byAdmin.body).not.toHaveProperty('applicationsWithheld');
+  });
+
+  it('lets only someone who may erase applications fulfil a deletion that reaches them', async () => {
+    const privacyRequest = await PrivacyRequestModel.create({
+      email: address,
+      type: 'delete',
+      status: 'pending',
+    });
+    const path = `/api/admin/privacy-requests/${privacyRequest.id as string}`;
+
+    const refused = await call('patch', path, editor).send({ status: 'fulfilled' });
+    expect(refused.status).toBe(403);
+    expect(refused.body.error.message).toMatch(/erase applications/);
+    // Nothing was erased, and the request is still open.
+    expect(await FormSubmissionModel.exists({ _id: applicationId })).not.toBeNull();
+    expect((await PrivacyRequestModel.findById(privacyRequest.id).lean())?.status).toBe('pending');
+
+    // Cloudinary's Admin API is never reached from a test.
+    const removeFolder = vi
+      .spyOn(cloudinary.api, 'delete_resources_by_prefix')
+      .mockResolvedValue({ deleted: {} } as never);
+    try {
+      const fulfilled = await call('patch', path, admin).send({ status: 'fulfilled' });
+      expect(fulfilled.status).toBe(200);
+      expect(await FormSubmissionModel.exists({ _id: applicationId })).toBeNull();
+      // The whole folder goes, not only the files the answers still name.
+      expect(removeFolder).toHaveBeenCalledWith(
+        `iaa/applications/${otherForm.id}/${applicationId}/`,
+        expect.objectContaining({ type: 'authenticated' }),
+      );
+    } finally {
+      removeFolder.mockRestore();
+    }
   });
 });

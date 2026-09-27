@@ -16,8 +16,9 @@ import { DRAFT_RETENTION_DAYS } from '@iaa/shared';
 export const DRAFT_TOKEN_BYTES = 32;
 
 /**
- * Tokens that may reach one draft at once. Each resume link adds one, so the
- * tab the applicant already has open keeps working; the oldest drops off.
+ * Tokens that may reach one draft at once. Each resume link adds one beside
+ * the token that asked for it, so the tab the applicant already has open keeps
+ * working; the oldest of the others drops off.
  */
 export const MAX_DRAFT_TOKENS = 5;
 
@@ -41,12 +42,46 @@ export const isDraftTokenShape = (value: unknown): value is string =>
   typeof value === 'string' && DRAFT_TOKEN_SHAPE.test(value);
 
 /**
- * The hashes to keep after adding one: the newest `MAX_DRAFT_TOKENS`, with no
- * repeats. The database update applies the same rule with `$push` and
- * `$slice`; this is the rule written down where it can be tested.
+ * The hashes to keep when a resume link is asked for: the one presented, the
+ * one added, and the newest others, `MAX_DRAFT_TOKENS` in all with no repeats.
+ * The presented hash is always kept. Only the open tab presents the first
+ * token, so trimming purely by age would lock that tab out on the fifth
+ * request and split the application in two. `tokenHashesAfterLink` is the
+ * same rule as a database update; this is it written down to be tested.
  */
-export const rotateTokenHashes = (current: readonly string[], added: string): string[] =>
-  [...current.filter((hash) => hash !== added), added].slice(-MAX_DRAFT_TOKENS);
+export const rotateTokenHashes = (
+  current: readonly string[],
+  presented: string,
+  added: string,
+): string[] =>
+  [...current.filter((hash) => hash !== presented && hash !== added), presented, added].slice(
+    -MAX_DRAFT_TOKENS,
+  );
+
+/**
+ * `rotateTokenHashes` as an aggregation expression over the stored
+ * `tokenHashes`, for an update pipeline. Worked out inside the one update, so
+ * two link requests at once cannot each overwrite the other's token.
+ */
+export const tokenHashesAfterLink = (
+  presented: string,
+  added: string,
+): Record<string, unknown> => ({
+  $slice: [
+    {
+      $concatArrays: [
+        {
+          $filter: {
+            input: '$tokenHashes',
+            cond: { $not: [{ $in: ['$$this', [presented, added]] }] },
+          },
+        },
+        [presented, added],
+      ],
+    },
+    -MAX_DRAFT_TOKENS,
+  ],
+});
 
 /** When a draft saved at `now` expires. Every save starts the count again. */
 export const draftExpiry = (now: Date): Date =>

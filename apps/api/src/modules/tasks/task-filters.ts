@@ -208,26 +208,51 @@ const LIST_ITEM_PROJECTION = {
   attachmentCount: { $size: nonEmpty('$attachments') },
 };
 
+/** Sort keys worked out per task rather than stored, and so never indexed. */
+const COMPUTED_SORT_KEYS = {
+  _priorityRank: { $indexOfArray: [[...WORK_PRIORITIES], '$priority'] },
+  _dueMissing: { $cond: [{ $eq: [{ $ifNull: ['$dueDate', null] }, null] }, 1, 0] },
+};
+
+const usesComputedKeys = (sort: SortSpec): boolean =>
+  Object.keys(sort).some((key) => key in COMPUTED_SORT_KEYS);
+
 /**
  * One page of list rows or board cards: match, sort, cut, and reduce each task
- * to its row. The sort keys that are not stored (priority rank, a missing due
- * date) are worked out on the way.
+ * to its row.
+ *
+ * A sort on stored fields (updated, created, key, and the board's position)
+ * comes straight after the match, so MongoDB reads the first page from an
+ * index (`{ status, boardOrder, _id }`, `{ updatedAt, _id }`) and stops,
+ * rather than fetching every matching task to sort them. Done tasks pile up,
+ * and every board refetch after a drag would otherwise pay for all of them.
+ *
+ * Priority and due sorts need keys that are worked out per task, so no index
+ * can serve them. Those tasks are cut down to their row first, so the sort
+ * carries counts rather than descriptions, checklists and files, and the
+ * worked-out keys are dropped again at the end.
  */
 export const listItemPipeline = (
   match: Filter,
   sort: SortSpec,
   skip: number,
   limit: number,
-): PipelineStage[] => [
-  { $match: match },
-  {
-    $addFields: {
-      _priorityRank: { $indexOfArray: [[...WORK_PRIORITIES], '$priority'] },
-      _dueMissing: { $cond: [{ $eq: [{ $ifNull: ['$dueDate', null] }, null] }, 1, 0] },
-    },
-  },
-  { $sort: sort },
-  { $skip: skip },
-  { $limit: limit },
-  { $project: LIST_ITEM_PROJECTION },
-];
+): PipelineStage[] => {
+  if (!usesComputedKeys(sort)) {
+    return [
+      { $match: match },
+      { $sort: sort },
+      { $skip: skip },
+      { $limit: limit },
+      { $project: LIST_ITEM_PROJECTION },
+    ];
+  }
+  return [
+    { $match: match },
+    { $project: { ...LIST_ITEM_PROJECTION, ...COMPUTED_SORT_KEYS } },
+    { $sort: sort },
+    { $skip: skip },
+    { $limit: limit },
+    { $project: { _priorityRank: 0, _dueMissing: 0 } },
+  ];
+};

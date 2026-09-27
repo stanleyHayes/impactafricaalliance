@@ -62,10 +62,17 @@ const query = (value: unknown) => {
 const build = () => {
   const audit = { record: vi.fn().mockResolvedValue(undefined) };
   const people = { summaries: vi.fn().mockResolvedValue(new Map()) };
-  const media = { destroyAsset: vi.fn().mockResolvedValue(undefined) };
+  const media = {
+    destroyAsset: vi.fn().mockResolvedValue(undefined),
+    destroyByPrefix: vi.fn().mockResolvedValue(undefined),
+  };
   const logger = { error: vi.fn(), warn: vi.fn(), info: vi.fn() };
   const service = new FormService(
-    { jwt: { accessSecret: 'x'.repeat(32) }, siteUrl: 'https://iaa.example' } as AppConfig,
+    {
+      jwt: { accessSecret: 'x'.repeat(32) },
+      siteUrl: 'https://iaa.example',
+      cloudinary: { folder: 'iaa' },
+    } as AppConfig,
     audit as unknown as AuditService,
     people as unknown as PeopleService,
     media as unknown as MediaProvider,
@@ -186,6 +193,32 @@ describe('form status rules', () => {
     const deleteOne = vi.spyOn(FormModel, 'deleteOne');
     await expect(service.remove(form._id.toString(), admin)).rejects.toThrow(/cannot be deleted/);
     expect(deleteOne).not.toHaveBeenCalled();
+  });
+
+  // A replaced upload is named by no answer, so only its folder leads to it.
+  it('deletes the folders of drafts that were signed uploads along with an unanswered form', async () => {
+    const { service, media } = build();
+    const form = stored();
+    const uploader = {
+      _id: new Types.ObjectId(),
+      formId: form._id,
+      signedUploads: [`iaa/applications/${form._id.toString()}/x/cv-1`],
+      answers: [],
+    };
+    const typist = { _id: new Types.ObjectId(), formId: form._id, answers: [{ value: 'Kofi' }] };
+    vi.spyOn(FormModel, 'findById').mockReturnValue(query(form));
+    vi.spyOn(FormSubmissionModel, 'countDocuments').mockReturnValue(query(0));
+    vi.spyOn(FormSubmissionModel, 'find').mockReturnValue(query([uploader, typist]));
+    vi.spyOn(FormModel, 'deleteOne').mockReturnValue(query({}));
+    vi.spyOn(FormVersionModel, 'deleteMany').mockReturnValue(query({}));
+    vi.spyOn(FormSubmissionModel, 'deleteMany').mockReturnValue(query({}));
+
+    await service.remove(form._id.toString(), admin);
+
+    expect(media.destroyByPrefix).toHaveBeenCalledTimes(1);
+    expect(media.destroyByPrefix).toHaveBeenCalledWith(
+      `iaa/applications/${form._id.toString()}/${uploader._id.toString()}/`,
+    );
   });
 });
 

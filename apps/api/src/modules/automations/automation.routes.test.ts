@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { AppConfig } from '../../config/env.js';
 import type { AppLogger } from '../../config/logger.js';
 import * as automation from '../event-messages/event-automation.worker.js';
+import * as drafts from '../forms/draft-files.js';
 import * as invites from '../reviews/review-invite.worker.js';
 
 import { createAutomationRouter } from './automation.routes.js';
@@ -26,6 +27,7 @@ const app = (runSecret?: string) => {
 const bothSucceed = () => {
   vi.spyOn(invites, 'runReviewInvites').mockResolvedValue({ events: 1, invitations: 95 });
   vi.spyOn(automation, 'runEventAutomation').mockResolvedValue({ reminders: 0, thankYous: 1 });
+  vi.spyOn(drafts, 'runDraftSweep').mockResolvedValue({ removed: 2, kept: 0 });
 };
 
 afterEach(() => vi.restoreAllMocks());
@@ -41,6 +43,7 @@ describe('the endpoint the scheduler calls', () => {
     expect(response.status).toBe(200);
     expect(response.body.reviewInvites).toEqual({ events: 1, invitations: 95 });
     expect(response.body.eventMessages).toEqual({ reminders: 0, thankYous: 1 });
+    expect(response.body.expiredDrafts).toEqual({ removed: 2, kept: 0 });
   });
 
   it('refuses a caller with the wrong secret', async () => {
@@ -78,6 +81,7 @@ describe('the endpoint the scheduler calls', () => {
   it('still sends the reminders when the invitations fail', async () => {
     vi.spyOn(invites, 'runReviewInvites').mockRejectedValue(new Error('mail provider down'));
     vi.spyOn(automation, 'runEventAutomation').mockResolvedValue({ reminders: 2, thankYous: 0 });
+    vi.spyOn(drafts, 'runDraftSweep').mockResolvedValue({ removed: 0, kept: 0 });
 
     const response = await request(app(SECRET))
       .post('/api/automations/run')
@@ -87,5 +91,19 @@ describe('the endpoint the scheduler calls', () => {
     expect(response.status).toBe(207);
     expect(response.body.reviewInvites).toBeNull();
     expect(response.body.eventMessages).toEqual({ reminders: 2, thankYous: 0 });
+  });
+
+  it('reports a failed draft sweep without stopping the emails', async () => {
+    vi.spyOn(invites, 'runReviewInvites').mockResolvedValue({ events: 0, invitations: 0 });
+    vi.spyOn(automation, 'runEventAutomation').mockResolvedValue({ reminders: 1, thankYous: 0 });
+    vi.spyOn(drafts, 'runDraftSweep').mockRejectedValue(new Error('database away'));
+
+    const response = await request(app(SECRET))
+      .post('/api/automations/run')
+      .set('x-automation-secret', SECRET);
+
+    expect(response.status).toBe(207);
+    expect(response.body.expiredDrafts).toBeNull();
+    expect(response.body.eventMessages).toEqual({ reminders: 1, thankYous: 0 });
   });
 });

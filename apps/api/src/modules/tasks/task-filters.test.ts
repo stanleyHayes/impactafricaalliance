@@ -1,11 +1,13 @@
 import { dueBucket, taskBoardQuerySchema, taskListQuerySchema } from '@iaa/shared';
-import { Types } from 'mongoose';
+import { Types, type PipelineStage } from 'mongoose';
 import { describe, expect, it } from 'vitest';
 
 import {
+  BOARD_SORT,
   buildTaskFilter,
   dayBounds,
   dueConditions,
+  listItemPipeline,
   summaryFilters,
   taskSortSpec,
 } from './task-filters.js';
@@ -141,5 +143,44 @@ describe('taskSortSpec', () => {
     expect(taskSortSpec('due', 'desc')).toEqual({ _dueMissing: 1, dueDate: -1, number: -1 });
     expect(Object.keys(taskSortSpec('updated', 'asc')).at(-1)).toBe('_id');
     expect(taskSortSpec('priority', 'desc')._priorityRank).toBe(-1);
+  });
+});
+
+describe('listItemPipeline', () => {
+  const match = { archivedAt: null };
+  const stageNames = (stages: PipelineStage[]): string[] =>
+    stages.map((stage) => Object.keys(stage)[0] ?? '');
+
+  it.each([
+    ['the board', BOARD_SORT],
+    ['the default list', taskSortSpec('updated', 'desc')],
+    ['created', taskSortSpec('created', 'asc')],
+    ['key', taskSortSpec('key', 'desc')],
+  ])('sorts %s straight after the match, so an index can serve the page', (_name, sort) => {
+    const stages = listItemPipeline(match, sort, 0, 100);
+    expect(stageNames(stages)).toEqual(['$match', '$sort', '$skip', '$limit', '$project']);
+    expect(stages[1]).toEqual({ $sort: sort });
+  });
+
+  it.each([
+    ['due', taskSortSpec('due', 'asc')],
+    ['priority', taskSortSpec('priority', 'desc')],
+  ])('cuts tasks to their row before a %s sort, and drops the worked-out keys', (_name, sort) => {
+    const stages = listItemPipeline(match, sort, 20, 20);
+    expect(stageNames(stages)).toEqual([
+      '$match',
+      '$project',
+      '$sort',
+      '$skip',
+      '$limit',
+      '$project',
+    ]);
+    const slim = (stages[1] as { $project: Record<string, unknown> }).$project;
+    // The row's own fields and counts, plus the keys the sort needs.
+    expect(slim).toMatchObject({ title: 1, checklistTotal: expect.anything() });
+    expect(slim).toHaveProperty('_priorityRank');
+    expect(slim).toHaveProperty('_dueMissing');
+    expect(slim).not.toHaveProperty('description');
+    expect(stages.at(-1)).toEqual({ $project: { _priorityRank: 0, _dueMissing: 0 } });
   });
 });

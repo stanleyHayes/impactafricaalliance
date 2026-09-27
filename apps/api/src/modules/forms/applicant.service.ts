@@ -45,12 +45,13 @@ import {
   type DraftFileScope,
 } from './application-files.js';
 import { withUniqueReference } from './application-reference.js';
+import { discardUnusedDraftFiles, MAX_SIGNED_UPLOADS } from './draft-files.js';
 import {
   draftExpiry,
   hashDraftToken,
   isDraftTokenShape,
-  MAX_DRAFT_TOKENS,
   newDraftToken,
+  tokenHashesAfterLink,
 } from './draft-token.js';
 import { answerProblemsError, draftNotFound, FormUnavailableError } from './form-errors.js';
 import {
@@ -260,13 +261,17 @@ export class ApplicantService {
         },
       ]);
     }
+    let signed: SignedApplicationUpload;
     try {
-      return this.media.createSignedApplicationUpload({
+      signed = this.media.createSignedApplicationUpload({
         formId: form._id.toString(),
         draftId: draft._id.toString(),
         fieldId: field.id,
         formats,
         maxBytes,
+        // Accepted above, so it is one of `formats`. A raw file keeps it in its
+        // id, which is what names the file when a reviewer downloads it.
+        extension: input.filename.trim().split('.').pop()?.toLowerCase(),
       });
     } catch (error) {
       if (error instanceof ServiceUnavailableError) {
@@ -276,13 +281,22 @@ export class ApplicantService {
       }
       throw error;
     }
+    // Remembered so a file the answers later drop can be found and deleted
+    // (`draft-files.ts`); Cloudinary is otherwise the only record of it.
+    await FormSubmissionModel.updateOne(
+      { _id: draft._id, status: 'draft' },
+      { $push: { signedUploads: { $each: [signed.publicId], $slice: -MAX_SIGNED_UPLOADS } } },
+    ).exec();
+    return signed;
   }
 
   /**
    * Submit. The saved answers, with any sent now laid over them, are checked
    * in full against the form as it is now, answers to hidden questions are
    * dropped, and every file is checked against the draft's folder and what
-   * Cloudinary holds. The token stops working once this succeeds.
+   * Cloudinary holds. The token stops working once this succeeds, and any
+   * file in the draft's folder that the answers no longer use is deleted
+   * (`draft-files.ts`), so a replaced upload does not outlive the application.
    */
   async submit(
     slug: string,
@@ -326,7 +340,7 @@ export class ApplicantService {
             statusHistory: [{ from: 'draft', to: 'submitted', at: now }],
             ...(agreed ? { consent: { version: CONSENT_VERSION, at: now } } : {}),
           },
-          $unset: { tokenHashes: 1, draftExpiresAt: 1, currentStepId: 1 },
+          $unset: { tokenHashes: 1, draftExpiresAt: 1, currentStepId: 1, signedUploads: 1 },
         },
         { returnDocument: 'after' },
       )
@@ -343,7 +357,15 @@ export class ApplicantService {
       action: 'submitted',
       summary: `Submitted ${submitted.reference} to "${form.title}"`,
     });
-    await Promise.all([this.acknowledge(form, submitted), this.notifyStaff(form, submitted)]);
+    await Promise.all([
+      this.acknowledge(form, submitted),
+      this.notifyStaff(form, submitted),
+      discardUnusedDraftFiles(
+        { media: this.media, logger: this.logger, rootFolder: this.config.cloudinary.folder },
+        draft,
+        verified,
+      ),
+    ]);
     const successMessage = form.settings?.successMessage;
     return {
       reference: submitted.reference,
@@ -355,8 +377,10 @@ export class ApplicantService {
   /**
    * "Email me a link to finish later" (plan D8). Always accepted, whatever
    * happens, so the answer never says whether a token or a form exists. When
-   * the token reaches a live draft, a fresh token is added beside it (the
-   * open tab keeps working) and sent to the address given.
+   * the token reaches a live draft, a fresh token is added beside it and sent
+   * to the address given. The presented token is always kept, however many
+   * links are asked for, so the open tab keeps working (`rotateTokenHashes`).
+   * The update is a pipeline so that rule is applied in one atomic step.
    */
   async requestResumeLink(
     slug: string,
@@ -371,18 +395,26 @@ export class ApplicantService {
       return;
     }
     const fresh = newDraftToken();
+    const presented = hashDraftToken(token);
     const draft = await FormSubmissionModel.findOneAndUpdate(
       {
         formId: form._id,
         status: 'draft',
-        tokenHashes: hashDraftToken(token),
+        tokenHashes: presented,
         draftExpiresAt: { $gt: now },
       },
-      {
-        $push: { tokenHashes: { $each: [hashDraftToken(fresh)], $slice: -MAX_DRAFT_TOKENS } },
-        $set: { 'applicant.email': input.email, draftExpiresAt: draftExpiry(now) },
-      },
-      { returnDocument: 'after' },
+      [
+        {
+          $set: {
+            tokenHashes: tokenHashesAfterLink(presented, hashDraftToken(fresh)),
+            // $literal: a pipeline would read a leading "$" as a field path.
+            'applicant.email': { $literal: input.email },
+            draftExpiresAt: draftExpiry(now),
+          },
+        },
+      ],
+      // Mongoose 9 refuses a pipeline update unless it is asked for.
+      { returnDocument: 'after', updatePipeline: true },
     )
       .lean<StoredSubmission>()
       .exec();

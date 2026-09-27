@@ -67,6 +67,13 @@ export interface FormSubmissionDocument {
   tokenHashes: string[];
   /** When an untouched draft is deleted; refreshed on every save. */
   draftExpiresAt?: Date | null;
+  /**
+   * The ids of the files this draft has been allowed to upload (the most
+   * recent fifty). Cloudinary is the only other record of them, so this is
+   * what says a draft's folder may hold files its answers no longer point at:
+   * a replaced CV, or one refused at submission. See `draft-files.ts`.
+   */
+  signedUploads?: string[];
   /** Which privacy wording the applicant agreed to, and when. */
   consent?: { version: string; at: Date } | null;
   submittedAt?: Date | null;
@@ -139,6 +146,7 @@ const formSubmissionSchema = new Schema<FormSubmissionDocument>(
     currentStepId: { type: String },
     tokenHashes: { type: [String], default: [] },
     draftExpiresAt: { type: Date },
+    signedUploads: { type: [String], default: undefined },
     consent: { type: consentSubSchema },
     submittedAt: { type: Date },
     reviews: { type: [reviewSubSchema], default: [] },
@@ -153,19 +161,32 @@ formSubmissionSchema.index(
   { reference: 1 },
   { unique: true, partialFilterExpression: { reference: { $type: 'string' } } },
 );
-// A form's applications in one status, newest first; also the submission counts.
-formSubmissionSchema.index({ formId: 1, status: 1, submittedAt: -1 });
-// The review queue and status tabs across every form, newest first.
-formSubmissionSchema.index({ status: 1, submittedAt: -1 });
+// A form's applications in one status, newest first; also the submission
+// counts. The lists break ties on submission time by `_id`, so `_id` ends the
+// key: without it MongoDB cannot read the order from the index and sorts every
+// match in memory before returning a page. Also serves the CSV export, read
+// backwards for oldest first.
+formSubmissionSchema.index({ formId: 1, status: 1, submittedAt: -1, _id: -1 });
+// The review queue and status tabs across every form, newest first, with the
+// same `_id` tie-break.
+formSubmissionSchema.index({ status: 1, submittedAt: -1, _id: -1 });
 // Privacy export and erasure find an applicant's records by email.
 formSubmissionSchema.index({ 'applicant.email': 1 });
 // A draft is reached by the hash of its token (multikey).
 formSubmissionSchema.index({ tokenHashes: 1 });
-// Deletes drafts left untouched past their expiry. Partial on status so a
-// submitted application is never removed, whatever its old expiry says.
+// A backstop for drafts left untouched past their expiry. The hourly sweep
+// (`draft-files.ts`, run by POST /api/automations/run) deletes them first,
+// with their uploaded files; MongoDB's TTL monitor would delete only the
+// record and strand the files. A week's grace leaves the sweep time to catch
+// up after a quiet spell. Partial on status so a submitted application is
+// never removed, whatever its old expiry says.
+export const DRAFT_TTL_GRACE_SECONDS = 7 * 86_400;
 formSubmissionSchema.index(
   { draftExpiresAt: 1 },
-  { expireAfterSeconds: 0, partialFilterExpression: { status: 'draft' } },
+  {
+    expireAfterSeconds: DRAFT_TTL_GRACE_SECONDS,
+    partialFilterExpression: { status: 'draft' },
+  },
 );
 
 export const FormSubmissionModel = model<FormSubmissionDocument>(

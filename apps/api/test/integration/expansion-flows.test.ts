@@ -454,11 +454,20 @@ describe('from speaker form to accepted application', () => {
       label: 'Full name',
       value: 'Ama Mensah',
     });
-    // Files come back as signed links made when the application is read.
+    // Files come back as signed download links, made when the application is
+    // read and good for an hour, so a copied link does not open a CV for good.
     const file = application.answers.find((answer) => answer.fieldId === 'headshot')?.value as {
       url: string;
     }[];
-    expect(file[0]?.url).toMatch(/^https:\/\/res\.cloudinary\.com\/iaa-flow-cloud\/.+\/s--/);
+    const link = new URL(file[0]?.url ?? '');
+    expect(link.origin + link.pathname).toBe(
+      'https://api.cloudinary.com/v1_1/iaa-flow-cloud/image/download',
+    );
+    expect(link.searchParams.get('type')).toBe('authenticated');
+    expect(link.searchParams.get('signature')).toBeTruthy();
+    const expiresAt = Number(link.searchParams.get('expires_at'));
+    expect(expiresAt - Date.now() / 1000).toBeGreaterThan(55 * 60);
+    expect(expiresAt - Date.now() / 1000).toBeLessThanOrEqual(60 * 60);
 
     const reviewed = await call(
       'post',

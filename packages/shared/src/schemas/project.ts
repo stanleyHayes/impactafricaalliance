@@ -13,6 +13,7 @@ import {
 import { partialForUpdate } from './update.js';
 import {
   booleanQueryParam,
+  calendarDateSchema,
   clearableTextField,
   fileAttachmentInputSchema,
   hasUniqueIds,
@@ -287,6 +288,11 @@ export type ProjectSort = (typeof PROJECT_SORTS)[number];
  * `GET /api/admin/projects`. Archived projects are left out unless
  * `includeArchived=true` or `status=archived` asks for them. `mine` means led
  * by or a member of the caller.
+ *
+ * `today` is the caller's own calendar day. A task counts as overdue against
+ * the reader's day, not the server's UTC one (plan D6), so the project's
+ * overdue figure agrees with My tasks and the Tasks badge, which send it too.
+ * The server falls back to its UTC day when it is left out.
  */
 export const projectListQuerySchema = paginationQuerySchema.extend({
   q: optionalTextField(80),
@@ -296,8 +302,18 @@ export const projectListQuerySchema = paginationQuerySchema.extend({
   mine: booleanQueryParam,
   includeArchived: booleanQueryParam,
   sort: z.enum(PROJECT_SORTS).default('updated'),
+  today: calendarDateSchema.optional(),
 });
 export type ProjectListQuery = z.infer<typeof projectListQuerySchema>;
+
+/**
+ * `GET /api/admin/projects/:id`. `today` is the caller's calendar day, for the
+ * project's overdue task count, as on the list.
+ */
+export const projectDetailQuerySchema = z.object({
+  today: calendarDateSchema.optional(),
+});
+export type ProjectDetailQuery = z.infer<typeof projectDetailQuerySchema>;
 
 export interface Milestone {
   id: string;

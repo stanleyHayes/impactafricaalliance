@@ -474,6 +474,32 @@ describe('project list', () => {
     const counted = await patch('admin', `/${project.id}`, { progressOverride: null });
     expect(counted.body.progress.source).toBe('tasks-and-milestones');
   });
+
+  it("counts a task as overdue against the caller's own day, as My tasks does", async () => {
+    const project = await create();
+    await TaskModel.create({
+      projectId: project.id,
+      key: 'IAA-9301',
+      number: 9301,
+      title: 'Book the venue',
+      dueDate: toCalendarDateIso('2026-10-05'),
+    });
+    const overdueOn = async (today: string): Promise<number | undefined> => {
+      const detail = await get('admin', `/${project.id}?today=${today}`);
+      expect(detail.status).toBe(200);
+      const list = await get('admin', `?q=${encodeURIComponent(project.title)}&today=${today}`);
+      expect(list.status).toBe(200);
+      const item = (list.body as Paginated<ProjectListItem>).items[0];
+      // The list and the detail page must agree on the same day.
+      expect(item?.taskCounts.overdue).toBe((detail.body as Project).taskCounts.overdue);
+      return item?.taskCounts.overdue;
+    };
+    // Due on the 5th: not late on the 5th itself, late from the 6th.
+    expect(await overdueOn('2026-10-05')).toBe(0);
+    expect(await overdueOn('2026-10-06')).toBe(1);
+    expect((await get('admin', `/${project.id}?today=2026-02-30`)).status).toBe(400);
+    expect((await get('admin', '?today=yesterday')).status).toBe(400);
+  });
 });
 
 describe('project evidence', () => {

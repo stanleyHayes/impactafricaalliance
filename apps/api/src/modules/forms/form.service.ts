@@ -34,6 +34,7 @@ import { diffFields } from '../audit/audit-diff.js';
 import { AuditService } from '../audit/audit.service.js';
 import { PeopleService } from '../people/people.service.js';
 
+import { folderOf, type DraftFolderSource } from './draft-files.js';
 import {
   definitionChanged,
   isAdmin,
@@ -421,8 +422,8 @@ export class FormService {
       );
     }
     const drafts = await FormSubmissionModel.find({ formId: form._id, status: 'draft' })
-      .select('answers')
-      .lean<{ answers?: { value: unknown }[] }[]>()
+      .select('formId signedUploads answers')
+      .lean<DraftFolderSource[]>()
       .exec();
     await Promise.all([
       FormModel.deleteOne({ _id: form._id }).exec(),
@@ -441,11 +442,35 @@ export class FormService {
         }),
       ),
     );
+    await this.removeDraftFolders(drafts);
     await this.audit.record({
       ...this.entry(form, actor),
       action: 'deleted',
       summary: `Deleted "${form.title}"`,
     });
+  }
+
+  /**
+   * The folders of deleted drafts that were signed uploads, which may hold
+   * files no answer names (a replaced CV). Best-effort: the form is already
+   * gone, so a folder that will not go is logged, not raised.
+   */
+  private async removeDraftFolders(drafts: readonly DraftFolderSource[]): Promise<void> {
+    // Files the answers name were deleted one by one above; only a draft that
+    // was signed uploads can hold others.
+    const withUploads = drafts.filter((draft) => (draft.signedUploads?.length ?? 0) > 0);
+    await Promise.all(
+      withUploads.map(async (draft) => {
+        try {
+          await this.media.destroyByPrefix(folderOf(this.config.cloudinary.folder, draft));
+        } catch (err) {
+          this.logger.error(
+            { err, module: 'forms', entityId: draft._id.toString() },
+            "Failed to delete a deleted form's draft files",
+          );
+        }
+      }),
+    );
   }
 
   // ── Status moves ──────────────────────────────────────────────────────

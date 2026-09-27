@@ -7,6 +7,7 @@ import { asyncHandler } from '../../common/async-handler.js';
 import type { AppConfig } from '../../config/env.js';
 import type { AppLogger } from '../../config/logger.js';
 import { runEventAutomation } from '../event-messages/event-automation.worker.js';
+import { runDraftSweep } from '../forms/draft-files.js';
 import { runReviewInvites } from '../reviews/review-invite.worker.js';
 
 /**
@@ -59,7 +60,7 @@ export const createAutomationRouter = (
       const started = Date.now();
       // One failing half must not cost the other: a mail provider that rejects
       // an invitation should not also stop that evening's reminders.
-      const [invites, events] = await Promise.all([
+      const [invites, events, drafts] = await Promise.all([
         runReviewInvites(container, logger).catch((error: unknown) => {
           logger.error({ err: error }, 'Review invitations failed during a scheduled run');
           return null;
@@ -68,17 +69,25 @@ export const createAutomationRouter = (
           logger.error({ err: error }, 'Event automation failed during a scheduled run');
           return null;
         }),
+        // Expired application drafts and their uploaded files. Here rather
+        // than on a timer for the same reason as the rest: a sleeping
+        // instance runs no timers.
+        runDraftSweep(container, logger).catch((error: unknown) => {
+          logger.error({ err: error }, 'The expired-draft sweep failed during a scheduled run');
+          return null;
+        }),
       ]);
 
       const result = {
         ranFor: Date.now() - started,
         reviewInvites: invites,
         eventMessages: events,
+        expiredDrafts: drafts,
       };
       logger.info(result, 'Scheduled automation run finished');
-      // 207 when a half failed, so a red run is visible in the scheduler
+      // 207 when a part failed, so a red run is visible in the scheduler
       // rather than only in a log nobody opens.
-      res.status(invites && events ? 200 : 207).json(result);
+      res.status(invites && events && drafts ? 200 : 207).json(result);
     }),
   );
 

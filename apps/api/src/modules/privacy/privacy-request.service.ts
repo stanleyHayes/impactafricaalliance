@@ -9,11 +9,13 @@ import type {
 import type { Types } from 'mongoose';
 import { inject, injectable } from 'tsyringe';
 
-import { NotFoundError } from '../../common/errors.js';
+import { ForbiddenError, NotFoundError } from '../../common/errors.js';
 import { paginate } from '../../common/pagination.js';
+import type { AppConfig } from '../../config/env.js';
 import type { AppLogger } from '../../config/logger.js';
 import type { MediaProvider } from '../../providers/media.provider.js';
 import { TOKENS } from '../../tokens.js';
+import { folderOf } from '../forms/draft-files.js';
 import { FormSubmissionModel } from '../forms/form-submission.model.js';
 import { FormVersionModel } from '../forms/form-version.model.js';
 import { FormModel } from '../forms/form.model.js';
@@ -42,7 +44,10 @@ interface PersonalDataExport {
     unsubscribedAt?: string;
   }>;
   donations: Array<{ reference: string; amountUsd: number; status: string; createdAt: string }>;
-  /** Applications made through the form builder, finished or still in draft. */
+  /**
+   * Applications made through the form builder, finished or still in draft.
+   * Empty when the caller may not read applications (see `applicationsWithheld`).
+   */
   applications: Array<{
     reference?: string;
     form: string;
@@ -51,7 +56,28 @@ interface PersonalDataExport {
     submittedAt?: string;
     createdAt: string;
   }>;
+  /**
+   * How many applications and drafts were left out because the caller may not
+   * read applications, so they know a colleague who can has to export them.
+   * Present only when some were.
+   */
+  applicationsWithheld?: number;
 }
+
+/**
+ * What the caller may do with applications (plan D2). Editors can handle
+ * privacy requests but, by default, cannot read applications, so a privacy
+ * export or erasure must not become a way round that.
+ */
+export interface ApplicationRights {
+  /** `applications:read`: the export may include applications and their answers. */
+  canReadApplications: boolean;
+  /** An administrator, or `applications:update`: an erasure may delete applications. */
+  canEraseApplications: boolean;
+}
+
+export const ERASURE_NEEDS_APPLICATIONS_ACCESS =
+  'This request would erase applications. An administrator, or someone who reviews applications, has to fulfil it.';
 
 interface StoredApplication {
   _id: Types.ObjectId;
@@ -109,6 +135,7 @@ export class PrivacyRequestService {
     @inject(PrivacyRequestRepository) private readonly repo: PrivacyRequestRepository,
     @inject(TOKENS.MediaProvider) private readonly media: MediaProvider,
     @inject(TOKENS.Logger) private readonly logger: AppLogger,
+    @inject(TOKENS.Config) private readonly config: AppConfig,
   ) {}
 
   async create(input: PrivacyRequestInput): Promise<PrivacyRequestDocument> {
@@ -134,10 +161,29 @@ export class PrivacyRequestService {
       throw new NotFoundError('Privacy request');
   }
 
-  async update(id: string, input: UpdatePrivacyRequestInput): Promise<PrivacyRequestDocument> {
+  /**
+   * Change a request's status or notes. Fulfilling a deletion request erases
+   * the person's data, and when that includes applications the caller must be
+   * allowed to erase them (`rights`). The check comes before anything is
+   * deleted, so a refused request erases nothing at all.
+   */
+  async update(
+    id: string,
+    input: UpdatePrivacyRequestInput,
+    rights: Pick<ApplicationRights, 'canEraseApplications'>,
+  ): Promise<PrivacyRequestDocument> {
     const request = await this.repo.findById(id);
     if (!request) {
       throw new NotFoundError('Privacy request');
+    }
+    const erases =
+      input.status === 'fulfilled' && request.status !== 'fulfilled' && request.type === 'delete';
+    if (
+      erases &&
+      !rights.canEraseApplications &&
+      (await FormSubmissionModel.exists(applicantFilter(request.email)).exec())
+    ) {
+      throw new ForbiddenError(ERASURE_NEEDS_APPLICATIONS_ACCESS);
     }
 
     const changes: Partial<PrivacyRequestDocument> = {
@@ -161,19 +207,32 @@ export class PrivacyRequestService {
     return updated;
   }
 
-  async exportPersonalData(email: string): Promise<PersonalDataExport> {
-    const [submissions, subscribers, donations, applications] = await Promise.all([
+  /**
+   * Everything held about one address. Applications, with every answer, are
+   * included only for a caller who may read applications; anyone else gets a
+   * count of what was left out instead (plan D2).
+   */
+  async exportPersonalData(
+    email: string,
+    rights: Pick<ApplicationRights, 'canReadApplications'>,
+  ): Promise<PersonalDataExport> {
+    const [submissions, subscribers, donations, applications, withheld] = await Promise.all([
       SubmissionModel.find({ 'payload.email': email.toLowerCase() })
         .sort({ createdAt: -1 })
         .lean()
         .exec(),
       SubscriberModel.find({ email: email.toLowerCase() }).lean().exec(),
       DonationModel.find({ donorEmail: email.toLowerCase() }).sort({ createdAt: -1 }).lean().exec(),
-      FormSubmissionModel.find(applicantFilter(email))
-        .sort({ createdAt: -1 })
-        .select('reference formId formVersion status answers submittedAt createdAt')
-        .lean<StoredApplication[]>()
-        .exec(),
+      rights.canReadApplications
+        ? FormSubmissionModel.find(applicantFilter(email))
+            .sort({ createdAt: -1 })
+            .select('reference formId formVersion status answers submittedAt createdAt')
+            .lean<StoredApplication[]>()
+            .exec()
+        : Promise.resolve([]),
+      rights.canReadApplications
+        ? Promise.resolve(0)
+        : FormSubmissionModel.countDocuments(applicantFilter(email)).exec(),
     ]);
     const labels = applications.length > 0 ? await labelsFor(applications) : new Map();
 
@@ -215,6 +274,7 @@ export class PrivacyRequestService {
           createdAt: doc.createdAt.toISOString(),
         };
       }),
+      ...(withheld > 0 ? { applicationsWithheld: withheld } : {}),
     };
   }
 
@@ -235,15 +295,17 @@ export class PrivacyRequestService {
 
   /**
    * Delete every application and draft made with this address, and their
-   * uploaded files. The files are removed best-effort: the records go
-   * whatever Cloudinary says, and a file left behind is private, reachable
-   * only through a signed link nobody can now produce.
+   * uploaded files: each file the answers name, and then each record's whole
+   * folder, which also holds files the answers no longer name (a replaced CV,
+   * one refused at submission). The files are removed best-effort: the
+   * records go whatever Cloudinary says, and a file left behind is private,
+   * reachable only through a signed link nobody can now produce.
    */
   private async eraseApplications(email: string): Promise<void> {
     const filter = applicantFilter(email);
     const applications = await FormSubmissionModel.find(filter)
-      .select('answers')
-      .lean<Pick<StoredApplication, '_id' | 'answers'>[]>()
+      .select('formId answers')
+      .lean<Pick<StoredApplication, '_id' | 'formId' | 'answers'>[]>()
       .exec();
     if (applications.length === 0) {
       return;
@@ -254,20 +316,30 @@ export class PrivacyRequestService {
     const files = applications.flatMap((item) =>
       (item.answers ?? []).flatMap((answer) => (isFileList(answer.value) ? answer.value : [])),
     );
-    await Promise.all(
-      files.map(async (file) => {
-        try {
-          await this.media.destroyAsset({
+    await Promise.all([
+      ...files.map((file) =>
+        this.bestEffort(file.publicId, () =>
+          this.media.destroyAsset({
             publicId: file.publicId,
             ...(file.resourceType ? { resourceType: file.resourceType } : {}),
-          });
-        } catch (err) {
-          this.logger.error(
-            { err, module: 'privacy', entityId: file.publicId },
-            'Failed to delete an applicant file during erasure',
-          );
-        }
+          }),
+        ),
+      ),
+      ...applications.map((item) => {
+        const folder = folderOf(this.config.cloudinary.folder, item);
+        return this.bestEffort(folder, () => this.media.destroyByPrefix(folder));
       }),
-    );
+    ]);
+  }
+
+  private async bestEffort(entityId: string, remove: () => Promise<void>): Promise<void> {
+    try {
+      await remove();
+    } catch (err) {
+      this.logger.error(
+        { err, module: 'privacy', entityId },
+        'Failed to delete an applicant file during erasure',
+      );
+    }
   }
 }

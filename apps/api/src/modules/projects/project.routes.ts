@@ -1,6 +1,7 @@
 import {
   objectIdSchema,
   paginationQuerySchema,
+  projectDetailQuerySchema,
   projectDocumentInputSchema,
   projectInputSchema,
   projectListQuerySchema,
@@ -57,7 +58,9 @@ export const createProjectRouters = (container: DependencyContainer): ProjectRou
     requirePermission('projects:read'),
     asyncHandler(async (req, res) => {
       const query = parseWith(projectListQuerySchema, req.query);
-      res.json(await projects.list(query, actorOf(req)));
+      // The caller's own day, when sent, decides what is overdue (plan D6);
+      // without it the service uses the server's UTC day.
+      res.json(await projects.list(query, actorOf(req), query.today));
     }),
   );
 
@@ -75,7 +78,8 @@ export const createProjectRouters = (container: DependencyContainer): ProjectRou
     requirePermission('projects:read'),
     asyncHandler(async (req, res) => {
       const { id } = parseWith(projectParams, req.params);
-      res.json(await projects.get(id));
+      const { today } = parseWith(projectDetailQuerySchema, req.query);
+      res.json(await projects.get(id, today));
     }),
   );
 

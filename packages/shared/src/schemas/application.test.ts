@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   APPLICATION_REFERENCE_PATTERN,
   APPLICATION_STATUSES,
+  applicationCountsQuerySchema,
   applicationExportQuerySchema,
   applicationListQuerySchema,
   applicationReviewInputSchema,
@@ -151,6 +152,17 @@ describe('application list query', () => {
   it('never lists drafts and refuses dates that are not days', () => {
     expect(applicationListQuerySchema.safeParse({ status: 'draft' }).success).toBe(false);
     expect(applicationListQuerySchema.safeParse({ from: '1 October' }).success).toBe(false);
+  });
+
+  it('counts everything with no filters, or what the list shows with its filters', () => {
+    expect(applicationCountsQuerySchema.parse({})).toEqual({});
+    expect(applicationCountsQuerySchema.parse({ formId, q: ' ama ', from: '2026-10-01' })).toEqual({
+      formId,
+      q: 'ama',
+      from: '2026-10-01',
+    });
+    expect(applicationCountsQuerySchema.safeParse({ formId: 'nope' }).success).toBe(false);
+    expect(applicationCountsQuerySchema.safeParse({ from: '1 October' }).success).toBe(false);
   });
 
   it('exports one form at a time', () => {

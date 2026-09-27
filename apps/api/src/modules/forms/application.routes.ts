@@ -1,4 +1,5 @@
 import {
+  applicationCountsQuerySchema,
   applicationExportQuerySchema,
   applicationListQuerySchema,
   applicationReviewInputSchema,
@@ -55,8 +56,8 @@ export const createApplicationRouters = (container: DependencyContainer): Applic
   adminRouter.get(
     '/counts',
     requirePermission('applications:read'),
-    asyncHandler(async (_req, res) => {
-      res.json(await applications.counts());
+    asyncHandler(async (req, res) => {
+      res.json(await applications.counts(parseWith(applicationCountsQuerySchema, req.query)));
     }),
   );
 

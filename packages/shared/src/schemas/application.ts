@@ -162,6 +162,20 @@ export const applicationListQuerySchema = paginationQuerySchema.extend({
 });
 export type ApplicationListQuery = z.infer<typeof applicationListQuerySchema>;
 
+/**
+ * `GET /api/admin/applications/counts`: how many applications sit in each
+ * status. With no filters, every application (the sidebar badge); with the
+ * list's form, search and dates, the same applications the list shows, so the
+ * status tabs never disagree with the list beside them.
+ */
+export const applicationCountsQuerySchema = z.object({
+  formId: objectIdSchema.optional(),
+  q: optionalTextField(120),
+  from: calendarDateSchema.optional(),
+  to: calendarDateSchema.optional(),
+});
+export type ApplicationCountsQuery = z.infer<typeof applicationCountsQuerySchema>;
+
 /** `GET /api/admin/applications/export`: every submitted application to one form, as CSV. */
 export const applicationExportQuerySchema = z.object({
   formId: objectIdSchema,

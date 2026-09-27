@@ -8,6 +8,7 @@ import {
   PROGRAMME_KEYS,
   PROJECT_STATUSES,
   projectDateProblem,
+  projectDetailQuerySchema,
   projectInputSchema,
   projectListQuerySchema,
   projectMediaInputSchema,
@@ -267,5 +268,16 @@ describe('project list query', () => {
   it('refuses an unknown status or sort', () => {
     expect(projectListQuerySchema.safeParse({ status: 'paused' }).success).toBe(false);
     expect(projectListQuerySchema.safeParse({ sort: 'random' }).success).toBe(false);
+  });
+
+  it("takes the caller's own day, for the overdue count, and refuses one that does not exist", () => {
+    expect(projectListQuerySchema.parse({ today: '2026-10-06' }).today).toBe('2026-10-06');
+    expect(projectListQuerySchema.parse({}).today).toBeUndefined();
+    expect(projectListQuerySchema.safeParse({ today: '2026-02-30' }).success).toBe(false);
+    expect(projectDetailQuerySchema.parse({ today: '2026-10-06' })).toEqual({
+      today: '2026-10-06',
+    });
+    expect(projectDetailQuerySchema.parse({})).toEqual({});
+    expect(projectDetailQuerySchema.safeParse({ today: '06/10/2026' }).success).toBe(false);
   });
 });

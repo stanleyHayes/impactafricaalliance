@@ -39,11 +39,26 @@ describe('draft tokens', () => {
 
   it('keep the newest five hashes when a resume link adds one', () => {
     const hashes = ['a', 'b', 'c', 'd', 'e'];
-    expect(rotateTokenHashes(hashes, 'f')).toEqual(['b', 'c', 'd', 'e', 'f']);
-    expect(rotateTokenHashes(['a'], 'b')).toEqual(['a', 'b']);
+    expect(rotateTokenHashes(hashes, 'e', 'f')).toEqual(['b', 'c', 'd', 'e', 'f']);
+    expect(rotateTokenHashes(['a'], 'a', 'b')).toEqual(['a', 'b']);
     // A repeat moves to the end rather than being kept twice.
-    expect(rotateTokenHashes(['a', 'b'], 'a')).toEqual(['b', 'a']);
-    expect(rotateTokenHashes(hashes, 'g')).toHaveLength(MAX_DRAFT_TOKENS);
+    expect(rotateTokenHashes(['a', 'b'], 'b', 'a')).toEqual(['b', 'a']);
+    expect(rotateTokenHashes(hashes, 'e', 'g')).toHaveLength(MAX_DRAFT_TOKENS);
+  });
+
+  it('always keep the token that asked for the link, so the open tab keeps working', () => {
+    // The oldest token is the open tab's; the oldest of the others drops instead.
+    const rotated = rotateTokenHashes(['a', 'b', 'c', 'd', 'e'], 'a', 'f');
+    expect(rotated).toEqual(['c', 'd', 'e', 'a', 'f']);
+    expect(rotated).toHaveLength(MAX_DRAFT_TOKENS);
+
+    // However many links the open tab asks for, its own token survives.
+    let kept = ['tab'];
+    for (const added of ['l1', 'l2', 'l3', 'l4', 'l5', 'l6']) {
+      kept = rotateTokenHashes(kept, 'tab', added);
+    }
+    expect(kept).toContain('tab');
+    expect(kept).toEqual(['l3', 'l4', 'l5', 'tab', 'l6']);
   });
 
   it('expire thirty days after the last save', () => {

@@ -5,7 +5,11 @@ import { ServiceUnavailableError, ValidationError } from '../common/errors.js';
 import type { AppConfig } from '../config/env.js';
 import type { AppLogger } from '../config/logger.js';
 
-import { CloudinaryMediaProvider, DOCUMENT_ALLOWED_FORMATS } from './media.provider.js';
+import {
+  CloudinaryMediaProvider,
+  DELIVERY_LINK_SECONDS,
+  DOCUMENT_ALLOWED_FORMATS,
+} from './media.provider.js';
 
 const secret = 'test-secret';
 const config = {
@@ -120,12 +124,42 @@ describe('applicant upload signatures', () => {
     );
   });
 
+  it.each(['docx', 'xlsx', 'pptx', 'odt', 'txt', 'csv'])(
+    'ends a %s file’s name with its extension, which a raw file needs to download by name',
+    (extension) => {
+      const signed = provider().createSignedApplicationUpload({ ...target, extension });
+      expect(signed.fields.public_id).toMatch(new RegExp(`^cv-[a-f0-9]{16}\\.${extension}$`));
+      expect(signed.publicId).toBe(`${signed.folder}/${signed.fields.public_id}`);
+      // The extension is part of the signed name, so it cannot be changed either.
+      const { signature, ...rest } = signed.fields;
+      const sent: Record<string, string> = { ...rest };
+      delete sent.api_key;
+      expect(cloudinary.utils.api_sign_request(sent, secret)).toBe(signature);
+      expect(
+        cloudinary.utils.api_sign_request(
+          { ...sent, public_id: String(sent.public_id).replace(`.${extension}`, '') },
+          secret,
+        ),
+      ).not.toBe(signature);
+    },
+  );
+
+  it.each(['pdf', 'jpg', 'png'])(
+    'leaves a %s file’s name bare, as Cloudinary keeps its format',
+    (extension) => {
+      const signed = provider().createSignedApplicationUpload({ ...target, extension });
+      expect(signed.fields.public_id).toMatch(/^cv-[a-f0-9]{16}$/);
+    },
+  );
+
   it.each([
     { draftId: '../../site' },
     { formId: 'a/b' },
     { fieldId: 'cv.pdf' },
     { formats: [] },
     { formats: ['pdf,exe'] },
+    { extension: 'docx/../x' },
+    { extension: 'doc.x' },
   ])('refuses a target that could leave its folder or widen its formats: %o', (change) => {
     expect(() => provider().createSignedApplicationUpload({ ...target, ...change })).toThrow(
       ValidationError,
@@ -134,14 +168,33 @@ describe('applicant upload signatures', () => {
 });
 
 describe('authenticated delivery links', () => {
-  it('signs a link to the authenticated copy', () => {
+  /** The link's query, with its signature checked against every other parameter. */
+  const signedQuery = (url: string | null): URLSearchParams => {
+    expect(url).not.toBeNull();
+    const parsed = new URL(url ?? '');
+    const params = new URLSearchParams(parsed.search);
+    const { signature, api_key: apiKey, ...signed } = Object.fromEntries(params);
+    expect(apiKey).toBe('key');
+    expect(signature).toBe(cloudinary.utils.api_sign_request(signed, secret));
+    return params;
+  };
+
+  it('gives a download link to the authenticated copy that expires within the hour', () => {
+    const now = Math.floor(Date.now() / 1000);
     const url = provider().signedDeliveryUrl({
       publicId: 'iaa/applications/x/y/cv-1',
       format: 'pdf',
     });
-    expect(url).toMatch(
-      /^https:\/\/res\.cloudinary\.com\/demo\/image\/authenticated\/s--[\w-]{8}--\/v1\/iaa\/applications\/x\/y\/cv-1\.pdf$/,
-    );
+    expect(url).toMatch(/^https:\/\/api\.cloudinary\.com\/v1_1\/demo\/image\/download\?/);
+    const params = signedQuery(url);
+    expect(params.get('public_id')).toBe('iaa/applications/x/y/cv-1');
+    expect(params.get('format')).toBe('pdf');
+    expect(params.get('type')).toBe('authenticated');
+    expect(params.get('attachment')).toBe('true');
+    const expiresAt = Number(params.get('expires_at'));
+    expect(expiresAt).toBeGreaterThan(now);
+    expect(expiresAt).toBeLessThanOrEqual(now + DELIVERY_LINK_SECONDS + 5);
+    expect(expiresAt).toBeGreaterThanOrEqual(now + DELIVERY_LINK_SECONDS - 5);
   });
 
   it('does not add the format to a raw file, whose name already has it', () => {
@@ -150,9 +203,10 @@ describe('authenticated delivery links', () => {
       resourceType: 'raw',
       format: 'docx',
     });
-    expect(url).toMatch(
-      /\/raw\/authenticated\/s--[\w-]{8}--\/v1\/iaa\/applications\/x\/y\/cv-1\.docx$/,
-    );
+    expect(url).toMatch(/^https:\/\/api\.cloudinary\.com\/v1_1\/demo\/raw\/download\?/);
+    const params = signedQuery(url);
+    expect(params.get('public_id')).toBe('iaa/applications/x/y/cv-1.docx');
+    expect(params.has('format')).toBe(false);
   });
 
   it('is null when Cloudinary is not configured', () => {

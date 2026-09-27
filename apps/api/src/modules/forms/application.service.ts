@@ -7,6 +7,7 @@ import {
   type AnswerValue,
   type ApplicationAnswer,
   type ApplicationCounts,
+  type ApplicationCountsQuery,
   type ApplicationExport,
   type ApplicationFormRef,
   type ApplicationListItem,
@@ -98,6 +99,26 @@ const submittedBetween = (from?: string, to?: string): Record<string, Date> | un
 };
 
 /**
+ * The form, search and date filters the list and the status counts share, so
+ * a tab's count always matches the list under it.
+ */
+const sharedFilter = (query: ApplicationCountsQuery): QueryFilter<FormSubmissionDocument> => {
+  const filter: QueryFilter<FormSubmissionDocument> = {};
+  if (query.formId) filter.formId = new Types.ObjectId(query.formId);
+  if (query.q) {
+    const pattern = searchRegex(query.q);
+    filter.$or = [
+      { reference: pattern },
+      { 'applicant.name': pattern },
+      { 'applicant.email': pattern },
+    ];
+  }
+  const submittedAt = submittedBetween(query.from, query.to);
+  if (submittedAt) filter.submittedAt = submittedAt;
+  return filter;
+};
+
+/**
  * Reviewing applications (plan §3.4, D2, D4): the lists, the counts behind
  * the tabs and badge, the CSV export, one application with its answers in
  * the order the applicant saw them, status changes and internal reviews.
@@ -115,18 +136,10 @@ export class ApplicationService {
   ) {}
 
   async list(query: ApplicationListQuery): Promise<Paginated<ApplicationListItem>> {
-    const filter: QueryFilter<FormSubmissionDocument> = { status: statusFilter(query) };
-    if (query.formId) filter.formId = new Types.ObjectId(query.formId);
-    if (query.q) {
-      const pattern = searchRegex(query.q);
-      filter.$or = [
-        { reference: pattern },
-        { 'applicant.name': pattern },
-        { 'applicant.email': pattern },
-      ];
-    }
-    const submittedAt = submittedBetween(query.from, query.to);
-    if (submittedAt) filter.submittedAt = submittedAt;
+    const filter: QueryFilter<FormSubmissionDocument> = {
+      ...sharedFilter(query),
+      status: statusFilter(query),
+    };
 
     const direction = query.order === 'asc' ? 1 : -1;
     const sortKey = query.sort === 'updated' ? 'updatedAt' : 'submittedAt';
@@ -154,10 +167,14 @@ export class ApplicationService {
     return paginate(items, total, query.page, query.pageSize);
   }
 
-  /** How many applications sit in each reviewable status. */
-  async counts(): Promise<ApplicationCounts> {
+  /**
+   * How many applications sit in each reviewable status: every one with no
+   * filters (the sidebar badge), or only those the list's form, search and
+   * dates select (the status tabs).
+   */
+  async counts(query: ApplicationCountsQuery = {}): Promise<ApplicationCounts> {
     const rows = await FormSubmissionModel.aggregate<{ _id: string; count: number }>([
-      { $match: { status: REVIEWABLE } },
+      { $match: { ...sharedFilter(query), status: REVIEWABLE } },
       { $group: { _id: '$status', count: { $sum: 1 } } },
     ]).exec();
     const counts = Object.fromEntries(
