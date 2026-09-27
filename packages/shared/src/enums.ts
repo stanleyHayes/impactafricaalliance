@@ -46,6 +46,11 @@ export const AdminResource = {
   Media: 'media',
   Users: 'users',
   Roles: 'roles',
+  Projects: 'projects',
+  Tasks: 'tasks',
+  Forms: 'forms',
+  Applications: 'applications',
+  ImpactStories: 'impact-stories',
 } as const;
 export type AdminResource = (typeof AdminResource)[keyof typeof AdminResource];
 export const ADMIN_RESOURCES = Object.values(AdminResource);
@@ -59,8 +64,23 @@ const allPermissions = (): Permission[] =>
 
 export const ALL_PERMISSIONS = allPermissions();
 
+/**
+ * Resources an editor does not get to read by default.
+ *
+ * Applications hold applicants' personal data: contact details, biographies,
+ * uploaded files. The editor template otherwise grants read on everything, so
+ * without this list every editor would see every applicant (spec §13,
+ * Privacy). An administrator grants access to the people who review, one by
+ * one, in the permission matrix.
+ */
+export const EDITOR_READ_EXCLUDED: readonly AdminResource[] = Object.freeze([
+  AdminResource.Applications,
+]);
+
 const editorPermissions = (): Permission[] => {
-  const read = ADMIN_RESOURCES.map((resource) => `${resource}:read` as Permission);
+  const read = ADMIN_RESOURCES.filter((resource) => !EDITOR_READ_EXCLUDED.includes(resource)).map(
+    (resource) => `${resource}:read` as Permission,
+  );
   const writeResources: AdminResource[] = [
     AdminResource.Articles,
     AdminResource.Stories,
@@ -82,6 +102,10 @@ const editorPermissions = (): Permission[] => {
     AdminResource.PrivacyRequests,
     AdminResource.SiteSettings,
     AdminResource.Media,
+    AdminResource.Projects,
+    AdminResource.Tasks,
+    AdminResource.Forms,
+    AdminResource.ImpactStories,
   ];
   const createUpdate = writeResources.flatMap((resource) => [
     `${resource}:create` as Permission,

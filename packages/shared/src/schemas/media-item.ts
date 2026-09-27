@@ -6,8 +6,19 @@ import { partialForUpdate } from './update.js';
 /**
  * Folders the library groups uploads under. Deliberately few: a folder an
  * editor has to think about is a folder they will file things in wrongly.
+ * Project photos and impact-story images get their own shelves because they
+ * are found again by what they belong to, not by what they show.
  */
-export const MEDIA_FOLDERS = ['site', 'team', 'events', 'news', 'gallery', 'documents'] as const;
+export const MEDIA_FOLDERS = [
+  'site',
+  'team',
+  'events',
+  'news',
+  'gallery',
+  'documents',
+  'projects',
+  'stories',
+] as const;
 export type MediaFolder = (typeof MEDIA_FOLDERS)[number];
 
 export const MEDIA_FOLDER_LABELS: Record<MediaFolder, string> = {
@@ -17,6 +28,8 @@ export const MEDIA_FOLDER_LABELS: Record<MediaFolder, string> = {
   news: 'News & stories',
   gallery: 'Gallery',
   documents: 'Documents',
+  projects: 'Projects',
+  stories: 'Impact stories',
 };
 
 /**

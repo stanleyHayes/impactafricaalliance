@@ -13,7 +13,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "seed": "tsx src/seed.ts",
-    "admin:reset": "tsx src/reset-admin.ts"
+    "admin:reset": "tsx src/reset-admin.ts",
+    "indexes:sync": "tsx src/sync-indexes.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.111.0",

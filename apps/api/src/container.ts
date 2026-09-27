@@ -4,6 +4,7 @@ import { container as rootContainer, type DependencyContainer } from 'tsyringe';
 
 import type { AppConfig } from './config/env.js';
 import type { AppLogger } from './config/logger.js';
+import { LoggingTaskEventPublisher } from './modules/tasks/task-events.js';
 import { ResendEmailProvider } from './providers/email.provider.js';
 import { CloudinaryMediaProvider } from './providers/media.provider.js';
 import { LinkedInGateway } from './providers/social/linkedin.gateway.js';
@@ -28,6 +29,8 @@ export const buildContainer = (config: AppConfig, logger: AppLogger): Dependency
   container.register(MetaGateway, { useClass: MetaGateway });
   container.register(XGateway, { useClass: XGateway });
   container.register(SocialPublisher, { useClass: SocialPublisher });
+  // Log-only until task notifications are built; the boundary is what matters (plan D12).
+  container.register(TOKENS.TaskEvents, { useClass: LoggingTaskEventPublisher });
 
   return container;
 };

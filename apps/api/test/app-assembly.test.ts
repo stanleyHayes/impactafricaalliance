@@ -42,6 +42,43 @@ describe('Application assembly (no database)', () => {
     expect(res.status).toBe(401);
   });
 
+  it.each([
+    '/api/admin/people',
+    '/api/admin/projects',
+    '/api/admin/tasks',
+    '/api/admin/forms',
+    '/api/admin/applications',
+    '/api/admin/impact-stories',
+    // The two sidebar badges poll these from every page of the dashboard.
+    '/api/admin/tasks/summary',
+    '/api/admin/applications/counts',
+  ])('guards the work module at %s behind authentication', async (path) => {
+    const res = await request(app).get(path);
+    expect(res.status).toBe(401);
+    expect(res.body.error.code).toBe('UNAUTHORIZED');
+  });
+
+  it('guards the document upload signer behind authentication', async () => {
+    const res = await request(app).post('/api/admin/media/sign-document').send({});
+    expect(res.status).toBe(401);
+  });
+
+  it('lets the public site send the draft and preview token headers across origins', async () => {
+    // The applicant flow and the preview pages carry their tokens in headers
+    // (plan D8, D10), which makes the browser ask first. The CORS policy names
+    // no allowed headers, so it echoes the request; this pins that behaviour.
+    const res = await request(app)
+      .options('/api/forms/speaker-application/draft')
+      .set('Origin', 'http://localhost:5173')
+      .set('Access-Control-Request-Method', 'PATCH')
+      .set('Access-Control-Request-Headers', 'content-type,x-draft-token,x-preview-token');
+    expect(res.status).toBe(204);
+    const allowed = String(res.headers['access-control-allow-headers']).toLowerCase();
+    expect(allowed).toContain('x-draft-token');
+    expect(allowed).toContain('x-preview-token');
+    expect(String(res.headers['access-control-allow-methods'])).toContain('PATCH');
+  });
+
   it('rejects invalid donation requests with a validation error', async () => {
     const res = await request(app).post('/api/payments').send({ provider: 'stripe' });
     expect(res.status).toBe(400);

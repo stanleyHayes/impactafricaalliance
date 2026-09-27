@@ -16,6 +16,8 @@ import { NavLink } from 'react-router-dom';
 
 import { useAuth } from '../../auth/AuthContext';
 import { useNewSubmissionCounts } from '../../lib/admin-hooks';
+import { useApplicationCounts } from '../../lib/applications';
+import { useTaskSummary } from '../../lib/tasks';
 
 import { buildNavGroups, type NavItem } from './nav-config';
 
@@ -227,10 +229,16 @@ const ThreadedNavLink = ({
 /** Grouped, collapsible sidebar navigation. Collapses to an icon rail on desktop. */
 export const SidebarNav = ({ collapsed, onNavigate }: SidebarNavProps): JSX.Element => {
   const { user } = useAuth();
-  const { data: counts } = useNewSubmissionCounts(user?.permissions.includes('submissions:read'));
+  const permissions = user?.permissions ?? [];
+  const { data: counts } = useNewSubmissionCounts(permissions.includes('submissions:read'));
+  // Each badge is only asked for by people who can open the page it counts.
+  const { data: tasks } = useTaskSummary(permissions.includes('tasks:read'));
+  const { data: applications } = useApplicationCounts(permissions.includes('applications:read'));
   const groups = buildNavGroups(user, {
     submissionsTotal: counts?.total,
     submissionsByType: counts?.byType,
+    tasksDue: tasks ? tasks.overdue + tasks.dueToday : undefined,
+    applicationsNew: applications?.submitted,
   });
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(groups.map((group) => [group.title, true])),

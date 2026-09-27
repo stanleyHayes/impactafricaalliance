@@ -1,7 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { api } from './api-client';
-import { uploadToCloudinary } from './cloudinary';
+import { DOCUMENT_ACCEPT, uploadToCloudinary } from './cloudinary';
 
 vi.mock('./api-client', () => ({ api: { post: vi.fn() } }));
 const signed = {
@@ -13,22 +13,34 @@ const signed = {
   allowedFormats: 'jpg,png,gif,webp,pdf',
   maxFileSize: 5 * 1024 * 1024,
 };
+const signedDocument = {
+  ...signed,
+  allowedFormats: 'jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,csv,ppt,pptx,txt',
+  maxFileSize: 10 * 1024 * 1024,
+};
+
+// A fresh Response per call: a body can only be read once.
+const cloudinaryAnswers = (body: Record<string, unknown>): ReturnType<typeof vi.spyOn> =>
+  vi
+    .spyOn(globalThis, 'fetch')
+    .mockImplementation(() => Promise.resolve(new Response(JSON.stringify(body))));
+
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(api.post).mockResolvedValue(signed);
 });
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
 describe('signed media upload', () => {
   it('sends the signed fields and returns media metadata for persistence', async () => {
-    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          secure_url: 'https://res.cloudinary.com/demo/image/upload/event.png',
-          public_id: 'events/one',
-          width: 800,
-          height: 600,
-        }),
-      ),
-    );
+    const fetchMock = cloudinaryAnswers({
+      secure_url: 'https://res.cloudinary.com/demo/image/upload/event.png',
+      public_id: 'events/one',
+      width: 800,
+      height: 600,
+    });
     const result = await uploadToCloudinary(
       new File(['image'], 'event.png', { type: 'image/png' }),
     );
@@ -40,12 +52,90 @@ describe('signed media upload', () => {
     expect(body.get('allowed_formats')).toBe(signed.allowedFormats);
     expect(result.publicId).toBe('events/one');
     expect(result.width).toBe(800);
-    fetchMock.mockRestore();
   });
+
+  it('adds an image to the media library unless told not to', async () => {
+    cloudinaryAnswers({
+      secure_url: 'https://res.cloudinary.com/demo/image/upload/event.png',
+      public_id: 'events/one',
+    });
+    await uploadToCloudinary(new File(['image'], 'event.png', { type: 'image/png' }), 'events');
+    expect(api.post).toHaveBeenCalledWith(
+      '/admin/media-library',
+      expect.objectContaining({ publicId: 'events/one', folder: 'events' }),
+    );
+
+    vi.mocked(api.post).mockClear();
+    await uploadToCloudinary(new File(['image'], 'event.png', { type: 'image/png' }), 'events', {
+      register: false,
+    });
+    expect(api.post).toHaveBeenCalledTimes(1);
+    expect(api.post).toHaveBeenCalledWith('/admin/media/sign', {});
+  });
+
   it('rejects unsupported files before requesting a signature', async () => {
     await expect(
       uploadToCloudinary(new File(['svg'], 'event.svg', { type: 'image/svg+xml' })),
     ).rejects.toThrow('Unsupported file type');
+    expect(api.post).not.toHaveBeenCalled();
+  });
+});
+
+describe('signed document upload', () => {
+  it('signs with the document profile and returns what a document list shows', async () => {
+    vi.mocked(api.post).mockResolvedValue(signedDocument);
+    cloudinaryAnswers({
+      secure_url: 'https://res.cloudinary.com/demo/raw/upload/iaa/budget.xlsx',
+      public_id: 'iaa/budget.xlsx',
+      bytes: 48_000,
+      resource_type: 'raw',
+      original_filename: 'budget',
+    });
+
+    const result = await uploadToCloudinary(
+      new File(['sheet'], 'Budget 2026.xlsx', { type: '' }),
+      'documents',
+      { register: false, profile: 'document' },
+    );
+
+    expect(api.post).toHaveBeenCalledTimes(1);
+    expect(api.post).toHaveBeenCalledWith('/admin/media/sign-document', {});
+    expect(result).toEqual({
+      url: 'https://res.cloudinary.com/demo/raw/upload/iaa/budget.xlsx',
+      publicId: 'iaa/budget.xlsx',
+      // Cloudinary leaves the format off raw files, so the extension stands in.
+      format: 'xlsx',
+      bytes: 48_000,
+      resourceType: 'raw',
+      originalFilename: 'Budget 2026.xlsx',
+    });
+  });
+
+  it('accepts office files by extension, whatever type the browser reports', () => {
+    expect(DOCUMENT_ACCEPT.split(',')).toEqual(
+      expect.arrayContaining(['.docx', '.xlsx', '.pptx', '.csv', '.pdf']),
+    );
+  });
+
+  it('refuses a file type the API would not sign, before asking for a signature', async () => {
+    await expect(
+      uploadToCloudinary(
+        new File(['x'], 'setup.exe', { type: 'application/octet-stream' }),
+        'documents',
+        {
+          profile: 'document',
+        },
+      ),
+    ).rejects.toThrow('Unsupported file type');
+    expect(api.post).not.toHaveBeenCalled();
+  });
+
+  it('refuses a document over 10 MB before asking for a signature', async () => {
+    const large = new File(['x'], 'minutes.pdf', { type: 'application/pdf' });
+    Object.defineProperty(large, 'size', { value: 11 * 1024 * 1024 });
+    await expect(uploadToCloudinary(large, 'documents', { profile: 'document' })).rejects.toThrow(
+      'Maximum size is 10 MB',
+    );
     expect(api.post).not.toHaveBeenCalled();
   });
 });

@@ -14,6 +14,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 
 import { usePreferences } from '../../lib/preferences';
+import { QuickCreateTaskButton } from '../tasks/QuickCreateTaskButton';
 import { Tour } from '../tour';
 import { useTour } from '../tour/TourContext';
 
@@ -168,6 +169,7 @@ export const AppShell = (): JSX.Element => {
             alignItems="center"
             id="admin-topbar-actions"
           >
+            <QuickCreateTaskButton />
             <ThemeSelector />
             <ThemeToggle />
             <NotificationsBell />

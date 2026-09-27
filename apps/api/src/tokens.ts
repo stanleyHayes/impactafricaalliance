@@ -12,4 +12,6 @@ export const TOKENS = {
   MediaProvider: Symbol('MediaProvider'),
   StripeGateway: Symbol('StripeGateway'),
   PaystackGateway: Symbol('PaystackGateway'),
+  /** Where task changes are announced; see `modules/tasks/task-events.ts`. */
+  TaskEvents: Symbol('TaskEvents'),
 } as const;

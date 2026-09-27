@@ -16,6 +16,7 @@ export default defineConfig({
         'src/**/*.test.ts',
         'src/server.ts',
         'src/seed.ts',
+        'src/sync-indexes.ts',
         'src/**/*.routes.ts',
         'src/**/*.model.ts',
         'src/types/**',

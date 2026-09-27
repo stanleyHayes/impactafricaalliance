@@ -219,8 +219,12 @@ export const RESOURCES: readonly ResourceConfig[] = [
   },
   {
     key: 'stories',
-    label: 'Impact Stories',
-    singular: 'Story',
+    // Labelled for what these are, so the sidebar never shows two "Impact
+    // Stories": the long block-built stories live under Impact stories.
+    label: 'Testimonials',
+    singular: 'Testimonial',
+    description:
+      'Short testimonials from the people our programmes reach: a quote, a photo and a few lines, shown on the home page.',
     icon: <AutoStoriesIcon />,
     createSchema: storyInputSchema,
     defaultValues: { status: 'draft', featured: false, order: 0 },

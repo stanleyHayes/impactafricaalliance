@@ -21,6 +21,10 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     css: false,
+    // The API client refuses to load without VITE_API_URL, and the CI test step
+    // has no .env. Tests mock every request, so the address is never dialled;
+    // it only has to exist for modules that import the client to load.
+    env: { VITE_API_URL: 'http://localhost:4000/api' },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],

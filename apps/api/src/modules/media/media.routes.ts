@@ -25,6 +25,18 @@ export const createMediaRouter = (container: DependencyContainer): Router => {
     }),
   );
 
+  // Documents and attachments for projects and tasks (plan D7). Same guard as
+  // /sign: anyone who may upload a photo may upload a document.
+  router.post(
+    '/sign-document',
+    requireAuth(tokens),
+    requireRole(UserRole.Admin, UserRole.Editor),
+    requirePermission('media:create'),
+    asyncHandler(async (_req, res) => {
+      res.json(media.createSignedDocumentUpload());
+    }),
+  );
+
   router.post(
     '/sign-cv',
     sensitiveRateLimit,

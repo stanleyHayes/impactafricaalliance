@@ -1,12 +1,17 @@
 import { UserRole, type PublicUser } from '@iaa/shared';
+import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import AssessmentIcon from '@mui/icons-material/Assessment';
+import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
 import AutoStoriesIcon from '@mui/icons-material/AutoStories';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import CollectionsIcon from '@mui/icons-material/Collections';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import Diversity3Icon from '@mui/icons-material/Diversity3';
+import DynamicFormIcon from '@mui/icons-material/DynamicForm';
+import FactCheckIcon from '@mui/icons-material/FactCheck';
 import GroupsIcon from '@mui/icons-material/Groups';
 import HandshakeIcon from '@mui/icons-material/Handshake';
+import HistoryEduIcon from '@mui/icons-material/HistoryEdu';
 import ImageIcon from '@mui/icons-material/Image';
 import InboxIcon from '@mui/icons-material/Inbox';
 import InsightsIcon from '@mui/icons-material/Insights';
@@ -22,6 +27,7 @@ import PublicIcon from '@mui/icons-material/Public';
 import RateReviewIcon from '@mui/icons-material/RateReview';
 import SettingsIcon from '@mui/icons-material/Settings';
 import ShareIcon from '@mui/icons-material/Share';
+import TaskAltIcon from '@mui/icons-material/TaskAlt';
 import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
 import WallpaperIcon from '@mui/icons-material/Wallpaper';
 import WorkOutlineIcon from '@mui/icons-material/WorkOutlineOutlined';
@@ -58,13 +64,18 @@ const CONTENT_ICONS: Record<string, JSX.Element> = {
   'site-images': <WallpaperIcon />,
 };
 
-/** Build the grouped sidebar navigation, filtered to what the user may access. */
+/** Live counts shown as badges beside the sidebar links. */
 export interface NavCounts {
   /** Unread submissions, keyed by submission type. */
   submissionsByType?: Record<string, number>;
   submissionsTotal?: number;
+  /** The signed-in person's tasks that are overdue or due today. */
+  tasksDue?: number;
+  /** Applications submitted and not yet picked up for review. */
+  applicationsNew?: number;
 }
 
+/** Build the grouped sidebar navigation, filtered to what the user may access. */
 export const buildNavGroups = (user: PublicUser | null, counts: NavCounts = {}): NavGroup[] => {
   const byType = counts.submissionsByType ?? {};
   const operations: NavItem[] = [
@@ -117,11 +128,39 @@ export const buildNavGroups = (user: PublicUser | null, counts: NavCounts = {}):
       ],
     },
     {
+      title: 'Work',
+      items: [
+        { to: '/projects', label: 'Projects', icon: <AccountTreeIcon /> },
+        // Counts what needs doing now, not everything open: a badge that
+        // never goes down stops being read.
+        { to: '/tasks', label: 'Tasks', icon: <TaskAltIcon />, badge: counts.tasksDue },
+      ],
+    },
+    {
+      title: 'Applications',
+      items: [
+        { to: '/forms', label: 'Forms', icon: <DynamicFormIcon /> },
+        // `end` so the list does not also light up on the review queue, which
+        // sits under the same path.
+        {
+          to: '/applications',
+          label: 'Applications',
+          icon: <AssignmentIndIcon />,
+          end: true,
+          badge: counts.applicationsNew,
+        },
+        { to: '/applications/review', label: 'Review queue', icon: <FactCheckIcon /> },
+      ],
+    },
+    {
       title: 'Content',
       items: [
         // The library sits with content because that is where an editor looks
         // for a picture, not under a settings heading.
         { to: '/media', label: 'Media library', icon: <CollectionsIcon /> },
+        // Ahead of the CMS lists: the long stories are what the Impact pages
+        // are built from. The short home-page quotes are Testimonials, below.
+        { to: '/impact-stories', label: 'Impact stories', icon: <HistoryEduIcon /> },
         ...RESOURCES.map((resource) => ({
           to: `/content/${resource.key}`,
           label: resource.label,
@@ -148,6 +187,8 @@ export const buildNavGroups = (user: PublicUser | null, counts: NavCounts = {}):
       ],
     },
   ];
+  // The first path segment is the permission key (`/impact-stories` needs
+  // `impact-stories:read`), apart from the few mapped below.
   const mayRead = (item: NavItem): boolean => {
     const path = item.to.split('/').filter(Boolean);
     let resource = path[0];

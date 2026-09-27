@@ -1,5 +1,8 @@
 import type { CreateUserInput, Permission, UpdateUserInput, UserRole } from '@iaa/shared';
+import type { Types } from 'mongoose';
 import { injectable } from 'tsyringe';
+
+import { searchRegex } from '../../common/regex.js';
 
 import { UserModel, type RefreshTokenRecord, type UserHydrated } from './user.model.js';
 
@@ -7,6 +10,37 @@ export interface NewUserData extends Omit<CreateUserInput, 'password'> {
   passwordHash: string;
   permissions: Permission[];
 }
+
+/**
+ * The few fields the people directory reads. Never the password hash, tokens,
+ * MFA secrets or permissions: the projection is what keeps them out, not a
+ * transform applied afterwards.
+ */
+export interface UserSummaryRow {
+  _id: Types.ObjectId;
+  name: string;
+  email: string;
+  role: UserRole;
+  isActive: boolean;
+}
+
+export interface DirectoryQuery {
+  q?: string;
+  ids?: readonly string[];
+  page: number;
+  pageSize: number;
+}
+
+const SUMMARY_PROJECTION = { name: 1, email: 1, role: 1, isActive: 1 } as const;
+
+// Sorts "ama" beside "Ama" rather than after every capitalised name.
+const NAME_COLLATION = { locale: 'en', strength: 2 } as const;
+
+const OBJECT_ID = /^[a-f\d]{24}$/i;
+
+// `$ne: false` rather than `true`, so an account saved before the flag existed
+// still counts as active, as it does at login.
+const ACTIVE = { $ne: false } as const;
 
 const MAX_REFRESH_TOKENS = 10;
 
@@ -27,6 +61,58 @@ export class UserRepository {
 
   findAll(): Promise<UserHydrated[]> {
     return UserModel.find().sort({ createdAt: -1 }).exec();
+  }
+
+  /**
+   * A page of the people directory: active accounts only, sorted by name.
+   * `q` matches part of a name or email in any case, as literal text; `ids`
+   * narrows to the people already attached to a record.
+   */
+  async findDirectory({
+    q,
+    ids,
+    page,
+    pageSize,
+  }: DirectoryQuery): Promise<{ items: UserSummaryRow[]; total: number }> {
+    const filter: Record<string, unknown> = { isActive: ACTIVE };
+    if (q) {
+      const pattern = searchRegex(q);
+      filter.$or = [{ name: pattern }, { email: pattern }];
+    }
+    if (ids) {
+      filter._id = { $in: ids.filter((id) => OBJECT_ID.test(id)) };
+    }
+    const [items, total] = await Promise.all([
+      UserModel.find(filter, SUMMARY_PROJECTION)
+        .collation(NAME_COLLATION)
+        .sort({ name: 1, _id: 1 })
+        .skip((page - 1) * pageSize)
+        .limit(pageSize)
+        .lean<UserSummaryRow[]>()
+        .exec(),
+      UserModel.countDocuments(filter).exec(),
+    ]);
+    return { items, total };
+  }
+
+  /**
+   * The directory fields for a set of ids, in no particular order. Ids that
+   * are not ObjectIds are skipped rather than failing the query, since they
+   * come from stored records that may predate a check.
+   */
+  findSummaries(
+    ids: readonly string[],
+    options: { activeOnly?: boolean } = {},
+  ): Promise<UserSummaryRow[]> {
+    const valid = ids.filter((id) => OBJECT_ID.test(id));
+    if (valid.length === 0) {
+      return Promise.resolve([]);
+    }
+    const filter: Record<string, unknown> = { _id: { $in: valid } };
+    if (options.activeOnly) {
+      filter.isActive = ACTIVE;
+    }
+    return UserModel.find(filter, SUMMARY_PROJECTION).lean<UserSummaryRow[]>().exec();
   }
 
   create(data: NewUserData): Promise<UserHydrated> {
