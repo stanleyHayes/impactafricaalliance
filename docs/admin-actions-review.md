@@ -75,3 +75,18 @@ align right; card/detail actions follow the record content. Explicit Save, Close
 confirmation buttons retain text labels. Detail timestamps read, for example,
 “9 September 2026 at 14:30 UTC”; hovering retains the exact original timestamp.
 The follow-up passed nine focused component tests, admin typecheck, ESLint and the whitespace check.
+
+## Rollout note: admin platform expansion (2026-09-27)
+
+Projects, Tasks, Forms, Applications and Impact stories add five permission groups: `projects`,
+`tasks`, `forms`, `applications` and `impact-stories`. Role templates include them. Editors get read,
+create and update on projects, tasks, forms and impact stories, and never delete; they do not get
+`applications:read`, so applicant data stays with the people an administrator grants it to through
+Users → Permissions. Publishing, closing or reopening a form, and publishing, unpublishing or
+archiving a story, also need the Admin role. Existing accounts keep their saved grants until
+`node tools/sync-user-permissions.mjs --env <file>` (dry run, then `--confirm`) backfills what their
+role template entitles them to; it only adds. Tokens must be refreshed afterwards (sign out and in, or
+wait 15 minutes). No custom permissions were automatically broadened. The privacy export and
+erasure follow the same line: without `applications:read` an export withholds applications and
+reports how many, and fulfilling a deletion that would erase applications needs an Admin or
+`applications:update`.

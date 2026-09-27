@@ -39,7 +39,8 @@ existing permission, route, collection or marketing contract changes meaning.
   its **admin label** changes from "Impact Stories" to **"Testimonials"**, so the sidebar never shows
   two "Impact Stories".
 - Marketing routes: `/impact/stories`, `/impact/stories/:slug`, `/impact/stories/preview`,
-  `/apply/:slug`, `/apply/preview`.
+  `/apply/:slug`, `/apply/preview`. Because of the last two, `preview` is a reserved slug for forms
+  and stories (`RESERVED_FORM_SLUGS`, `RESERVED_STORY_SLUGS`); the API refuses it with a 400.
 - Enum values are lowercase kebab-case to match every existing const (`in-review`, not `IN_REVIEW`;
   `speaker-application`, not `SPEAKER_APPLICATION`).
 
@@ -106,8 +107,10 @@ There is no audit mechanism. Add a small additive collection (spec §13 Auditabi
   (`req.user.sub`, `req.user.email`); never from the body.
 - Read through each module's own endpoint (`GET /api/admin/projects/:id/activity`, `.../tasks/:id/activity`,
   applications include `statusHistory`), so audit visibility follows the module's permission.
-- Recorded actions: created, updated (with changed field names), status-changed, assigned/unassigned,
-  archived/restored, deleted, published/unpublished, commented, reviewed, submitted.
+- Recorded actions (`AUDIT_ACTIONS`): created, updated (with changed field names), status-changed,
+  assigned/unassigned, archived/restored, deleted, published/unpublished, commented, reviewed,
+  submitted, and for a project's evidence `media-added`, `media-removed`, `document-added`,
+  `document-removed`. The admin shows changed values through per-module label formatters.
 
 ### D5. Soft delete and archive
 
@@ -131,10 +134,15 @@ Nothing soft-deletes today. New modules add `archivedAt` and never cascade-delet
   `clearableDate` (full ISO), so `null` clears on PATCH.
 - **Due buckets** (`overdue | today | upcoming | none`) compare calendar-date keys with the caller's
   local date, sent as `today=YYYY-MM-DD` (defaults to the server's UTC date).
-- **Instants** (form `opensAt`/`closesAt`, `publishedAt`, timestamps) use the existing
-  `IsoDateTimeField` (MUI X DateTimePicker, 12-hour, local display / UTC storage).
+- **Instants** (form `opensAt`/`closesAt`) use a new `InstantField` (MUI X DateTimePicker, 12-hour,
+  local display / UTC storage), not the existing `IsoDateTimeField`, which clears the saved value
+  when a date is half-typed. The new modules show timestamps on the 12-hour clock.
 - The admin gets a themed MUI X **`DateField`** for calendar dates. An invalid date never clears a
-  value; clearing sends `null`.
+  value; clearing sends `null`. Both fields report an unfinished or impossible date through
+  `onProblemChange`, and the new editors and short dialogs refuse to continue or save while one is
+  set.
+  The task drawer's inline dates use `commit="settled"` (saved on blur, Enter or a calendar pick),
+  and its inline saves run one at a time per field.
 
 ### D7. Uploads
 
@@ -149,11 +157,19 @@ Nothing soft-deletes today. New modules add `archivedAt` and never cascade-delet
   server-generated `public_id`, the field's allowed formats, and **`type: 'authenticated'`**, so
   applicant files are not public URLs. On submit the server checks every file answer's `publicId`
   starts with that folder, and (when Cloudinary is configured) confirms size and format through the
-  Admin API. Admins view files through **signed delivery URLs** generated when an application is
-  read.
+  Admin API. Admins view files through **download links that expire after an hour**
+  (`private_download_url` with `expires_at`), generated when an application is read; the open
+  application refetches every 30 minutes and on focus. Office and text files, which Cloudinary
+  stores as `raw`, are signed as `<id>.<ext>` so downloads keep their extension.
+- Applicant files never outlive their record: a draft remembers what it was allowed to upload
+  (`signedUploads`), submit deletes files the final answers do not use, the hourly
+  `POST /api/automations/run` deletes expired drafts' folders before their records, and privacy
+  erasure and form deletion remove whole folders (`MediaProvider.listAssetsByPrefix` /
+  `destroyByPrefix`, no-ops without Cloudinary).
 - `MediaProvider` gains: `createSignedDocumentUpload()`, `createSignedApplicationUpload(opts)`,
-  `signedDeliveryUrl(asset)`, `inspectAsset(asset)` and `destroyAsset(asset)` (the last three are
-  no-ops returning `null` when Cloudinary is not configured, so tests and local dev work).
+  `signedDeliveryUrl(asset)`, `inspectAsset(asset)`, `destroyAsset(asset)`, `listAssetsByPrefix` and
+  `destroyByPrefix` (all but the signers are no-ops when Cloudinary is not configured, so tests and
+  local dev work).
 - Embedded `MediaAsset` snapshots stay the convention (no `coverMediaId`). Documents and attachments use
   `fileAssetSchema` = `mediaAssetSchema` + `{ format?, bytes?, resourceType?, originalFilename? }`.
 
@@ -161,16 +177,21 @@ Nothing soft-deletes today. New modules add `archivedAt` and never cascade-delet
 
 - A draft is a `FormSubmission` with `status: 'draft'`. Creating one returns an opaque **draft token**
   (32 random bytes, base64url). Only its SHA-256 hash is stored (`tokenHashes`, max 5 active) with
-  `draftExpiresAt` (30 days, refreshed on save). A TTL index with a `partialFilterExpression` on
-  `status: 'draft'` deletes expired drafts. This follows the password-reset precedent, not the
-  stateless review HMAC (which cannot expire or be revoked).
+  `draftExpiresAt` (30 days, refreshed on save). The hourly automation run deletes expired drafts
+  and their files; a TTL index (partial on `status: 'draft'`, 7 days after `draftExpiresAt`) is only
+  the backstop, because the TTL monitor would strand the files. This follows the password-reset
+  precedent, not the stateless review HMAC (which cannot expire or be revoked).
 - The token travels in the **`x-draft-token` header** (CORS credentials are off, and query strings reach
   analytics). The browser keeps it in `localStorage` under `iaa:marketing:apply:<slug>` (try/catch).
 - "Email me a link to finish later": `POST /api/forms/:slug/draft/resume-link { email }` always answers
-  202. When a draft exists for that token, the server rotates in a fresh token and emails
+  202 (with a JSON `{ message }`). When a draft exists for that token, the server adds a fresh token,
+  always keeping the one presented (the open tab's) and dropping the oldest other, and emails
   `<PUBLIC_SITE_URL>/apply/<slug>#resume=<token>` (a fragment, so it never reaches servers or
   analytics). The page moves the token into storage and strips the fragment.
 - Submission ids are never authorisation. A submitted draft stops accepting the token.
+- A closed form keeps its public page (`window: 'closed'`). Starting a draft, saving with drafts
+  off, signing an upload or submitting when the form cannot take it answers 409 with
+  `details.reason`: `not-yet-open`, `closed`, `limit-reached` or `drafts-off`.
 - `settings.allowDrafts = false` means no autosave and no resume link; the in-progress record is still
   created on Begin so uploads can be signed, but answers are only sent at submit.
 
@@ -363,10 +384,10 @@ delete). Layout per module: `<x>.model.ts`, `<x>.service.ts` (`@injectable`, exp
 
 | Method & path | Permission | Notes |
 | --- | --- | --- |
-| `GET /` | `projects:read` | `projectListQuerySchema`: `q`, `status`, `priority`, `programme`, `mine`, `includeArchived`, `sort` (`updated, start, end, title`), `page`, `pageSize` → `Paginated<ProjectListItem>` |
+| `GET /` | `projects:read` | `projectListQuerySchema`: `q`, `status`, `priority`, `programme`, `mine`, `includeArchived`, `sort` (`updated, start, end, title`), `today` (D6, for overdue counts), `page`, `pageSize` → `Paginated<ProjectListItem>` |
 | `POST /` | `projects:create` | validates lead/members exist and are active; audit `created` |
-| `GET /:id` | `projects:read` | `Project` with progress, taskCounts, storyCount, people |
-| `PATCH /:id` | `projects:update` | `projectUpdateSchema`; status via `canTransitionProject`; `archived` sets `archivedAt`; audit with changed fields |
+| `GET /:id` | `projects:read` | `Project` with progress, taskCounts (overdue against `?today=`), storyCount, people |
+| `PATCH /:id` | `projects:update` | `projectUpdateSchema`; status via `canTransitionProject` (409 when refused); `archived` sets `archivedAt`; audit with changed fields |
 | `DELETE /:id` | `projects:delete` | 409 when tasks or stories reference it |
 | `POST /:id/media` | `projects:update` | `projectMediaInputSchema`, max 200 items |
 | `PATCH /:id/media/:itemId` | `projects:update` | caption, takenOn, shareable |
@@ -395,7 +416,8 @@ overwrite each other.
 | `POST /:id/comments` | `tasks:update` | `@name` mentions resolved to user ids; increments `commentCount` |
 | `PATCH /:id/comments/:commentId` · `DELETE /:id/comments/:commentId` | `tasks:update` | author only (delete: author or Admin) |
 | `GET /:id/activity` | `tasks:read` | |
-| `DELETE /:id` | `tasks:delete` | removes comments too |
+| `PATCH /:id/archive` | `tasks:update` | `{ archived: boolean }` (added for the drawer's Archive/Restore, D5) |
+| `DELETE /:id` | `tasks:delete` | removes comments too, and unlinks subtasks and dependents |
 
 ### 3.4 Forms and applications
 
@@ -431,7 +453,7 @@ Admin `/api/admin/applications`:
 | Method & path | Permission | Notes |
 | --- | --- | --- |
 | `GET /` | `applications:read` | `applicationListQuerySchema` (`formId`, `status` — never drafts, `q` on applicant name/email/reference, `from`, `to`, `sort`, paging) |
-| `GET /counts` | `applications:read` | counts by status (for tabs and the nav badge of new `submitted`) |
+| `GET /counts` | `applications:read` | counts by status; optional `formId`, `q`, `from`, `to` match the list so the tabs agree with it (the nav badge calls it unfiltered) |
 | `GET /export` | `applications:read` | CSV for one `formId` (all pages, formula-injection guarded) |
 | `GET /:id` | `applications:read` | `AdminApplication` with the version snapshot, reviewer names and signed file URLs |
 | `PATCH /:id/status` | `applications:update` | `canChangeApplicationStatus`; appends `statusHistory`; audit |
@@ -439,7 +461,13 @@ Admin `/api/admin/applications`:
 | `DELETE /:id/reviews/:reviewId` | `applications:update` | own review only (or Admin) |
 
 Privacy: `privacy-request.service.ts` export and erase include `FormSubmission` records (and drafts)
-matched on `applicant.email`, and erasure destroys their Cloudinary files best-effort.
+matched on `applicant.email`, and erasure destroys their Cloudinary folders best-effort. Because D2
+keeps applicant data from editors, a caller without `applications:read` gets `applications: []`
+plus an `applicationsWithheld` count, and fulfilling a deletion that would erase applications needs
+an Admin or `applications:update` (403 before anything is erased).
+
+Status changes on forms, applications and stories answer 200 without change when the record already
+has that status, because the admin client retries a PATCH after a dropped connection.
 
 ### 3.5 Impact stories
 
@@ -451,8 +479,8 @@ Admin `/api/admin/impact-stories`:
 | `POST /` | `impact-stories:create` | |
 | `POST /from-project/:projectId` | `impact-stories:create` + `projects:read` | `storyFromProject` prefill: title, excerpt from summary, cover, hero, rich-text description, metrics, partners, **shareable** media only as a gallery; copies, never live references |
 | `GET /:id` | `impact-stories:read` | |
-| `PATCH /:id` | `impact-stories:update` | |
-| `PATCH /:id/status` | `impact-stories:update` (+ Admin for `published`, unpublish and `archived`) | `storyPublishProblems` must be empty to publish; sets `publishedAt` on first publish |
+| `PATCH /:id` | `impact-stories:update` | editing a published story needs the Admin role (403) and must leave it publishable (400) |
+| `PATCH /:id/status` | `impact-stories:update` (+ Admin for `published`, unpublish and `archived`) | `storyPublishProblems` must be empty to publish; sets `publishedAt` on first publish; a move the workflow refuses is 409, one needing the Admin role 403 |
 | `POST /:id/preview` | `impact-stories:read` | `PreviewLink` |
 | `DELETE /:id` | `impact-stories:delete` | only when never published |
 
@@ -499,8 +527,8 @@ Each item is hidden without `<key>:read` (path-derived `mayRead`).
 
 | Module | Pages (`pages/<module>/`) | Components | Hooks |
 | --- | --- | --- | --- |
-| Projects | `ProjectsPage` (All / My / Archived tabs, table+card views, server paging), `ProjectEditorPage` (stepwise: Basics · People · Schedule & place · Scope · Story & cover · Review), `ProjectDetailLayout` + tabs `ProjectOverviewTab`, `ProjectTasksTab`, `ProjectMilestonesTab`, `ProjectMediaTab`, `ProjectImpactTab`, `ProjectDocumentsTab`, `ProjectActivityTab` | `components/projects/*` | `lib/projects.ts` |
-| Tasks | `MyTasksPage` (Overdue / Today / Upcoming / No date), `AllTasksPage` (filters, server paging), `TaskBoardPage` (dnd-kit Kanban), `TaskEditorPage` (stepwise: Basics · Assignment · Schedule · Details · Review), `TaskDetailPage` | `components/tasks/*`: `TaskDrawer` (opened by `?task=<key>` on any task page), `QuickCreateTaskDialog` (≤5 fields, opened from the top bar and project Tasks tab), `ProjectTasksPanel`, `TaskComments`, `TaskChecklist`, `TaskStatusChip`, `TaskPriorityChip` | `lib/tasks.ts` |
+| Projects | `ProjectsPage` (All / My / Archived tabs, table+card views, server paging), `ProjectEditorPage` (stepwise: Basics · People · Schedule & place · Scope · Story & cover · Review; programme sits in Scope so each step keeps five fields or fewer), `ProjectDetailLayout` + tabs `ProjectOverviewTab`, `ProjectTasksTab`, `ProjectMilestonesTab`, `ProjectMediaTab`, `ProjectImpactTab`, `ProjectDocumentsTab`, `ProjectActivityTab` | `components/projects/*` | `lib/projects.ts` |
+| Tasks | `MyTasksPage` (Overdue / Due today / Upcoming / No due date, plus Completed behind "Show completed"), `AllTasksPage` (filters, server paging), `TaskBoardPage` (dnd-kit Kanban), `TaskEditorPage` (stepwise: Basics · Assignment · Schedule · Details · Review), `TaskDetailPage` | `components/tasks/*`: `TaskDrawer` (opened by `?task=<key>` on any task page), `QuickCreateTaskDialog` (≤5 fields, opened from the top bar and project Tasks tab), `ProjectTasksPanel`, `TaskComments`, `TaskChecklist`, `TaskStatusChip`, `TaskPriorityChip` | `lib/tasks.ts` |
 | Forms | `FormsPage`, `FormEditorPage` (stepwise: Basics · Introduction · Questions (builder) · Schedule & limits · Confirmation · Review), `FormDetailPage` (summary, publish/close, preview, share link, submissions count) | `components/form-builder/*`: `FormBuilder` (steps + fields, dnd + up/down), `FieldEditor`, `VisibilityRuleEditor`, `FieldPreview` | `lib/forms.ts` |
 | Applications | `ApplicationsPage` (status tabs, form filter, search, server paging, CSV export), `ReviewQueuePage`, `ApplicationDetailPage` (answers in form order, files, reviews, status change with note, history) | `components/applications/*` | `lib/applications.ts` |
 | Impact stories | `ImpactStoriesPage` (Drafts / Published tabs), `ImpactStoryEditorPage` (stepwise: Basics · Classification · Blocks · Search & sharing · Review with preview), `StoryFromProjectPage` (creates then redirects) | `components/impact-stories/*`: `BlockEditor`, one editor per block type (a `Record<BlockType, Component>` map), `ProjectStoriesPanel` | `lib/impact-stories.ts` |
@@ -518,7 +546,10 @@ Rules for every editor page: AGENTS.md stepwise rules (FormStepNavigation, Enter
 current step, whole form on save, return to the failing step, lock while uploading or saving, same flow
 for create and edit, skeleton loader with Retry). Inline edits in the task drawer save immediately
 (single-value preferences are not multi-field forms). Missing permissions are said out loud with who can
-grant them. New flows are added to `docs/design/forms.md`.
+grant them. New flows are added to `docs/design/forms.md`. The four editors share one Review
+summary (`components/forms/ReviewSummary.tsx`, the `ResourceReview` pattern), and the module pages
+load on first visit (`React.lazy` in `App.tsx`, a skeleton inside the shell) so they stay out of the
+admin's entry chunk.
 
 ### 4.4 Dashboard
 
@@ -624,6 +655,13 @@ contracts already exist.
   2. `npm run build:shared && node tools/sync-user-permissions.mjs --env <file>` (dry run), then
      `--confirm`.
   3. Ask staff to sign out and in (or wait 15 minutes) so their tokens carry the new permissions.
+  4. Deploy the marketing site after the API, so the sitemap and story link previews can read
+     `/api/impact-stories`.
+- The collections and every index the sync builds are listed in the README ("Rolling out the admin
+  platform expansion"). Hardening changed three before any environment was synced: the task board
+  index is `{status, boardOrder, _id}` (plus `{updatedAt:-1, _id:-1}`), the two application list
+  indexes end in `_id:-1`, and the draft TTL is 7 days after `draftExpiresAt`. The sync never drops
+  or alters an index, so an environment synced earlier needs the old ones dropped and a `collMod`.
 - Cloudinary: authenticated delivery must be available on the account for applicant files (it is on
   standard plans). If it is not, set the field's accepted kinds to what can be public and note it.
 
@@ -673,7 +711,7 @@ contracts already exist.
 | --- | --- | --- | --- |
 | 2026-09-27 | 0 Discovery + plan | Done | This document and `IAA_EXPANSION_DISCOVERY.md` |
 | 2026-09-27 | F Foundation | Done | Shared contracts, models, audit, people, counters, preview tokens, rate limiters, media profiles, router stubs, admin shared pieces and marketing stubs (commit `5de8698`) |
-| 2026-09-27 | 1 Projects + Tasks | Built and reviewed, not yet committed | §3.2 and §3.3 routes, list/board/drawer/editors, project Tasks tab via `ProjectTasksPanel`; progress follows task completion. Extra: `PATCH /api/admin/tasks/:id/archive`. Open: evidence audit actions (`media-added` and similar) are cast, not in `AUDIT_ACTIONS` |
-| 2026-09-27 | 2 Forms + Applications + applicant flow | Built and reviewed, not yet committed | §3.4 routes, builder, review pages, privacy hook, `/apply/:slug` and `/apply/preview`. Extra: 409s carry `details.reason`; `preview` is a reserved form slug. Not yet tried against a real Cloudinary account or real email |
-| 2026-09-27 | 3 Impact stories | Built and reviewed, not yet committed | §3.5 routes, block editor, from-project prefill, public pages, crawler meta, sitemap. Extra: `preview` is a reserved story slug. The sitemap keeps its old copy until the API with `/impact-stories` is deployed |
-| 2026-09-27 | 4 Hardening (integration pass) | In progress | Cross-module wiring checked; `test/integration/expansion-flows.test.ts` and the widened 403 sweep added; dashboard "Your work" panel; `docs/design/forms.md` updated. Still to do: browser walkthrough at 390px, tablet and dark theme; index sync and permission backfill per environment (§8) |
+| 2026-09-27 | 1 Projects + Tasks | Done | §3.2 and §3.3 routes, list/board/drawer/editors, project Tasks tab via `ProjectTasksPanel`; progress follows task completion. Extra: `PATCH /api/admin/tasks/:id/archive`; evidence audit actions are now in `AUDIT_ACTIONS` (commits `6b2b90e`, `161ff54`) |
+| 2026-09-27 | 2 Forms + Applications + applicant flow | Done | §3.4 routes, builder, review pages, privacy hook, `/apply/:slug` and `/apply/preview`. Extra: 409s carry `details.reason`; `preview` is a reserved form slug (commits `82b5323`, `367f76d`) |
+| 2026-09-27 | 3 Impact stories | Done | §3.5 routes, block editor, from-project prefill, public pages, crawler meta, sitemap. Extra: `preview` is a reserved story slug. The sitemap keeps its old copy until the API with `/impact-stories` is deployed (commit `03e95e7`) |
+| 2026-09-27 | 4 Hardening | Done (not yet committed) | Integration pass, dashboard "Your work" panel and end-to-end flow test (commit `8c7d47e`); then a six-lens review (security, correctness, accessibility and consistency, performance, visual): 54 findings confirmed and 54 fixed, each with a regression test, 7 refuted; after-fix screenshots re-checked at 1440 and 390 in light, and a dark subset at 1440. Decisions above corrected where the build departed. Not yet done: index sync and permission backfill per environment (§8); Cloudinary delivery and raw-file names, and Resend email, untried against real accounts |

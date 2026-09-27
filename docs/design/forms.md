@@ -32,10 +32,14 @@ Use the shared `FormStepNavigation` component. Let the form own validation and s
 state across steps; preserve image uploads, AI assistance, Markdown editors, previews and permission
 rules. Review/save errors must keep the user's work. Show skeletons when loading an existing record.
 
-CMS review screens use `ResourceReview`: one connected summary with section edit controls and a
-responsive grid of labelled values. Keep short values together; reserve full rows for descriptions,
-rich text, and long content. Summary widths follow the content rather than the input's editor width.
-Images, uploaded file links, custom previews, and all configured fields remain available for review.
+Every Review step draws its summary with `ReviewSummary` (`components/forms/ReviewSummary.tsx`): one
+connected summary with an `Edit <section>` control per step (held while saving or uploading) and a
+responsive grid of labelled values, with "Not set" for anything left empty. CMS resources reach it
+through `ResourceReview`; the project, task, form and story editors use it directly and put their own
+panels (readiness checks, status cards) below it. Keep short values together; reserve full rows for
+descriptions, rich text, and long content. Summary widths follow the content rather than the input's
+editor width. Images, uploaded file links, custom previews, and all configured fields remain
+available for review.
 
 Event scheduling uses [MUI X DateTimePicker](https://mui.com/x/react-date-pickers/date-time-picker/)
 with the Day.js adapter, British date formatting and 12-hour time (`DD MMM YYYY, hh:mm A`). Mouse
@@ -45,6 +49,8 @@ Calendar dates without a time (project and task dates, milestones) use `DateFiel
 12:00 UTC of the chosen day, so every staff time zone reads the same day.
 End times must follow the start; registration can close at or before the start. Empty optional dates
 are distinct from invalid dates, and clearing existing values sends the API's explicit null update.
+`DateField` and `InstantField` never pass a half-typed or impossible date on; they report it through
+`onProblemChange`, and the step or dialog holding them refuses Continue, Enter and Save while it is set.
 
 ## Verification
 

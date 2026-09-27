@@ -815,3 +815,32 @@ Owner: Codex. Status: implemented and verified with automated checks; publicatio
 - No production event or media asset was created or edited during verification. Deployment and authenticated event-editor acceptance remain unverified.
 
 - Verification: 16 focused tests pass across shared event ordering, both view preferences, marketing filters, admin calendar/uploads and API signatures. Admin, marketing and API TypeScript checks, changed-file ESLint and diff checks pass.
+
+### 2026-09-27 — Admin platform expansion: hardening and rollout notes
+
+- **Owner:** Claude. **Status:** Hardening done and verified locally; not yet committed or deployed.
+  Design record: [IAA_EXPANSION_PLAN.md](IAA_EXPANSION_PLAN.md) (§12 progress log).
+- Projects, Tasks, Forms and applications (with the public `/apply/:slug` flow) and Impact stories
+  (admin block editor, `/impact/stories` on the site) went through a six-lens review: security,
+  correctness, accessibility and consistency, performance and visual comparison with the existing
+  screens. 54 findings were confirmed and fixed, each with a regression test; 7 were refuted.
+- Notable fixes: half-typed dates can no longer be skipped past or saved; the task drawer sits above
+  the app bar; one shared Review summary for the four stepwise editors; select labels no longer sit
+  on their placeholders; hidden headings no longer widen three list pages; applicant files download
+  with their extension through links that expire after an hour, and are deleted with expired drafts;
+  editors can no longer read or erase applications through privacy requests; the admin work pages
+  load on demand (entry chunk 1.38 MB, was 2.49 MB); task and application indexes serve their sorts.
+- Final pass: the timeline and comment times use the console's 12-hour clock, the task Status filter
+  matches the other filters, and the visually hidden style lives once in `lib/visually-hidden.ts`.
+- README gained the module overview, the corrected stack line and "Rolling out the admin platform
+  expansion" (deploy the API first, `indexes:sync` dry run then `--confirm`, permission backfill dry
+  run then `--confirm`, staff sign out and in) with every new collection and index.
+- **Verification:** `npm run build:shared`, `npm run lint`, `npm run typecheck`, `npm run build` and
+  `git diff --check` pass. Vitest with `--maxWorkers=2`: shared 421 (19 files), API 538 (56), admin
+  534 (84), marketing 339 (55), 1,832 in all. Screens were re-shot after the fixes against the
+  in-memory API with local-only settings, at 1440 and 390 in light and a 1440 dark subset: no
+  horizontal overflow, no console errors, no request left localhost apart from placeholder images.
+- **Not verified:** index sync and the permission backfill in any real environment; Cloudinary
+  authenticated delivery, raw-file names and expiring download links against a real (non-production)
+  cloud; Resend email; touch dragging on the board; tablet widths; the Aura, Ocean and Sunset presets
+  in a browser (contrast is covered by `theme.test.ts`).
