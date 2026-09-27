@@ -22,6 +22,7 @@ import {
 } from '../features/impact-stories/api';
 import { ImpactStoryCard } from '../features/impact-stories/ImpactStoryCard';
 import { programmeLabel } from '../features/impact-stories/story-utils';
+import { StoryWatermark, WATERMARK_HOST_SX } from '../features/impact-stories/StoryWatermark';
 
 const GRID_SX = {
   display: 'grid',
@@ -194,8 +195,10 @@ const NoStories = ({
           flexDirection: 'column',
           justifyContent: 'space-between',
           gap: 4,
+          ...WATERMARK_HOST_SX,
         }}
       >
+        <StoryWatermark variant="africa" color={brandColors.deepForest} opacity={0.1} size={260} />
         <Stack direction="row" justifyContent="space-between" alignItems="center">
           <Typography variant="overline" sx={{ letterSpacing: 2, fontWeight: 700 }}>
             The story continues

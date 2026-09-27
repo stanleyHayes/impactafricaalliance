@@ -20,6 +20,7 @@ import { MintSurface } from '../../components/MintSurface';
 import { HeroBlock } from './blocks';
 import { formatStoryDate, programmeLabel, storyUrl } from './story-utils';
 import { StoryBlocks } from './StoryBlocks';
+import { StoryWatermark, WATERMARK_HOST_SX } from './StoryWatermark';
 
 const BackLink = (): JSX.Element => (
   <Link
@@ -200,8 +201,10 @@ const StoryFooter = ({
           gridTemplateColumns: { xs: '1fr', md: '1fr auto' },
           gap: 3,
           alignItems: 'center',
+          ...WATERMARK_HOST_SX,
         }}
       >
+        <StoryWatermark variant="network" color="common.black" opacity={0.08} size={240} />
         <Box>
           <Typography variant="overline" sx={{ fontWeight: 700, letterSpacing: 1.5 }}>
             Keep reading

@@ -11,6 +11,7 @@ import { Link as RouterLink } from 'react-router-dom';
 
 import { formatStoryDate, programmeLabel } from './story-utils';
 import { StoryImage } from './StoryImage';
+import { StoryWatermark, WATERMARK_HOST_SX, watermarkFor } from './StoryWatermark';
 
 const clamp = (lines: number) =>
   ({
@@ -40,10 +41,14 @@ export const ImpactStoryCard = ({ story }: { story: PublicImpactStoryListItem })
           transform: 'translateY(-3px)',
         },
         '&:hover .story-img': { transform: 'scale(1.045)' },
+        '&:hover .story-watermark, &:focus-within .story-watermark': {
+          transform: 'rotate(-12deg) scale(1.1)',
+        },
         '@media (prefers-reduced-motion: reduce)': {
           transition: 'none',
           '&:hover': { transform: 'none' },
           '&:hover .story-img': { transform: 'none' },
+          '&:hover .story-watermark, &:focus-within .story-watermark': { transform: 'none' },
         },
       }}
     >
@@ -102,8 +107,10 @@ export const ImpactStoryCard = ({ story }: { story: PublicImpactStoryListItem })
             p: { xs: 2.5, md: 3.5 },
             borderBottom: 2,
             borderColor: 'divider',
+            ...WATERMARK_HOST_SX,
           }}
         >
+          <StoryWatermark variant={watermarkFor(story.slug)} color="primary.main" />
           <Typography
             variant="overline"
             sx={{
