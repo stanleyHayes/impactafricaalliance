@@ -7,6 +7,7 @@ import TextField from '@mui/material/TextField';
 import { useForm } from 'react-hook-form';
 
 import { ConsentCheckbox } from '../../components/ConsentCheckbox';
+import { friendlyFormErrors } from '../../lib/form-errors';
 import { useSubmitForm } from '../../lib/mutations';
 
 import { SubmitFeedback } from './SubmitFeedback';
@@ -20,12 +21,14 @@ export const PartnerForm = (): JSX.Element => {
     reset,
     formState: { errors },
   } = useForm<PartnerSubmissionInput>({
-    resolver: zodResolver(partnerSubmissionSchema),
+    resolver: zodResolver(partnerSubmissionSchema, { error: friendlyFormErrors }),
     defaultValues: { type: SubmissionType.Partner, consent: false },
   });
 
   const onSubmit = handleSubmit((values) =>
-    submit.mutate(values, { onSuccess: () => reset({ type: SubmissionType.Partner, consent: false }) }),
+    submit.mutate(values, {
+      onSuccess: () => reset({ type: SubmissionType.Partner, consent: false }),
+    }),
   );
 
   return (

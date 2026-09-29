@@ -10,6 +10,7 @@ import {
   locateProblems,
   sameAnswer,
   savableAnswers,
+  submitProblems,
   summariseAnswer,
 } from './answers';
 
@@ -92,6 +93,19 @@ describe('problems', () => {
       focusFieldId: 'name',
     });
     expect(firstStepErrors([])).toBeNull();
+  });
+
+  it('says which part of a date is missing, or that the day does not exist', () => {
+    const dateSteps: FormStep[] = [
+      { id: 'when', title: 'When', fields: [field({ id: 'start', type: 'date', required: true })] },
+    ];
+    const messageFor = (start: string): string | undefined =>
+      submitProblems(dateSteps, { start })[0]?.message;
+
+    expect(messageFor('2027-02-31')).toBe('February 2027 has 28 days. Check the day and month.');
+    expect(messageFor('2027-02-')).toBe('The date needs a day.');
+    expect(messageFor('')).toBe('This question needs an answer.');
+    expect(messageFor('2027-02-28')).toBeUndefined();
   });
 
   it('places server problems on visible steps and drops the rest', () => {

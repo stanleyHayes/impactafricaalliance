@@ -3,11 +3,11 @@ import type { ComponentType } from 'react';
 
 import type { AnswerUpdate } from '../session-state';
 
-import { MultiSelectCards, RadioCards, SelectAnswer, usesNativeSelect } from './ChoiceAnswers';
+import { MultiSelectCards, RadioCards, SelectAnswer, usesSearchableSelect } from './ChoiceAnswers';
 import { fieldIdsFor, type FieldProps } from './field-props';
 import { FileAnswerField } from './FileAnswerField';
 import { QuestionFrame, type FrameKind } from './QuestionFrame';
-import { LongTextAnswer, NumberAnswer, SingleLineAnswer } from './TextAnswers';
+import { DateAnswer, LongTextAnswer, NumberAnswer, SingleLineAnswer } from './TextAnswers';
 import { CheckboxAnswer, ConsentAnswer } from './TickAnswers';
 
 /** The answer control for every question type. */
@@ -17,7 +17,7 @@ export const FIELD_RENDERERS: Record<FormFieldType, ComponentType<FieldProps>> =
   email: SingleLineAnswer,
   phone: SingleLineAnswer,
   number: NumberAnswer,
-  date: SingleLineAnswer,
+  date: DateAnswer,
   select: SelectAnswer,
   'multi-select': MultiSelectCards,
   radio: RadioCards,
@@ -33,7 +33,8 @@ const FRAME_KINDS: Record<FormFieldType, FrameKind> = {
   email: 'label',
   phone: 'label',
   number: 'label',
-  date: 'label',
+  // Day, month and year are three controls, named together by a legend.
+  date: 'legend',
   select: 'legend',
   'multi-select': 'legend',
   radio: 'legend',
@@ -44,7 +45,7 @@ const FRAME_KINDS: Record<FormFieldType, FrameKind> = {
 };
 
 export const frameKindFor = (field: FormField): FrameKind =>
-  usesNativeSelect(field) ? 'label' : FRAME_KINDS[field.type];
+  usesSearchableSelect(field) ? 'label' : FRAME_KINDS[field.type];
 
 interface QuestionFieldProps {
   field: FormField;

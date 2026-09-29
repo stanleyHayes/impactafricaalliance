@@ -11,6 +11,7 @@ import TextField from '@mui/material/TextField';
 import { useForm, type Resolver } from 'react-hook-form';
 
 import { ConsentCheckbox } from '../../components/ConsentCheckbox';
+import { friendlyFormErrors } from '../../lib/form-errors';
 import { useSubmitForm } from '../../lib/mutations';
 
 import { SubmitFeedback } from './SubmitFeedback';
@@ -24,12 +25,16 @@ export const VolunteerForm = (): JSX.Element => {
     reset,
     formState: { errors },
   } = useForm<VolunteerSubmissionInput>({
-    resolver: zodResolver(volunteerSubmissionSchema) as Resolver<VolunteerSubmissionInput>,
+    resolver: zodResolver(volunteerSubmissionSchema, {
+      error: friendlyFormErrors,
+    }) as Resolver<VolunteerSubmissionInput>,
     defaultValues: { type: SubmissionType.Volunteer, consent: false },
   });
 
   const onSubmit = handleSubmit((values) =>
-    submit.mutate(values, { onSuccess: () => reset({ type: SubmissionType.Volunteer, consent: false }) }),
+    submit.mutate(values, {
+      onSuccess: () => reset({ type: SubmissionType.Volunteer, consent: false }),
+    }),
   );
 
   return (

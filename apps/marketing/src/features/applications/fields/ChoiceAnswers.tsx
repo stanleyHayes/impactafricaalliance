@@ -1,23 +1,27 @@
-import type { AnswerValue, FormField } from '@iaa/shared';
+import type { AnswerValue, FormField, FormOption } from '@iaa/shared';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
+import Autocomplete from '@mui/material/Autocomplete';
 import Box from '@mui/material/Box';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
+import { alpha, type Theme } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
+import { useState } from 'react';
 
-import { INPUT_SX, optionCardSx } from '../styles';
+import { optionCardSx } from '../styles';
 
-import { isRequiredField, type FieldProps } from './field-props';
+import { ENTER_ADVANCES, isRequiredField, type FieldProps } from './field-props';
 
 /**
  * Past this many options a list of cards becomes a long scroll, so a select
- * question falls back to the browser's own dropdown, which every phone
- * presents as a comfortable picker.
+ * question becomes a searchable list instead: type a few letters to narrow
+ * it, or open it and pick.
  */
 export const CARD_OPTION_LIMIT = 8;
 
-export const usesNativeSelect = (field: FormField): boolean =>
+export const usesSearchableSelect = (field: FormField): boolean =>
   field.type === 'select' && field.options.length > CARD_OPTION_LIMIT;
 
 const chosenValues = (value: AnswerValue | undefined): string[] =>
@@ -98,34 +102,108 @@ export const MultiSelectCards = ({
   );
 };
 
-/** A long list of options in the browser's own picker. */
-const NativeSelect = ({ field, value, error, ids, onChange }: FieldProps): JSX.Element => (
-  <TextField
-    select
-    fullWidth
-    value={typeof value === 'string' ? value : ''}
-    onChange={(event) => onChange(event.target.value)}
-    error={Boolean(error)}
-    sx={INPUT_SX}
-    slotProps={{
-      select: { native: true },
-      htmlInput: {
-        id: ids.input,
-        required: isRequiredField(field),
-        'aria-describedby': ids.describedBy,
-        'aria-invalid': Boolean(error) || undefined,
-      },
-    }}
-  >
-    <option value="">{field.placeholder ?? 'Choose one'}</option>
-    {field.options.map((option) => (
-      <option key={option.value} value={option.value}>
-        {option.label}
-      </option>
-    ))}
-  </TextField>
-);
+// The flow's large type and roomy input (see INPUT_SX). Autocomplete sets
+// its own tighter padding with a more specific selector, so these name the
+// same classes to win.
+const SEARCH_INPUT_SX = {
+  '& .MuiInputBase-input': { fontSize: { xs: '1.125rem', md: '1.25rem' }, lineHeight: 1.5 },
+  '&.MuiAutocomplete-root .MuiOutlinedInput-root': { py: 0.75, pl: 1.25 },
+  '&.MuiAutocomplete-root .MuiOutlinedInput-root .MuiAutocomplete-input': { py: 1, px: 0.75 },
+} as const;
 
-/** A select question: cards for a short list, the browser's picker for a long one. */
+const listSx = (theme: Theme) => ({
+  py: 0.75,
+  maxHeight: 'min(22rem, 45vh)',
+  '& .MuiAutocomplete-option': {
+    minHeight: 48,
+    mx: 0.75,
+    px: 1.5,
+    gap: 1.25,
+    borderRadius: 2,
+    fontSize: { xs: '1.0625rem', md: '1.125rem' },
+    fontWeight: 500,
+    lineHeight: 1.45,
+    overflowWrap: 'anywhere',
+  },
+  '& .MuiAutocomplete-option[aria-selected="true"]': {
+    bgcolor: alpha(theme.palette.primary.main, theme.palette.mode === 'light' ? 0.1 : 0.14),
+  },
+  '& .MuiAutocomplete-option.Mui-focused, & .MuiAutocomplete-option[aria-selected="true"].Mui-focused':
+    { bgcolor: alpha(theme.palette.primary.main, 0.18) },
+});
+
+const PAPER_SX = {
+  mt: 0.75,
+  borderRadius: 3,
+  border: 1,
+  borderColor: 'divider',
+  fontSize: { xs: '1.0625rem', md: '1.125rem' },
+} as const;
+
+/**
+ * A long list of options as a searchable list box, in the flow's own style
+ * rather than the browser's dropdown. Typing narrows the list and highlights
+ * the first match; arrow keys, Home and End move through it; Enter or a tap
+ * chooses. Screen readers hear it as a combo box with the question as its
+ * name.
+ *
+ * Enter moves on to the next step only while the list is shut. With the list
+ * open, Enter chooses the highlighted option instead.
+ */
+const SearchableSelect = ({ field, value, error, ids, onChange }: FieldProps): JSX.Element => {
+  const [open, setOpen] = useState(false);
+  const selected = field.options.find((option) => option.value === value) ?? null;
+  return (
+    <Autocomplete<FormOption>
+      id={ids.input}
+      options={field.options}
+      value={selected}
+      onChange={(_event, option) => onChange(option?.value ?? '')}
+      open={open}
+      onOpen={() => setOpen(true)}
+      onClose={() => setOpen(false)}
+      getOptionLabel={(option) => option.label}
+      isOptionEqualToValue={(option, current) => option.value === current.value}
+      autoHighlight
+      blurOnSelect="touch"
+      fullWidth
+      noOptionsText="Nothing matches that. Try fewer letters, or open the list."
+      clearText="Clear answer"
+      openText="Show the options"
+      closeText="Hide the options"
+      sx={SEARCH_INPUT_SX}
+      slotProps={{ paper: { sx: PAPER_SX }, listbox: { sx: listSx } }}
+      renderOption={({ key, ...optionProps }, option, state) => (
+        <li key={key} {...optionProps}>
+          <Box component="span" sx={{ flex: 1, minWidth: 0 }}>
+            {option.label}
+          </Box>
+          {state.selected && (
+            <CheckRoundedIcon aria-hidden="true" sx={{ color: 'primary.main', flexShrink: 0 }} />
+          )}
+        </li>
+      )}
+      renderInput={(params) => (
+        <TextField
+          {...params}
+          placeholder={field.placeholder ?? 'Start typing, or open the list'}
+          error={Boolean(error)}
+          slotProps={{
+            ...params.slotProps,
+            htmlInput: {
+              ...params.slotProps.htmlInput,
+              'aria-describedby': ids.describedBy,
+              'aria-invalid': Boolean(error) || undefined,
+              'aria-required': isRequiredField(field) || undefined,
+              ...(open ? {} : ENTER_ADVANCES),
+            },
+          }}
+        />
+      )}
+    />
+  );
+};
+
+/** A select question: cards for a short list, a searchable list for a long one. */
 export const SelectAnswer = (props: FieldProps): JSX.Element =>
-  usesNativeSelect(props.field) ? <NativeSelect {...props} /> : <RadioCards {...props} />;
+  usesSearchableSelect(props.field) ? <SearchableSelect {...props} /> : <RadioCards {...props} />;

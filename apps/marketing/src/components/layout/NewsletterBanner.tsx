@@ -12,6 +12,7 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useForm } from 'react-hook-form';
 
+import { friendlyFormErrors } from '../../lib/form-errors';
 import { useSubscribe } from '../../lib/mutations';
 import { ConsentCheckbox } from '../ConsentCheckbox';
 import { SocialLinks } from '../SocialLinks';
@@ -121,7 +122,7 @@ export const NewsletterBanner = (): JSX.Element => {
     reset,
     formState: { errors },
   } = useForm<SubscribeInput>({
-    resolver: zodResolver(subscribeSchema),
+    resolver: zodResolver(subscribeSchema, { error: friendlyFormErrors }),
     defaultValues: { name: '', email: '', consent: false },
   });
 

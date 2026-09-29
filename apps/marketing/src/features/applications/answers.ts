@@ -16,6 +16,7 @@ import {
   type FormStep,
 } from '@iaa/shared';
 
+import { calendarDateProblem, formatDateKey } from '../../lib/calendar-date';
 import { formatEventTime } from '../../lib/event-utils';
 
 import type { ServerAnswerProblem } from './errors';
@@ -48,15 +49,31 @@ export const savableAnswers = (steps: readonly FormStep[], answers: AnswerMap): 
   });
 };
 
+/**
+ * Every problem with the answers, checked as strictly as a submission.
+ *
+ * The shared check can only say "Enter a date." about a date it cannot read.
+ * The Day / Month / Year field keeps what was typed, so here the person is
+ * told which part is missing, or that the day does not exist ("February 2027
+ * has 28 days"), as the browser's date input never did.
+ */
+export const submitProblems = (steps: readonly FormStep[], answers: AnswerMap): AnswerProblem[] => {
+  const fields = fieldsById(steps);
+  return validateAnswers(steps, answers, { mode: 'submit' }).map((problem) => {
+    const value = answerFor(answers, problem.fieldId);
+    if (fields.get(problem.fieldId)?.type !== 'date' || typeof value !== 'string') {
+      return problem;
+    }
+    return { ...problem, message: calendarDateProblem(value) ?? problem.message };
+  });
+};
+
 /** Problems on one step, checked as strictly as a submission. */
 export const stepProblems = (
   steps: readonly FormStep[],
   answers: AnswerMap,
   stepId: string,
-): AnswerProblem[] =>
-  validateAnswers(steps, answers, { mode: 'submit' }).filter(
-    (problem) => problem.stepId === stepId,
-  );
+): AnswerProblem[] => submitProblems(steps, answers).filter((problem) => problem.stepId === stepId);
 
 /** The first step with problems, its errors by question, and the question to focus. */
 export interface StepErrors {
@@ -100,17 +117,8 @@ export const locateProblems = (
 export const hasAnyAnswer = (answers: AnswerMap): boolean =>
   Object.values(answers).some((value) => !isEmptyAnswer(value));
 
-const DATE_KEY = /^(\d{4})-(\d{2})-(\d{2})$/;
-
 /** `2026-10-05` as "5 October 2026", read as a calendar day with no time zone. */
-export const formatCalendarDate = (key: string): string => {
-  const match = DATE_KEY.exec(key);
-  if (!match) {
-    return key;
-  }
-  const date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]), 12));
-  return new Intl.DateTimeFormat('en-GB', { dateStyle: 'long', timeZone: 'UTC' }).format(date);
-};
+export const formatCalendarDate = formatDateKey;
 
 const instantDateFormatter = new Intl.DateTimeFormat('en-GB', {
   dateStyle: 'long',

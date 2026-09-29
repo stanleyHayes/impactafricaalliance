@@ -11,6 +11,7 @@ import Typography from '@mui/material/Typography';
 import { useForm } from 'react-hook-form';
 
 import { ConsentCheckbox } from '../../components/ConsentCheckbox';
+import { friendlyFormErrors } from '../../lib/form-errors';
 import { useSubmitForm } from '../../lib/mutations';
 
 import { SubmitFeedback } from './SubmitFeedback';
@@ -24,12 +25,14 @@ export const ContactForm = (): JSX.Element => {
     reset,
     formState: { errors },
   } = useForm<ContactSubmissionInput>({
-    resolver: zodResolver(contactSubmissionSchema),
+    resolver: zodResolver(contactSubmissionSchema, { error: friendlyFormErrors }),
     defaultValues: { type: SubmissionType.Contact, consent: false },
   });
 
   const onSubmit = handleSubmit((values) =>
-    submit.mutate(values, { onSuccess: () => reset({ type: SubmissionType.Contact, consent: false }) }),
+    submit.mutate(values, {
+      onSuccess: () => reset({ type: SubmissionType.Contact, consent: false }),
+    }),
   );
 
   return (

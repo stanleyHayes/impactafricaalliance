@@ -64,6 +64,9 @@ export const ReviewLinkRequest = ({ eventId }: { eventId: string }): JSX.Element
         </Typography>
         <Stack
           component="form"
+          // The schema's message shows under the field; the browser's own
+          // bubble would cover it and cannot be styled.
+          noValidate
           aria-label="Send me my review link"
           direction={{ xs: 'column', sm: 'row' }}
           spacing={1.5}
@@ -87,7 +90,10 @@ export const ReviewLinkRequest = ({ eventId }: { eventId: string }): JSX.Element
             }}
             error={error !== ''}
             helperText={error || ' '}
-            slotProps={{ inputLabel: { shrink: true }, htmlInput: { maxLength: 200 } }}
+            slotProps={{
+              inputLabel: { shrink: true },
+              htmlInput: { maxLength: 200, inputMode: 'email' },
+            }}
           />
           <Button
             type="submit"

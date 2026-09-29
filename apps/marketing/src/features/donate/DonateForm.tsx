@@ -29,6 +29,7 @@ import { useEffect, useState } from 'react';
 import { Controller, useForm, type Resolver } from 'react-hook-form';
 
 import { Watermark } from '../../components/Watermark';
+import { friendlyFormErrors } from '../../lib/form-errors';
 import { useCreateDonation, usePaymentProviders } from '../../lib/mutations';
 
 import { DonationImpacts } from './DonationImpacts';
@@ -118,7 +119,9 @@ export const DonateForm = (): JSX.Element => {
     control,
     formState: { errors },
   } = useForm<CreateDonationInput>({
-    resolver: zodResolver(createDonationSchema) as Resolver<CreateDonationInput>,
+    resolver: zodResolver(createDonationSchema, {
+      error: friendlyFormErrors,
+    }) as Resolver<CreateDonationInput>,
     defaultValues: {
       provider: isStripeEnabled() ? PaymentProvider.Stripe : PaymentProvider.Paystack,
       amountUsd: 100,

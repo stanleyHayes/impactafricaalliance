@@ -1,8 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  privacyRequestInputSchema,
-  type PrivacyRequestInput,
-} from '@iaa/shared';
+import { privacyRequestInputSchema, type PrivacyRequestInput } from '@iaa/shared';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import BlockRoundedIcon from '@mui/icons-material/BlockRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
@@ -27,6 +24,7 @@ import { LegalLayout } from '../components/legal/LegalLayout';
 import { Seo } from '../components/Seo';
 import { apiPost } from '../lib/api-client';
 import { usePageCopy } from '../lib/content-hooks';
+import { friendlyFormErrors } from '../lib/form-errors';
 
 /** Each right, named as the law names it and explained as a person would say it. */
 const TYPE_OPTIONS: SelectChoice[] = [
@@ -81,7 +79,7 @@ const PrivacyRequest = (): JSX.Element => {
     handleSubmit,
     formState: { errors },
   } = useForm<PrivacyRequestInput>({
-    resolver: zodResolver(privacyRequestInputSchema),
+    resolver: zodResolver(privacyRequestInputSchema, { error: friendlyFormErrors }),
     defaultValues: { type: 'access' },
   });
 

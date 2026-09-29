@@ -24,6 +24,8 @@ import { ReviewLinkRequest } from './ReviewLinkRequest';
 import { ReviewList } from './ReviewList';
 import { ReviewsSummary } from './ReviewsSummary';
 
+const NAME_INPUT_ID = 'event-review-name';
+
 /**
  * The form only appears for someone holding a review link.
  *
@@ -45,6 +47,8 @@ export const EventReviewForm = ({
   const [comment, setComment] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState('');
+  // A problem with the name, shown under it rather than in the general alert.
+  const [nameProblem, setNameProblem] = useState('');
   const [busy, setBusy] = useState(false);
   const ratingLabels = ['Poor', 'Fair', 'Good', 'Very good', 'Excellent'];
 
@@ -66,6 +70,13 @@ export const EventReviewForm = ({
       displayName: displayName.trim(),
     });
     if (!parsed.success) {
+      const nameIssue = parsed.error.issues.find((issue) => issue.path[0] === 'displayName');
+      if (nameIssue) {
+        setNameProblem(nameIssue.message);
+        setError('');
+        document.getElementById(NAME_INPUT_ID)?.focus();
+        return;
+      }
       setError(parsed.error.issues[0]?.message || 'Check your details.');
       return;
     }
@@ -93,6 +104,9 @@ export const EventReviewForm = ({
   return (
     <Box
       component="form"
+      // Our own messages instead of the browser's bubbles, which cannot be
+      // styled and are not reliably read out.
+      noValidate
       aria-label="Review this event"
       aria-busy={busy}
       onSubmit={(event) => {
@@ -298,18 +312,23 @@ export const EventReviewForm = ({
               </Typography>
             </Box>
             <TextField
+              id={NAME_INPUT_ID}
               label="Name to show"
               placeholder="Your name"
               disabled={busy}
               slotProps={{
-                htmlInput: { minLength: 2, maxLength: 80 },
+                htmlInput: { maxLength: 80 },
                 inputLabel: { shrink: true },
               }}
               value={displayName}
-              onChange={(event) => setDisplayName(event.target.value)}
+              onChange={(event) => {
+                setDisplayName(event.target.value);
+                setNameProblem('');
+              }}
               required
               fullWidth
-              helperText="This name will be visible with your published review."
+              error={nameProblem !== ''}
+              helperText={nameProblem || 'This name will be visible with your published review.'}
             />
           </Stack>
         )}

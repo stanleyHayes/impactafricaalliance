@@ -1,9 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  SubmissionType,
-  jobSubmissionSchema,
-  type JobSubmissionInput,
-} from '@iaa/shared';
+import { SubmissionType, jobSubmissionSchema, type JobSubmissionInput } from '@iaa/shared';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
 import Box from '@mui/material/Box';
@@ -24,6 +20,7 @@ import { Seo } from '../components/Seo';
 import { SubmitFeedback } from '../features/forms/SubmitFeedback';
 import { signCvUpload, uploadCvToCloudinary } from '../lib/cloudinary';
 import { useJob } from '../lib/content-hooks';
+import { friendlyFormErrors } from '../lib/form-errors';
 import { useSubmitForm } from '../lib/mutations';
 
 const MAX_CV_SIZE = 5 * 1024 * 1024;
@@ -94,9 +91,19 @@ interface CvUploadFieldProps {
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-const CvUploadField = ({ cvFile, cvError, resumeError, onChange }: CvUploadFieldProps): JSX.Element => (
+const CvUploadField = ({
+  cvFile,
+  cvError,
+  resumeError,
+  onChange,
+}: CvUploadFieldProps): JSX.Element => (
   <Box>
-    <Button component="label" variant="outlined" startIcon={<DescriptionRoundedIcon />} sx={{ fontWeight: 700 }}>
+    <Button
+      component="label"
+      variant="outlined"
+      startIcon={<DescriptionRoundedIcon />}
+      sx={{ fontWeight: 700 }}
+    >
       {cvFile ? 'Change CV' : 'Upload CV (PDF, max 5 MB)'}
       <input type="file" accept="application/pdf" hidden onChange={onChange} />
     </Button>
@@ -155,7 +162,7 @@ const JobApplicationForm = ({ job }: JobApplicationFormProps): JSX.Element => {
     reset,
     formState: { errors },
   } = useForm<JobSubmissionInput>({
-    resolver: zodResolver(jobSubmissionSchema),
+    resolver: zodResolver(jobSubmissionSchema, { error: friendlyFormErrors }),
     defaultValues: {
       type: SubmissionType.Job,
       jobSlug: job.slug,
@@ -351,7 +358,10 @@ const JobApplication = (): JSX.Element => {
 
   return (
     <>
-      <Seo title={pageTitle} description={`Apply for the ${job.title} position at Impact Africa Alliance.`} />
+      <Seo
+        title={pageTitle}
+        description={`Apply for the ${job.title} position at Impact Africa Alliance.`}
+      />
 
       <PageHero
         eyebrow="Careers"

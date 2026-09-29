@@ -4,6 +4,7 @@ import PauseRoundedIcon from '@mui/icons-material/PauseRounded';
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
+import Slider from '@mui/material/Slider';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { useReducedMotion } from 'framer-motion';
@@ -110,20 +111,27 @@ export const AllianceSculpture = ({
         >
           Rotate
         </Typography>
-        <Box
-          component="input"
-          id={controlId}
-          type="range"
+        {/* The site's own slider rather than the browser's range input, which
+            each browser draws differently and only `accent-color` can touch.
+            Arrow keys, Page Up/Down, Home and End still turn it. */}
+        <Slider
+          size="small"
           min={-180}
           max={180}
           value={angle}
-          onChange={(event) => setAngle(Number(event.target.value))}
+          onChange={(_event, next) => setAngle(Array.isArray(next) ? (next[0] ?? 0) : next)}
           aria-label={`Rotate ${variant} sculpture`}
+          getAriaValueText={(value) => `${value} degrees`}
+          slotProps={{ input: { id: controlId } }}
           sx={{
             width: 100,
-            accentColor: brandColors.mint,
+            color: brandColors.mint,
             cursor: 'ew-resize',
-            '&:focus-visible': { outline: `2px solid ${brandColors.gold}`, outlineOffset: 4 },
+            '& .MuiSlider-thumb.Mui-focusVisible': {
+              boxShadow: 'none',
+              outline: `2px solid ${brandColors.gold}`,
+              outlineOffset: 3,
+            },
           }}
         />
         {!reducedMotion && (

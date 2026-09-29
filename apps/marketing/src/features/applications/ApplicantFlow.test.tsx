@@ -614,3 +614,103 @@ describe('motion', () => {
     expect(next).toBeVisible();
   });
 });
+
+describe('leaving part-way through', () => {
+  const home = (): HTMLElement => screen.getByRole('link', { name: 'Impact Africa Alliance home' });
+
+  it('never asks through the browser’s own “Leave site?” prompt', async () => {
+    const listen = vi.spyOn(window, 'addEventListener');
+    renderApplyRoute('/apply/speakers');
+    await startApplication();
+    type(/Full name/, 'Ama Mensah');
+
+    expect(listen.mock.calls.map(([name]) => name)).not.toContain('beforeunload');
+  });
+
+  it('asks in its own dialog when leaving would lose answers, and stays on Stay', async () => {
+    vi.mocked(getPublicForm).mockResolvedValue(makeForm({ settings: { allowDrafts: false } }));
+    renderApplyRoute('/apply/speakers');
+    await startApplication();
+    type(/Full name/, 'Ama Mensah');
+
+    // As a keyboard user would: focus the logo, then follow it.
+    home().focus();
+    fireEvent.click(home());
+    const dialog = await screen.findByRole('dialog', { name: 'Leave your application?' });
+    expect(dialog).toHaveTextContent(/cannot be saved part-way through/);
+    expect(within(dialog).getByRole('button', { name: 'Stay and carry on' })).toHaveFocus();
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Stay and carry on' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(screen.getByLabelText(/Full name/)).toHaveValue('Ama Mensah');
+    expect(home()).toHaveFocus();
+  });
+
+  it('goes home when the applicant chooses to leave', async () => {
+    vi.mocked(getPublicForm).mockResolvedValue(makeForm({ settings: { allowDrafts: false } }));
+    renderApplyRoute('/apply/speakers');
+    await startApplication();
+    type(/Full name/, 'Ama Mensah');
+
+    fireEvent.click(home());
+    fireEvent.click(await screen.findByRole('button', { name: 'Leave' }));
+
+    expect(await screen.findByText('Home page')).toBeInTheDocument();
+  });
+
+  it('goes straight home when autosave already has everything', async () => {
+    renderApplyRoute('/apply/speakers');
+    await startApplication();
+
+    fireEvent.click(home());
+
+    expect(await screen.findByText('Home page')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+});
+
+describe('date questions', () => {
+  const dateForm = makeForm({
+    steps: [
+      {
+        id: 'availability',
+        title: 'Availability',
+        fields: [
+          {
+            id: 'available-from',
+            type: 'date',
+            label: 'Earliest date you could speak',
+            required: true,
+            options: [],
+          },
+        ],
+      },
+    ],
+  });
+
+  it('says a date does not exist, on the question and in the summary', async () => {
+    vi.mocked(getPublicForm).mockResolvedValue(dateForm);
+    renderApplyRoute('/apply/speakers');
+    await findScreenHeading('Speak at our summit');
+    click('Begin');
+    await findScreenHeading('Availability');
+
+    type('Day', '31');
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: /^Month/ }));
+    fireEvent.click(await screen.findByRole('option', { name: 'February' }));
+    type('Year', '2027');
+    click('Review answers');
+
+    const summary = await screen.findByRole('alert');
+    expect(summary).toHaveTextContent('February 2027 has 28 days. Check the day and month.');
+    const group = screen.getByRole('group', { name: /Earliest date you could speak/ });
+    expect(group).toHaveAccessibleDescription(/February 2027 has 28 days/);
+    expect(screen.getByLabelText('Day')).toHaveFocus();
+    expect(screen.getByLabelText('Day')).toHaveAttribute('aria-invalid', 'true');
+
+    type('Day', '28');
+    click('Review answers');
+    await findScreenHeading('Check your answers');
+    expect(screen.getByText('28 February 2027')).toBeInTheDocument();
+  });
+});

@@ -30,6 +30,20 @@ describe('event reviews', () => {
     expect(screen.queryByRole('textbox', { name: 'Name to show' })).not.toBeInTheDocument();
     expect(apiPost).not.toHaveBeenCalled();
   });
+  it('shows its own message under the name instead of the browser’s bubble', () => {
+    renderWithProviders(<EventReviewForm token={token} onDone={vi.fn()} />);
+    expect(screen.getByRole('form', { name: 'Review this event' })).toHaveAttribute('novalidate');
+    fireEvent.click(screen.getByRole('radio', { name: '4 Stars' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Submit review' }));
+
+    const name = screen.getByRole('textbox', { name: 'Name to show' });
+    expect(name).toHaveAttribute('aria-invalid', 'true');
+    expect(name).toHaveAccessibleDescription('Please give a name to show');
+    expect(name).toHaveFocus();
+    expect(apiPost).not.toHaveBeenCalled();
+  });
   it('previews the review and preserves values when going back', () => {
     renderWithProviders(<EventReviewForm token={token} onDone={vi.fn()} />);
     completeFirstStep();

@@ -39,6 +39,21 @@ describe('asking for a review link again', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('If that address was registered');
   });
 
+  it('shows its own message when the button is pressed, not the browser’s bubble', () => {
+    renderWithProviders(<ReviewLinkRequest eventId={eventId} />);
+    expect(screen.getByRole('form', { name: 'Send me my review link' })).toHaveAttribute(
+      'novalidate',
+    );
+    type('not-an-email');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Send my link' }));
+
+    const email = screen.getByRole('textbox', { name: 'Email you registered with' });
+    expect(email).toHaveAttribute('aria-invalid', 'true');
+    expect(email).toHaveAccessibleDescription('Enter the email you registered with');
+    expect(apiPost).not.toHaveBeenCalled();
+  });
+
   it('refuses an address that is not one', () => {
     renderWithProviders(<ReviewLinkRequest eventId={eventId} />);
     type('not-an-email');

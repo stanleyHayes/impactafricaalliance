@@ -22,8 +22,10 @@ import RadioGroup from '@mui/material/RadioGroup';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 
+import { DateField } from '../../components/forms/DateField';
+import { calendarDateProblem } from '../../lib/calendar-date';
 import { useRegisterForEvent } from '../../lib/mutations';
 
 import { buildSteps, type RegistrationStep } from './registration-steps';
@@ -41,18 +43,33 @@ const isBlank = (value: AnswerValue | undefined): boolean =>
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/** Validate the current step in isolation; empty is fine unless it is required. */
+/**
+ * Validate the current step in isolation; empty is fine unless it is required.
+ * A date is checked here too, since the Day / Month / Year field keeps an
+ * unfinished date as typed rather than quietly dropping it.
+ */
 const stepError = (step: RegistrationStep, value: AnswerValue | undefined): string | undefined => {
   if (isBlank(value)) {
     return step.required ? 'This one we do need.' : undefined;
   }
-  if (step.kind === 'email' && typeof value === 'string' && !EMAIL_PATTERN.test(value.trim())) {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+  if (step.kind === 'email' && !EMAIL_PATTERN.test(value.trim())) {
     return 'That email address does not look right.';
   }
-  return undefined;
+  return step.kind === 'date' ? (calendarDateProblem(value) ?? undefined) : undefined;
 };
 
-
+/** Enter in a one-line input moves on, as a form would submit. */
+const enterAdvances =
+  (onEnter: () => void) =>
+  (keyEvent: KeyboardEvent<HTMLElement>): void => {
+    if (keyEvent.key === 'Enter' && (keyEvent.target as HTMLElement).tagName === 'INPUT') {
+      keyEvent.preventDefault();
+      onEnter();
+    }
+  };
 
 interface SuccessPanelProps {
   title: string;
@@ -64,55 +81,55 @@ interface SuccessPanelProps {
 const SuccessPanel = ({ title, result, onClose }: SuccessPanelProps): JSX.Element => {
   const { alreadyRegistered, meetingUrl } = result;
   return (
-  <Stack spacing={2.5} alignItems="flex-start">
-    <CheckCircleRoundedIcon sx={{ color: 'success.main', fontSize: 56 }} />
-    <Typography variant="h3" sx={{ fontSize: { xs: '1.9rem', md: '2.5rem' } }}>
-      {alreadyRegistered ? "You're already on the list." : "You're in."}
-    </Typography>
-    <Typography color="text.secondary" sx={{ lineHeight: 1.75 }}>
-      {meetingUrl ? (
-        <>
-          Here is your link to join <strong>{title}</strong>. We&apos;ll email it to you as well, so
-          you have it when the session starts.
-        </>
-      ) : (
-        <>
-          We&apos;ll email the joining details for <strong>{title}</strong> before it starts. Keep
-          an eye on your inbox.
-        </>
+    <Stack spacing={2.5} alignItems="flex-start">
+      <CheckCircleRoundedIcon sx={{ color: 'success.main', fontSize: 56 }} />
+      <Typography variant="h3" sx={{ fontSize: { xs: '1.9rem', md: '2.5rem' } }}>
+        {alreadyRegistered ? "You're already on the list." : "You're in."}
+      </Typography>
+      <Typography color="text.secondary" sx={{ lineHeight: 1.75 }}>
+        {meetingUrl ? (
+          <>
+            Here is your link to join <strong>{title}</strong>. We&apos;ll email it to you as well,
+            so you have it when the session starts.
+          </>
+        ) : (
+          <>
+            We&apos;ll email the joining details for <strong>{title}</strong> before it starts. Keep
+            an eye on your inbox.
+          </>
+        )}
+      </Typography>
+      {meetingUrl && (
+        <Box
+          sx={{
+            alignSelf: 'stretch',
+            p: 2,
+            borderRadius: 2,
+            border: 1,
+            borderColor: 'divider',
+            bgcolor: 'action.hover',
+          }}
+        >
+          <Button
+            component="a"
+            href={meetingUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            variant="contained"
+            startIcon={<VideocamRoundedIcon />}
+            sx={{ fontWeight: 700 }}
+          >
+            Join the session
+          </Button>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ mt: 1.5, overflowWrap: 'anywhere' }}
+          >
+            {meetingUrl}
+          </Typography>
+        </Box>
       )}
-    </Typography>
-    {meetingUrl && (
-      <Box
-        sx={{
-          alignSelf: 'stretch',
-          p: 2,
-          borderRadius: 2,
-          border: 1,
-          borderColor: 'divider',
-          bgcolor: 'action.hover',
-        }}
-      >
-        <Button
-          component="a"
-          href={meetingUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          variant="contained"
-          startIcon={<VideocamRoundedIcon />}
-          sx={{ fontWeight: 700 }}
-        >
-          Join the session
-        </Button>
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={{ mt: 1.5, overflowWrap: 'anywhere' }}
-        >
-          {meetingUrl}
-        </Typography>
-      </Box>
-    )}
       <Button
         variant={meetingUrl ? 'text' : 'contained'}
         onClick={onClose}
@@ -123,7 +140,6 @@ const SuccessPanel = ({ title, result, onClose }: SuccessPanelProps): JSX.Elemen
     </Stack>
   );
 };
-
 
 interface ConsentPanelProps {
   consent: boolean;
@@ -143,13 +159,10 @@ const ConsentPanel = ({ consent, onConsentChange, failed }: ConsentPanelProps): 
       label="I agree to Impact Africa Alliance contacting me about this event and processing my details under the Privacy Policy."
     />
     {failed && (
-      <Alert severity="error">
-        We couldn&apos;t complete your registration. Please try again.
-      </Alert>
+      <Alert severity="error">We couldn&apos;t complete your registration. Please try again.</Alert>
     )}
   </Stack>
 );
-
 
 interface StepFooterProps {
   canGoBack: boolean;
@@ -214,62 +227,136 @@ const StepFooter = ({
   </Stack>
 );
 
+interface StepIds {
+  /** The question heading, which names the answer. */
+  question: string;
+  /** Hint and error ids, for `aria-describedby`. */
+  describedBy: string | undefined;
+  error: string;
+}
+
 interface StepFieldProps {
   step: RegistrationStep;
   value: AnswerValue | undefined;
   error: string | undefined;
+  ids: StepIds;
   fieldRef: React.RefObject<HTMLInputElement | null>;
   onChange: (value: AnswerValue) => void;
   onEnter: () => void;
 }
 
-/** The single input for the current step, chosen by the step's answer type. */
-const StepField = ({
+/** The ids tying the current question, its hint and its problem to the answer. */
+const stepIdsFor = (
+  base: string,
+  step: RegistrationStep | undefined,
+  error: string | undefined,
+): StepIds => ({
+  question: `${base}-question`,
+  error: `${base}-error`,
+  describedBy:
+    [step?.hint ? `${base}-hint` : '', error ? `${base}-error` : ''].filter(Boolean).join(' ') ||
+    undefined,
+});
+
+/** The problem with the answer, in words, tied to the answer by its id. */
+const StepError = ({ id, message }: { id: string; message: string | undefined }) =>
+  message ? (
+    <Typography id={id} role="alert" sx={{ mt: 1.5, color: 'error.main', fontWeight: 600 }}>
+      {message}
+    </Typography>
+  ) : null;
+
+const SingleChoiceStep = ({ step, value, ids, onChange }: StepFieldProps): JSX.Element => (
+  <RadioGroup
+    sx={{ mt: 2 }}
+    aria-labelledby={ids.question}
+    aria-describedby={ids.describedBy}
+    value={typeof value === 'string' ? value : ''}
+    onChange={(changeEvent) => onChange(changeEvent.target.value)}
+  >
+    {(step.options ?? []).map((option) => (
+      <FormControlLabel key={option} value={option} control={<Radio />} label={option} />
+    ))}
+  </RadioGroup>
+);
+
+const MultiChoiceStep = ({ step, value, ids, onChange }: StepFieldProps): JSX.Element => {
+  const selected = Array.isArray(value) ? value : [];
+  return (
+    <Stack
+      role="group"
+      aria-labelledby={ids.question}
+      aria-describedby={ids.describedBy}
+      sx={{ mt: 2 }}
+    >
+      {(step.options ?? []).map((option) => (
+        <FormControlLabel
+          key={option}
+          control={
+            <Checkbox
+              checked={selected.includes(option)}
+              onChange={(_changeEvent, checked) =>
+                onChange(
+                  checked ? [...selected, option] : selected.filter((entry) => entry !== option),
+                )
+              }
+            />
+          }
+          label={option}
+        />
+      ))}
+    </Stack>
+  );
+};
+
+// The dialog's big answer type, shared by the text input and the date parts.
+const ANSWER_INPUT_SX = {
+  '& .MuiInputBase-input': { fontSize: { xs: '1.35rem', md: '1.8rem' }, py: 1.5 },
+} as const;
+
+/** A date as Day, Month and Year, never the browser's own date input. */
+const DateStep = ({
   step,
   value,
   error,
+  ids,
+  fieldRef,
+  onChange,
+  onEnter,
+}: StepFieldProps): JSX.Element => (
+  <Box sx={{ mt: 3 }} onKeyDown={enterAdvances(onEnter)}>
+    <DateField
+      id={`registration-${step.key}`}
+      value={typeof value === 'string' ? value : ''}
+      onChange={onChange}
+      labelledBy={ids.question}
+      describedBy={ids.describedBy}
+      invalid={Boolean(error)}
+      required={step.required}
+      clearable={!step.required}
+      variant="standard"
+      inputSx={ANSWER_INPUT_SX}
+      dayRef={fieldRef}
+    />
+  </Box>
+);
+
+// Only the types that bring up the right phone keyboard. Anything else is
+// plain text, so a new step kind can never fall back to a browser picker.
+const TEXT_INPUT_TYPES: Partial<Record<RegistrationStep['kind'], string>> = {
+  email: 'email',
+  tel: 'tel',
+};
+
+const TextStep = ({
+  step,
+  value,
+  error,
+  ids,
   fieldRef,
   onChange,
   onEnter,
 }: StepFieldProps): JSX.Element => {
-  if (step.kind === 'single-choice') {
-    return (
-      <RadioGroup
-        sx={{ mt: 2 }}
-        value={typeof value === 'string' ? value : ''}
-        onChange={(changeEvent) => onChange(changeEvent.target.value)}
-      >
-        {(step.options ?? []).map((option) => (
-          <FormControlLabel key={option} value={option} control={<Radio />} label={option} />
-        ))}
-      </RadioGroup>
-    );
-  }
-
-  if (step.kind === 'multi-choice') {
-    const selected = Array.isArray(value) ? value : [];
-    return (
-      <Stack sx={{ mt: 2 }}>
-        {(step.options ?? []).map((option) => (
-          <FormControlLabel
-            key={option}
-            control={
-              <Checkbox
-                checked={selected.includes(option)}
-                onChange={(_changeEvent, checked) =>
-                  onChange(
-                    checked ? [...selected, option] : selected.filter((entry) => entry !== option),
-                  )
-                }
-              />
-            }
-            label={option}
-          />
-        ))}
-      </Stack>
-    );
-  }
-
   const isLongText = step.kind === 'long-text';
   return (
     <TextField
@@ -277,23 +364,50 @@ const StepField = ({
       fullWidth
       autoComplete="off"
       variant="standard"
-      type={isLongText ? 'text' : step.kind}
+      type={TEXT_INPUT_TYPES[step.kind] ?? 'text'}
       multiline={isLongText}
       minRows={isLongText ? 3 : undefined}
       placeholder={step.placeholder}
       value={typeof value === 'string' ? value : ''}
       onChange={(changeEvent) => onChange(changeEvent.target.value)}
-      onKeyDown={(keyEvent) => {
-        if (keyEvent.key === 'Enter' && !isLongText) {
-          keyEvent.preventDefault();
-          onEnter();
-        }
-      }}
+      onKeyDown={isLongText ? undefined : enterAdvances(onEnter)}
       error={Boolean(error)}
-      helperText={error}
-      slotProps={{ inputLabel: { shrink: true } }}
-      sx={{ mt: 3, '& .MuiInputBase-input': { fontSize: { xs: '1.35rem', md: '1.8rem' }, py: 1.5 } }}
+      slotProps={{
+        inputLabel: { shrink: true },
+        htmlInput: {
+          'aria-labelledby': ids.question,
+          'aria-describedby': ids.describedBy,
+          'aria-invalid': Boolean(error) || undefined,
+          'aria-required': step.required || undefined,
+        },
+      }}
+      sx={{ mt: 3, ...ANSWER_INPUT_SX }}
     />
+  );
+};
+
+const STEP_FIELDS: Record<RegistrationStep['kind'], (props: StepFieldProps) => JSX.Element> = {
+  text: TextStep,
+  email: TextStep,
+  tel: TextStep,
+  'long-text': TextStep,
+  date: DateStep,
+  'single-choice': SingleChoiceStep,
+  'multi-choice': MultiChoiceStep,
+};
+
+/**
+ * The answer for the current step, chosen by the step's answer type, with
+ * its problem (if any) written underneath. Every kind shows the problem in
+ * words; the choice steps used to show nothing at all.
+ */
+const StepField = (props: StepFieldProps): JSX.Element => {
+  const Field = STEP_FIELDS[props.step.kind];
+  return (
+    <>
+      <Field {...props} />
+      <StepError id={props.ids.error} message={props.error} />
+    </>
   );
 };
 
@@ -316,6 +430,7 @@ export const EventRegistrationDialog = ({
   const [consent, setConsent] = useState(false);
   const [touched, setTouched] = useState(false);
   const fieldRef = useRef<HTMLInputElement>(null);
+  const idBase = useId();
 
   // The consent panel lives one past the last question.
   const isConsentStep = index === steps.length;
@@ -338,6 +453,7 @@ export const EventRegistrationDialog = ({
   }, [index]);
 
   const error = touched && step ? stepError(step, values[step.key]) : undefined;
+  const ids = stepIdsFor(idBase, step, error);
 
   const goNext = (): void => {
     if (step) {
@@ -411,7 +527,12 @@ export const EventRegistrationDialog = ({
           sx={{ flexShrink: 0, px: { xs: 2.5, md: 5 }, py: 2 }}
         >
           <Typography
-            sx={{ color: 'text.secondary', fontSize: '0.78rem', fontWeight: 700, letterSpacing: 1.2 }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              letterSpacing: 1.2,
+            }}
           >
             {succeeded ? 'REGISTERED' : `${index + 1} / ${total}`}
           </Typography>
@@ -457,20 +578,31 @@ export const EventRegistrationDialog = ({
                   step && (
                     <>
                       <Typography
+                        id={ids.question}
                         variant="h3"
-                        sx={{ mt: 1.5, fontSize: { xs: '1.7rem', md: '2.35rem' }, lineHeight: 1.25 }}
+                        sx={{
+                          mt: 1.5,
+                          fontSize: { xs: '1.7rem', md: '2.35rem' },
+                          lineHeight: 1.25,
+                        }}
                       >
                         {step.question}
                       </Typography>
                       {step.hint && (
-                        <Typography color="text.secondary" sx={{ mt: 1.5, lineHeight: 1.7 }}>
+                        <Typography
+                          id={`${idBase}-hint`}
+                          color="text.secondary"
+                          sx={{ mt: 1.5, lineHeight: 1.7 }}
+                        >
                           {step.hint}
                         </Typography>
                       )}
-                                    <StepField
+                      <StepField
+                        key={step.key}
                         step={step}
                         value={values[step.key]}
                         error={error}
+                        ids={ids}
                         fieldRef={fieldRef}
                         onChange={(next) => setValue(step.key, next)}
                         onEnter={goNext}

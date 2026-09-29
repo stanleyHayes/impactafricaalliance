@@ -1,7 +1,6 @@
 import {
   answerFor,
   pruneHiddenAnswers,
-  validateAnswers,
   visibleSteps,
   type AnswerMap,
   type AnswerProblem,
@@ -21,6 +20,7 @@ import {
   locateProblems,
   savableAnswers,
   stepProblems,
+  submitProblems,
 } from './answers';
 import {
   createDraft,
@@ -106,6 +106,21 @@ export interface SessionActions {
   continueAsNew: () => Promise<void>;
 }
 
+/**
+ * What leaving the flow now would lose, so the page can ask first:
+ *
+ * - `uploading`: a file is still on its way and would not be added.
+ * - `unsaved`: the latest change has not reached the server and saving is
+ *   failing (offline, or retrying), or the draft stopped working.
+ * - `no-drafts`: this form keeps nothing part-way, so every answer would go.
+ *
+ * Null when nothing would be lost, including when autosave has everything.
+ *
+ * This replaces the browser's own "Leave site?" prompt, which could not be
+ * worded or styled and interrupted people whose answers were already safe.
+ */
+export type LeaveRisk = 'uploading' | 'unsaved' | 'no-drafts' | null;
+
 export interface FormSession {
   phase: SessionPhase;
   form: PublicForm | undefined;
@@ -132,6 +147,8 @@ export interface FormSession {
   receipt: SubmissionReceipt | null;
   autosave: AutosaveStatus;
   uploading: boolean;
+  /** What leaving now would lose, read at the moment of leaving. See `LeaveRisk`. */
+  leaveRisk: () => LeaveRisk;
   actions: SessionActions;
 }
 
@@ -218,6 +235,31 @@ const hasFileAnswers = (form: PublicForm | undefined, answers: AnswerMap): boole
 
 const isActiveView = (view: FlowState['view']): boolean =>
   view === 'steps' || view === 'review' || view === 'submitting';
+
+// Saves that have not got through. A change still waiting out the quiet
+// period, or a save on its way, is sent when the flow closes, so neither
+// needs the person to stay.
+const STUCK_SAVES = new Set<AutosaveStatus['kind']>(['retrying', 'offline', 'failed']);
+
+interface LeaveRiskInput {
+  uploading: boolean;
+  drafts: boolean;
+  /** The draft stopped working, so nothing typed since is being saved. */
+  draftLost: boolean;
+  /** A change the server has not got, with saving currently failing. */
+  stuck: boolean;
+  answered: boolean;
+}
+
+const leaveRiskFor = (input: LeaveRiskInput): LeaveRisk => {
+  if (input.uploading) {
+    return 'uploading';
+  }
+  if (!input.drafts) {
+    return input.answered ? 'no-drafts' : null;
+  }
+  return input.stuck || (input.draftLost && input.answered) ? 'unsaved' : null;
+};
 
 /**
  * The applicant flow's state machine (spec §7, plan §5.1, D8).
@@ -399,27 +441,24 @@ export const useFormSession = (source: FormSource): FormSession => {
     }
   }, [currentStepId, payloadFor, schedule, state.answers, state.changeSeq]);
 
-  // Warn before leaving only when leaving would lose something: an upload
-  // still running, a change not yet saved, or answers on a form without drafts.
-  const unsavedRef = useRef<() => boolean>(() => false);
+  // Read when the person goes to leave, so it always sees the latest answers
+  // and upload state without making the check change on every keystroke.
+  const leaveRiskRef = useRef<() => LeaveRisk>(() => null);
   useEffect(() => {
-    unsavedRef.current = () => uploading || hasUnsent() || (!drafts && hasAnyAnswer(state.answers));
-  }, [drafts, hasUnsent, state.answers, uploading]);
+    leaveRiskRef.current = () =>
+      leaveRiskFor({
+        uploading,
+        drafts,
+        draftLost: state.draftLost,
+        stuck: hasUnsent() && STUCK_SAVES.has(autosave.status.kind),
+        answered: hasAnyAnswer(state.answers),
+      });
+  }, [autosave.status.kind, drafts, hasUnsent, state.answers, state.draftLost, uploading]);
   const guarding = !preview && isActiveView(state.view);
-  useEffect(() => {
-    if (!guarding) {
-      return undefined;
-    }
-    const onBeforeUnload = (event: BeforeUnloadEvent): void => {
-      if (unsavedRef.current()) {
-        // Current browsers show their own "leave site?" prompt for this; the
-        // deprecated `returnValue` is not needed.
-        event.preventDefault();
-      }
-    };
-    window.addEventListener('beforeunload', onBeforeUnload);
-    return () => window.removeEventListener('beforeunload', onBeforeUnload);
-  }, [guarding]);
+  const leaveRisk = useCallback(
+    (): LeaveRisk => (guarding ? leaveRiskRef.current() : null),
+    [guarding],
+  );
 
   const showProblems = useCallback(
     (problems: readonly AnswerProblem[], returnToReview: boolean, notice?: string): boolean => {
@@ -493,7 +532,7 @@ export const useFormSession = (source: FormSource): FormSession => {
     if (state.returnToReview) {
       // An edit can reveal questions further on; check the whole form so the
       // person is taken to anything new before the review screen.
-      const all = validateAnswers(form.steps, state.answers, { mode: 'submit' });
+      const all = submitProblems(form.steps, state.answers);
       if (!showProblems(all, true)) {
         dispatch({ type: 'go-review' });
       }
@@ -581,7 +620,7 @@ export const useFormSession = (source: FormSource): FormSession => {
     if (!form || uploading || state.view === 'submitting') {
       return;
     }
-    if (showProblems(validateAnswers(form.steps, state.answers, { mode: 'submit' }), true)) {
+    if (showProblems(submitProblems(form.steps, state.answers), true)) {
       return;
     }
     if (preview) {
@@ -779,6 +818,7 @@ export const useFormSession = (source: FormSource): FormSession => {
     receipt: state.receipt,
     autosave: autosave.status,
     uploading,
+    leaveRisk,
     actions,
   };
 };

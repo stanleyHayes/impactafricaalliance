@@ -7,6 +7,8 @@ import LinearProgress from '@mui/material/LinearProgress';
 import Link from '@mui/material/Link';
 import { useTheme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
+import type { MouseEvent } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 
 import { Logo } from '../../../components/Logo';
 import type { AutosaveStatus } from '../use-autosave';
@@ -20,6 +22,12 @@ export interface ProgressHeaderProps {
   progress: number;
   autosave: AutosaveStatus | null;
   onSaveForLater?: () => void;
+  /**
+   * Called when the logo is followed, before the page changes. The flow uses
+   * it to ask first when leaving would lose answers; calling
+   * `preventDefault()` on the event keeps the person where they are.
+   */
+  onHomeClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
 }
 
 /**
@@ -27,16 +35,17 @@ export interface ProgressHeaderProps {
  * where drafts are allowed, and where the applicant is (step, bar and save
  * state). Nothing else competes with the questions.
  *
- * The logo is a plain link, not a router link, on purpose: leaving the flow
- * then goes through the browser, which asks before discarding unsaved
- * answers (see the flow's `beforeunload` guard). A router link would skip
- * that question.
+ * The logo is a router link, so leaving keeps the page alive long enough for
+ * autosave to send the last change. When leaving would lose something, the
+ * flow asks in its own dialog (see `onHomeClick`), never the browser's
+ * "Leave site?" prompt.
  */
 export const ProgressHeader = ({
   progressLabel,
   progress,
   autosave,
   onSaveForLater,
+  onHomeClick,
 }: ProgressHeaderProps): JSX.Element => {
   const theme = useTheme();
   return (
@@ -53,7 +62,9 @@ export const ProgressHeader = ({
         }}
       >
         <Link
-          href="/"
+          component={RouterLink}
+          to="/"
+          onClick={onHomeClick}
           aria-label={`${ORG.name} home`}
           sx={{
             display: 'inline-flex',

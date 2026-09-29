@@ -35,6 +35,31 @@ describe('ReviewForm', () => {
     expect(screen.getByRole('textbox', { name: 'Public name' })).toHaveValue('Ama');
     expect(apiPost).not.toHaveBeenCalled();
   });
+  it('shows its own message on each answer instead of the browser’s bubble', () => {
+    renderWithProviders(<ReviewForm />);
+    const form = screen.getByRole('form', { name: 'Share your experience.' });
+    expect(form).toHaveAttribute('novalidate');
+    fireEvent.click(screen.getByRole('radio', { name: '4 stars — Very good' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+
+    fireEvent.change(screen.getByRole('textbox', { name: 'Email address' }), {
+      target: { value: 'not-an-email' },
+    });
+    // A real click, which the browser would have stopped at the empty name.
+    fireEvent.click(screen.getByRole('button', { name: 'Send my review' }));
+
+    const name = screen.getByRole('textbox', { name: 'Public name' });
+    expect(name).toHaveAttribute('aria-invalid', 'true');
+    expect(name).toHaveAccessibleDescription('Please give a name to show');
+    expect(name).toHaveFocus();
+    expect(screen.getByRole('textbox', { name: 'Email address' })).toHaveAccessibleDescription(
+      'Enter an email we can confirm this with',
+    );
+    expect(apiPost).not.toHaveBeenCalled();
+
+    fireEvent.change(name, { target: { value: 'Ama' } });
+    expect(name).not.toHaveAttribute('aria-invalid', 'true');
+  });
   it('preserves the submission contract and shows email confirmation', async () => {
     vi.mocked(apiPost).mockResolvedValue({});
     renderWithProviders(<ReviewForm />);

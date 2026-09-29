@@ -53,4 +53,25 @@ describe('ContactForm', () => {
       ),
     );
   });
+
+  it('shows its own message on every empty answer instead of the browser’s', async () => {
+    const user = userEvent.setup();
+    const { container } = renderWithProviders(<ContactForm />);
+    expect(container.querySelector('form')).toHaveAttribute('novalidate');
+
+    await user.type(screen.getByLabelText('Email address'), 'ama@');
+    await user.click(screen.getByRole('button', { name: 'Send message' }));
+
+    // Checking is asynchronous, so wait for the messages to arrive.
+    await waitFor(() =>
+      expect(screen.getByLabelText('Full name')).toHaveAccessibleDescription(
+        'This field is required.',
+      ),
+    );
+    expect(screen.getByLabelText('Email address')).toHaveAccessibleDescription(
+      'Enter an email address, like name@example.com.',
+    );
+    expect(screen.getByLabelText('Full name')).toHaveAttribute('aria-invalid', 'true');
+    expect(mutate).not.toHaveBeenCalled();
+  });
 });

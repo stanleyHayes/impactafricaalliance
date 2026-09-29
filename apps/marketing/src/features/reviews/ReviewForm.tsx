@@ -16,6 +16,41 @@ import { apiPost } from '../../lib/api-client';
 
 const ratingLabels = ['Choose a rating', 'Poor', 'Fair', 'Good', 'Very good', 'Excellent'];
 
+type ReviewField = 'displayName' | 'email' | 'role' | 'comment';
+
+// Each answer's input id, so a problem can be shown on it and focus sent there.
+const FIELD_IDS: Record<ReviewField, string> = {
+  displayName: 'review-display-name',
+  email: 'review-email',
+  role: 'review-role',
+  comment: 'review-comment',
+};
+
+const isReviewField = (key: unknown): key is ReviewField =>
+  typeof key === 'string' && key in FIELD_IDS;
+
+/** The first problem with each answer, from the schema's own messages. */
+const fieldProblems = (
+  issues: readonly { path: readonly PropertyKey[]; message: string }[],
+): Partial<Record<ReviewField, string>> => {
+  const problems: Partial<Record<ReviewField, string>> = {};
+  for (const issue of issues) {
+    const [key] = issue.path;
+    if (isReviewField(key) && !problems[key]) {
+      problems[key] = issue.message;
+    }
+  }
+  return problems;
+};
+
+/**
+ * The organisation review, in two steps.
+ *
+ * The form turns off the browser's own checks (`noValidate`): their bubbles
+ * cannot be styled, vanish after a moment and are not read out reliably. The
+ * schema's messages are shown under each answer instead, and focus goes to
+ * the first one that needs attention.
+ */
 export const ReviewForm = ({ preview = false }: { preview?: boolean }): JSX.Element => {
   const [step, setStep] = useState(0);
   const [hoverRating, setHoverRating] = useState(-1);
@@ -23,9 +58,33 @@ export const ReviewForm = ({ preview = false }: { preview?: boolean }): JSX.Elem
   const [form, setForm] = useState({ displayName: '', email: '', role: '', comment: '' });
   const [state, setState] = useState<'idle' | 'busy' | 'sent'>('idle');
   const [error, setError] = useState('');
+  const [problems, setProblems] = useState<Partial<Record<ReviewField, string>>>({});
 
-  const set = (field: keyof typeof form) => (event: { target: { value: string } }) =>
+  const set = (field: ReviewField) => (event: { target: { value: string } }) => {
     setForm((previous) => ({ ...previous, [field]: event.target.value }));
+    setProblems((previous) => ({ ...previous, [field]: undefined }));
+  };
+
+  /** Error state and message for one answer, falling back to its usual help. */
+  const problemProps = (field: ReviewField, help?: string) => ({
+    id: FIELD_IDS[field],
+    error: Boolean(problems[field]),
+    helperText: problems[field] ?? help,
+  });
+
+  /**
+   * Each problem under its own answer, with focus on the first. Anything not
+   * tied to an answer goes in the alert above the buttons.
+   */
+  const showProblems = (issues: readonly { path: PropertyKey[]; message: string }[]): void => {
+    const found = fieldProblems(issues);
+    const first = (Object.keys(FIELD_IDS) as ReviewField[]).find((field) => found[field]);
+    setProblems(found);
+    setError(first ? '' : issues[0]?.message || 'Please check your details.');
+    if (first) {
+      document.getElementById(FIELD_IDS[first])?.focus();
+    }
+  };
 
   const submit = async (): Promise<void> => {
     if (state === 'busy') return;
@@ -45,7 +104,7 @@ export const ReviewForm = ({ preview = false }: { preview?: boolean }): JSX.Elem
       consent: true,
     });
     if (!validation.success) {
-      setError(validation.error.issues[0]?.message || 'Please check your details.');
+      showProblems(validation.error.issues);
       return;
     }
     if (preview) {
@@ -88,6 +147,7 @@ export const ReviewForm = ({ preview = false }: { preview?: boolean }): JSX.Elem
     <Box
       component="form"
       id="review-form"
+      noValidate
       tabIndex={-1}
       aria-labelledby="review-form-title"
       aria-busy={state === 'busy'}
@@ -228,7 +288,10 @@ export const ReviewForm = ({ preview = false }: { preview?: boolean }): JSX.Elem
               minRows={2}
               fullWidth
               slotProps={{ inputLabel: { shrink: true }, htmlInput: { maxLength: 2000 } }}
-              helperText={`${form.comment.length.toLocaleString()} / 2,000 characters`}
+              {...problemProps(
+                'comment',
+                `${form.comment.length.toLocaleString()} / 2,000 characters`,
+              )}
               sx={{
                 '& .MuiFormHelperText-root': { textAlign: 'right', mr: 0, fontSize: '0.7rem' },
               }}
@@ -252,10 +315,8 @@ export const ReviewForm = ({ preview = false }: { preview?: boolean }): JSX.Elem
               fullWidth
               size="small"
               autoComplete="name"
-              slotProps={{
-                inputLabel: { shrink: true },
-                htmlInput: { minLength: 2, maxLength: 80 },
-              }}
+              slotProps={{ inputLabel: { shrink: true }, htmlInput: { maxLength: 80 } }}
+              {...problemProps('displayName')}
             />
             <TextField
               label="Email address"
@@ -267,7 +328,11 @@ export const ReviewForm = ({ preview = false }: { preview?: boolean }): JSX.Elem
               fullWidth
               size="small"
               autoComplete="email"
-              slotProps={{ inputLabel: { shrink: true }, htmlInput: { maxLength: 200 } }}
+              slotProps={{
+                inputLabel: { shrink: true },
+                htmlInput: { maxLength: 200, inputMode: 'email' },
+              }}
+              {...problemProps('email')}
             />
             <TextField
               label="Your connection to IAA (optional)"
@@ -277,6 +342,7 @@ export const ReviewForm = ({ preview = false }: { preview?: boolean }): JSX.Elem
               fullWidth
               size="small"
               slotProps={{ inputLabel: { shrink: true }, htmlInput: { maxLength: 80 } }}
+              {...problemProps('role')}
             />
           </Stack>
         )}

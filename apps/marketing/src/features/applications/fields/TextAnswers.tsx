@@ -3,6 +3,7 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import type { HTMLAttributes } from 'react';
 
+import { DateField } from '../../../components/forms/DateField';
 import { INPUT_SX } from '../styles';
 
 import { ENTER_ADVANCES, isRequiredField, joinIds, type FieldProps } from './field-props';
@@ -19,7 +20,6 @@ const SINGLE_LINE: Partial<Record<FormFieldType, SingleLineConfig>> = {
   email: { type: 'email', inputMode: 'email', autoComplete: 'email' },
   phone: { type: 'tel', inputMode: 'tel', autoComplete: 'tel' },
   url: { type: 'url', inputMode: 'url', autoComplete: 'url' },
-  date: { type: 'date' },
 };
 
 // A question that supplies the applicant's own details can be filled in by
@@ -33,10 +33,7 @@ const MAPPED_AUTOCOMPLETE: Record<ApplicantMapping, string> = {
 const autoCompleteFor = (props: FieldProps, config: SingleLineConfig): string | undefined =>
   props.field.mapsTo ? MAPPED_AUTOCOMPLETE[props.field.mapsTo] : config.autoComplete;
 
-/**
- * Short text, email, phone, link and date: one line each, and Enter moves on.
- * A date uses the browser's own date input, which stores `YYYY-MM-DD`.
- */
+/** Short text, email, phone and link: one line each, and Enter moves on. */
 export const SingleLineAnswer = (props: FieldProps): JSX.Element => {
   const { field, value, error, ids, onChange } = props;
   const config = SINGLE_LINE[field.type] ?? { type: 'text' };
@@ -63,6 +60,27 @@ export const SingleLineAnswer = (props: FieldProps): JSX.Element => {
     />
   );
 };
+
+/**
+ * A date, as Day, Month and Year rather than the browser's date input, whose
+ * calendar looks different in every browser. Stored as `YYYY-MM-DD` once the
+ * three parts make a real day; until then the unfinished value is kept, so
+ * Continue can say what is missing ("The date needs a year") instead of
+ * calling the question unanswered. The fieldset around it names the three
+ * parts and carries the help and error text.
+ */
+export const DateAnswer = ({ field, value, error, ids, onChange }: FieldProps): JSX.Element => (
+  <DateField
+    id={ids.input}
+    value={typeof value === 'string' ? value : ''}
+    onChange={onChange}
+    invalid={Boolean(error)}
+    required={isRequiredField(field)}
+    clearable={!isRequiredField(field)}
+    textInputProps={ENTER_ADVANCES}
+    inputSx={INPUT_SX}
+  />
+);
 
 /**
  * A number. Stored as a number, or null when cleared. The browser's number

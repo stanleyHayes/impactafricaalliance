@@ -17,6 +17,7 @@ import { StatusScreen, type StatusKind } from './screens/StatusScreen';
 import { StepScreen } from './screens/StepScreen';
 import { UploadContext, type UploadContextValue } from './upload-context';
 import { useFormSession, type FormSession, type SessionPhase } from './use-form-session';
+import { useLeaveConfirmation } from './use-leave-confirmation';
 
 interface ScreenProps {
   session: FormSession;
@@ -171,6 +172,7 @@ export const ApplicantFlow = ({ source }: { source: FormSource }): JSX.Element =
   const Screen = SCREENS[phase];
   const progress = progressFor(session);
   const inForm = phase === 'steps' || phase === 'review';
+  const leaving = useLeaveConfirmation(session.leaveRisk);
 
   useEffect(() => {
     scrollToTop();
@@ -212,6 +214,7 @@ export const ApplicantFlow = ({ source }: { source: FormSource }): JSX.Element =
           onSaveForLater={
             session.canSaveForLater && inForm ? () => setSaveLaterOpen(true) : undefined
           }
+          onHomeClick={leaving.onHomeClick}
         />
         <Box component="main" sx={{ display: 'flex', flex: 1, flexDirection: 'column' }}>
           {session.draftLost && inForm && (
@@ -229,6 +232,7 @@ export const ApplicantFlow = ({ source }: { source: FormSource }): JSX.Element =
         onClose={() => setSaveLaterOpen(false)}
         onSend={actions.requestResumeLink}
       />
+      {leaving.dialog}
     </UploadContext.Provider>
   );
 };
