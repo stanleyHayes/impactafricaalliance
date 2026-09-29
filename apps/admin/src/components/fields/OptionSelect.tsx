@@ -13,6 +13,11 @@ export interface SelectChoice {
   icon?: ReactNode;
   /** A colour chip shown before the label — for options that are a colour. */
   swatch?: string;
+  /**
+   * Shown but not choosable, and skipped by the arrow keys: a step that is
+   * not open yet, say. Say why in `description`.
+   */
+  disabled?: boolean;
 }
 
 const Leading = ({ option }: { option: SelectChoice }): JSX.Element | null => {
@@ -134,6 +139,7 @@ export const OptionSelect = ({
       <MenuItem
         key={option.value}
         value={option.value}
+        disabled={option.disabled}
         sx={{
           alignItems: 'flex-start',
           gap: 1.25,

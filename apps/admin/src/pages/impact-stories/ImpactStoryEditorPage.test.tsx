@@ -6,6 +6,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { api } from '../../lib/api-client';
+import { goToStep } from '../../test/step-menu';
 import { theme } from '../../theme/theme';
 
 import ImpactStoryEditorPage from './ImpactStoryEditorPage';
@@ -197,9 +198,7 @@ describe('ImpactStoryEditorPage', () => {
     expect(screen.getByRole('textbox', { name: /Title/ })).toBeDisabled();
     // The upload field has no switch of its own; the step's fieldset covers it.
     expect(screen.getByText('Cover image').closest('fieldset')).toBeDisabled();
-    fireEvent.change(screen.getByRole('combobox', { name: 'Go to step' }), {
-      target: { value: '1' },
-    });
+    await goToStep(1);
     expect(stepHeading('Classification')).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: 'Tags' })).toBeDisabled();
   });

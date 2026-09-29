@@ -22,7 +22,8 @@ interface ResourceRowActionsProps {
   canDelete?: boolean;
   onView: (row: ResourceRow) => void;
   onEdit: (row: ResourceRow) => void;
-  onDelete: (id: string) => void;
+  /** Asks the page to confirm; the row is passed whole so the dialog can name it. */
+  onDelete: (row: ResourceRow) => void;
 }
 
 const tintButtonSx = (tone: 'primary' | 'error') => ({
@@ -31,7 +32,13 @@ const tintButtonSx = (tone: 'primary' | 'error') => ({
   '&:hover': { bgcolor: tone === 'error' ? 'rgba(211,47,47,0.12)' : 'rgba(27,94,32,0.12)' },
 });
 
-/** Per-row view / edit / delete controls. Edit + delete are gated by permission. */
+/**
+ * Per-row view / edit / delete controls. Edit + delete are gated by permission.
+ *
+ * Delete only asks: the confirmation lives on the page, outside the grid, so
+ * one dialog serves every row and its keystrokes never reach the grid's own
+ * cell navigation.
+ */
 export const ResourceRowActions = ({
   row,
   canEdit,
@@ -68,11 +75,8 @@ export const ResourceRowActions = ({
         <IconButton
           size="small"
           aria-label="Delete"
-          onClick={() => {
-            if (window.confirm('Delete this item? This cannot be undone.')) {
-              onDelete(String(row.id));
-            }
-          }}
+          aria-haspopup="dialog"
+          onClick={() => onDelete(row)}
           sx={tintButtonSx('error')}
         >
           <DeleteIcon fontSize="small" />
@@ -221,7 +225,7 @@ interface ResourceCardProps {
   canDelete?: boolean;
   onView: (row: ResourceRow) => void;
   onEdit: (row: ResourceRow) => void;
-  onDelete: (id: string) => void;
+  onDelete: (row: ResourceRow) => void;
 }
 
 /** Grid-view card for any content collection, derived from the resource config. */

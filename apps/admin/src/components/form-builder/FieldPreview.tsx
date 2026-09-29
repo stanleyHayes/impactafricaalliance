@@ -16,6 +16,9 @@ import Stack from '@mui/material/Stack';
 import { alpha } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
+import { useState } from 'react';
+
+import { DateField } from '../fields/DateField';
 
 type PreviewInput = (props: { field: FormField; name: string }) => JSX.Element;
 
@@ -24,7 +27,6 @@ const INPUT_TYPES: Partial<Record<FormFieldType, string>> = {
   phone: 'tel',
   url: 'url',
   number: 'number',
-  date: 'date',
 };
 
 const TextPreview: PreviewInput = ({ field, name }) => (
@@ -38,6 +40,25 @@ const TextPreview: PreviewInput = ({ field, name }) => (
     slotProps={{ htmlInput: { 'aria-label': name } }}
   />
 );
+
+/**
+ * A date question, answered with the same themed calendar the console uses,
+ * not the browser's own date input, whose look and wording change with the
+ * browser and the reader's locale. The question's name is already shown above
+ * it, so the field is labelled with its placeholder, or plainly "Date"; what is
+ * picked is not kept.
+ */
+const DatePreview: PreviewInput = ({ field }) => {
+  const [value, setValue] = useState<string | null>(null);
+  return (
+    <DateField
+      label={field.placeholder?.trim() || 'Date'}
+      size="small"
+      value={value}
+      onChange={setValue}
+    />
+  );
+};
 
 const SelectPreview: PreviewInput = ({ field, name }) => (
   <TextField
@@ -123,7 +144,7 @@ const PREVIEWS: Record<FormFieldType, PreviewInput> = {
   phone: TextPreview,
   url: TextPreview,
   number: TextPreview,
-  date: TextPreview,
+  date: DatePreview,
   select: SelectPreview,
   radio: RadioPreview,
   'multi-select': MultiPreview,

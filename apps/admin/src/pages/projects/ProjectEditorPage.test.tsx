@@ -3,6 +3,7 @@ import { Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { api, ApiError } from '../../lib/api-client';
+import { goToStep } from '../../test/step-menu';
 
 import {
   answerPeople,
@@ -214,9 +215,7 @@ describe('ProjectEditorPage', () => {
       await screen.findByText('Finish typing the date, or clear it, before continuing.'),
     ).toBeInTheDocument();
     next();
-    fireEvent.change(screen.getByRole('combobox', { name: 'Go to step' }), {
-      target: { value: '5' },
-    });
+    await goToStep(5);
     expect(screen.getByRole('heading', { level: 2, name: 'Schedule & place' })).toBeInTheDocument();
     expect(patch).not.toHaveBeenCalled();
   });
@@ -224,9 +223,7 @@ describe('ProjectEditorPage', () => {
   it('reviews with the shared summary, with an Edit button per section', async () => {
     setup(`/projects/${projectFixture().id}/edit`);
     await screen.findByRole('textbox', { name: /^Title/ });
-    fireEvent.change(screen.getByRole('combobox', { name: 'Go to step' }), {
-      target: { value: '5' },
-    });
+    await goToStep(5);
     await heading('Review');
     expect(screen.getByRole('region', { name: 'Schedule & place' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Edit scope' }));

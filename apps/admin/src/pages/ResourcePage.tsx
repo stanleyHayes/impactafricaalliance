@@ -9,6 +9,7 @@ import { Navigate, useNavigate, useParams } from 'react-router-dom';
 
 import { useCan } from '../auth/useCan';
 import { ResourceCard, ResourceRowActions } from '../components/crud/ResourceCard';
+import { ResourceDeleteDialog } from '../components/crud/ResourceDeleteDialog';
 import { ResourceDetailDialog } from '../components/crud/ResourceDetailDialog';
 import { ResourceFormDialog } from '../components/crud/ResourceFormDialog';
 import { DataTable, type DataTableFilter } from '../components/data/DataTable';
@@ -18,7 +19,7 @@ import { EmptyState } from '../components/EmptyState';
 import { PageHeader } from '../components/PageHeader';
 import { resourceGuide } from '../lib/page-guides';
 import { usesResourceFormPage } from '../resources/form-steps';
-import { useDeleteResource, useResourceList } from '../resources/hooks';
+import { useResourceList } from '../resources/hooks';
 import { findResource } from '../resources/registry';
 import type { ResourceConfig, ResourceRow } from '../resources/types';
 
@@ -75,10 +76,10 @@ const ResourcePage = (): JSX.Element => {
   const navigate = useNavigate();
   const resource = findResource(key);
   const list = useResourceList(key);
-  const remove = useDeleteResource(key);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<ResourceRow | null>(null);
   const [viewing, setViewing] = useState<ResourceRow | null>(null);
+  const [deleting, setDeleting] = useState<ResourceRow | null>(null);
   const [view, setView] = useViewMode(`resource-${key}`);
 
   const filters = useMemo<DataTableFilter[]>(
@@ -126,12 +127,12 @@ const ResourcePage = (): JSX.Element => {
           canDelete={canDelete}
           onView={(row) => setViewing(row)}
           onEdit={openEdit}
-          onDelete={(id) => remove.mutate(id)}
+          onDelete={setDeleting}
         />
       ),
     };
     return [...resource.columns, actions];
-  }, [resource, remove, canEdit, canDelete, openEdit]);
+  }, [resource, canEdit, canDelete, openEdit]);
 
   if (!resource || !can('read', key as AdminResource)) {
     return <Navigate to="/" replace />;
@@ -169,11 +170,6 @@ const ResourcePage = (): JSX.Element => {
           {list.error.message}
         </Alert>
       )}
-      {remove.isError && (
-        <Alert severity="error" onClose={() => remove.reset()}>
-          {remove.error.message}
-        </Alert>
-      )}
       <DataTable
         rows={items}
         columns={columns}
@@ -189,7 +185,7 @@ const ResourcePage = (): JSX.Element => {
             canDelete={canDelete}
             onView={(cardRow) => setViewing(cardRow)}
             onEdit={openEdit}
-            onDelete={(id) => remove.mutate(id)}
+            onDelete={setDeleting}
           />
         )}
         empty={
@@ -218,6 +214,14 @@ const ResourcePage = (): JSX.Element => {
           if (row) openEdit(row);
         }}
       />
+
+      {canDelete && (
+        <ResourceDeleteDialog
+          resource={resource}
+          row={deleting}
+          onClose={() => setDeleting(null)}
+        />
+      )}
 
       {(canEdit || canCreate) && !usesResourceFormPage(resource) && (
         <ResourceFormDialog

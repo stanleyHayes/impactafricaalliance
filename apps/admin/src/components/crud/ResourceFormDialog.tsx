@@ -109,6 +109,9 @@ export const ResourceFormDialog = ({
             component="form"
             id="resource-form"
             onSubmit={onSubmit}
+            // The resource schema reports every problem under its field; the
+            // browser's own validation bubbles would only cover some of them.
+            noValidate
             sx={{
               display: 'grid',
               gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },

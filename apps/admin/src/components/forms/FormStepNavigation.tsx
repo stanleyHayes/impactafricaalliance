@@ -3,8 +3,9 @@ import LinearProgress from '@mui/material/LinearProgress';
 import Step from '@mui/material/Step';
 import StepButton from '@mui/material/StepButton';
 import Stepper from '@mui/material/Stepper';
-import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
+
+import { OptionSelect, type SelectChoice } from '../fields/OptionSelect';
 
 interface FormStepNavigationProps {
   steps: readonly string[];
@@ -14,7 +15,28 @@ interface FormStepNavigationProps {
   disabled?: boolean;
 }
 
-/** Shared progress navigation for dedicated create/edit pages. */
+/**
+ * The phone-width step list. Steps past the furthest one reached stay in the
+ * list, so the reader can see what is coming, but cannot be chosen until the
+ * steps before them have been checked.
+ */
+const stepChoices = (steps: readonly string[], maxStep: number): SelectChoice[] =>
+  steps.map((label, index) => ({
+    value: String(index),
+    label: `${index + 1}. ${label}`,
+    ...(index > maxStep
+      ? { disabled: true, description: 'Opens once the steps before it are complete.' }
+      : {}),
+  }));
+
+/**
+ * Shared progress navigation for dedicated create/edit pages.
+ *
+ * On a phone the stepper does not fit, so a "Go to step" menu stands in for
+ * it. That menu is the console's own `OptionSelect` rather than the browser's
+ * native select, whose system picker ignored the theme and looked different
+ * on every device.
+ */
 export const FormStepNavigation = ({
   steps,
   activeStep,
@@ -41,23 +63,15 @@ export const FormStepNavigation = ({
     >
       Step {activeStep + 1} of {steps.length} · {steps[activeStep]}
     </Typography>
-    <TextField
-      select
+    <OptionSelect
       label="Go to step"
-      fullWidth
       size="small"
-      value={activeStep}
+      options={stepChoices(steps, maxStep)}
+      value={String(activeStep)}
       disabled={disabled}
-      onChange={(event) => onStepChange(Number(event.target.value))}
-      slotProps={{ select: { native: true } }}
+      onChange={(value) => onStepChange(Number(value))}
       sx={{ display: { xs: 'block', sm: 'none' } }}
-    >
-      {steps.map((label, index) => (
-        <option key={label} value={index} disabled={index > maxStep}>
-          {index + 1}. {label}
-        </option>
-      ))}
-    </TextField>
+    />
     <Box
       sx={{
         display: { xs: 'none', sm: 'block' },

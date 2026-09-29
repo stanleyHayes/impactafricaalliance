@@ -9,6 +9,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { api } from '../../lib/api-client';
+import { goToStep } from '../../test/step-menu';
 import { theme } from '../../theme/theme';
 
 import FormEditorPage from './FormEditorPage';
@@ -207,9 +208,7 @@ describe('FormEditorPage', () => {
       target: { value: '' },
     });
     // Every step is open to an existing form, so Review is one click away.
-    fireEvent.change(screen.getByRole('combobox', { name: 'Go to step' }), {
-      target: { value: '5' },
-    });
+    await goToStep(5);
     await stepHeading('Review');
     fireEvent.click(screen.getByRole('button', { name: 'Update form' }));
     await waitFor(() => expect(api.patch).toHaveBeenCalledTimes(1));
@@ -225,9 +224,7 @@ describe('FormEditorPage', () => {
     vi.mocked(api.get).mockResolvedValue(savedForm);
     setup('/forms/form-1/edit');
     await stepHeading('Basics');
-    fireEvent.change(screen.getByRole('combobox', { name: 'Go to step' }), {
-      target: { value: '5' },
-    });
+    await goToStep(5);
     await stepHeading('Review');
     expect(screen.getByRole('region', { name: 'Basics' })).toHaveTextContent('Mentor call');
     fireEvent.click(screen.getByRole('button', { name: 'Edit basics' }));
@@ -248,9 +245,7 @@ describe('FormEditorPage', () => {
     setup('/forms/form-1/edit');
     await stepHeading('Basics');
     expect(screen.getByText(/Changing the address breaks links/)).toBeInTheDocument();
-    fireEvent.change(screen.getByRole('combobox', { name: 'Go to step' }), {
-      target: { value: '5' },
-    });
+    await goToStep(5);
     await stepHeading('Review');
     expect(screen.getByText('Fix these before saving this live form')).toBeInTheDocument();
 

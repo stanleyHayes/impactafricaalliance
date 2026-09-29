@@ -91,7 +91,16 @@ const CreateUserDialog = ({
         onClose={onClose}
       />
       <DialogContent sx={{ bgcolor: 'background.default', py: 3 }}>
-        <Stack component="form" id="user-form" spacing={2} onSubmit={onSubmit} sx={dialogSectionSx}>
+        {/* noValidate: the schema's messages show under each field, never the
+            browser's own bubble for a malformed email. */}
+        <Stack
+          component="form"
+          id="user-form"
+          spacing={2}
+          onSubmit={onSubmit}
+          noValidate
+          sx={dialogSectionSx}
+        >
           <TextField
             label="Name"
             error={Boolean(errors.name)}

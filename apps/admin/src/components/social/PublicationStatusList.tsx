@@ -9,15 +9,17 @@ import Chip from '@mui/material/Chip';
 import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
+import { useState } from 'react';
 
 import { useAuth } from '../../auth/AuthContext';
 import {
   useApprovePublication,
   useCancelPublication,
-  useRejectPublication,
   useRetryPublication,
   useSocialPublications,
 } from '../../lib/social-publishing';
+
+import { DeclinePublicationDialog } from './DeclinePublicationDialog';
 
 const STATUS_COLOUR: Record<
   SocialPublication['status'],
@@ -59,7 +61,8 @@ export const PublicationStatusList = ({ articleId }: { articleId?: string }): JS
   const retry = useRetryPublication();
   const cancel = useCancelPublication();
   const approve = useApprovePublication();
-  const reject = useRejectPublication();
+  // The held post an administrator is declining; the dialog asks why.
+  const [declining, setDeclining] = useState<SocialPublication | null>(null);
   const canApprove = user?.role === UserRole.Admin;
 
   if (isLoading) {
@@ -68,9 +71,7 @@ export const PublicationStatusList = ({ articleId }: { articleId?: string }): JS
   const items = data ?? [];
   if (items.length === 0) {
     return (
-      <Typography color="text.secondary">
-        Nothing has been sent to social media yet.
-      </Typography>
+      <Typography color="text.secondary">Nothing has been sent to social media yet.</Typography>
     );
   }
 
@@ -136,13 +137,8 @@ export const PublicationStatusList = ({ articleId }: { articleId?: string }): JS
                     <Button
                       size="small"
                       color="inherit"
-                      disabled={reject.isPending}
-                      onClick={() => {
-                        const reason = window.prompt('Why is this being declined?')?.trim();
-                        if (reason) {
-                          reject.mutate({ id: publication.id, reason });
-                        }
-                      }}
+                      aria-haspopup="dialog"
+                      onClick={() => setDeclining(publication)}
                     >
                       Decline
                     </Button>
@@ -193,6 +189,7 @@ export const PublicationStatusList = ({ articleId }: { articleId?: string }): JS
           </Box>
         );
       })}
+      <DeclinePublicationDialog publication={declining} onClose={() => setDeclining(null)} />
     </Stack>
   );
 };

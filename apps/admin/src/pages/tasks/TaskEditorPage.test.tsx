@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { fullTask, paged, renderTaskUi } from '../../components/tasks/task-test-fixtures';
 import { api } from '../../lib/api-client';
+import { goToStep } from '../../test/step-menu';
 
 import TaskEditorPage from './TaskEditorPage';
 
@@ -137,9 +138,7 @@ describe('TaskEditorPage', () => {
 
     fireEvent.change(title(), { target: { value: 'Print 200 programmes' } });
     // Every step of a saved task can be visited at once.
-    fireEvent.change(screen.getByRole('combobox', { name: 'Go to step' }), {
-      target: { value: '4' },
-    });
+    await goToStep(4);
     await heading('Review');
     fireEvent.click(screen.getByRole('button', { name: 'Update task' }));
 
@@ -171,9 +170,7 @@ describe('TaskEditorPage', () => {
     );
 
     fireEvent.change(title(), { target: { value: 'New title' } });
-    fireEvent.change(screen.getByRole('combobox', { name: 'Go to step' }), {
-      target: { value: '4' },
-    });
+    await goToStep(4);
     await heading('Review');
     fireEvent.click(screen.getByRole('button', { name: 'Update task' }));
 
@@ -222,9 +219,7 @@ describe('TaskEditorPage', () => {
     renderTaskUi(<TaskEditorPage />, { route: '/tasks/IAA-7/edit', path: '/tasks/:taskKey/edit' });
     await heading('Basics');
     fireEvent.change(title(), { target: { value: 'Print 200 programmes' } });
-    fireEvent.change(screen.getByRole('combobox', { name: 'Go to step' }), {
-      target: { value: '4' },
-    });
+    await goToStep(4);
     await heading('Review');
     fireEvent.click(screen.getByRole('button', { name: 'Update task' }));
 
@@ -239,9 +234,7 @@ describe('TaskEditorPage', () => {
       screen.getAllByText('Choose assignees who are active members of the team').length,
     ).toBeGreaterThan(0);
     // What was typed on the other steps is still there.
-    fireEvent.change(screen.getByRole('combobox', { name: 'Go to step' }), {
-      target: { value: '0' },
-    });
+    await goToStep(0);
     await heading('Basics');
     expect(title()).toHaveValue('Print 200 programmes');
   });
@@ -255,9 +248,7 @@ describe('TaskEditorPage', () => {
     });
     renderTaskUi(<TaskEditorPage />, { route: '/tasks/IAA-7/edit', path: '/tasks/:taskKey/edit' });
     await heading('Basics');
-    fireEvent.change(screen.getByRole('combobox', { name: 'Go to step' }), {
-      target: { value: '4' },
-    });
+    await goToStep(4);
     await heading('Review');
     expect(await screen.findByText('Ama Mensah')).toBeInTheDocument();
   });
@@ -270,9 +261,7 @@ describe('TaskEditorPage', () => {
     );
     renderTaskUi(<TaskEditorPage />, { route: '/tasks/IAA-7/edit', path: '/tasks/:taskKey/edit' });
     await heading('Basics');
-    fireEvent.change(screen.getByRole('combobox', { name: 'Go to step' }), {
-      target: { value: '2' },
-    });
+    await goToStep(2);
     await heading('Schedule');
     const due = screen.getByRole('group', { name: /Due date/ });
     const day = within(due).getByRole('spinbutton', { name: 'Day' });
@@ -290,9 +279,7 @@ describe('TaskEditorPage', () => {
     ).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Schedule', level: 2 })).toBeInTheDocument();
     // Jumping ahead from the step rail is held back the same way.
-    fireEvent.change(screen.getByRole('combobox', { name: 'Go to step' }), {
-      target: { value: '4' },
-    });
+    await goToStep(4);
     expect(screen.getByRole('heading', { name: 'Schedule', level: 2 })).toBeInTheDocument();
     expect(api.patch).not.toHaveBeenCalled();
   });
@@ -306,9 +293,7 @@ describe('TaskEditorPage', () => {
   it('reviews with the shared summary: Edit per section, and Not set for empty values', async () => {
     renderTaskUi(<TaskEditorPage />, { route: '/tasks/IAA-7/edit', path: '/tasks/:taskKey/edit' });
     await heading('Basics');
-    fireEvent.change(screen.getByRole('combobox', { name: 'Go to step' }), {
-      target: { value: '4' },
-    });
+    await goToStep(4);
     await heading('Review');
     const schedule = screen.getByRole('region', { name: 'Schedule' });
     expect(within(schedule).getAllByText('Not set').length).toBe(3);
