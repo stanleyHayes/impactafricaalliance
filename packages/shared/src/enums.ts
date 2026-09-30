@@ -191,6 +191,8 @@ export const TeamTier = {
   Executive: 'executive',
   Board: 'board',
   NonExecutive: 'non-executive',
+  /** People who represent the alliance in their own country; listed after the regional teams. */
+  Ambassador: 'ambassador',
 } as const;
 export type TeamTier = (typeof TeamTier)[keyof typeof TeamTier];
 export const TEAM_TIERS = Object.values(TeamTier);
@@ -199,6 +201,7 @@ export const TEAM_TIER_LABELS: Record<TeamTier, string> = {
   executive: 'Functional Directors',
   board: 'Board of Directors',
   'non-executive': 'Country & Regional Teams',
+  ambassador: 'Ambassadors',
 };
 
 export const EVENT_TYPES = Object.values(EventType);

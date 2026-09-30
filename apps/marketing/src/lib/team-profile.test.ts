@@ -1,7 +1,7 @@
 import type { TeamMember } from '@iaa/shared';
 import { describe, expect, it } from 'vitest';
 
-import { memberSocials } from './team-profile';
+import { cardName, memberSocials } from './team-profile';
 
 const member = {
   id: 't1',
@@ -45,5 +45,26 @@ describe('the links shown on a team profile', () => {
     const dubious = { ...member, linkedInUrl: 'jemimah-on-linkedin' } as TeamMember;
 
     expect(memberSocials(dubious, { linkedInUrl: true })).toEqual([]);
+  });
+});
+
+describe('the name over a team portrait', () => {
+  it('is the first name only', () => {
+    expect(cardName('Emmanuel Mbansi')).toBe('Emmanuel');
+    expect(cardName('Nsomah Doris Anyane')).toBe('Nsomah');
+  });
+
+  it('skips a leading title', () => {
+    expect(cardName('Amb. Amina Muhammad Bello')).toBe('Amina');
+    expect(cardName('Dr Kwame Asante')).toBe('Kwame');
+  });
+
+  it('keeps an Akan title with the name it belongs to', () => {
+    expect(cardName('Nana Afua Osimpo Kesewaah Amo')).toBe('Nana Afua');
+    expect(cardName('Nana Ama Dwamena')).toBe('Nana Ama');
+  });
+
+  it('copes with a single or padded name', () => {
+    expect(cardName('  Harrys ')).toBe('Harrys');
   });
 });

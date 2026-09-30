@@ -76,7 +76,10 @@ describe('the team section', () => {
   it('places the leadership in rank order, most senior first', () => {
     renderTeam();
 
-    const names = screen.getAllByRole('heading', { level: 3 }).map((node) => node.textContent);
+    // The full name each card announces; the portrait itself shows the first name.
+    const names = screen
+      .getAllByRole('heading', { level: 3 })
+      .map((node) => node.lastElementChild?.textContent);
     expect(names).toEqual([
       'Emmanuel Mbansi',
       'Joshua Opoku Agyemang',
@@ -112,5 +115,30 @@ describe('the team section', () => {
     expect(
       within(country).queryByRole('heading', { name: 'Emmanuel Mbansi' }),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe('ambassadors', () => {
+  const ambassador = (name: string, country: string, order: number): TeamMember => ({
+    ...member(name, 'Ambassador', 'ambassador', order),
+    country,
+  });
+
+  it('get their own group, after the country and regional teams', () => {
+    renderTeam([...TEAM, ambassador('Kadiatou Ouattara', 'ML', 40)]);
+
+    const headings = screen.getAllByText(/Country & Regional Teams|Ambassadors/);
+    expect(headings.map((heading) => heading.textContent)).toEqual([
+      'Country & Regional Teams',
+      'Ambassadors',
+    ]);
+  });
+
+  it('show their first name over the portrait, their country under it, and the full name to screen readers', () => {
+    renderTeam([ambassador('Nana Afua Osimpo Kesewaah Amo', 'GH', 41)]);
+
+    const card = screen.getByRole('heading', { level: 3, name: /Nana Afua Osimpo Kesewaah Amo/ });
+    expect(within(card).getByText('Nana Afua')).toBeInTheDocument();
+    expect(screen.getByText('Ghana')).toBeInTheDocument();
   });
 });

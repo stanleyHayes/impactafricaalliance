@@ -22,7 +22,8 @@ const STEP_DEFINITIONS: Record<string, readonly StepDefinition[]> = {
     { label: 'Publishing', fields: ['status', 'featured', 'order'] },
   ],
   team: [
-    { label: 'Profile', fields: ['name', 'role', 'tier', 'bio', 'photo'] },
+    { label: 'Profile', fields: ['name', 'role', 'tier', 'country'] },
+    { label: 'About', fields: ['bio', 'photo'] },
     {
       label: 'Profile links',
       fields: ['linkedInUrl', 'xUrl', 'instagramUrl', 'facebookUrl', 'tiktokUrl'],

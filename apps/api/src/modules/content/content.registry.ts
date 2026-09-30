@@ -55,6 +55,7 @@ import { SitePopupModel } from './models/site-popup.model.js';
 import { ImpactStatModel } from './models/stat.model.js';
 import { StoryModel } from './models/story.model.js';
 import { TeamMemberModel } from './models/team.model.js';
+import { TeamContentService } from './team-content.service.js';
 
 const ACTIVE_ONLY = { isActive: true };
 
@@ -117,6 +118,7 @@ export const buildContentModules = (container: DependencyContainer): MountedCont
       schemas: { create: teamMemberInputSchema, update: teamMemberUpdateSchema },
       publicFilter: ACTIVE_ONLY,
       defaultSort: { order: 1, name: 1 },
+      serviceFactory: (repo, options) => new TeamContentService(repo, options),
     },
     container,
   ),

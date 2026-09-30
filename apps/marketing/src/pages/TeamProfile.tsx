@@ -1,10 +1,11 @@
-import { TEAM_TIER_LABELS, brandFonts, type TeamMember } from '@iaa/shared';
+import { TEAM_TIER_LABELS, brandFonts, countryName, type TeamMember } from '@iaa/shared';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArrowOutwardRoundedIcon from '@mui/icons-material/ArrowOutwardRounded';
 import AutoGraphRoundedIcon from '@mui/icons-material/AutoGraphRounded';
 import CampaignRoundedIcon from '@mui/icons-material/CampaignRounded';
 import ExploreRoundedIcon from '@mui/icons-material/ExploreRounded';
 import HubRoundedIcon from '@mui/icons-material/HubRounded';
+import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
 import PublicRoundedIcon from '@mui/icons-material/PublicRounded';
 import { Box, Button, Container, Divider, Typography } from '@mui/material';
 import Stack from '@mui/material/Stack';
@@ -155,6 +156,17 @@ export const TeamProfileContent = ({ member }: { member: TeamMember }): JSX.Elem
               <RoleMark sx={{ fontSize: 20 }} />
               <Typography variant="body2">{TEAM_TIER_LABELS[member.tier]}</Typography>
             </Stack>
+            {member.country && (
+              <Stack
+                direction="row"
+                spacing={1}
+                alignItems="center"
+                sx={{ mt: 1, color: 'text.secondary' }}
+              >
+                <PlaceRoundedIcon aria-hidden sx={{ fontSize: 20 }} />
+                <Typography variant="body2">{countryName(member.country)}</Typography>
+              </Stack>
+            )}
           </Box>
           <Box component="article" sx={{ minWidth: 0 }}>
             <Box

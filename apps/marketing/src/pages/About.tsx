@@ -4,6 +4,7 @@ import {
   TEAM_TIER_LABELS,
   brandColors,
   brandFonts,
+  countryName,
   type TeamMember,
   type TeamTier,
 } from '@iaa/shared';
@@ -18,6 +19,7 @@ import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
 import HandshakeRoundedIcon from '@mui/icons-material/HandshakeRounded';
 import HubRoundedIcon from '@mui/icons-material/HubRounded';
 import LightbulbRoundedIcon from '@mui/icons-material/LightbulbRounded';
+import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
 import PublicRoundedIcon from '@mui/icons-material/PublicRounded';
 import RecyclingRoundedIcon from '@mui/icons-material/RecyclingRounded';
 import TrackChangesRoundedIcon from '@mui/icons-material/TrackChangesRounded';
@@ -50,6 +52,7 @@ import { responsiveImage } from '../lib/cloudinary-image';
 import { usePageCopy, usePartners, useTeam } from '../lib/content-hooks';
 import { useImageFallback } from '../lib/image-fallback';
 import { shippedSiteImage, useSiteImage, useSiteImageWithFallback } from '../lib/site-images';
+import { cardName } from '../lib/team-profile';
 
 const DISCIPLINES: ReadonlyArray<{ label: string; icon: SvgIconComponent }> = [
   { label: 'Technology', icon: CodeRoundedIcon },
@@ -773,6 +776,16 @@ const TeamEmptyState = (): JSX.Element => (
   </Card>
 );
 
+/** Kept for assistive technology while hidden from sight. */
+const VISUALLY_HIDDEN = {
+  position: 'absolute',
+  width: 1,
+  height: 1,
+  overflow: 'hidden',
+  clip: 'rect(0 0 0 0)',
+  whiteSpace: 'nowrap',
+} as const;
+
 const TeamMemberCard = ({ member }: { member: TeamMember }): JSX.Element => {
   const artwork = useSiteImage('team-artwork');
   // The portrait, then the dashboard's artwork, then the shipped artwork:
@@ -851,12 +864,34 @@ const TeamMemberCard = ({ member }: { member: TeamMember }): JSX.Element => {
         }}
       />
       <Box sx={{ position: 'absolute', inset: 'auto 0 0', p: 2.5 }}>
+        {/* First name only over the portrait, so every card's name is about
+            the same length; screen readers still hear the full name. */}
         <Typography
           component="h3"
           sx={{ fontSize: { xs: '1.35rem', md: '1.5rem' }, fontWeight: 600, lineHeight: 1.2 }}
         >
-          {member.name}
+          <span aria-hidden="true">{cardName(member.name)}</span>
+          <Box component="span" sx={VISUALLY_HIDDEN}>
+            {member.name}
+          </Box>
         </Typography>
+        {member.country && (
+          <Typography
+            sx={{
+              mt: 0.5,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.5,
+              color: brandColors.gold,
+              fontSize: '.82rem',
+              fontWeight: 700,
+              letterSpacing: 0.3,
+            }}
+          >
+            <PlaceRoundedIcon aria-hidden sx={{ fontSize: 16 }} />
+            {countryName(member.country)}
+          </Typography>
+        )}
         <Typography
           sx={{ mt: 0.75, color: 'rgba(255,255,255,.86)', fontSize: '.9rem', lineHeight: 1.5 }}
         >

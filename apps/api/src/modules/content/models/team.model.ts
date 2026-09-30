@@ -7,6 +7,8 @@ export interface TeamMemberDocument {
   name: string;
   role: string;
   tier: TeamTier;
+  /** ISO 3166-1 alpha-2 code, shown under the name; required for ambassadors. */
+  country?: string | null;
   bio?: string;
   photo?: MediaAsset;
   linkedInUrl?: string;
@@ -27,6 +29,7 @@ const teamSchema = new Schema<TeamMemberDocument>(
     name: { type: String, required: true, trim: true },
     role: { type: String, required: true, trim: true },
     tier: { type: String, enum: TEAM_TIERS, default: TeamTier.Executive, index: true },
+    country: { type: String },
     bio: { type: String },
     photo: { type: mediaSubSchema, required: false },
     linkedInUrl: { type: String },

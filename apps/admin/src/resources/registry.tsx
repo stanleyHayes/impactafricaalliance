@@ -21,6 +21,7 @@ import {
   reportInputSchema,
   storyInputSchema,
   teamMemberInputSchema,
+  countryName,
 } from '@iaa/shared';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import AutoStoriesIcon from '@mui/icons-material/AutoStories';
@@ -44,7 +45,12 @@ import { ArticlePreview } from '../components/markdown/ArticlePreview';
 import { PageSettingPreview } from '../components/markdown/PageSettingPreview';
 import { ImageSlotPreview } from '../components/media/ImageSlotPreview';
 import { formatUtcDate } from '../lib/date';
-import { CONTENT_STATUS_OPTIONS, JOB_TYPE_OPTIONS, TEAM_TIER_OPTIONS } from '../lib/select-options';
+import {
+  CONTENT_STATUS_OPTIONS,
+  JOB_TYPE_OPTIONS,
+  TEAM_COUNTRY_OPTIONS,
+  TEAM_TIER_OPTIONS,
+} from '../lib/select-options';
 
 import type { ResourceConfig, SelectOption } from './types';
 
@@ -277,6 +283,13 @@ export const RESOURCES: readonly ResourceConfig[] = [
       { name: 'name', label: 'Name', type: 'text' },
       { name: 'role', label: 'Role', type: 'text' },
       { name: 'tier', label: 'Group', type: 'select', options: TEAM_TIER_OPTIONS },
+      {
+        name: 'country',
+        label: 'Country',
+        type: 'select',
+        options: TEAM_COUNTRY_OPTIONS,
+        helperText: 'Shown under the name on the website. Required for ambassadors.',
+      },
       { name: 'bio', label: 'Bio', type: 'textarea', wide: true },
       { name: 'photo', label: 'Photo', type: 'image', wide: true },
       // Every profile link is optional — blanks are dropped, and the public
@@ -296,6 +309,12 @@ export const RESOURCES: readonly ResourceConfig[] = [
       { field: 'name', headerName: 'Name', flex: 1, minWidth: 160 },
       { field: 'role', headerName: 'Role', flex: 1, minWidth: 160 },
       { field: 'tier', headerName: 'Group', width: 150 },
+      {
+        field: 'country',
+        headerName: 'Country',
+        width: 150,
+        valueGetter: (value: string | null | undefined) => (value ? countryName(value) : ''),
+      },
       booleanColumn('isActive', 'Active'),
     ],
   },

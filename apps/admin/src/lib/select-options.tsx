@@ -1,4 +1,7 @@
 import {
+  AFRICAN_COUNTRY_CODES,
+  countryName,
+  DIASPORA_COUNTRY_CODES,
   FILE_KIND_FORMATS,
   PILLARS,
   STORY_BLOCK_LABELS,
@@ -15,6 +18,7 @@ import AttachFileRoundedIcon from '@mui/icons-material/AttachFileRounded';
 import BadgeOutlinedIcon from '@mui/icons-material/BadgeOutlined';
 import BlockRoundedIcon from '@mui/icons-material/BlockRounded';
 import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined';
+import CampaignOutlinedIcon from '@mui/icons-material/CampaignOutlined';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import CategoryOutlinedIcon from '@mui/icons-material/CategoryOutlined';
 import CheckBoxOutlineBlankRoundedIcon from '@mui/icons-material/CheckBoxOutlineBlankRounded';
@@ -245,6 +249,31 @@ export const TEAM_TIER_OPTIONS: SelectChoice[] = [
     description: 'People leading the work in a particular country or region.',
     icon: <PublicOutlinedIcon />,
   },
+  {
+    value: 'ambassador',
+    label: 'Ambassadors',
+    description:
+      'People who represent the alliance in their own country. Listed after the regional teams, with their country under their name.',
+    icon: <CampaignOutlinedIcon />,
+  },
+];
+
+/**
+ * A member's country, by name. Every African country first, then the diaspora
+ * countries members are based in; the value stored is the ISO code.
+ */
+export const TEAM_COUNTRY_OPTIONS: SelectChoice[] = [
+  {
+    value: '',
+    label: 'No country',
+    description: 'Nothing is shown under the name. Not allowed for ambassadors.',
+  },
+  ...AFRICAN_COUNTRY_CODES.map((code) => ({ value: code, label: countryName(code) })),
+  ...DIASPORA_COUNTRY_CODES.map((code) => ({
+    value: code,
+    label: countryName(code),
+    description: 'Outside Africa',
+  })),
 ];
 
 export const JOB_TYPE_OPTIONS: SelectChoice[] = [
