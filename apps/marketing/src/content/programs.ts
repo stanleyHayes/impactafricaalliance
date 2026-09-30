@@ -8,6 +8,8 @@ export interface ProgramContent {
   initiative: string;
   title: string;
   descriptor: string;
+  /** One short clause for tight spaces such as the footer: one line of a desktop card. */
+  summary: string;
   challenge: string;
   whatWeDo: string[];
   goal: string;
@@ -20,6 +22,7 @@ export const PROGRAMS: readonly ProgramContent[] = [
     title: 'Digital Skills & Innovation Hub',
     descriptor:
       "Bridging Africa's digital divide, one skill, one entrepreneur, and one community at a time.",
+    summary: 'Coding, e-commerce, and start-up skills',
     challenge:
       'Millions of young Africans graduate each year without the digital skills employers need. The gap between classroom education and the job market leaves entire generations underemployed, despite Africa’s growing digital economy.',
     whatWeDo: [
@@ -36,6 +39,7 @@ export const PROGRAMS: readonly ProgramContent[] = [
     title: 'STEM & Vocational Digital Learning Platform',
     descriptor:
       'Making world-class STEM and vocational education accessible to every African learner, wherever they are.',
+    summary: 'Certified online courses linked to careers',
     challenge:
       'Quality STEM education remains out of reach for the majority of African youth. Geographic barriers, lack of equipment, and outdated curricula leave students disconnected from the skills the global economy demands.',
     whatWeDo: [
@@ -52,6 +56,7 @@ export const PROGRAMS: readonly ProgramContent[] = [
     title: 'Youth Inclusion & Career Launchpad',
     descriptor:
       'Closing the gap between leaving school and landing work, so no young person is left on the sidelines.',
+    summary: 'From learning to earning, with mentors',
     challenge:
       'Africa adds millions of young people to its workforce every year, yet most arrive without the workplace readiness employers screen for: communication, teamwork, digital fluency, and the confidence to navigate a first job. Young women, rural youth, and young people with disabilities are excluded first and hardest.',
     whatWeDo: [
@@ -67,6 +72,7 @@ export const PROGRAMS: readonly ProgramContent[] = [
     initiative: 'Initiative 04',
     title: 'Women Empowerment through Digital Innovation & Mentorship',
     descriptor: 'When African women rise, Africa rises. We are committed to making that happen.',
+    summary: 'Digital skills and leadership for women',
     challenge:
       'Women across Africa face compounding barriers: limited access to technology, restricted financial resources, cultural gatekeeping, and a shortage of female mentors in STEM and business. Closing this gap is essential.',
     whatWeDo: [
