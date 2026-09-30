@@ -34,6 +34,7 @@ import {
 import { ApiError } from '../../lib/api-client';
 import { pageGuides } from '../../lib/page-guides';
 import { useCreateProject, useProject, useUpdateProject } from '../../lib/projects';
+import { backLinkSx, skinned, surfaceSx, tokenVar } from '../../theme/surfaces';
 
 /** The Schedule & place step, where the date fields are. */
 const SCHEDULE_STEP = 2;
@@ -77,6 +78,7 @@ const EditorHeader = ({
         to={backTo}
         startIcon={<ArrowBackRoundedIcon />}
         disabled={busy}
+        sx={backLinkSx}
       >
         {editing ? 'Back to project' : 'All projects'}
       </Button>
@@ -107,6 +109,16 @@ const EditorProblems = ({
   </>
 );
 
+/**
+ * The strip under the form holding Back and Save. Classic sets it on the page
+ * colour; that colour is opaque in every skin, which would cut a solid band
+ * out of a frosted or clay card, so the other skins use their well instead.
+ */
+const footerSx = skinned(
+  { bgcolor: 'background.default', borderTop: 1, borderColor: 'divider' },
+  { bgcolor: tokenVar('surfaceInsetBg') },
+);
+
 const EditorFooter = ({
   backLabel,
   onBack,
@@ -122,12 +134,7 @@ const EditorFooter = ({
     direction="row"
     justifyContent="space-between"
     spacing={2}
-    sx={{
-      p: { xs: 2, md: 3 },
-      bgcolor: 'background.default',
-      borderTop: 1,
-      borderColor: 'divider',
-    }}
+    sx={[{ p: { xs: 2, md: 3 } }, footerSx]}
   >
     <Button onClick={onBack} disabled={busy}>
       {backLabel}
@@ -282,13 +289,7 @@ const ProjectEditorForm = ({ project: loaded }: { project?: Project }): JSX.Elem
           noValidate
           onSubmit={submit}
           aria-label={project ? `Edit ${project.title}` : 'New project'}
-          sx={{
-            border: 1,
-            borderColor: 'divider',
-            borderRadius: 3,
-            bgcolor: 'background.paper',
-            overflow: 'hidden',
-          }}
+          sx={{ borderRadius: 3, overflow: 'hidden', ...surfaceSx.card }}
         >
           <Box sx={{ p: { xs: 2.5, md: 4 } }}>
             <Typography
@@ -382,7 +383,7 @@ const ProjectEditorPage = (): JSX.Element => {
           component={RouterLink}
           to="/projects"
           startIcon={<ArrowBackRoundedIcon />}
-          sx={{ mt: 2 }}
+          sx={[{ mt: 2 }, backLinkSx]}
         >
           All projects
         </Button>

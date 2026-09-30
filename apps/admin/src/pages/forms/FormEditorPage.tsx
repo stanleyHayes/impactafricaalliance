@@ -16,6 +16,7 @@ import { FormPageSkeleton } from '../../components/PageSkeleton';
 import type { ApiError } from '../../lib/api-client';
 import { useCreateForm, useForm, useUpdateForm } from '../../lib/forms';
 import { pageGuides } from '../../lib/page-guides';
+import { backLinkSx, skinned, surfaceSx, tokenVar } from '../../theme/surfaces';
 
 import {
   createBody,
@@ -40,6 +41,17 @@ import {
 } from './FormEditorSteps';
 
 type DateKey = 'opensAt' | 'closesAt';
+
+/**
+ * The Back and Continue strip under each step. Classic paints it in the page
+ * colour. The other skins make it a well in the card instead: their page
+ * colour is an opaque canvas that would lie across a frosted or clay card as a
+ * flat band.
+ */
+const FOOTER_SX = skinned(
+  { p: { xs: 2, md: 3 }, bgcolor: 'background.default', borderTop: 1, borderColor: 'divider' },
+  { bgcolor: tokenVar('surfaceInsetBg') },
+);
 
 const submitLabel = (saving: boolean, step: number, editing: boolean): string => {
   if (saving) return 'Saving…';
@@ -235,6 +247,7 @@ const FormEditorForm = ({
             to={backTo}
             startIcon={<ArrowBackRoundedIcon />}
             disabled={busy}
+            sx={backLinkSx}
           >
             {form ? 'Back to the form' : 'All forms'}
           </Button>
@@ -259,13 +272,7 @@ const FormEditorForm = ({
           noValidate
           onSubmit={submit}
           aria-label={form ? `Edit ${form.title}` : 'New form'}
-          sx={{
-            border: 1,
-            borderColor: 'divider',
-            borderRadius: 3,
-            bgcolor: 'background.paper',
-            overflow: 'hidden',
-          }}
+          sx={{ borderRadius: 3, overflow: 'hidden', ...surfaceSx.card }}
         >
           <Box sx={{ p: { xs: 2, md: 4 } }}>
             <Typography
@@ -295,17 +302,7 @@ const FormEditorForm = ({
               )}
             </Stack>
           </Box>
-          <Stack
-            direction="row"
-            justifyContent="space-between"
-            spacing={2}
-            sx={{
-              p: { xs: 2, md: 3 },
-              bgcolor: 'background.default',
-              borderTop: 1,
-              borderColor: 'divider',
-            }}
-          >
+          <Stack direction="row" justifyContent="space-between" spacing={2} sx={FOOTER_SX}>
             <Button
               onClick={() => (step > 0 ? changeStep(step - 1) : navigate(backTo))}
               disabled={busy}
@@ -343,7 +340,12 @@ const LoadError = ({
           : error?.message || 'The form could not be loaded.'}
       </Alert>
       <Box>
-        <Button component={RouterLink} to="/forms" startIcon={<ArrowBackRoundedIcon />}>
+        <Button
+          component={RouterLink}
+          to="/forms"
+          startIcon={<ArrowBackRoundedIcon />}
+          sx={backLinkSx}
+        >
           All forms
         </Button>
       </Box>

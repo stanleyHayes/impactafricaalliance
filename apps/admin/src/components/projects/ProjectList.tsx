@@ -19,6 +19,7 @@ import Typography from '@mui/material/Typography';
 import { Link as RouterLink } from 'react-router-dom';
 
 import { initials } from '../../lib/initials';
+import { skinned, surfaceSx } from '../../theme/surfaces';
 
 import { countLabel, formatDateRange } from './project-format';
 import { ProjectPriorityChip, ProjectStatusChip } from './ProjectChips';
@@ -81,6 +82,9 @@ const rowFacts = (project: ProjectListItem): string =>
     .filter(Boolean)
     .join(' · ');
 
+/** The table's frame: the skin's card (paper with a divider edge in Classic). */
+const TABLE_FRAME_SX = { borderRadius: 3, ...surfaceSx.card } as const;
+
 /**
  * The table view: one row per project, linked by its title. Code, dates and
  * lead sit under the title rather than in columns of their own, so the table
@@ -88,9 +92,7 @@ const rowFacts = (project: ProjectListItem): string =>
  * progress.
  */
 export const ProjectTable = ({ items }: { items: readonly ProjectListItem[] }): JSX.Element => (
-  <TableContainer
-    sx={{ border: 1, borderColor: 'divider', borderRadius: 3, bgcolor: 'background.paper' }}
-  >
+  <TableContainer sx={TABLE_FRAME_SX}>
     <Table size="small" aria-label="Projects">
       <TableHead>
         <TableRow>
@@ -217,10 +219,7 @@ export const ProjectCardGrid = ({ items }: { items: readonly ProjectListItem[] }
 
 /** The table view while it loads: the same frame with placeholder rows. */
 export const ProjectTableSkeleton = ({ rows = 6 }: { rows?: number }): JSX.Element => (
-  <TableContainer
-    sx={{ border: 1, borderColor: 'divider', borderRadius: 3, bgcolor: 'background.paper' }}
-    aria-hidden
-  >
+  <TableContainer sx={TABLE_FRAME_SX} aria-hidden>
     <Table size="small">
       <TableHead>
         <TableRow>
@@ -254,14 +253,17 @@ export const ProjectTableSkeleton = ({ rows = 6 }: { rows?: number }): JSX.Eleme
   </TableContainer>
 );
 
+/**
+ * A card while it loads. Classic draws only its outline; the other skins draw
+ * their card, so the grid does not change material when the projects arrive.
+ */
+const skeletonCardSx = skinned({ border: 1, borderColor: 'divider' }, surfaceSx.card);
+
 /** The card view while it loads. */
 export const ProjectCardSkeleton = ({ cards = 6 }: { cards?: number }): JSX.Element => (
   <Box sx={CARD_GRID} aria-hidden>
     {Array.from({ length: cards }, (_, index) => (
-      <Box
-        key={index}
-        sx={{ border: 1, borderColor: 'divider', borderRadius: 3, overflow: 'hidden' }}
-      >
+      <Box key={index} sx={[{ borderRadius: 3, overflow: 'hidden' }, skeletonCardSx]}>
         <Skeleton variant="rectangular" sx={{ aspectRatio: '16 / 7', height: 'auto' }} />
         <Stack spacing={1.25} sx={{ p: 2 }}>
           <Stack direction="row" spacing={1}>

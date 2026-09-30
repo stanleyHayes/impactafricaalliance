@@ -16,6 +16,7 @@ import { PageHeader } from '../../components/PageHeader';
 import { FormPageSkeleton } from '../../components/PageSkeleton';
 import { IMPACT_STORIES_QUERY_KEY, useCreateStoryFromProject } from '../../lib/impact-stories';
 import { pageGuides } from '../../lib/page-guides';
+import { backLinkSx } from '../../theme/surfaces';
 
 /**
  * Starts an impact story from a project (`/impact-stories/from-project/:projectId`):
@@ -85,7 +86,7 @@ const StoryFromProjectPage = (): JSX.Element => {
             component={RouterLink}
             to={backToProject}
             startIcon={<ArrowBackRoundedIcon />}
-            sx={{ alignSelf: 'flex-start' }}
+            sx={[{ alignSelf: 'flex-start' }, backLinkSx]}
           >
             Back to the project
           </Button>

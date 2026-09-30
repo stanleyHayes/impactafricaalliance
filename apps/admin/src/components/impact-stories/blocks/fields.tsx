@@ -13,6 +13,7 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
+import { skinned, surfaceSx } from '../../../theme/surfaces';
 import { MediaUploadField } from '../../fields/MediaUploadField';
 
 /** What every block type's editor receives. */
@@ -143,6 +144,12 @@ interface RowsEditorProps<Row> {
 }
 
 /**
+ * One row's frame. Classic outlines it inside the block; the other skins sink
+ * it into the block card as a well, one compartment per row.
+ */
+const ROW_SX = skinned({ border: 1, borderColor: 'divider' }, surfaceSx.inset);
+
+/**
  * A short list of similar rows (numbers, timeline steps, partners) with add,
  * remove and move buttons. Rows are few and move rarely, so buttons are
  * enough here; the blocks themselves can also be dragged.
@@ -175,7 +182,7 @@ export const RowsEditor = <Row,>({
           key={index}
           role="group"
           aria-label={`${noun} ${index + 1}`}
-          sx={{ p: 1.5, border: 1, borderColor: 'divider', borderRadius: 2 }}
+          sx={[{ p: 1.5, borderRadius: 2 }, ROW_SX]}
         >
           <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mb: 1.5 }}>
             <Typography variant="body2" sx={{ fontWeight: 700, flexGrow: 1 }}>

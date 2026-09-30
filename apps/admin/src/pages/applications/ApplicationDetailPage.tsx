@@ -27,6 +27,7 @@ import { PageHeader } from '../../components/PageHeader';
 import { useApplication } from '../../lib/applications';
 import { formatInstant } from '../../lib/forms';
 import { pageGuides } from '../../lib/page-guides';
+import { backLinkSx } from '../../theme/surfaces';
 
 const QuestionRow = ({
   label,
@@ -229,7 +230,12 @@ const ApplicationDetailPage = (): JSX.Element => {
         alignItems={{ sm: 'center' }}
         sx={{ mb: 3 }}
       >
-        <Button component={RouterLink} to="/applications" startIcon={<ArrowBackRoundedIcon />}>
+        <Button
+          component={RouterLink}
+          to="/applications"
+          startIcon={<ArrowBackRoundedIcon />}
+          sx={backLinkSx}
+        >
           All applications
         </Button>
         <Alert severity="info" icon={<LockOutlinedIcon />} sx={{ flex: 1 }}>

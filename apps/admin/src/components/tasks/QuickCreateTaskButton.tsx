@@ -6,9 +6,27 @@ import Tooltip from '@mui/material/Tooltip';
 import { useState } from 'react';
 
 import { useHasPermission } from '../../auth/useCan';
+import { skinned } from '../../theme/surfaces';
+import { topBarActionSkin } from '../layout/top-bar-action';
 
 import { QuickCreateTaskDialog, TaskCreatedSnackbar } from './QuickCreateTaskDialog';
 import { useOpenTask } from './use-task-drawer';
+
+/**
+ * The button's look. Classic: a quiet glyph that gains a primary tint under
+ * the pointer. The other skins make it one of their raised controls, by the
+ * recipe every top-bar action shares, so the bar's actions read as one set.
+ */
+const triggerSx = skinned(
+  {
+    color: 'text.secondary',
+    '&:hover': {
+      color: 'text.primary',
+      bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
+    },
+  },
+  topBarActionSkin,
+);
 
 /**
  * "New task" in the top bar, so a task can be written down from any page the
@@ -31,13 +49,7 @@ export const QuickCreateTaskButton = (): JSX.Element | null => {
           aria-label="New task"
           aria-haspopup="dialog"
           onClick={() => setOpen(true)}
-          sx={{
-            color: 'text.secondary',
-            '&:hover': {
-              color: 'text.primary',
-              bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
-            },
-          }}
+          sx={triggerSx}
         >
           <AddTaskRoundedIcon />
         </IconButton>

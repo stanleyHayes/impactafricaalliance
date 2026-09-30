@@ -21,6 +21,7 @@ import { useApplicationCounts } from '../../lib/applications';
 import { useStoriesInReviewCount } from '../../lib/impact-stories';
 import { useActiveProjectCount } from '../../lib/projects';
 import { useTaskSummary } from '../../lib/tasks';
+import { focusRingSx, skinned, surfaceSx, tokenVar } from '../../theme/surfaces';
 
 /** How a tile's number is coloured: a warning only when something is late. */
 type Tone = 'alert' | 'attention' | 'calm';
@@ -45,6 +46,11 @@ interface WorkTile {
   retry: () => void;
 }
 
+/**
+ * A tile sits inside the panel's card, so it is the skin's nested card: less
+ * depth than the panel, so the shadows do not double up (Classic: paper with
+ * a hairline, like any card).
+ */
 const tileSurface = {
   display: 'flex',
   flexDirection: 'column',
@@ -53,10 +59,21 @@ const tileSurface = {
   height: '100%',
   p: 2,
   borderRadius: 2.5,
-  border: 1,
-  borderColor: 'divider',
-  bgcolor: 'background.paper',
+  ...surfaceSx.nested,
 } as const;
+
+/**
+ * A tile that links somewhere. Classic lifts it on a glow in its tone under
+ * the pointer; a skin lifts it on its own hover shadow instead (the edge
+ * still takes the tone) and presses it in while it is clicked.
+ */
+const TILE_LINK_SKIN = skinned(
+  {},
+  {
+    '&:hover': { boxShadow: tokenVar('surfaceHoverShadow') },
+    '&:active': { boxShadow: tokenVar('surfacePressedShadow') },
+  },
+);
 
 const TileHeading = ({ tile }: { tile: WorkTile }): JSX.Element => {
   const Icon = tile.icon;
@@ -105,23 +122,24 @@ const Tile = ({ tile }: { tile: WorkTile }): JSX.Element => {
       component={RouterLink}
       to={tile.to}
       aria-busy={tile.loading || undefined}
-      sx={{
-        ...tileSurface,
-        color: 'inherit',
-        textDecoration: 'none',
-        transition: (theme) =>
-          theme.transitions.create(['border-color', 'box-shadow'], {
-            duration: theme.transitions.duration.shorter,
-          }),
-        '&:hover': {
-          borderColor: (theme) => alpha(TONE_COLOUR[tone](theme), 0.5),
-          boxShadow: (theme) => `0 10px 24px -18px ${alpha(TONE_COLOUR[tone](theme), 0.8)}`,
+      sx={[
+        {
+          ...tileSurface,
+          color: 'inherit',
+          textDecoration: 'none',
+          transition: (theme) =>
+            theme.transitions.create(['border-color', 'box-shadow'], {
+              duration: theme.transitions.duration.shorter,
+            }),
+          '&:hover': {
+            borderColor: (theme) => alpha(TONE_COLOUR[tone](theme), 0.5),
+            boxShadow: (theme) => `0 10px 24px -18px ${alpha(TONE_COLOUR[tone](theme), 0.8)}`,
+          },
+          // The skin's ring (Classic's is this same 2px primary outline).
+          '&:focus-visible': focusRingSx,
         },
-        '&:focus-visible': {
-          outline: (theme) => `2px solid ${theme.palette.primary.main}`,
-          outlineOffset: 2,
-        },
-      }}
+        TILE_LINK_SKIN,
+      ]}
     >
       <TileHeading tile={tile} />
       {tile.loading ? (
@@ -263,10 +281,14 @@ export const YourWorkPanel = (): JSX.Element | null => {
       component="section"
       variant="outlined"
       aria-labelledby="your-work-heading"
-      sx={{ borderRadius: 3, borderColor: 'divider' }}
+      sx={{ borderRadius: 3, borderColor: tokenVar('surfaceBorderColor') }}
     >
       <Box
-        sx={{ px: 2.75, py: 2.25, bgcolor: (theme) => alpha(theme.palette.primary.main, 0.035) }}
+        // Classic's own faint tint; a skin's tinted header strip.
+        sx={skinned(
+          { px: 2.75, py: 2.25, bgcolor: (theme) => alpha(theme.palette.primary.main, 0.035) },
+          surfaceSx.tinted,
+        )}
       >
         <Typography id="your-work-heading" variant="h6" component="h2" sx={{ fontWeight: 700 }}>
           Your work

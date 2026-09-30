@@ -11,17 +11,27 @@ import Typography from '@mui/material/Typography';
 import { Link as RouterLink } from 'react-router-dom';
 
 import { useNewSubmissionCounts } from '../lib/admin-hooks';
+import { skinned, tokenVar } from '../theme/surfaces';
 
 /** Each type links to the inbox that already filters to it. */
 const BREAKDOWN = [
   { type: 'partner', label: 'partner', to: '/submissions/partners', Icon: HandshakeOutlinedIcon },
   { type: 'volunteer', label: 'mentor', to: '/submissions/mentors', Icon: VolunteerActivismIcon },
-  { type: 'contact', label: 'contact', to: '/submissions/contact', Icon: MarkEmailUnreadRoundedIcon },
-  { type: 'job', label: 'application', to: '/submissions/applications', Icon: MarkEmailUnreadRoundedIcon },
+  {
+    type: 'contact',
+    label: 'contact',
+    to: '/submissions/contact',
+    Icon: MarkEmailUnreadRoundedIcon,
+  },
+  {
+    type: 'job',
+    label: 'application',
+    to: '/submissions/applications',
+    Icon: MarkEmailUnreadRoundedIcon,
+  },
 ] as const;
 
-const plural = (count: number, noun: string): string =>
-  `${count} ${noun}${count === 1 ? '' : 's'}`;
+const plural = (count: number, noun: string): string => `${count} ${noun}${count === 1 ? '' : 's'}`;
 
 /**
  * Dashboard banner for unread submissions.
@@ -45,38 +55,56 @@ export const NewSubmissionsBanner = (): JSX.Element | null => {
   return (
     <Box
       role="status"
-      sx={{
-        display: 'flex',
-        flexDirection: { xs: 'column', md: 'row' },
-        alignItems: { xs: 'flex-start', md: 'center' },
-        gap: 2,
-        mb: 3,
-        p: { xs: 2, sm: 2.5 },
-        border: 1,
-        borderColor: (theme) => alpha(theme.palette.warning.main, 0.35),
-        borderRadius: 2.5,
-        bgcolor: (theme) => alpha(theme.palette.warning.main, 0.08),
-      }}
+      // A warning-toned card. Classic tints the page. A skin builds it from
+      // its own card material and depth with a much lighter warm tint: the
+      // warning's brown at Classic's strength over Neumorphism's grey or
+      // Clay's mint turns a muddy beige. The warning edge and the filled
+      // tile carry the tone instead.
+      sx={skinned(
+        {
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
+          alignItems: { xs: 'flex-start', md: 'center' },
+          gap: 2,
+          mb: 3,
+          p: { xs: 2, sm: 2.5 },
+          border: 1,
+          borderColor: (theme) => alpha(theme.palette.warning.main, 0.35),
+          borderRadius: 2.5,
+          bgcolor: (theme) => alpha(theme.palette.warning.main, 0.08),
+        },
+        {
+          bgcolor: tokenVar('surfaceBg'),
+          backgroundImage: (theme) => {
+            const tint = alpha(theme.palette.warning.main, 0.04);
+            return `linear-gradient(${tint}, ${tint})`;
+          },
+          boxShadow: tokenVar('surfaceShadow'),
+          backdropFilter: tokenVar('surfaceBackdrop'),
+        },
+      )}
     >
       <Box
-        sx={{
-          display: 'grid',
-          flexShrink: 0,
-          width: 42,
-          height: 42,
-          placeItems: 'center',
-          borderRadius: 2,
-          bgcolor: 'warning.main',
-          color: 'common.black',
-        }}
+        // A tone tile: it keeps its warning fill and takes the skin's depth.
+        sx={skinned(
+          {
+            display: 'grid',
+            flexShrink: 0,
+            width: 42,
+            height: 42,
+            placeItems: 'center',
+            borderRadius: 2,
+            bgcolor: 'warning.main',
+            color: 'common.black',
+          },
+          { boxShadow: tokenVar('tileShadow') },
+        )}
       >
         <MarkEmailUnreadRoundedIcon />
       </Box>
 
       <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography sx={{ fontWeight: 750 }}>
-          {plural(total, 'new submission')} waiting
-        </Typography>
+        <Typography sx={{ fontWeight: 750 }}>{plural(total, 'new submission')} waiting</Typography>
         {breakdown.length > 0 && (
           <Stack direction="row" spacing={0.75} sx={{ mt: 1, flexWrap: 'wrap', rowGap: 0.75 }}>
             {breakdown.map(({ type, label, to, Icon }) => (

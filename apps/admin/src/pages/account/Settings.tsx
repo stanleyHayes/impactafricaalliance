@@ -7,7 +7,7 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
-import { alpha } from '@mui/material/styles';
+import { alpha, type Theme } from '@mui/material/styles';
 import Switch from '@mui/material/Switch';
 import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
@@ -15,6 +15,24 @@ import { Link as RouterLink } from 'react-router-dom';
 
 import { AccountPanel, AccountSectionHeader } from '../../components/account/AccountSurface';
 import { usePreferences } from '../../lib/preferences';
+import { skinned, surfaceSx } from '../../theme/surfaces';
+
+/**
+ * An icon square. Classic tints it with the primary; a skin makes it one of
+ * its icon tiles (raised, frosted or clay), as every other icon holder is.
+ */
+const iconTileSx = (fill: number) =>
+  skinned({ bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, fill) }, surfaceSx.tile);
+
+/**
+ * A bordered paper box inside an account panel. Classic draws it as a small
+ * card; a skin sets it into the panel as one of its wells, so it does not read
+ * as a card stacked on a card.
+ */
+const panelWellSx = skinned(
+  { border: 1, borderColor: 'divider', bgcolor: 'background.paper' },
+  surfaceSx.inset,
+);
 
 const PreferenceRow = ({
   icon,
@@ -32,27 +50,23 @@ const PreferenceRow = ({
     spacing={2}
     alignItems="center"
     justifyContent="space-between"
-    sx={{
-      p: 2,
-      border: 1,
-      borderColor: 'divider',
-      borderRadius: 2,
-      bgcolor: 'background.paper',
-    }}
+    sx={[{ p: 2, borderRadius: 2 }, panelWellSx]}
   >
     <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
       <Box
-        sx={{
-          display: 'grid',
-          width: 42,
-          height: 42,
-          flexShrink: 0,
-          placeItems: 'center',
-          borderRadius: 2,
-          bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
-          color: 'text.primary',
-          '& svg': { fontSize: 22 },
-        }}
+        sx={[
+          {
+            display: 'grid',
+            width: 42,
+            height: 42,
+            flexShrink: 0,
+            placeItems: 'center',
+            borderRadius: 2,
+            color: 'text.primary',
+            '& svg': { fontSize: 22 },
+          },
+          iconTileSx(0.08),
+        ]}
       >
         {icon}
       </Box>

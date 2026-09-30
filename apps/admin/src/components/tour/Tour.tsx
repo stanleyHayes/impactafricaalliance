@@ -13,6 +13,7 @@ import Typography from '@mui/material/Typography';
 import { useEffect, useMemo, useState } from 'react';
 
 import { usePreferences } from '../../lib/preferences';
+import { skinned, surfaceSx } from '../../theme/surfaces';
 
 import { TOUR_STEPS } from './tour-steps';
 import { useTour } from './TourContext';
@@ -88,15 +89,19 @@ export const Tour = (): JSX.Element | null => {
       disablePortal
       slotProps={{
         paper: {
-          sx: {
-            width: 320,
-            p: 2.5,
-            borderRadius: 2.5,
-            border: 1,
-            borderColor: 'divider',
-            boxShadow: (t) => t.shadows[12],
-            bgcolor: 'background.paper',
-          },
+          // Classic's own hairline card and shadow; a skin's overlay panel.
+          sx: skinned(
+            {
+              width: 320,
+              p: 2.5,
+              borderRadius: 2.5,
+              border: 1,
+              borderColor: 'divider',
+              boxShadow: (t) => t.shadows[12],
+              bgcolor: 'background.paper',
+            },
+            surfaceSx.overlay,
+          ),
         },
       }}
     >
@@ -112,19 +117,22 @@ export const Tour = (): JSX.Element | null => {
     </Popover>
   ) : (
     <Paper
-      sx={{
-        position: 'fixed',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: 360,
-        p: 3,
-        borderRadius: 3,
-        border: 1,
-        borderColor: 'divider',
-        boxShadow: (t) => t.shadows[16],
-        zIndex: 1401,
-      }}
+      sx={skinned(
+        {
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: 360,
+          p: 3,
+          borderRadius: 3,
+          border: 1,
+          borderColor: 'divider',
+          boxShadow: (t) => t.shadows[16],
+          zIndex: 1401,
+        },
+        surfaceSx.overlay,
+      )}
     >
       <TourCard
         step={step}
@@ -171,18 +179,24 @@ export const Tour = (): JSX.Element | null => {
             pointerEvents: 'none',
             animation: 'pulse-ring 2s infinite',
             '@keyframes pulse-ring': {
-              '0%': { boxShadow: `0 0 0 4px ${alpha(theme.palette.primary.main, 0.25)}, 0 0 0 9999px ${alpha(
-                theme.palette.background.default,
-                0.45,
-              )}` },
-              '50%': { boxShadow: `0 0 0 8px ${alpha(theme.palette.primary.main, 0.15)}, 0 0 0 9999px ${alpha(
-                theme.palette.background.default,
-                0.45,
-              )}` },
-              '100%': { boxShadow: `0 0 0 4px ${alpha(theme.palette.primary.main, 0.25)}, 0 0 0 9999px ${alpha(
-                theme.palette.background.default,
-                0.45,
-              )}` },
+              '0%': {
+                boxShadow: `0 0 0 4px ${alpha(theme.palette.primary.main, 0.25)}, 0 0 0 9999px ${alpha(
+                  theme.palette.background.default,
+                  0.45,
+                )}`,
+              },
+              '50%': {
+                boxShadow: `0 0 0 8px ${alpha(theme.palette.primary.main, 0.15)}, 0 0 0 9999px ${alpha(
+                  theme.palette.background.default,
+                  0.45,
+                )}`,
+              },
+              '100%': {
+                boxShadow: `0 0 0 4px ${alpha(theme.palette.primary.main, 0.25)}, 0 0 0 9999px ${alpha(
+                  theme.palette.background.default,
+                  0.45,
+                )}`,
+              },
             },
           }}
         />
@@ -203,13 +217,26 @@ interface TourCardProps {
   isLast: boolean;
 }
 
-const TourCard = ({ step, stepIndex, total, onBack, onNext, onClose, isLast }: TourCardProps): JSX.Element => (
+const TourCard = ({
+  step,
+  stepIndex,
+  total,
+  onBack,
+  onNext,
+  onClose,
+  isLast,
+}: TourCardProps): JSX.Element => (
   <Stack spacing={2}>
     <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
       <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
         {step.title}
       </Typography>
-      <IconButton size="small" aria-label="Close tour" onClick={onClose} sx={{ mt: -0.5, mr: -0.5 }}>
+      <IconButton
+        size="small"
+        aria-label="Close tour"
+        onClick={onClose}
+        sx={{ mt: -0.5, mr: -0.5 }}
+      >
         <CloseIcon fontSize="small" />
       </IconButton>
     </Stack>

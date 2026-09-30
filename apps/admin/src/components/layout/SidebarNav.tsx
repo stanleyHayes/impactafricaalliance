@@ -1,4 +1,3 @@
-import { brandColors } from '@iaa/shared';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import Badge from '@mui/material/Badge';
@@ -9,9 +8,7 @@ import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
-import { alpha, type Theme } from '@mui/material/styles';
 import Tooltip from '@mui/material/Tooltip';
-import type { SystemStyleObject } from '@mui/system';
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 
@@ -19,6 +16,7 @@ import { useAuth } from '../../auth/AuthContext';
 import { useNewSubmissionCounts } from '../../lib/admin-hooks';
 import { useApplicationCounts } from '../../lib/applications';
 import { useTaskSummary } from '../../lib/tasks';
+import { focusRingSx, navSx, skinned, tokenVar } from '../../theme/surfaces';
 
 import { buildNavGroups, type NavItem } from './nav-config';
 
@@ -38,23 +36,30 @@ interface SidebarNavProps {
 const SPINE_LEFT = 22;
 const TICK_WIDTH = 12;
 
-/** Black or white, whichever the palette says reads on the primary fill. */
-const onPrimary = (theme: Theme): string =>
-  theme.palette.getContrastText(theme.palette.primary.main);
+/**
+ * A nav row's look, idle, under the pointer and as the current page, from
+ * the skin's nav tokens. Classic's are this sidebar's own: secondary text,
+ * the hover fill, and a primary pill for the current page whose text takes
+ * whichever of black and white contrasts with the fill (black read at only
+ * 3.7:1 on Aura's violet; checked for every preset in theme.test). Neumorphism
+ * presses the current row in instead, and every skin's colours are checked
+ * the same way.
+ *
+ * The current row comes after the hover so it wins under the pointer too,
+ * as it always has.
+ */
+const NAV_ROW = {
+  color: navSx.link.color,
+  '&:hover': navSx.link['&:hover'],
+  '&.active': navSx.active,
+};
 
 /**
- * The current page's row: a primary pill. Its text and icon take whichever of
- * black and white the palette says contrasts with the fill, rather than
- * always black, which read at only 3.7:1 on Aura's violet. The same colour
- * holds on the darker hover fill (checked for every preset in theme.test).
+ * Keyboard focus on a nav row. Classic keeps MUI's focus fill, exactly as it
+ * was; a skin draws its ring outside the row, where it still shows around
+ * the filled current row (an inside ring in the primary would vanish on it).
  */
-const ACTIVE_ROW: SystemStyleObject<Theme> = {
-  bgcolor: 'primary.main',
-  color: onPrimary,
-  boxShadow: `0 6px 16px -8px ${alpha(brandColors.forest, 0.7)}`,
-  '& .MuiListItemIcon-root': { color: onPrimary },
-  '&:hover': { bgcolor: 'primary.dark', color: onPrimary },
-};
+const NAV_ROW_FOCUS = skinned({}, { '&.Mui-focusVisible, &:focus-visible': focusRingSx });
 
 /**
  * Collapsed icon-rail link: icon-only ListItemButton wrapped in a right-placed
@@ -73,23 +78,24 @@ const RailNavLink = ({
       to={item.to}
       end={item.end}
       onClick={onNavigate}
-      sx={{
-        minHeight: 44,
-        borderRadius: 2,
-        mx: 0.75,
-        my: 0.25,
-        px: 1.25,
-        justifyContent: 'center',
-        color: 'text.secondary',
-        '& .MuiListItemIcon-root': {
-          color: 'inherit',
-          minWidth: 0,
-          mr: 0,
+      sx={[
+        {
+          minHeight: 44,
+          borderRadius: 2,
+          mx: 0.75,
+          my: 0.25,
+          px: 1.25,
           justifyContent: 'center',
+          '& .MuiListItemIcon-root': {
+            color: 'inherit',
+            minWidth: 0,
+            mr: 0,
+            justifyContent: 'center',
+          },
+          ...NAV_ROW,
         },
-        '&:hover': { bgcolor: 'action.hover', color: 'text.primary' },
-        '&.active': ACTIVE_ROW,
-      }}
+        NAV_ROW_FOCUS,
+      ]}
     >
       <ListItemIcon>
         <Badge
@@ -123,12 +129,12 @@ const NavBadge = ({ count }: { count?: number }): JSX.Element | null =>
         height: 20,
         px: 0.75,
         borderRadius: 10,
-        bgcolor: 'error.main',
-        color: 'common.white',
+        ...navSx.badge,
         fontSize: '0.68rem',
         fontWeight: 800,
-        // The active row is a filled pill; keep the count legible on it.
-        '.active &': { bgcolor: 'common.black', color: 'common.white' },
+        // Where the current row is a filled pill, the count turns black to
+        // stay legible on it (Neumorphism's pressed row keeps it red).
+        '.active &': navSx.badgeOnActive,
       }}
     >
       {count > 99 ? '99+' : count}
@@ -161,9 +167,7 @@ const ThreadedNavLink = ({
       position: 'relative',
       // Active link -> light up its connector foot in primary.main so the
       // thread highlights exactly where you are (keyed off NavLink's class).
-      '& .MuiListItemButton-root.active ~ .iaa-thread-foot': {
-        bgcolor: 'primary.main',
-      },
+      '& .MuiListItemButton-root.active ~ .iaa-thread-foot': navSx.spineActive,
       // Vertical spine: a 1px divider-coloured guide down the gutter. The last
       // child only runs to the centre so the corner reads as a clean `└`.
       '&::before': {
@@ -173,7 +177,7 @@ const ThreadedNavLink = ({
         top: 0,
         bottom: last ? '50%' : 0,
         width: '1px',
-        bgcolor: 'divider',
+        ...navSx.spine,
         pointerEvents: 'none',
       },
     }}
@@ -183,26 +187,27 @@ const ThreadedNavLink = ({
       to={item.to}
       end={item.end}
       onClick={onNavigate}
-      sx={{
-        position: 'relative',
-        minHeight: 40,
-        borderRadius: 2,
-        ml: `${SPINE_LEFT + TICK_WIDTH}px`,
-        mr: 1.5,
-        my: 0.25,
-        px: 1.25,
-        justifyContent: 'flex-start',
-        color: 'text.secondary',
-        '& .MuiListItemIcon-root': {
-          color: 'inherit',
-          minWidth: 0,
+      sx={[
+        {
+          position: 'relative',
+          minHeight: 40,
+          borderRadius: 2,
+          ml: `${SPINE_LEFT + TICK_WIDTH}px`,
           mr: 1.5,
-          justifyContent: 'center',
-          '& .MuiSvgIcon-root': { fontSize: 20 },
+          my: 0.25,
+          px: 1.25,
+          justifyContent: 'flex-start',
+          '& .MuiListItemIcon-root': {
+            color: 'inherit',
+            minWidth: 0,
+            mr: 1.5,
+            justifyContent: 'center',
+            '& .MuiSvgIcon-root': { fontSize: 20 },
+          },
+          ...NAV_ROW,
         },
-        '&:hover': { bgcolor: 'action.hover', color: 'text.primary' },
-        '&.active': ACTIVE_ROW,
-      }}
+        NAV_ROW_FOCUS,
+      ]}
     >
       <ListItemIcon>{item.icon}</ListItemIcon>
       <ListItemText
@@ -222,7 +227,7 @@ const ThreadedNavLink = ({
         top: '50%',
         width: `${TICK_WIDTH}px`,
         height: '1px',
-        bgcolor: 'divider',
+        ...navSx.spine,
         pointerEvents: 'none',
         transition: (t) =>
           t.transitions.create('background-color', {
@@ -284,27 +289,38 @@ export const SidebarNav = ({ collapsed, onNavigate }: SidebarNavProps): JSX.Elem
               aria-controls={panelId}
               aria-label={`${open ? 'Collapse' : 'Expand'} ${group.title}`}
               disableRipple
-              sx={{
-                borderRadius: 2,
-                mx: 1.5,
-                py: 0.25,
-                pl: 1,
-                '&:hover': { bgcolor: 'transparent' },
-              }}
+              // Classic's heading stays flat under the pointer; a skin lets it
+              // answer like the rows it opens and closes.
+              sx={skinned(
+                {
+                  borderRadius: 2,
+                  mx: 1.5,
+                  py: 0.25,
+                  pl: 1,
+                  '&:hover': { bgcolor: 'transparent' },
+                },
+                {
+                  '&:hover': {
+                    bgcolor: tokenVar('navHoverBg'),
+                    boxShadow: tokenVar('navHoverShadow'),
+                  },
+                  '&.Mui-focusVisible': focusRingSx,
+                },
+              )}
             >
               <ListItemText
                 primary={group.title}
                 slotProps={{
                   primary: {
                     variant: 'overline',
-                    sx: { fontWeight: 700, letterSpacing: 1, color: 'text.secondary' },
+                    sx: { fontWeight: 700, letterSpacing: 1, ...navSx.heading },
                   },
                 }}
               />
               {open ? (
-                <ExpandLess fontSize="small" sx={{ color: 'text.disabled' }} aria-hidden />
+                <ExpandLess fontSize="small" sx={navSx.chevron} aria-hidden />
               ) : (
-                <ExpandMore fontSize="small" sx={{ color: 'text.disabled' }} aria-hidden />
+                <ExpandMore fontSize="small" sx={navSx.chevron} aria-hidden />
               )}
             </ListItemButton>
             {/* Children: threaded beneath the parent on one continuous guide. */}

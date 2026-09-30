@@ -7,12 +7,14 @@ import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
 import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
-import { alpha, useTheme, type SxProps, type Theme } from '@mui/material/styles';
+import { alpha, useTheme, type Theme } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
+import type { SystemStyleObject } from '@mui/system';
 import { DataGrid, type GridColDef, type GridRowModel, type GridRowsProp } from '@mui/x-data-grid';
 import { useMemo, useState, type ReactNode } from 'react';
 
+import { gridSx, skinned, surfaceSx, tokenVar } from '../../theme/surfaces';
 import { OptionSelect } from '../fields/OptionSelect';
 
 import { TableLoadingSkeleton } from './TableLoadingSkeleton';
@@ -135,8 +137,13 @@ const filterRows = (rows: GridRowsProp, search: string): GridRowsProp => {
   });
 };
 
-/** Theme-aware grid chrome: tinted header with readable titles in every preset and mode. */
-const buildGridSx = (theme: Theme): SxProps<Theme> => {
+/**
+ * Theme-aware grid chrome: tinted header with readable titles in every preset and mode.
+ *
+ * The header, rules, zebra rows, hover, selection and footer read the skin's
+ * grid tokens, whose Classic values are the ones this grid always had.
+ */
+const buildGridSx = (theme: Theme): SystemStyleObject<Theme> => {
   const green = theme.palette.primary.main;
   const gold = theme.palette.secondary.main;
   return {
@@ -146,10 +153,7 @@ const buildGridSx = (theme: Theme): SxProps<Theme> => {
     color: 'text.primary',
 
     // Header: subtle brand tint with high-contrast titles and a gold accent underline.
-    '& .MuiDataGrid-columnHeaders': {
-      bgcolor: alpha(green, 0.07),
-      borderBottom: `1px solid ${alpha(green, 0.18)}`,
-    },
+    '& .MuiDataGrid-columnHeaders': gridSx.header,
     '& .MuiDataGrid-columnHeader': { px: 2 },
     '& .MuiDataGrid-columnHeaderTitle': {
       fontSize: '0.75rem',
@@ -164,7 +168,7 @@ const buildGridSx = (theme: Theme): SxProps<Theme> => {
 
     // Cells + rows: airy, zebra-striped, with a calm hover.
     '& .MuiDataGrid-cell': {
-      borderColor: 'divider',
+      ...gridSx.rule,
       display: 'flex',
       alignItems: 'center',
       px: 2,
@@ -173,10 +177,10 @@ const buildGridSx = (theme: Theme): SxProps<Theme> => {
       transition: theme.transitions.create('background-color', {
         duration: theme.transitions.duration.shortest,
       }),
-      '&:nth-of-type(even)': { bgcolor: alpha(green, 0.02) },
+      '&:nth-of-type(even)': gridSx.stripe,
     },
-    '& .MuiDataGrid-row:hover': { bgcolor: alpha(green, 0.06) },
-    '& .MuiDataGrid-row.Mui-selected': { bgcolor: alpha(green, 0.1) },
+    '& .MuiDataGrid-row:hover': gridSx.hover,
+    '& .MuiDataGrid-row.Mui-selected': gridSx.selected,
     '& .MuiDataGrid-row.Mui-selected:hover': { bgcolor: alpha(green, 0.12) },
 
     // Restore visible, on-brand focus indicators for keyboard users.
@@ -196,7 +200,7 @@ const buildGridSx = (theme: Theme): SxProps<Theme> => {
     '& .MuiDataGrid-footerContainer': {
       borderTop: '1px solid',
       borderColor: 'divider',
-      bgcolor: 'background.default',
+      ...gridSx.footer,
       px: 1.5,
     },
     '& .MuiTablePagination-root': {
@@ -221,6 +225,23 @@ const buildGridSx = (theme: Theme): SxProps<Theme> => {
     },
   };
 };
+
+/**
+ * What only a skin changes in the grid: row rules in the skin's rule colour
+ * rather than Classic's faint green, and keyboard focus in the skin's ring
+ * (Classic keeps its gold, which is too faint to rely on for the skins'
+ * 3:1 on their surfaces).
+ */
+const GRID_SKIN_SX = skinned(
+  {},
+  {
+    '--DataGrid-rowBorderColor': tokenVar('gridRule'),
+    '& .MuiDataGrid-cell:focus-visible, & .MuiDataGrid-cell:focus-within, & .MuiDataGrid-columnHeader:focus-visible, & .MuiDataGrid-columnHeader:focus-within':
+      { outline: tokenVar('focusRing'), outlineOffset: '-2px' },
+  },
+);
+
+const TOOLBAR_SKIN_SX = skinned({ bgcolor: 'background.paper' }, { bgcolor: 'transparent' });
 
 interface TableToolbarProps {
   search: string;
@@ -257,13 +278,12 @@ const TableToolbar = ({
       alignItems={{ xs: 'stretch', sm: 'center' }}
       justifyContent="space-between"
       spacing={1.25}
-      sx={{
-        p: 2,
-        borderBottom: '1px solid',
-        borderColor: 'divider',
-        bgcolor: 'background.paper',
-        flexShrink: 0,
-      }}
+      sx={[
+        { p: 2, borderBottom: '1px solid', borderColor: 'divider', flexShrink: 0 },
+        // Classic paints the strip in paper, as its card is; a skin lets the
+        // card's own material (frost, clay) run through it.
+        TOOLBAR_SKIN_SX,
+      ]}
     >
       <Stack
         direction="row"
@@ -305,10 +325,7 @@ const TableToolbar = ({
             value={filterValues[filter.field] ?? ''}
             onChange={(value: string) => onFilterChange(filter.field, value)}
             placeholder="All"
-            options={[
-              { value: '', label: `All ${filter.label.toLowerCase()}` },
-              ...filter.options,
-            ]}
+            options={[{ value: '', label: `All ${filter.label.toLowerCase()}` }, ...filter.options]}
             sx={{ minWidth: 190 }}
           />
         ))}
@@ -320,7 +337,7 @@ const TableToolbar = ({
             onClick={onClearFilters}
             onDelete={onClearFilters}
             deleteIcon={<FilterAltOffIcon />}
-            sx={{ borderRadius: 2 }}
+            sx={{ borderRadius: tokenVar('chipRadius') }}
           />
         )}
         {!showControls && <Box sx={{ display: { xs: 'none', sm: 'block' } }} />}
@@ -425,10 +442,8 @@ export const DataTable = (props: DataTableProps): JSX.Element => {
     setFilterValues((prev) => ({ ...prev, [field]: value }));
 
   const containerSx = {
-    bgcolor: 'background.paper',
     borderRadius: 3,
-    border: '1px solid',
-    borderColor: 'divider',
+    ...surfaceSx.card,
     overflow: 'hidden',
   } as const;
 
@@ -515,7 +530,7 @@ export const DataTable = (props: DataTableProps): JSX.Element => {
                 </Stack>
               ),
             }}
-            sx={buildGridSx(theme)}
+            sx={[buildGridSx(theme), GRID_SKIN_SX]}
           />
         </Box>
       )}

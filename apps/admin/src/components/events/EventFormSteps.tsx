@@ -16,9 +16,9 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import type { ComponentProps } from 'react';
 
-
 import type { EventFormState } from '../../lib/event-form';
 import { CONTENT_STATUS_OPTIONS, EVENT_TYPE_OPTIONS } from '../../lib/select-options';
+import { skinned, surfaceSx } from '../../theme/surfaces';
 import { EventDateTimeField } from '../fields/EventDateTimeField';
 import { MediaUploadField } from '../fields/MediaUploadField';
 import { OptionSelect } from '../fields/OptionSelect';
@@ -184,7 +184,13 @@ export const EventRegistrationFields = ({
 
 export const EventFollowUpFields = ({ form, setField }: StepProps): JSX.Element => (
   <>
-    <Box sx={{ p: 2.5, bgcolor: 'action.hover', borderRadius: 2 }}>
+    <Box
+      sx={[
+        { p: 2.5, borderRadius: 2 },
+        // A note set into the form: grey in Classic, one of the skin's wells elsewhere.
+        skinned({ bgcolor: 'action.hover' }, surfaceSx.inset),
+      ]}
+    >
       <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
         Stay in touch automatically
       </Typography>

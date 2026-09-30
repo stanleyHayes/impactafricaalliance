@@ -41,6 +41,7 @@ import { useTaskDrawer } from '../../components/tasks/use-task-drawer';
 import { useTaskFilters, useTaskSort } from '../../components/tasks/use-task-filters';
 import { pageGuides } from '../../lib/page-guides';
 import { useTasks } from '../../lib/tasks';
+import { skinned, surfaceSx } from '../../theme/surfaces';
 
 /** Rows per page: a screenful on a laptop, and a short scroll on a phone. */
 const PAGE_SIZE = 25;
@@ -206,6 +207,16 @@ const TaskTable = ({
 };
 
 /**
+ * The count and sort strip at the top of the list. Classic tints it faintly
+ * with the primary; the other skins use their section-header tint, as on
+ * every other card with a heading strip.
+ */
+const listHeaderSx = skinned(
+  { bgcolor: (theme) => alpha(theme.palette.primary.main, 0.03) },
+  surfaceSx.tinted,
+);
+
+/**
  * Every task across the team, filtered, sorted and paged by the API so the
  * browser never loads the whole list. Filters, sort and page live in the
  * address; a row opens the task in the drawer beside the list.
@@ -316,10 +327,8 @@ const AllTasksPage = (): JSX.Element => {
       <TaskFilters controls={controls} />
       <Box
         sx={{
-          border: 1,
-          borderColor: 'divider',
           borderRadius: 3,
-          bgcolor: 'background.paper',
+          ...surfaceSx.card,
           overflow: 'hidden',
           opacity: query.isPlaceholderData ? 0.7 : 1,
           transition: 'opacity 150ms ease',
@@ -330,13 +339,7 @@ const AllTasksPage = (): JSX.Element => {
           direction={{ xs: 'column', sm: 'row' }}
           spacing={1.5}
           alignItems={{ xs: 'stretch', sm: 'center' }}
-          sx={{
-            px: 2,
-            py: 1.25,
-            borderBottom: 1,
-            borderColor: 'divider',
-            bgcolor: (current) => alpha(current.palette.primary.main, 0.03),
-          }}
+          sx={[{ px: 2, py: 1.25, borderBottom: 1, borderColor: 'divider' }, listHeaderSx]}
         >
           <Typography
             ref={headingRef}

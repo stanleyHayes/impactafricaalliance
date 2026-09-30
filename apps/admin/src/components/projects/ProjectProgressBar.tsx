@@ -4,7 +4,16 @@ import LinearProgress from '@mui/material/LinearProgress';
 import Typography from '@mui/material/Typography';
 import { useId } from 'react';
 
+import { skinned, tokenVar } from '../../theme/surfaces';
+
 import { progressText } from './project-format';
+
+/**
+ * The track under the bar. Classic keeps its quiet grey; the other skins use
+ * their own track (sunk in Neumorphism and Clay, tinted glass in Glass), which
+ * the theme would give the bar if this did not set a colour.
+ */
+const trackSx = skinned({ bgcolor: 'action.hover' }, { bgcolor: tokenVar('trackBg') });
 
 export interface ProjectProgressBarProps {
   progress: ProjectProgress;
@@ -30,12 +39,14 @@ export const ProjectProgressBar = ({
         value={progress.value ?? 0}
         color={manual ? 'secondary' : 'primary'}
         aria-labelledby={labelId}
-        sx={{
-          height: dense ? 6 : 8,
-          borderRadius: 99,
-          bgcolor: 'action.hover',
-          '& .MuiLinearProgress-bar': { borderRadius: 99 },
-        }}
+        sx={[
+          {
+            height: dense ? 6 : 8,
+            borderRadius: 99,
+            '& .MuiLinearProgress-bar': { borderRadius: 99 },
+          },
+          trackSx,
+        ]}
       />
       <Typography
         id={labelId}

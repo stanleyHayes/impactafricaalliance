@@ -21,6 +21,7 @@ import {
 import { initials } from '../../lib/initials';
 import { usePeopleSearch } from '../../lib/people';
 import { useDebouncedValue } from '../../lib/use-debounced-value';
+import { skinned, surfaceSx, tokenVar } from '../../theme/surfaces';
 
 /** An `@` being typed: where it starts and what follows it so far. */
 interface MentionQuery {
@@ -42,6 +43,37 @@ export const mentionAtCaret = (text: string, caret: number): MentionQuery | null
 
 /** People shown in the list at once; more typing narrows it. */
 const SUGGESTIONS = 6;
+
+/**
+ * The list's panel. Classic: a paper with a divider edge and MUI's shadow for
+ * its elevation. The other skins draw it as they draw every menu and listbox,
+ * with the same inner padding their listboxes have.
+ */
+const listPanelSx = skinned(
+  { mt: 0.5, py: 0.5, borderRadius: 2.5, border: 1, borderColor: 'divider' },
+  { ...surfaceSx.overlay, px: '6px', py: '6px' },
+);
+
+/**
+ * A colleague in the list. Classic tints the one the keyboard is on. The
+ * other skins paint it as their listboxes paint an `aria-selected` option,
+ * which this one is: the skins' hover look is too faint here (in Glass it is
+ * frosted white on a frosted white panel), and this highlight is the only
+ * sign of who Enter will mention.
+ */
+const optionSx = (highlighted: boolean) =>
+  skinned(
+    {
+      bgcolor: (theme) => (highlighted ? alpha(theme.palette.primary.main, 0.1) : 'transparent'),
+    },
+    {
+      borderRadius: tokenVar('itemRadius'),
+      bgcolor: highlighted ? tokenVar('itemSelectedBg') : 'transparent',
+      boxShadow: highlighted ? tokenVar('itemSelectedShadow') : 'none',
+      // The name takes the skin's selected colour; the email stays secondary.
+      ...(highlighted && { '& .MuiTypography-body2': { color: tokenVar('itemSelectedColor') } }),
+    },
+  );
 
 /** The colleagues matching what follows the `@`, as a list the keyboard can move through. */
 const MentionList = ({
@@ -67,13 +99,7 @@ const MentionList = ({
     placement="bottom-start"
     sx={{ zIndex: (theme) => theme.zIndex.modal + 1, width: anchor?.clientWidth }}
   >
-    <Paper
-      id={id}
-      role="listbox"
-      aria-label="Colleagues to mention"
-      elevation={8}
-      sx={{ mt: 0.5, py: 0.5, borderRadius: 2.5, border: 1, borderColor: 'divider' }}
-    >
+    <Paper id={id} role="listbox" aria-label="Colleagues to mention" elevation={8} sx={listPanelSx}>
       {people.map((person, index) => (
         <Box
           key={person.id}
@@ -86,16 +112,17 @@ const MentionList = ({
             onChoose(person);
           }}
           onMouseEnter={() => onHighlight(index)}
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1.25,
-            px: 1.5,
-            py: 0.75,
-            cursor: 'pointer',
-            bgcolor: (theme) =>
-              index === highlight ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
-          }}
+          sx={[
+            {
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.25,
+              px: 1.5,
+              py: 0.75,
+              cursor: 'pointer',
+            },
+            optionSx(index === highlight),
+          ]}
         >
           <Avatar
             aria-hidden

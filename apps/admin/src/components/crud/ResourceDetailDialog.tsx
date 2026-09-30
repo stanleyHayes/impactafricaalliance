@@ -13,7 +13,8 @@ import Typography from '@mui/material/Typography';
 
 import { formatUtcDate } from '../../lib/date';
 import type { FieldConfig, ResourceConfig, ResourceRow } from '../../resources/types';
-import { DialogFooter, DialogHeader, dialogPaperSx } from '../dialogs/DialogShell';
+import { surfaceSx } from '../../theme/surfaces';
+import { DialogFooter, DialogHeader, dialogBodySx, dialogPaperSx } from '../dialogs/DialogShell';
 import { InformationItem } from '../InformationItem';
 import { Markdown } from '../markdown/Markdown';
 
@@ -195,7 +196,7 @@ export const ResourceDetailDialog = ({
         description="Review the saved information and attached assets."
         onClose={onClose}
       />
-      <DialogContent sx={{ bgcolor: 'background.default', py: 3 }}>
+      <DialogContent sx={[dialogBodySx, { py: 3 }]}>
         {row ? (
           <Box
             sx={{
@@ -211,10 +212,9 @@ export const ResourceDetailDialog = ({
                   minWidth: 0,
                   gridColumn: field.wide ? '1 / -1' : 'auto',
                   p: 2,
-                  border: '1px solid',
-                  borderColor: 'divider',
                   borderRadius: 2.5,
-                  bgcolor: 'background.paper',
+                  // The skin's card (Classic: paper with a hairline).
+                  ...surfaceSx.card,
                   transition: theme.transitions.create('border-color', {
                     duration: theme.transitions.duration.shorter,
                   }),

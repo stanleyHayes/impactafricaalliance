@@ -23,13 +23,11 @@ import { useState, type ReactNode } from 'react';
 
 import { formatUtcDate } from '../../lib/date';
 import type { ResourceRow } from '../../resources/types';
-import { DialogFooter, dialogPaperSx } from '../dialogs/DialogShell';
+import { skinned, surfaceSx, tokenVar } from '../../theme/surfaces';
+import { DialogFooter, dialogBodySx, dialogPaperSx } from '../dialogs/DialogShell';
 import { Markdown } from '../markdown/Markdown';
 import { PublicationStatusList } from '../social/PublicationStatusList';
-import {
-  SocialPublishDialog,
-  type SocialPublishSource,
-} from '../social/SocialPublishDialog';
+import { SocialPublishDialog, type SocialPublishSource } from '../social/SocialPublishDialog';
 
 /** Where the article lives publicly, for the link each post carries. */
 const SITE_URL = (
@@ -166,7 +164,10 @@ const ArticleHero = ({
   const gold = theme.palette.secondary.main;
 
   return (
-    <DialogTitle component="div" sx={{ position: 'relative', minHeight: { xs: 330, md: 390 }, p: 0 }}>
+    <DialogTitle
+      component="div"
+      sx={{ position: 'relative', minHeight: { xs: 330, md: 390 }, p: 0 }}
+    >
       {article.cover ? (
         <Box
           component="img"
@@ -193,91 +194,91 @@ const ArticleHero = ({
           <NewspaperRoundedIcon sx={{ color: 'rgba(255,255,255,0.16)', fontSize: 112 }} />
         </Box>
       )}
-    <Box
-      sx={{
-        position: 'absolute',
-        inset: 0,
-        background: 'linear-gradient(180deg, rgba(10,31,20,0.16) 10%, rgba(10,31,20,0.9) 100%)',
-      }}
-    />
-
-    <IconButton
-      aria-label="Close article details"
-      onClick={onClose}
-      sx={{
-        position: 'absolute',
-        top: 16,
-        right: 16,
-        zIndex: 2,
-        border: '1px solid rgba(255,255,255,0.28)',
-        bgcolor: 'rgba(10,31,20,0.38)',
-        color: 'common.white',
-        backdropFilter: 'blur(8px)',
-        '&:hover': { bgcolor: 'rgba(10,31,20,0.58)' },
-      }}
-    >
-      <CloseRoundedIcon />
-    </IconButton>
-
-    <Box
-      sx={{
-        position: 'absolute',
-        right: 0,
-        bottom: 0,
-        left: 0,
-        zIndex: 1,
-        p: { xs: 3, sm: 4, md: 5 },
-        color: 'common.white',
-      }}
-    >
-      <Stack direction="row" useFlexGap flexWrap="wrap" gap={1} sx={{ mb: 2 }}>
-        <Chip
-          size="small"
-          label={article.status}
-          color={statusColor(article.status)}
-          sx={{ fontWeight: 700, textTransform: 'capitalize' }}
-        />
-        <Chip
-          size="small"
-          icon={<AccessTimeRoundedIcon />}
-          label={`${article.readingTime} min read`}
-          sx={{
-            border: '1px solid rgba(255,255,255,0.22)',
-            bgcolor: 'rgba(255,255,255,0.12)',
-            color: 'common.white',
-            '& .MuiChip-icon': { color: 'secondary.light' },
-          }}
-        />
-      </Stack>
-      <Typography
-        id="article-detail-title"
-        component="h2"
-        variant="h3"
+      <Box
         sx={{
-          maxWidth: 920,
+          position: 'absolute',
+          inset: 0,
+          background: 'linear-gradient(180deg, rgba(10,31,20,0.16) 10%, rgba(10,31,20,0.9) 100%)',
+        }}
+      />
+
+      <IconButton
+        aria-label="Close article details"
+        onClick={onClose}
+        sx={{
+          position: 'absolute',
+          top: 16,
+          right: 16,
+          zIndex: 2,
+          border: '1px solid rgba(255,255,255,0.28)',
+          bgcolor: 'rgba(10,31,20,0.38)',
           color: 'common.white',
-          fontSize: { xs: '1.8rem', sm: '2.25rem', md: '2.8rem' },
-          lineHeight: 1.1,
+          backdropFilter: 'blur(8px)',
+          '&:hover': { bgcolor: 'rgba(10,31,20,0.58)' },
         }}
       >
-        {article.title}
-      </Typography>
-      {article.excerpt && (
+        <CloseRoundedIcon />
+      </IconButton>
+
+      <Box
+        sx={{
+          position: 'absolute',
+          right: 0,
+          bottom: 0,
+          left: 0,
+          zIndex: 1,
+          p: { xs: 3, sm: 4, md: 5 },
+          color: 'common.white',
+        }}
+      >
+        <Stack direction="row" useFlexGap flexWrap="wrap" gap={1} sx={{ mb: 2 }}>
+          <Chip
+            size="small"
+            label={article.status}
+            color={statusColor(article.status)}
+            sx={{ fontWeight: 700, textTransform: 'capitalize' }}
+          />
+          <Chip
+            size="small"
+            icon={<AccessTimeRoundedIcon />}
+            label={`${article.readingTime} min read`}
+            sx={{
+              border: '1px solid rgba(255,255,255,0.22)',
+              bgcolor: 'rgba(255,255,255,0.12)',
+              color: 'common.white',
+              '& .MuiChip-icon': { color: 'secondary.light' },
+            }}
+          />
+        </Stack>
         <Typography
-          id="article-detail-excerpt"
+          id="article-detail-title"
+          component="h2"
+          variant="h3"
           sx={{
-            maxWidth: 780,
-            mt: 1.5,
-            color: 'rgba(255,255,255,0.76)',
-            fontSize: { xs: '0.94rem', md: '1.05rem' },
-            lineHeight: 1.65,
+            maxWidth: 920,
+            color: 'common.white',
+            fontSize: { xs: '1.8rem', sm: '2.25rem', md: '2.8rem' },
+            lineHeight: 1.1,
           }}
         >
-          {article.excerpt}
+          {article.title}
         </Typography>
-      )}
-    </Box>
-  </DialogTitle>
+        {article.excerpt && (
+          <Typography
+            id="article-detail-excerpt"
+            sx={{
+              maxWidth: 780,
+              mt: 1.5,
+              color: 'rgba(255,255,255,0.76)',
+              fontSize: { xs: '0.94rem', md: '1.05rem' },
+              lineHeight: 1.65,
+            }}
+          >
+            {article.excerpt}
+          </Typography>
+        )}
+      </Box>
+    </DialogTitle>
   );
 };
 
@@ -297,14 +298,18 @@ const ArticleBodyPreview = ({ body }: { body: string }): JSX.Element => (
       <Markdown>{body}</Markdown>
     ) : (
       <Box
-        sx={{
-          py: 8,
-          border: 1,
-          borderColor: 'divider',
-          borderRadius: 3,
-          bgcolor: 'background.default',
-          textAlign: 'center',
-        }}
+        // An empty well: Classic's page-coloured box, a skin's inset.
+        sx={skinned(
+          {
+            py: 8,
+            border: 1,
+            borderColor: 'divider',
+            borderRadius: 3,
+            bgcolor: 'background.default',
+            textAlign: 'center',
+          },
+          surfaceSx.inset,
+        )}
       >
         <NewspaperRoundedIcon sx={{ color: 'text.disabled', fontSize: 44 }} />
         <Typography sx={{ mt: 1.5, fontWeight: 650 }}>No article body yet</Typography>
@@ -355,21 +360,25 @@ const ArticleMetadata = ({ article }: { article: ArticleDetail }): JSX.Element =
       <DetailItem label="Slug">
         <Box
           component="code"
-          sx={{
-            display: 'block',
-            maxWidth: '100%',
-            overflow: 'hidden',
-            px: 1.25,
-            py: 1,
-            border: '1px solid',
-            borderColor: 'divider',
-            borderRadius: 1.5,
-            bgcolor: 'background.paper',
-            color: 'text.secondary',
-            fontSize: '0.78rem',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}
+          // The address sits in a small well: Classic's paper strip, a skin's inset.
+          sx={skinned(
+            {
+              display: 'block',
+              maxWidth: '100%',
+              overflow: 'hidden',
+              px: 1.25,
+              py: 1,
+              border: '1px solid',
+              borderColor: 'divider',
+              borderRadius: 1.5,
+              bgcolor: 'background.paper',
+              color: 'text.secondary',
+              fontSize: '0.78rem',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            },
+            surfaceSx.inset,
+          )}
         >
           /news/{article.slug || 'untitled'}
         </Box>
@@ -390,7 +399,8 @@ const ArticleMetadata = ({ article }: { article: ArticleDetail }): JSX.Element =
             size="small"
             variant="outlined"
             label={formatTag(tag)}
-            sx={{ bgcolor: 'background.paper' }}
+            // Lifted off the side panel: Classic's paper, a skin's raised surface.
+            sx={skinned({ bgcolor: 'background.paper' }, { bgcolor: tokenVar('surfaceRaisedBg') })}
           />
         ))}
       </Stack>
@@ -464,12 +474,10 @@ export const ArticleDetailDialog = ({
           </Grid>
           <Grid
             size={{ xs: 12, md: 4 }}
-            sx={{
-              borderTop: { xs: 1, md: 0 },
-              borderLeft: { md: 1 },
-              borderColor: 'divider',
-              bgcolor: 'background.default',
-            }}
+            sx={[
+              { borderTop: { xs: 1, md: 0 }, borderLeft: { md: 1 }, borderColor: 'divider' },
+              dialogBodySx,
+            ]}
           >
             <ArticleMetadata article={article} />
             {articleId && (

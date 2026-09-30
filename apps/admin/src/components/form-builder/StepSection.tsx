@@ -27,11 +27,12 @@ import Card from '@mui/material/Card';
 import Collapse from '@mui/material/Collapse';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
-import { alpha } from '@mui/material/styles';
+import { alpha, type Theme } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useRef, useState, type MutableRefObject } from 'react';
 
+import { skinned, tokenVar } from '../../theme/surfaces';
 import { MediaUploadField } from '../fields/MediaUploadField';
 
 import { AddQuestionButton } from './AddQuestionButton';
@@ -43,6 +44,29 @@ import {
 } from './builder-model';
 import { QuestionCard } from './QuestionCard';
 import { VisibilityRuleEditor } from './VisibilityRuleEditor';
+
+/**
+ * A step sits inside the editor's card, so a skin draws it as a nested card:
+ * less depth than the card around it, so the shadows do not stack up.
+ */
+const STEP_CARD_SX = skinned(
+  { borderRadius: 3, overflow: 'visible' },
+  {
+    bgcolor: tokenVar('surfaceNestedBg'),
+    backgroundImage: 'none',
+    boxShadow: tokenVar('surfaceNestedShadow'),
+    backdropFilter: 'none',
+  },
+);
+
+/**
+ * The step header's tint: Classic keeps its own 5% primary, and the other
+ * skins use the tint they give every section header.
+ */
+const HEADER_TINT_SX = skinned(
+  { bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.05) },
+  { bgcolor: tokenVar('surfaceTintBg') },
+);
 
 /** The step's name and where it sits, with its move and remove buttons. */
 const StepHeader = ({
@@ -62,22 +86,24 @@ const StepHeader = ({
   onRemoveStep: () => void;
   disabled: boolean;
 }): JSX.Element => (
-  // An object `sx`, with the theme read only for the tint: the console's
-  // Stack merges its layout props into `sx`, and a whole-`sx` function would
-  // lose every style here (padding, tint and divider alike).
   <Stack
     direction="row"
     alignItems="center"
     spacing={1}
-    sx={{
-      px: { xs: 2, md: 2.5 },
-      py: 1.5,
-      borderBottom: 1,
-      borderColor: 'divider',
-      bgcolor: (theme) => alpha(theme.palette.primary.main, 0.05),
-      borderTopLeftRadius: 12,
-      borderTopRightRadius: 12,
-    }}
+    sx={[
+      {
+        px: { xs: 2, md: 2.5 },
+        py: 1.5,
+        borderBottom: 1,
+        borderColor: 'divider',
+        // The card's own corners (12px in Classic), because the card does
+        // not clip: each skin rounds cards more, and a fixed radius would let
+        // the tint show past the curve.
+        borderTopLeftRadius: 'inherit',
+        borderTopRightRadius: 'inherit',
+      },
+      HEADER_TINT_SX,
+    ]}
   >
     <Typography
       id={headingId}
@@ -225,12 +251,7 @@ export const StepSection = ({
   };
 
   return (
-    <Card
-      component="section"
-      variant="outlined"
-      aria-labelledby={headingId}
-      sx={{ borderRadius: 3, overflow: 'visible' }}
-    >
+    <Card component="section" variant="outlined" aria-labelledby={headingId} sx={STEP_CARD_SX}>
       <StepHeader
         headingId={headingId}
         title={step.title}

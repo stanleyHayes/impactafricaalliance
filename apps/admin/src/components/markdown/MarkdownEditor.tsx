@@ -10,13 +10,14 @@ import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
 import InputBase from '@mui/material/InputBase';
 import Stack from '@mui/material/Stack';
-import { alpha, useTheme } from '@mui/material/styles';
+import { alpha, useTheme, type Theme } from '@mui/material/styles';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useId, useRef, useState } from 'react';
 
+import { skinned, tokenVar } from '../../theme/surfaces';
 import { AiAssistButton } from '../ai/AiAssistButton';
 
 import { Markdown } from './Markdown';
@@ -28,6 +29,37 @@ interface MarkdownEditorProps {
   error?: string;
   minRows?: number;
 }
+
+/**
+ * The editor's frame. It is one composite text field: Classic's own frame
+ * (a hairline, a primary edge and glow in focus); in a skin, the skin's field
+ * (its well, edge, corner, depth and focus glow). An error keeps its red edge
+ * either way.
+ */
+const editorFrameSx = (theme: Theme, error: boolean) => {
+  const danger = theme.palette.error.main;
+  const accent = error ? danger : theme.palette.primary.main;
+  return skinned(
+    {
+      border: `1px solid ${error ? danger : theme.palette.divider}`,
+      borderRadius: 2,
+      overflow: 'hidden',
+      transition: theme.transitions.create(['border-color', 'box-shadow']),
+      '&:focus-within': { borderColor: accent, boxShadow: `0 0 0 2px ${alpha(accent, 0.16)}` },
+    },
+    {
+      border: `1px solid ${error ? danger : tokenVar('inputBorderColor')}`,
+      borderRadius: tokenVar('inputRadius'),
+      bgcolor: tokenVar('inputBg'),
+      boxShadow: tokenVar('inputShadow'),
+      backdropFilter: tokenVar('inputBackdrop'),
+      '&:focus-within': {
+        borderColor: error ? danger : tokenVar('focusRingColor'),
+        boxShadow: tokenVar('inputFocusShadow'),
+      },
+    },
+  )(theme);
+};
 
 /**
  * A markdown rich-text editor: formatting toolbar + a write/preview switch.
@@ -141,9 +173,6 @@ export const MarkdownEditor = ({
     },
   ];
 
-  const accent = error ? theme.palette.error.main : theme.palette.primary.main;
-  const frameColor = error ? theme.palette.error.main : theme.palette.divider;
-
   return (
     <Box>
       {label && (
@@ -155,18 +184,7 @@ export const MarkdownEditor = ({
           {label}
         </Typography>
       )}
-      <Box
-        sx={{
-          border: `1px solid ${frameColor}`,
-          borderRadius: 2,
-          overflow: 'hidden',
-          transition: theme.transitions.create(['border-color', 'box-shadow']),
-          '&:focus-within': {
-            borderColor: accent,
-            boxShadow: `0 0 0 2px ${alpha(accent, 0.16)}`,
-          },
-        }}
-      >
+      <Box sx={editorFrameSx(theme, Boolean(error))}>
         <Stack
           direction="row"
           alignItems="center"
@@ -201,20 +219,31 @@ export const MarkdownEditor = ({
               exclusive
               value={mode}
               onChange={(_event, next) => next && setMode(next as 'write' | 'preview')}
-              sx={{
-                '& .MuiToggleButton-root': {
-                  px: 1.5,
-                  py: 0.25,
-                  border: 'none',
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  color: 'text.secondary',
-                  '&.Mui-selected': {
-                    color: 'text.primary',
-                    bgcolor: alpha(theme.palette.primary.main, 0.1),
+              // Classic's own tinted selection; a skin's segmented selection.
+              sx={skinned(
+                {
+                  '& .MuiToggleButton-root': {
+                    px: 1.5,
+                    py: 0.25,
+                    border: 'none',
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    color: 'text.secondary',
+                    '&.Mui-selected': {
+                      color: 'text.primary',
+                      bgcolor: alpha(theme.palette.primary.main, 0.1),
+                    },
                   },
                 },
-              }}
+                {
+                  '& .MuiToggleButton-root': {
+                    '&.Mui-selected, &.Mui-selected:hover': {
+                      color: tokenVar('segmentSelectedColor'),
+                      bgcolor: tokenVar('segmentSelectedBg'),
+                    },
+                  },
+                },
+              )}
             >
               <ToggleButton value="write">Write</ToggleButton>
               <ToggleButton value="preview">Preview</ToggleButton>
@@ -236,14 +265,18 @@ export const MarkdownEditor = ({
               'aria-describedby': helpId,
               'aria-invalid': Boolean(error) || undefined,
             }}
-            sx={{
-              display: 'block',
-              p: 1.75,
-              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
-              fontSize: '0.875rem',
-              lineHeight: 1.7,
-              bgcolor: 'background.paper',
-            }}
+            // Classic's paper; in a skin the frame's field colour shows through.
+            sx={skinned(
+              {
+                display: 'block',
+                p: 1.75,
+                fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+                fontSize: '0.875rem',
+                lineHeight: 1.7,
+                bgcolor: 'background.paper',
+              },
+              { bgcolor: 'transparent' },
+            )}
           />
         ) : (
           <Box sx={{ p: 1.75, minHeight: minRows * 22, maxHeight: 540, overflowY: 'auto' }}>

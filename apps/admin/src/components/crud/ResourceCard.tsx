@@ -14,6 +14,7 @@ import Typography from '@mui/material/Typography';
 
 import { formatUtcDate } from '../../lib/date';
 import type { FieldConfig, ResourceConfig, ResourceRow } from '../../resources/types';
+import { skinned, surfaceSx, tokenVar } from '../../theme/surfaces';
 import { InformationItem } from '../InformationItem';
 
 interface ResourceRowActionsProps {
@@ -26,11 +27,23 @@ interface ResourceRowActionsProps {
   onDelete: (row: ResourceRow) => void;
 }
 
-const tintButtonSx = (tone: 'primary' | 'error') => ({
-  color: tone === 'error' ? 'error.main' : 'text.secondary',
-  bgcolor: tone === 'error' ? 'rgba(211,47,47,0.06)' : 'rgba(27,94,32,0.06)',
-  '&:hover': { bgcolor: tone === 'error' ? 'rgba(211,47,47,0.12)' : 'rgba(27,94,32,0.12)' },
-});
+/**
+ * A row action's tinted square. Classic keeps its fixed tints exactly. In a
+ * skin the plain actions become the skin's own controls (the theme gives
+ * them their depth), while Delete keeps its red tint, which means something,
+ * and takes the same depth.
+ */
+const tintButtonSx = (tone: 'primary' | 'error') =>
+  skinned(
+    {
+      color: tone === 'error' ? 'error.main' : 'text.secondary',
+      bgcolor: tone === 'error' ? 'rgba(211,47,47,0.06)' : 'rgba(27,94,32,0.06)',
+      '&:hover': { bgcolor: tone === 'error' ? 'rgba(211,47,47,0.12)' : 'rgba(27,94,32,0.12)' },
+    },
+    tone === 'error'
+      ? {}
+      : { bgcolor: tokenVar('controlBg'), '&:hover': { bgcolor: tokenVar('controlBg') } },
+  );
 
 /**
  * Per-row view / edit / delete controls. Edit + delete are gated by permission.
@@ -201,23 +214,31 @@ const deriveCardModel = (resource: ResourceConfig, row: ResourceRow): CardModel 
   };
 };
 
+/**
+ * The record's picture, or its collection's icon, in a small frame. Classic's
+ * frame is a grey hairline square; a skin's is its icon tile, sunk into the
+ * card. The picture itself is never restyled.
+ */
 const Thumb = ({ imageUrl, icon }: { imageUrl?: string; icon?: JSX.Element }): JSX.Element => (
   <Box
-    sx={{
-      width: 48,
-      height: 48,
-      flexShrink: 0,
-      borderRadius: 2,
-      overflow: 'hidden',
-      bgcolor: 'action.hover',
-      border: '1px solid',
-      borderColor: 'divider',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      color: 'text.secondary',
-      '& > svg': { fontSize: 24 },
-    }}
+    sx={skinned(
+      {
+        width: 48,
+        height: 48,
+        flexShrink: 0,
+        borderRadius: 2,
+        overflow: 'hidden',
+        bgcolor: 'action.hover',
+        border: '1px solid',
+        borderColor: 'divider',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: 'text.secondary',
+        '& > svg': { fontSize: 24 },
+      },
+      { ...surfaceSx.tileInset, border: tokenVar('tileBorder') },
+    )}
   >
     {imageUrl ? (
       <Box
@@ -232,6 +253,9 @@ const Thumb = ({ imageUrl, icon }: { imageUrl?: string; icon?: JSX.Element }): J
     )}
   </Box>
 );
+
+/** Under the pointer a skin lifts the card on its own hover shadow, not Classic's `shadows[3]`. */
+const CARD_HOVER_SKIN = skinned({}, { '&:hover': surfaceSx.cardHover });
 
 interface ResourceCardProps {
   resource: ResourceConfig;
@@ -260,22 +284,25 @@ export const ResourceCard = ({
   return (
     <Card
       variant="outlined"
-      sx={{
-        height: '100%',
-        position: 'relative',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-        borderRadius: 2.5,
-        transition: theme.transitions.create(['box-shadow', 'border-color', 'transform'], {
-          duration: theme.transitions.duration.shorter,
-        }),
-        '&:hover': {
-          borderColor: 'primary.light',
-          boxShadow: theme.shadows[3],
-          transform: 'translateY(-1px)',
+      sx={[
+        {
+          height: '100%',
+          position: 'relative',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          borderRadius: 2.5,
+          transition: theme.transitions.create(['box-shadow', 'border-color', 'transform'], {
+            duration: theme.transitions.duration.shorter,
+          }),
+          '&:hover': {
+            borderColor: 'primary.light',
+            boxShadow: theme.shadows[3],
+            transform: 'translateY(-1px)',
+          },
         },
-      }}
+        CARD_HOVER_SKIN,
+      ]}
     >
       <Box
         aria-hidden

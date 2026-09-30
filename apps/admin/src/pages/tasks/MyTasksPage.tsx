@@ -28,6 +28,7 @@ import { TaskViewTabs } from '../../components/tasks/TaskViewTabs';
 import { useTaskDrawer } from '../../components/tasks/use-task-drawer';
 import { pageGuides } from '../../lib/page-guides';
 import { useTasks, type TaskListParams } from '../../lib/tasks';
+import { surfaceSx } from '../../theme/surfaces';
 
 /** Tasks shown in each section before "See all". */
 const SECTION_SIZE = 20;
@@ -136,10 +137,11 @@ const TaskSection = ({
       component="section"
       aria-labelledby={headingId}
       sx={{
-        border: 1,
-        borderColor: spec.key === 'overdue' && total ? 'error.light' : 'divider',
         borderRadius: 3,
-        bgcolor: 'background.paper',
+        // The skin's card (paper with a divider edge in Classic). A late group
+        // keeps its warning edge in every skin: that colour means something.
+        ...surfaceSx.card,
+        ...(spec.key === 'overdue' && total ? { borderColor: 'error.light' } : {}),
         overflow: 'hidden',
       }}
     >

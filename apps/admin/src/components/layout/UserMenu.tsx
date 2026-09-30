@@ -21,7 +21,10 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../../auth/AuthContext';
+import { skinned, surfaceSx } from '../../theme/surfaces';
 import { useTour } from '../tour';
+
+import { panelHeaderSx, pillActionSkin, topBarActionOpenSkin } from './top-bar-action';
 
 const initials = (name: string): string =>
   name
@@ -112,25 +115,35 @@ export const UserMenu = (): JSX.Element => {
         aria-label="Account menu"
         aria-haspopup="menu"
         aria-expanded={open}
-        sx={{
-          gap: 1,
-          pl: 0.5,
-          pr: { xs: 0.5, sm: 1 },
-          py: 0.5,
-          borderRadius: 999,
-          border: 1,
-          borderColor: open ? 'primary.main' : 'divider',
-          bgcolor: open ? (t) => alpha(t.palette.primary.main, 0.06) : 'transparent',
-          transition: (t) => t.transitions.create(['background-color', 'border-color']),
-          '&:hover': {
-            bgcolor: (t) => alpha(t.palette.primary.main, 0.06),
-            borderColor: 'primary.light',
+        // The account pill is a ButtonBase, which no theme override reaches:
+        // Classic keeps its hairline pill; a skin gives it the whole control
+        // recipe, pressed in while the menu is open.
+        sx={skinned(
+          {
+            gap: 1,
+            pl: 0.5,
+            pr: { xs: 0.5, sm: 1 },
+            py: 0.5,
+            borderRadius: 999,
+            border: 1,
+            borderColor: open ? 'primary.main' : 'divider',
+            bgcolor: open ? (t) => alpha(t.palette.primary.main, 0.06) : 'transparent',
+            transition: (t) => t.transitions.create(['background-color', 'border-color']),
+            '&:hover': {
+              bgcolor: (t) => alpha(t.palette.primary.main, 0.06),
+              borderColor: 'primary.light',
+            },
+            '&:focus-visible': {
+              outline: (t) => `2px solid ${t.palette.primary.main}`,
+              outlineOffset: 2,
+            },
           },
-          '&:focus-visible': {
-            outline: (t) => `2px solid ${t.palette.primary.main}`,
-            outlineOffset: 2,
+          {
+            ...pillActionSkin,
+            ...(open && topBarActionOpenSkin),
+            transition: (t) => t.transitions.create(['background-color', 'box-shadow']),
           },
-        }}
+        )}
       >
         <Avatar
           sx={{
@@ -200,29 +213,15 @@ export const UserMenu = (): JSX.Element => {
               mt: 1.25,
               width: 320,
               maxWidth: 'calc(100vw - 32px)',
-              borderRadius: 2.5,
-              border: 1,
-              borderColor: 'divider',
+              ...surfaceSx.overlay,
               overflowX: 'hidden',
               overflowY: 'auto',
-              boxShadow: '0 12px 32px rgba(26, 92, 56, 0.14)',
             },
           },
         }}
       >
         <Box
-          sx={{
-            px: 2,
-            py: 1.75,
-            display: 'flex',
-            gap: 1.5,
-            alignItems: 'center',
-            background: (t) =>
-              `linear-gradient(135deg, ${alpha(t.palette.primary.main, 0.08)}, ${alpha(
-                t.palette.primary.main,
-                0,
-              )})`,
-          }}
+          sx={[{ px: 2, py: 1.75, display: 'flex', gap: 1.5, alignItems: 'center' }, panelHeaderSx]}
         >
           <Avatar
             sx={{

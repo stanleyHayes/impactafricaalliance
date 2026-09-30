@@ -4,6 +4,7 @@ import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import { useId, type ReactNode } from 'react';
 
+import { surfaceSx, tokenVar } from '../../theme/surfaces';
 import { InformationItem } from '../InformationItem';
 
 export interface ReviewItem {
@@ -60,10 +61,9 @@ export const ReviewSummary = ({ sections, onEdit, disabled }: ReviewSummaryProps
     <Box
       sx={{
         containerType: 'inline-size',
-        border: 1,
-        borderColor: 'divider',
+        // The skin's card (Classic: paper with a hairline).
+        ...surfaceSx.card,
         borderRadius: 2,
-        bgcolor: 'background.paper',
       }}
     >
       {sections.map((section, index) => (
@@ -117,7 +117,8 @@ export const ReviewSummary = ({ sections, onEdit, disabled }: ReviewSummaryProps
                 minWidth: 0,
                 px: 0.75,
                 color: 'text.secondary',
-                '&:hover': { color: 'text.primary', bgcolor: 'action.hover' },
+                // The skin's item hover (Classic's is this same `action.hover`).
+                '&:hover': { color: 'text.primary', bgcolor: tokenVar('itemHoverBg') },
               }}
             >
               Edit

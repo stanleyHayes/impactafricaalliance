@@ -12,7 +12,7 @@ import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
-import { alpha } from '@mui/material/styles';
+import { alpha, type Theme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
@@ -20,6 +20,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
 import { AccountPanel, AccountSectionHeader } from '../../components/account/AccountSurface';
 import { formatUtcDate } from '../../lib/date';
+import { focusRingSx, skinned, surfaceSx, tokenVar } from '../../theme/surfaces';
 
 const initials = (name: string): string =>
   name
@@ -40,8 +41,13 @@ const formatRole = (role?: string): string =>
         .join(' ')
     : 'Member';
 
+/**
+ * The status chip on the identity banner. Its fill is part of the banner art,
+ * so it sits on the filled class: a skin fills default chips through a
+ * stronger rule than a plain bgcolor, which would repaint it in the skin's grey.
+ */
 const activeChipSx = (active: boolean) => ({
-  bgcolor: active ? 'rgba(14,42,34,0.08)' : 'rgba(255,255,255,0.1)',
+  '&.MuiChip-filled': { bgcolor: active ? 'rgba(14,42,34,0.08)' : 'rgba(255,255,255,0.1)' },
   color: active ? 'rgba(14,42,34,0.72)' : 'common.white',
   '& .MuiChip-icon': { color: active ? 'rgba(14,42,34,0.72)' : 'rgba(255,255,255,0.78)' },
 });
@@ -61,6 +67,50 @@ const identityModel = (user: PublicUser | null) => {
   };
 };
 
+/**
+ * An icon square. Classic tints it with the primary; a skin makes it one of
+ * its icon tiles (raised, frosted or clay), as every other icon holder is.
+ */
+const iconTileSx = (fill: number) =>
+  skinned({ bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, fill) }, surfaceSx.tile);
+
+/**
+ * A bordered paper box inside an account panel. Classic draws it as a small
+ * card; a skin sets it into the panel as one of its wells, so it does not read
+ * as a card stacked on a card.
+ */
+const panelWellSx = skinned(
+  { border: 1, borderColor: 'divider', bgcolor: 'background.paper' },
+  surfaceSx.inset,
+);
+
+/**
+ * A shortcut row. Classic outlines it and washes it under the pointer; a skin
+ * makes it one of its raised controls (higher under the pointer, pressed in
+ * while held) and draws its focus ring.
+ */
+const quickActionSx = skinned(
+  {
+    border: 1,
+    borderColor: 'divider',
+    '&:hover': {
+      borderColor: (theme: Theme) => alpha(theme.palette.primary.main, 0.3),
+      bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.035),
+      transform: 'translateX(3px)',
+    },
+  },
+  {
+    ...surfaceSx.raised,
+    '&:hover': {
+      bgcolor: tokenVar('surfaceRaisedBg'),
+      border: tokenVar('surfaceRaisedBorder'),
+      boxShadow: tokenVar('controlHoverShadow'),
+    },
+    '&:active': surfaceSx.pressed,
+    '&:focus-visible': focusRingSx,
+  },
+);
+
 const DetailItem = ({
   icon,
   label,
@@ -74,20 +124,22 @@ const DetailItem = ({
     direction="row"
     spacing={1.5}
     alignItems="center"
-    sx={{ p: 2, border: 1, borderColor: 'divider', borderRadius: 2, bgcolor: 'background.paper' }}
+    sx={[{ p: 2, borderRadius: 2 }, panelWellSx]}
   >
     <Box
-      sx={{
-        display: 'grid',
-        width: 38,
-        height: 38,
-        flexShrink: 0,
-        placeItems: 'center',
-        borderRadius: 1.75,
-        bgcolor: (theme) => alpha(theme.palette.primary.main, 0.07),
-        color: 'text.primary',
-        '& svg': { fontSize: 20 },
-      }}
+      sx={[
+        {
+          display: 'grid',
+          width: 38,
+          height: 38,
+          flexShrink: 0,
+          placeItems: 'center',
+          borderRadius: 1.75,
+          color: 'text.primary',
+          '& svg': { fontSize: 20 },
+        },
+        iconTileSx(0.07),
+      ]}
     >
       {icon}
     </Box>
@@ -157,7 +209,11 @@ const IdentityCard = ({ user }: { user: PublicUser | null }): JSX.Element => {
               <Chip
                 size="small"
                 label={model.role}
-                sx={{ bgcolor: 'secondary.main', color: 'secondary.contrastText' }}
+                sx={{
+                  // On the filled class, like the status chip beside it, so a skin keeps the fill.
+                  '&.MuiChip-filled': { bgcolor: 'secondary.main' },
+                  color: 'secondary.contrastText',
+                }}
               />
               <Chip
                 size="small"
@@ -216,35 +272,33 @@ const QuickAction = ({
   <Box
     component={RouterLink}
     to={to}
-    sx={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: 1.5,
-      p: 2,
-      border: 1,
-      borderColor: 'divider',
-      borderRadius: 2,
-      color: 'text.primary',
-      textDecoration: 'none',
-      transition: 'background-color 160ms ease, border-color 160ms ease, transform 160ms ease',
-      '&:hover': {
-        borderColor: (theme) => alpha(theme.palette.primary.main, 0.3),
-        bgcolor: (theme) => alpha(theme.palette.primary.main, 0.035),
-        transform: 'translateX(3px)',
+    sx={[
+      {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1.5,
+        p: 2,
+        borderRadius: 2,
+        color: 'text.primary',
+        textDecoration: 'none',
+        transition: 'background-color 160ms ease, border-color 160ms ease, transform 160ms ease',
       },
-    }}
+      quickActionSx,
+    ]}
   >
     <Box
-      sx={{
-        display: 'grid',
-        width: 42,
-        height: 42,
-        flexShrink: 0,
-        placeItems: 'center',
-        borderRadius: 2,
-        bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
-        color: 'text.primary',
-      }}
+      sx={[
+        {
+          display: 'grid',
+          width: 42,
+          height: 42,
+          flexShrink: 0,
+          placeItems: 'center',
+          borderRadius: 2,
+          color: 'text.primary',
+        },
+        iconTileSx(0.08),
+      ]}
     >
       {icon}
     </Box>

@@ -10,6 +10,7 @@ import Typography from '@mui/material/Typography';
 
 import { PROGRAMME_OPTIONS, withAnyOption } from '../../lib/select-options';
 import { slugify } from '../../lib/slug';
+import { skinned, surfaceSx, tokenVar } from '../../theme/surfaces';
 import { OptionSelect } from '../fields/OptionSelect';
 import { TagsField } from '../fields/TagsField';
 import { ReviewSummary } from '../forms/ReviewSummary';
@@ -156,6 +157,19 @@ export const StoryClassificationStep = ({
 
 const counter = (length: number, limit: number): string => `${length}/${limit}`;
 
+/**
+ * The search result preview's frame. Classic outlines it on the card; the
+ * other skins sink it into the card as a well, set apart from the fields.
+ */
+const PREVIEW_WELL_SX = skinned({ border: 1, borderColor: 'divider' }, surfaceSx.inset);
+
+/**
+ * The preview's title, coloured like a search result link. Classic keeps the
+ * dark primary; the other skins use their accent, which is held to 4.5:1 on
+ * their wells where the dark primary is not.
+ */
+const PREVIEW_TITLE_SX = skinned({ color: 'primary.dark' }, { color: tokenVar('accentText') });
+
 /** What search engines and link previews show, when it should differ from the story. */
 export const StorySearchStep = ({
   form,
@@ -209,12 +223,12 @@ export const StorySearchStep = ({
       <Box
         aria-label="Search result preview"
         role="figure"
-        sx={{ p: 2, border: 1, borderColor: 'divider', borderRadius: 2, maxWidth: 600 }}
+        sx={[{ p: 2, borderRadius: 2, maxWidth: 600 }, PREVIEW_WELL_SX]}
       >
         <Typography variant="caption" color="text.secondary">
           impactafricaalliance.org › impact › stories › {form.slug || 'story'}
         </Typography>
-        <Typography sx={{ color: 'primary.dark', fontWeight: 600, overflowWrap: 'anywhere' }}>
+        <Typography sx={[{ fontWeight: 600, overflowWrap: 'anywhere' }, PREVIEW_TITLE_SX]}>
           {shownTitle.slice(0, SEO_TITLE_LIMIT)}
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ overflowWrap: 'anywhere' }}>
@@ -315,15 +329,27 @@ export const StoryReviewSummary = ({
   );
 };
 
+/**
+ * The checklist's panel. Its border keeps the verdict's colour (warning or
+ * success) in every skin; the other skins add their raised surface to it.
+ */
+const CHECKLIST_SX = skinned(
+  {},
+  { bgcolor: tokenVar('surfaceRaisedBg'), boxShadow: tokenVar('surfaceRaisedShadow') },
+);
+
 /** What still stands between this story and the website, as the API will judge it. */
 export const PublishChecklist = ({ problems }: { problems: string[] }): JSX.Element => (
   <Box
-    sx={{
-      p: { xs: 1.5, sm: 2 },
-      border: 1,
-      borderRadius: 2,
-      borderColor: problems.length > 0 ? 'warning.main' : 'success.main',
-    }}
+    sx={[
+      {
+        p: { xs: 1.5, sm: 2 },
+        border: 1,
+        borderRadius: 2,
+        borderColor: problems.length > 0 ? 'warning.main' : 'success.main',
+      },
+      CHECKLIST_SX,
+    ]}
   >
     <Typography component="h3" variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
       Ready to publish?

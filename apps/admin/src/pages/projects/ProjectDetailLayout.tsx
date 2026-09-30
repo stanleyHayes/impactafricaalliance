@@ -31,6 +31,7 @@ import type { ProjectOutletContext } from '../../components/projects/useProjectO
 import { ApiError } from '../../lib/api-client';
 import { pageGuides } from '../../lib/page-guides';
 import { useProject } from '../../lib/projects';
+import { backLinkSx } from '../../theme/surfaces';
 
 /**
  * The project's sections, one route each under `/projects/:projectId`.
@@ -49,7 +50,12 @@ const PROJECT_TABS: readonly DetailTab[] = [
 const DESCRIPTION = 'Plans, people, progress and evidence for one initiative.';
 
 const BackLink = (): JSX.Element => (
-  <Button component={RouterLink} to="/projects" startIcon={<ArrowBackRoundedIcon />}>
+  <Button
+    component={RouterLink}
+    to="/projects"
+    startIcon={<ArrowBackRoundedIcon />}
+    sx={backLinkSx}
+  >
     All projects
   </Button>
 );

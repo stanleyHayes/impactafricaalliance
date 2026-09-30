@@ -5,6 +5,8 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
+import { skinned, tokenVar } from '../../theme/surfaces';
+
 export interface SelectChoice {
   value: string;
   label: string;
@@ -121,14 +123,18 @@ export const OptionSelect = ({
         MenuProps: {
           slotProps: {
             paper: {
-              sx: {
-                mt: 0.75,
-                borderRadius: 3,
-                border: 1,
-                borderColor: 'divider',
-                maxHeight: 380,
-                '& .MuiList-root': { py: 0.75 },
-              },
+              // Classic's rounder menu with a hairline; a skin's overlay edge and corner.
+              sx: skinned(
+                {
+                  mt: 0.75,
+                  borderRadius: 3,
+                  border: 1,
+                  borderColor: 'divider',
+                  maxHeight: 380,
+                  '& .MuiList-root': { py: 0.75 },
+                },
+                { borderRadius: tokenVar('overlayRadius'), border: tokenVar('overlayBorder') },
+              ),
             },
           },
         },
@@ -176,7 +182,9 @@ export const OptionSelect = ({
           )}
         </Box>
         {option.value === value && (
-          <CheckRoundedIcon sx={{ fontSize: 17, color: 'primary.main', mt: 0.25, flexShrink: 0 }} />
+          <CheckRoundedIcon
+            sx={{ fontSize: 17, color: tokenVar('accentText'), mt: 0.25, flexShrink: 0 }}
+          />
         )}
       </MenuItem>
     ))}

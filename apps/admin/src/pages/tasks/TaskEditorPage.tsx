@@ -45,6 +45,7 @@ import { pageGuides } from '../../lib/page-guides';
 import { usePeople } from '../../lib/people';
 import { TASK_STATUS_OPTIONS, WORK_PRIORITY_OPTIONS } from '../../lib/select-options';
 import { useCreateTask, useTask, useTaskProject, useUpdateTask } from '../../lib/tasks';
+import { backLinkSx, skinned, surfaceSx, tokenVar } from '../../theme/surfaces';
 
 type SetField = <K extends keyof TaskFormState>(key: K, value: TaskFormState[K]) => void;
 
@@ -337,6 +338,16 @@ const submitLabel = (saving: boolean, step: number, editing: boolean): string =>
 
 const STEP_VIEWS = [BasicsStep, AssignmentStep, ScheduleStep, DetailsStep];
 
+/**
+ * The strip under the form holding Back and Save. Classic sets it on the page
+ * colour; that colour is opaque in every skin, which would cut a solid band
+ * out of a frosted or clay card, so the other skins use their well instead.
+ */
+const footerSx = skinned(
+  { bgcolor: 'background.default', borderTop: 1, borderColor: 'divider' },
+  { bgcolor: tokenVar('surfaceInsetBg') },
+);
+
 const TaskEditorForm = ({
   task: loaded,
   initialProjectId,
@@ -481,6 +492,7 @@ const TaskEditorForm = ({
             startIcon={<ArrowBackRoundedIcon />}
             disabled={saving}
             fullWidth
+            sx={backLinkSx}
           >
             {task ? 'Back to task' : 'My tasks'}
           </Button>
@@ -499,13 +511,7 @@ const TaskEditorForm = ({
           component="form"
           noValidate
           onSubmit={submit}
-          sx={{
-            border: 1,
-            borderColor: 'divider',
-            borderRadius: 3,
-            bgcolor: 'background.paper',
-            overflow: 'hidden',
-          }}
+          sx={{ borderRadius: 3, overflow: 'hidden', ...surfaceSx.card }}
         >
           <Box sx={{ p: { xs: 2.5, md: 4 } }}>
             <Typography
@@ -542,12 +548,7 @@ const TaskEditorForm = ({
             direction="row"
             justifyContent="space-between"
             spacing={2}
-            sx={{
-              p: { xs: 2, md: 3 },
-              bgcolor: 'background.default',
-              borderTop: 1,
-              borderColor: 'divider',
-            }}
+            sx={[{ p: { xs: 2, md: 3 } }, footerSx]}
           >
             <Button
               onClick={() => (step > 0 ? changeStep(step - 1) : navigate(cancelTo))}

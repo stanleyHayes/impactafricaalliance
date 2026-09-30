@@ -21,6 +21,7 @@ import { Markdown } from '../../components/markdown/Markdown';
 import { countLabel, sdgLabel } from '../../components/projects/project-format';
 import { useProjectOutlet } from '../../components/projects/useProjectOutlet';
 import { initials } from '../../lib/initials';
+import { skinned, surfaceSx } from '../../theme/surfaces';
 
 const Quiet = ({ children }: { children: ReactNode }): JSX.Element => (
   <Typography variant="body2" color="text.secondary">
@@ -85,6 +86,13 @@ const keyNumbers = (project: Project): { label: string; value: string; note?: st
   ];
 };
 
+/**
+ * A key number's tile. Classic draws an outline on the section's paper; the
+ * other skins sink it into the section as a well, so the figures read as
+ * readouts rather than more cards to press.
+ */
+const keyNumberSx = skinned({ border: 1, borderColor: 'divider' }, surfaceSx.inset);
+
 const KeyNumbers = ({ project }: { project: Project }): JSX.Element => (
   <Box
     component="dl"
@@ -96,10 +104,7 @@ const KeyNumbers = ({ project }: { project: Project }): JSX.Element => (
     }}
   >
     {keyNumbers(project).map((item) => (
-      <Box
-        key={item.label}
-        sx={{ p: 1.5, border: 1, borderColor: 'divider', borderRadius: 2.5, minWidth: 0 }}
-      >
+      <Box key={item.label} sx={[{ p: 1.5, borderRadius: 2.5, minWidth: 0 }, keyNumberSx]}>
         <Typography
           component="dt"
           variant="caption"

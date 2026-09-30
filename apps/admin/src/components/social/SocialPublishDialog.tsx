@@ -25,6 +25,7 @@ import {
   usePublishSocial,
   type DestinationPreview,
 } from '../../lib/social-publishing';
+import { skinned, surfaceSx } from '../../theme/surfaces';
 import { DialogFooter, DialogHeader, dialogPaperSx } from '../dialogs/DialogShell';
 import { ChoiceCards } from '../fields/ChoiceCards';
 import { IsoDateTimeField } from '../fields/EventDateTimeField';
@@ -114,6 +115,12 @@ const buildDestinations = ({
     ];
   });
 
+/** A destination's row: Classic's bare hairline box, a skin's card. */
+const DESTINATION_ROW_SX = skinned(
+  { p: 1.25, border: 1, borderColor: 'divider', borderRadius: 2 },
+  surfaceSx.card,
+);
+
 /** One destination and the connection behind it, or an invitation to connect one. */
 const DestinationRow = ({
   capability,
@@ -134,7 +141,7 @@ const DestinationRow = ({
       direction="row"
       alignItems="center"
       justifyContent="space-between"
-      sx={{ p: 1.25, border: 1, borderColor: 'divider', borderRadius: 2 }}
+      sx={DESTINATION_ROW_SX}
     >
       <FormControlLabel
         control={
@@ -427,7 +434,13 @@ export const SocialPublishDialog = ({
   const blockers = blockersFor(selected, captions, source.imageUrl);
 
   return (
-    <Dialog open fullWidth maxWidth="md" onClose={onClose} slotProps={{ paper: { sx: dialogPaperSx } }}>
+    <Dialog
+      open
+      fullWidth
+      maxWidth="md"
+      onClose={onClose}
+      slotProps={{ paper: { sx: dialogPaperSx } }}
+    >
       <DialogHeader
         title="Publish to social media"
         description="Choose where this goes, then review what each network will say."
@@ -469,8 +482,8 @@ export const SocialPublishDialog = ({
 
           {submitted && (
             <Alert severity="info">
-              Sent to an administrator for approval. Nothing is published until they release it,
-              and you can follow it under Recent publications.
+              Sent to an administrator for approval. Nothing is published until they release it, and
+              you can follow it under Recent publications.
             </Alert>
           )}
           {publish.isError && <Alert severity="error">{publish.error.message}</Alert>}

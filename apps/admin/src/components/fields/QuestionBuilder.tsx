@@ -20,6 +20,7 @@ import Typography from '@mui/material/Typography';
 import { useState } from 'react';
 
 import { QUESTION_TYPE_OPTIONS } from '../../lib/select-options';
+import { skinned, surfaceSx, tokenVar } from '../../theme/surfaces';
 
 import { OptionSelect } from './OptionSelect';
 
@@ -32,6 +33,18 @@ const TYPE_LABELS: Record<EventQuestionType, string> = {
 };
 
 const CHOICE_TYPES: EventQuestionType[] = ['single-choice', 'multi-choice'];
+
+/**
+ * The attendee preview's mock answer boxes. Classic draws them as paper with
+ * a hairline; a skin draws them as its own fields (well, edge and depth), so
+ * the preview looks like the form it stands for.
+ */
+const previewFieldSkin = {
+  bgcolor: tokenVar('inputBg'),
+  border: `1px solid ${tokenVar('inputBorderColor')}`,
+  borderRadius: tokenVar('inputRadius'),
+  boxShadow: tokenVar('inputShadow'),
+};
 
 const newQuestionId = (): string =>
   typeof crypto !== 'undefined' && 'randomUUID' in crypto
@@ -139,15 +152,19 @@ export const QuestionBuilder = ({
         <Stack
           alignItems="center"
           spacing={1.5}
-          sx={{
-            p: 4,
-            mb: 2,
-            border: '1px dashed',
-            borderColor: 'divider',
-            borderRadius: 3,
-            bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04),
-            textAlign: 'center',
-          }}
+          // Keeps its dashed outline; a skin sinks it into the page as a well.
+          sx={skinned(
+            {
+              p: 4,
+              mb: 2,
+              border: '1px dashed',
+              borderColor: 'divider',
+              borderRadius: 3,
+              bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04),
+              textAlign: 'center',
+            },
+            { bgcolor: tokenVar('surfaceInsetBg'), boxShadow: tokenVar('surfaceInsetShadow') },
+          )}
         >
           <QuestionAnswerOutlinedIcon sx={{ fontSize: 40, color: 'text.secondary' }} />
           <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
@@ -168,8 +185,8 @@ export const QuestionBuilder = ({
               elevation={0}
               sx={{
                 p: { xs: 2, md: 3 },
-                border: 1,
-                borderColor: 'divider',
+                // The skin's card (Classic: paper with a hairline, no shadow).
+                ...surfaceSx.card,
                 borderRadius: 3,
                 position: 'relative',
                 overflow: 'hidden',
@@ -196,15 +213,19 @@ export const QuestionBuilder = ({
               >
                 <Typography
                   variant="subtitle2"
-                  sx={{
-                    display: 'grid',
-                    placeItems: 'center',
-                    width: 38,
-                    height: 38,
-                    borderRadius: 1.5,
-                    bgcolor: (theme) => alpha(theme.palette.primary.main, 0.14),
-                    fontWeight: 800,
-                  }}
+                  // The question's number in a tile: Classic's own tint, a skin's tile.
+                  sx={skinned(
+                    {
+                      display: 'grid',
+                      placeItems: 'center',
+                      width: 38,
+                      height: 38,
+                      borderRadius: 1.5,
+                      bgcolor: (theme) => alpha(theme.palette.primary.main, 0.14),
+                      fontWeight: 800,
+                    },
+                    surfaceSx.tile,
+                  )}
                 >
                   {String(index + 1).padStart(2, '0')}
                 </Typography>
@@ -301,12 +322,16 @@ export const QuestionBuilder = ({
                   component="aside"
                   aria-label={`Preview question ${index + 1}`}
                   spacing={2}
-                  sx={{
-                    p: 2.5,
-                    borderRadius: 2,
-                    bgcolor: (theme) => alpha(theme.palette.primary.main, 0.055),
-                    alignSelf: 'stretch',
-                  }}
+                  // The preview sits in a well: Classic's tint, a skin's inset.
+                  sx={skinned(
+                    {
+                      p: 2.5,
+                      borderRadius: 2,
+                      bgcolor: (theme) => alpha(theme.palette.primary.main, 0.055),
+                      alignSelf: 'stretch',
+                    },
+                    surfaceSx.inset,
+                  )}
                 >
                   <Stack direction="row" spacing={1} alignItems="center">
                     <VisibilityOutlinedIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
@@ -340,13 +365,16 @@ export const QuestionBuilder = ({
                             direction="row"
                             spacing={1.25}
                             alignItems="center"
-                            sx={{
-                              p: 1.25,
-                              border: 1,
-                              borderColor: 'divider',
-                              borderRadius: 1.5,
-                              bgcolor: 'background.paper',
-                            }}
+                            sx={skinned(
+                              {
+                                p: 1.25,
+                                border: 1,
+                                borderColor: 'divider',
+                                borderRadius: 1.5,
+                                bgcolor: 'background.paper',
+                              },
+                              previewFieldSkin,
+                            )}
                           >
                             <Box
                               aria-hidden
@@ -368,16 +396,19 @@ export const QuestionBuilder = ({
                     </Stack>
                   ) : (
                     <Box
-                      sx={{
-                        p: 1.5,
-                        minHeight: question.type === 'long-text' ? 100 : 48,
-                        border: 1,
-                        borderColor: 'divider',
-                        borderRadius: 1.5,
-                        bgcolor: 'background.paper',
-                        color: 'text.secondary',
-                        fontSize: 14,
-                      }}
+                      sx={skinned(
+                        {
+                          p: 1.5,
+                          minHeight: question.type === 'long-text' ? 100 : 48,
+                          border: 1,
+                          borderColor: 'divider',
+                          borderRadius: 1.5,
+                          bgcolor: 'background.paper',
+                          color: 'text.secondary',
+                          fontSize: 14,
+                        },
+                        previewFieldSkin,
+                      )}
                     >
                       {question.type === 'date' ? 'Day / Month / Year' : 'Your answer…'}
                     </Box>

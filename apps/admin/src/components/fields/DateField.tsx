@@ -6,6 +6,8 @@ import type { DateValidationError, PickerChangeHandlerContext } from '@mui/x-dat
 import dayjs, { type Dayjs } from 'dayjs';
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 
+import { pickerDesktopPaperSx, pickerFieldSx, pickerMobilePaperSx } from './picker-surface';
+
 export interface DateFieldProps {
   label: string;
   /**
@@ -286,15 +288,15 @@ export const DateField = ({
           error: Boolean(message),
           helperText: message || helperText,
           inputRef: hiddenInputRef,
-          sx: { '& .MuiPickersOutlinedInput-root': { borderRadius: 2.5 } },
+          sx: pickerFieldSx,
         },
         actionBar: {
           actions: required
             ? ['today', 'cancel', 'accept']
             : ['clear', 'today', 'cancel', 'accept'],
         },
-        desktopPaper: { sx: { borderRadius: 3, border: 1, borderColor: 'divider', boxShadow: 8 } },
-        mobilePaper: { sx: { borderRadius: 3, border: 1, borderColor: 'divider' } },
+        desktopPaper: { sx: pickerDesktopPaperSx },
+        mobilePaper: { sx: pickerMobilePaperSx },
         popper: { sx: { zIndex: (theme) => theme.zIndex.modal + 1 } },
       }}
     />

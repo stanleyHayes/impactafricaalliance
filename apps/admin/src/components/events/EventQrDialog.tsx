@@ -11,6 +11,7 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
 import { useEventQr } from '../../lib/admin-hooks';
+import { skinned, surfaceSx } from '../../theme/surfaces';
 import { DialogFooter, DialogHeader, dialogPaperSx } from '../dialogs/DialogShell';
 
 interface EventQrDialogProps {
@@ -27,6 +28,13 @@ const slugify = (value: string): string =>
     .slice(0, 60);
 
 /** Shows a scannable code for an event and lets an editor save it for print. */
+/**
+ * The dialog's body behind the code. Classic sets it on the page colour; a
+ * skin sinks it into the dialog as one of its wells, which in Glass also keeps
+ * it frosted rather than a solid block inside a frosted panel.
+ */
+const dialogWellSx = skinned({ bgcolor: 'background.default' }, surfaceSx.inset);
+
 export const EventQrDialog = ({ event, open, onClose }: EventQrDialogProps): JSX.Element => {
   const { data, isFetching, isError, refetch } = useEventQr(open && event ? event.id : undefined);
   const qrCode = !isFetching && !isError ? data : undefined;
@@ -47,7 +55,7 @@ export const EventQrDialog = ({ event, open, onClose }: EventQrDialogProps): JSX
         description={event ? `Scan to open “${event.title}”.` : ''}
         onClose={onClose}
       />
-      <DialogContent sx={{ bgcolor: 'background.default', py: 3 }}>
+      <DialogContent sx={[{ py: 3 }, dialogWellSx]}>
         <Stack spacing={2} alignItems="center">
           {isFetching && <Skeleton variant="rounded" width={240} height={240} />}
           {isError && !isFetching && (

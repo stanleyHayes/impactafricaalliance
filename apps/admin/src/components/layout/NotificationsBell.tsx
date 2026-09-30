@@ -25,6 +25,27 @@ import { useHasPermission } from '../../auth/useCan';
 import { useNewSubmissionCounts, useUpdateSubmissionStatus } from '../../lib/admin-hooks';
 import { formatUtcShort } from '../../lib/date';
 import { usePreferences } from '../../lib/preferences';
+import { skinned, surfaceSx, tokenVar } from '../../theme/surfaces';
+
+import { panelHeaderSx, topBarActionOpenSkin, topBarActionSkin } from './top-bar-action';
+
+/**
+ * A row in a top-bar panel. Classic runs it edge to edge with a hover fill
+ * and no ring; a skin insets it so its hover depth is not clipped by the
+ * panel, rounds it like the skin's menu items and gives keyboard focus the
+ * skin's ring. The content keeps Classic's 16px indent either way.
+ */
+const notificationRowSkin = {
+  mx: 0.75,
+  px: 1.25,
+  borderRadius: tokenVar('itemRadius'),
+  '&:hover': { bgcolor: tokenVar('itemHoverBg'), boxShadow: tokenVar('itemHoverShadow') },
+  '&:focus-visible': {
+    outline: tokenVar('focusRing'),
+    outlineOffset: '-2px',
+    bgcolor: tokenVar('itemHoverBg'),
+  },
+};
 
 type Tint = 'primary' | 'secondary' | 'info';
 
@@ -124,21 +145,39 @@ export const NotificationsBell = (): JSX.Element => {
           aria-label={`Notifications${count ? `, ${count} new` : ''}`}
           aria-haspopup="dialog"
           aria-expanded={open}
-          sx={{
-            color: open ? 'text.primary' : 'text.secondary',
-            bgcolor: open ? (t) => alpha(t.palette.primary.main, 0.08) : 'transparent',
-            '&:hover': {
-              color: 'text.primary',
-              bgcolor: (t) => alpha(t.palette.primary.main, 0.08),
+          // A top-bar action: Classic's quiet tint; a skin's raised control,
+          // pressed in while its panel is open.
+          sx={skinned(
+            {
+              color: open ? 'text.primary' : 'text.secondary',
+              bgcolor: open ? (t) => alpha(t.palette.primary.main, 0.08) : 'transparent',
+              '&:hover': {
+                color: 'text.primary',
+                bgcolor: (t) => alpha(t.palette.primary.main, 0.08),
+              },
             },
-          }}
+            { ...topBarActionSkin, ...(open && topBarActionOpenSkin) },
+          )}
         >
           <Badge
             badgeContent={count}
             color="error"
             max={99}
             overlap="circular"
-            sx={{ '& .MuiBadge-badge': { fontWeight: 700, fontSize: '0.625rem' } }}
+            sx={[
+              { '& .MuiBadge-badge': { fontWeight: 700, fontSize: '0.625rem' } },
+              // In a skin the count matches the sidebar's count pills, which keep
+              // white on a red deep enough to read in dark mode too.
+              skinned(
+                {},
+                {
+                  '& .MuiBadge-badge': {
+                    bgcolor: tokenVar('navBadgeBg'),
+                    color: tokenVar('navBadgeColor'),
+                  },
+                },
+              ),
+            ]}
           >
             <NotificationsNoneIcon />
           </Badge>
@@ -158,29 +197,24 @@ export const NotificationsBell = (): JSX.Element => {
               mt: 1.25,
               width: 364,
               maxWidth: '92vw',
-              borderRadius: 2.5,
               overflow: 'hidden',
-              border: 1,
-              borderColor: 'divider',
-              boxShadow: '0 12px 32px rgba(26, 92, 56, 0.14)',
+              ...surfaceSx.overlay,
             },
           },
         }}
       >
         <Box
-          sx={{
-            px: 2,
-            py: 1.5,
-            display: 'flex',
-            alignItems: 'baseline',
-            justifyContent: 'space-between',
-            gap: 1,
-            background: (t) =>
-              `linear-gradient(135deg, ${alpha(t.palette.primary.main, 0.08)}, ${alpha(
-                t.palette.primary.main,
-                0,
-              )})`,
-          }}
+          sx={[
+            {
+              px: 2,
+              py: 1.5,
+              display: 'flex',
+              alignItems: 'baseline',
+              justifyContent: 'space-between',
+              gap: 1,
+            },
+            panelHeaderSx,
+          ]}
         >
           <Typography sx={{ fontFamily: brandFonts.heading, fontWeight: 700, fontSize: '0.95rem' }}>
             Notifications
@@ -194,17 +228,20 @@ export const NotificationsBell = (): JSX.Element => {
         {recent.length === 0 ? (
           <Box sx={{ px: 3, py: 5, textAlign: 'center' }}>
             <Box
-              sx={{
-                width: 52,
-                height: 52,
-                mx: 'auto',
-                mb: 1.5,
-                borderRadius: '50%',
-                display: 'grid',
-                placeItems: 'center',
-                color: 'text.primary',
-                bgcolor: (t) => alpha(t.palette.primary.main, 0.1),
-              }}
+              sx={[
+                {
+                  width: 52,
+                  height: 52,
+                  mx: 'auto',
+                  mb: 1.5,
+                  borderRadius: '50%',
+                  display: 'grid',
+                  placeItems: 'center',
+                  color: 'text.primary',
+                },
+                // An empty-state medallion: Classic's flat tint, a skin's raised tile.
+                skinned({ bgcolor: (t) => alpha(t.palette.primary.main, 0.1) }, surfaceSx.tile),
+              ]}
             >
               <DoneAllIcon />
             </Box>
@@ -233,31 +270,38 @@ export const NotificationsBell = (): JSX.Element => {
                       viewAll();
                     }
                   }}
-                  sx={{
-                    px: 2,
-                    py: 1.25,
-                    display: 'flex',
-                    gap: 1.5,
-                    cursor: 'pointer',
-                    alignItems: 'flex-start',
-                    transition: (t) => t.transitions.create('background-color'),
-                    '&:hover': { bgcolor: 'action.hover' },
-                    '&:hover .iaa-notif-action': { opacity: 1 },
-                    '&:focus-visible': { outline: 'none', bgcolor: 'action.hover' },
-                  }}
+                  sx={skinned(
+                    {
+                      px: 2,
+                      py: 1.25,
+                      display: 'flex',
+                      gap: 1.5,
+                      cursor: 'pointer',
+                      alignItems: 'flex-start',
+                      transition: (t) => t.transitions.create('background-color'),
+                      '&:hover': { bgcolor: 'action.hover' },
+                      '&:hover .iaa-notif-action': { opacity: 1 },
+                      '&:focus-visible': { outline: 'none', bgcolor: 'action.hover' },
+                    },
+                    notificationRowSkin,
+                  )}
                 >
                   <Box
-                    sx={{
-                      mt: 0.25,
-                      width: 38,
-                      height: 38,
-                      flexShrink: 0,
-                      borderRadius: 2,
-                      display: 'grid',
-                      placeItems: 'center',
-                      color: 'text.secondary',
-                      bgcolor: (t) => alpha(t.palette[meta.tint].main, 0.12),
-                    }}
+                    // A tone tile: it keeps its type's tint and takes the skin's depth.
+                    sx={skinned(
+                      {
+                        mt: 0.25,
+                        width: 38,
+                        height: 38,
+                        flexShrink: 0,
+                        borderRadius: 2,
+                        display: 'grid',
+                        placeItems: 'center',
+                        color: 'text.secondary',
+                        bgcolor: (t) => alpha(t.palette[meta.tint].main, 0.12),
+                      },
+                      { border: tokenVar('tileBorder'), boxShadow: tokenVar('tileShadow') },
+                    )}
                   >
                     <Icon fontSize="small" />
                   </Box>
@@ -338,12 +382,16 @@ export const NotificationsBell = (): JSX.Element => {
           <Button
             fullWidth
             onClick={viewAll}
-            sx={{
-              fontWeight: 700,
-              color: 'text.primary',
-              borderRadius: 1.5,
-              '&:hover': { bgcolor: (t) => alpha(t.palette.primary.main, 0.06) },
-            }}
+            // Classic's own primary hover tint; a skin's text-button hover.
+            sx={skinned(
+              {
+                fontWeight: 700,
+                color: 'text.primary',
+                borderRadius: 1.5,
+                '&:hover': { bgcolor: (t) => alpha(t.palette.primary.main, 0.06) },
+              },
+              { '&:hover': { bgcolor: tokenVar('itemHoverBg') } },
+            )}
           >
             View all
           </Button>

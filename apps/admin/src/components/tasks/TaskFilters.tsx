@@ -25,6 +25,7 @@ import {
   withAnyOption,
 } from '../../lib/select-options';
 import { useDebouncedValue } from '../../lib/use-debounced-value';
+import { surfaceSx } from '../../theme/surfaces';
 import { OptionSelect, type SelectChoice } from '../fields/OptionSelect';
 import { UserPicker } from '../people/UserPicker';
 
@@ -178,14 +179,7 @@ export const TaskFilters = ({
     <Box
       component="section"
       aria-label="Task filters"
-      sx={{
-        mb: 3,
-        p: { xs: 2, md: 2.5 },
-        border: 1,
-        borderColor: 'divider',
-        borderRadius: 3,
-        bgcolor: 'background.paper',
-      }}
+      sx={{ mb: 3, p: { xs: 2, md: 2.5 }, borderRadius: 3, ...surfaceSx.card }}
     >
       <Stack direction="row" spacing={1.5} alignItems="center">
         <TextField

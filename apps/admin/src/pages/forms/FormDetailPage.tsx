@@ -48,6 +48,7 @@ import {
 } from '../../lib/forms';
 import { pageGuides } from '../../lib/page-guides';
 import { APPLICATION_STATUS_OPTIONS, FORM_TYPE_OPTIONS } from '../../lib/select-options';
+import { backLinkSx, skinned, tokenVar } from '../../theme/surfaces';
 
 import { publishBlockers } from './form-editor-model';
 import { FormStatusChip } from './FormStatusChip';
@@ -582,15 +583,20 @@ const HeaderActions = ({ form }: { form: FormDefinition }): JSX.Element => {
   );
 };
 
+/**
+ * A loading section's header strip. Classic leaves it plain; the other skins
+ * give it the tint DetailSection's header has there, so the page does not
+ * change colour when the form arrives.
+ */
+const SKELETON_HEADER_SX = skinned(
+  { px: { xs: 2.5, md: 3.5 }, py: 2.5, borderBottom: 1, borderColor: 'divider' },
+  { bgcolor: tokenVar('surfaceTintBg') },
+);
+
 /** One section's outline while it loads: the tinted header, then `children`. */
 const SectionSkeleton = ({ children }: { children: ReactNode }): JSX.Element => (
   <Card variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden' }}>
-    <Stack
-      direction="row"
-      spacing={1.5}
-      alignItems="center"
-      sx={{ px: { xs: 2.5, md: 3.5 }, py: 2.5, borderBottom: 1, borderColor: 'divider' }}
-    >
+    <Stack direction="row" spacing={1.5} alignItems="center" sx={SKELETON_HEADER_SX}>
       <Skeleton variant="rounded" width={40} height={40} sx={{ borderRadius: 2 }} />
       <Skeleton variant="text" width="40%" sx={{ fontSize: '1.1rem' }} />
     </Stack>
@@ -687,7 +693,12 @@ const FormDetailPage = (): JSX.Element => {
             : query.error?.message || 'The form could not be loaded.'}
         </Alert>
         <Box>
-          <Button component={RouterLink} to="/forms" startIcon={<ArrowBackRoundedIcon />}>
+          <Button
+            component={RouterLink}
+            to="/forms"
+            startIcon={<ArrowBackRoundedIcon />}
+            sx={backLinkSx}
+          >
             All forms
           </Button>
         </Box>
@@ -706,7 +717,12 @@ const FormDetailPage = (): JSX.Element => {
         action={<HeaderActions form={form} />}
       />
       <Box sx={{ mb: 2 }}>
-        <Button component={RouterLink} to="/forms" startIcon={<ArrowBackRoundedIcon />}>
+        <Button
+          component={RouterLink}
+          to="/forms"
+          startIcon={<ArrowBackRoundedIcon />}
+          sx={backLinkSx}
+        >
           All forms
         </Button>
       </Box>

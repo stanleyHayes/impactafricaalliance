@@ -18,6 +18,13 @@ import {
   useRetryPublication,
   useSocialPublications,
 } from '../../lib/social-publishing';
+import { skinned, surfaceSx } from '../../theme/surfaces';
+
+/** A publication's row: Classic's bare hairline box, a skin's card. */
+const ROW_SX = skinned(
+  { p: 1.5, border: 1, borderColor: 'divider', borderRadius: 2 },
+  surfaceSx.card,
+);
 
 import { DeclinePublicationDialog } from './DeclinePublicationDialog';
 
@@ -88,10 +95,7 @@ export const PublicationStatusList = ({ articleId }: { articleId?: string }): JS
           publication.status !== 'cancelled' &&
           publication.status !== 'pending_approval';
         return (
-          <Box
-            key={publication.id}
-            sx={{ p: 1.5, border: 1, borderColor: 'divider', borderRadius: 2 }}
-          >
+          <Box key={publication.id} sx={ROW_SX}>
             <Stack
               direction="row"
               spacing={1}

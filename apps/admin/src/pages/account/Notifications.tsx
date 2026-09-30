@@ -14,7 +14,7 @@ import Chip from '@mui/material/Chip';
 import Grid from '@mui/material/Grid';
 import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
-import { alpha } from '@mui/material/styles';
+import { alpha, type Theme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import { Link as RouterLink } from 'react-router-dom';
 
@@ -22,6 +22,7 @@ import { RequirePermission } from '../../auth/RequirePermission';
 import { AccountPanel, AccountSectionHeader } from '../../components/account/AccountSurface';
 import { useSubmissions, useUpdateSubmissionStatus } from '../../lib/admin-hooks';
 import { formatUtcShort } from '../../lib/date';
+import { skinned, surfaceSx, tokenVar } from '../../theme/surfaces';
 
 interface TypeMeta {
   icon: JSX.Element;
@@ -85,6 +86,13 @@ const relativeTime = (iso: string): string => {
   return formatUtcShort(iso);
 };
 
+/**
+ * An icon square. Classic tints it with the primary; a skin makes it one of
+ * its icon tiles (raised, frosted or clay), as every other icon holder is.
+ */
+const iconTileSx = (fill: number) =>
+  skinned({ bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, fill) }, surfaceSx.tile);
+
 /** The loading shape of a NotificationCard, from its own padding and avatar. */
 const NotificationCardSkeleton = (): JSX.Element => (
   <AccountPanel>
@@ -135,15 +143,17 @@ const NotificationCard = ({ submission }: { submission: Submission }): JSX.Eleme
       >
         <Avatar
           variant="rounded"
-          sx={{
-            width: 48,
-            height: 48,
-            borderRadius: 2,
-            flexShrink: 0,
-            color: 'text.secondary',
-            bgcolor: alpha(meta.color, 0.12),
-            boxShadow: `inset 0 0 0 1px ${alpha(meta.color, 0.2)}`,
-          }}
+          sx={[
+            { width: 48, height: 48, borderRadius: 2, flexShrink: 0, color: 'text.secondary' },
+            // The type's tint stays; a skin swaps the tinted ring for its tile depth.
+            skinned(
+              {
+                bgcolor: alpha(meta.color, 0.12),
+                boxShadow: `inset 0 0 0 1px ${alpha(meta.color, 0.2)}`,
+              },
+              { boxShadow: tokenVar('tileShadow') },
+            ),
+          ]}
         >
           {meta.icon}
         </Avatar>
@@ -187,16 +197,22 @@ const NotificationCard = ({ submission }: { submission: Submission }): JSX.Eleme
 const NotificationsEmptyState = (): JSX.Element => (
   <AccountPanel sx={{ p: { xs: 4, md: 6 }, textAlign: 'center' }}>
     <Box
-      sx={{
-        display: 'grid',
-        width: 70,
-        height: 70,
-        mx: 'auto',
-        placeItems: 'center',
-        borderRadius: '50%',
-        bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
-        color: 'text.primary',
-      }}
+      sx={[
+        {
+          display: 'grid',
+          width: 70,
+          height: 70,
+          mx: 'auto',
+          placeItems: 'center',
+          borderRadius: '50%',
+          color: 'text.primary',
+        },
+        // An empty inbox: a skin sinks the medallion in rather than tinting it.
+        skinned(
+          { bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08) },
+          { bgcolor: tokenVar('tileBg'), boxShadow: tokenVar('tileInsetShadow') },
+        ),
+      ]}
     >
       <DoneAllRoundedIcon sx={{ fontSize: 34 }} />
     </Box>
@@ -269,15 +285,17 @@ const Notifications = (): JSX.Element => {
         <Grid size={{ xs: 12, xl: 4 }}>
           <AccountPanel sx={{ height: '100%', p: 3 }}>
             <Box
-              sx={{
-                display: 'grid',
-                width: 54,
-                height: 54,
-                placeItems: 'center',
-                borderRadius: 2.5,
-                bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
-                color: 'text.primary',
-              }}
+              sx={[
+                {
+                  display: 'grid',
+                  width: 54,
+                  height: 54,
+                  placeItems: 'center',
+                  borderRadius: 2.5,
+                  color: 'text.primary',
+                },
+                iconTileSx(0.08),
+              ]}
             >
               <MarkEmailReadRoundedIcon sx={{ fontSize: 28 }} />
             </Box>

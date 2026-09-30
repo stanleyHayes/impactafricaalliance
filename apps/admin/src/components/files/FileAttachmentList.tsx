@@ -21,6 +21,7 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useState } from 'react';
 
+import { skinned, surfaceSx, tokenVar } from '../../theme/surfaces';
 import { ActionIcon } from '../data/ActionIcon';
 import { ConfirmDialog } from '../dialogs/ConfirmDialog';
 
@@ -133,7 +134,11 @@ export const FileAttachmentList = ({
         <Typography
           variant="body2"
           color="text.secondary"
-          sx={{ p: 2, border: 1, borderStyle: 'dashed', borderColor: 'divider', borderRadius: 2.5 }}
+          // Keeps its dashed outline; a skin sinks it in as a well.
+          sx={skinned(
+            { p: 2, border: 1, borderStyle: 'dashed', borderColor: 'divider', borderRadius: 2.5 },
+            { bgcolor: tokenVar('surfaceInsetBg'), boxShadow: tokenVar('surfaceInsetShadow') },
+          )}
         >
           {emptyText}
         </Typography>
@@ -149,23 +154,26 @@ export const FileAttachmentList = ({
                 alignItems: 'center',
                 gap: 1.5,
                 p: 1.25,
-                border: 1,
-                borderColor: 'divider',
                 borderRadius: 2.5,
-                bgcolor: 'background.paper',
+                // The skin's card (Classic: paper with a hairline).
+                ...surfaceSx.card,
               }}
             >
               <Box
                 aria-hidden
-                sx={{
-                  display: 'grid',
-                  placeItems: 'center',
-                  width: 40,
-                  height: 40,
-                  borderRadius: 2,
-                  color: 'text.secondary',
-                  bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
-                }}
+                // The file type's icon tile: Classic's faint tint, a skin's sunk tile.
+                sx={skinned(
+                  {
+                    display: 'grid',
+                    placeItems: 'center',
+                    width: 40,
+                    height: 40,
+                    borderRadius: 2,
+                    color: 'text.secondary',
+                    bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
+                  },
+                  surfaceSx.tileInset,
+                )}
               >
                 {FORMAT_ICONS[formatOf(item)] ?? <InsertDriveFileOutlinedIcon />}
               </Box>

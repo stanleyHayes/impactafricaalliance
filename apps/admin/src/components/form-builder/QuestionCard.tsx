@@ -28,6 +28,7 @@ import Typography from '@mui/material/Typography';
 import { useState } from 'react';
 
 import { APPLICANT_MAPPING_OPTIONS, FORM_FIELD_TYPE_OPTIONS } from '../../lib/select-options';
+import { handleSx, skinned, surfaceSx, tokenVar } from '../../theme/surfaces';
 
 import { MAX_FIELDS_PER_STEP } from './builder-model';
 import { FieldEditor } from './FieldEditor';
@@ -54,6 +55,25 @@ export interface QuestionCardProps {
 }
 
 const chipSx = { height: 20 };
+
+/**
+ * A question card picked up by its handle. Classic lifts it on elevation 8.
+ * The other skins use their floating shadow, because their elevation 8 is
+ * about the depth a card already has at rest, so a dragged card would not
+ * look lifted.
+ */
+const DRAGGING_SX = skinned({ boxShadow: 8 }, { boxShadow: tokenVar('overlayShadow') });
+
+/**
+ * The summary row that opens a question. Classic has no hover of its own and
+ * a flush 2px ring, which the card's clipped edge needs; the ring takes the
+ * skin's colour everywhere. The other skins add their list-row hover, so the
+ * row reads as a control.
+ */
+const TOGGLE_STATES_SX = skinned(
+  { '&:focus-visible': { outline: tokenVar('focusRing') } },
+  { '&:hover': { bgcolor: tokenVar('itemHoverBg'), boxShadow: tokenVar('itemHoverShadow') } },
+);
 
 /** The short facts under a question's label: required, conditional, what it supplies, trouble. */
 const QuestionChips = ({
@@ -202,14 +222,23 @@ export const QuestionCard = ({
         transform: CSS.Transform.toString(sortable.transform),
         transition: sortable.transition,
       }}
-      sx={(theme) => ({
-        borderRadius: 2.5,
-        overflow: 'hidden',
-        position: 'relative',
-        zIndex: sortable.isDragging ? 2 : 'auto',
-        boxShadow: sortable.isDragging ? theme.shadows[8] : 'none',
-        borderColor: needsAttention ? alpha(theme.palette.warning.main, 0.7) : 'divider',
-      })}
+      sx={[
+        {
+          borderRadius: 2.5,
+          overflow: 'hidden',
+          position: 'relative',
+          zIndex: sortable.isDragging ? 2 : 'auto',
+          // A card inside the step card: the skin's nested card, quieter than
+          // the step so depth does not double up (in Classic, paper with a
+          // divider border and no shadow).
+          ...surfaceSx.nested,
+        },
+        // A whole border in the warning colour, since some skins draw raised
+        // elements without one and the warning must still show.
+        needsAttention &&
+          ((theme) => ({ border: 1, borderColor: alpha(theme.palette.warning.main, 0.7) })),
+        sortable.isDragging && DRAGGING_SX,
+      ]}
     >
       {/* On a phone the four buttons would leave the label a word or two, so
           they wrap onto a second line under it; wider screens keep one row. */}
@@ -232,7 +261,7 @@ export const QuestionCard = ({
             aria-label={`Drag to reorder ${name}`}
             size="small"
             disabled={disabled}
-            sx={{ cursor: 'grab', touchAction: 'none' }}
+            sx={{ cursor: 'grab', touchAction: 'none', ...handleSx }}
           >
             <DragIndicatorRoundedIcon fontSize="small" />
           </IconButton>
@@ -243,23 +272,25 @@ export const QuestionCard = ({
           onClick={onToggle}
           aria-expanded={expanded}
           aria-controls={bodyId}
-          sx={{
-            flex: { xs: '1 1 calc(100% - 48px)', sm: '1 1 auto' },
-            minWidth: 0,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1.25,
-            py: 0.75,
-            px: 0.5,
-            border: 0,
-            background: 'none',
-            color: 'inherit',
-            font: 'inherit',
-            textAlign: 'left',
-            cursor: 'pointer',
-            borderRadius: 1.5,
-            '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main' },
-          }}
+          sx={[
+            {
+              flex: { xs: '1 1 calc(100% - 48px)', sm: '1 1 auto' },
+              minWidth: 0,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.25,
+              py: 0.75,
+              px: 0.5,
+              border: 0,
+              background: 'none',
+              color: 'inherit',
+              font: 'inherit',
+              textAlign: 'left',
+              cursor: 'pointer',
+              borderRadius: 1.5,
+            },
+            TOGGLE_STATES_SX,
+          ]}
         >
           <Box
             aria-hidden

@@ -2,6 +2,8 @@ import Box from '@mui/material/Box';
 import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
 
+import { surfaceSx } from '../../theme/surfaces';
+
 /** The grid the slot cards sit on, shared with the loaded page so nothing moves. */
 export const SLOT_GRID_SX = {
   display: 'grid',
@@ -10,7 +12,7 @@ export const SLOT_GRID_SX = {
 } as const;
 
 const CardSkeleton = (): JSX.Element => (
-  <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 2.5, overflow: 'hidden' }}>
+  <Box sx={{ ...surfaceSx.card, borderRadius: 2.5, overflow: 'hidden' }}>
     {/* The picture frame is one height on every card (SiteImageSlotCard). */}
     <Skeleton variant="rectangular" height={190} />
     <Box sx={{ p: 2 }}>
@@ -30,10 +32,7 @@ const CardSkeleton = (): JSX.Element => (
 export const SiteImagesSkeleton = ({ sections = 2 }: { sections?: number }): JSX.Element => (
   <Stack spacing={3} aria-busy="true" aria-label="Loading site images">
     {Array.from({ length: sections }, (_, section) => (
-      <Box
-        key={section}
-        sx={{ border: 1, borderColor: 'divider', borderRadius: 3, overflow: 'hidden' }}
-      >
+      <Box key={section} sx={{ ...surfaceSx.card, borderRadius: 3, overflow: 'hidden' }}>
         <Box sx={{ px: { xs: 2.5, md: 3.5 }, py: 2.5, borderBottom: 1, borderColor: 'divider' }}>
           <Skeleton variant="text" width={160} sx={{ fontSize: '1.25rem' }} />
           <Skeleton variant="text" width={220} sx={{ fontSize: '0.875rem' }} />

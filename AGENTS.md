@@ -21,3 +21,5 @@
   resources select dedicated pages automatically through `apps/admin/src/resources/form-steps.ts`.
 
 See [form design guidance](docs/design/forms.md) for the routes and verification checklist.
+
+See [console skins](docs/design/skins.md) before styling admin surfaces: use the skin helpers, and keep Classic pixel-identical.

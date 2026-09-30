@@ -6,6 +6,7 @@ import { Link as RouterLink, useParams } from 'react-router-dom';
 
 import { PageHeader } from '../../components/PageHeader';
 import { TaskDetailContent } from '../../components/tasks/TaskDetailContent';
+import { backLinkSx, surfaceSx } from '../../theme/surfaces';
 
 /**
  * One task at its own address, `/tasks/IAA-42`, for links shared in chat or
@@ -27,20 +28,13 @@ const TaskDetailPage = (): JSX.Element => {
             to="/tasks/all"
             startIcon={<ArrowBackRoundedIcon />}
             fullWidth
+            sx={backLinkSx}
           >
             All tasks
           </Button>
         }
       />
-      <Box
-        sx={{
-          p: { xs: 2, md: 3 },
-          border: 1,
-          borderColor: 'divider',
-          borderRadius: 3,
-          bgcolor: 'background.paper',
-        }}
-      >
+      <Box sx={{ p: { xs: 2, md: 3 }, borderRadius: 3, ...surfaceSx.card }}>
         <TaskDetailContent key={taskKey} taskKey={taskKey} variant="page" />
       </Box>
     </>

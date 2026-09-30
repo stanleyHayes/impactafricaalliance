@@ -6,6 +6,8 @@ import Typography from '@mui/material/Typography';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
+import { gridSx, skinned, surfaceSx, tokenVar } from '../../theme/surfaces';
+
 /** MUI-styled renderers for GitHub-flavoured markdown elements. */
 const components: Components = {
   h1: ({ children }) => (
@@ -85,17 +87,21 @@ const components: Components = {
   pre: ({ children }) => (
     <Box
       component="pre"
-      sx={{
-        my: 1.5,
-        p: 2,
-        borderRadius: 2,
-        overflowX: 'auto',
-        bgcolor: (t) => alpha(t.palette.text.primary, 0.04),
-        border: (t) => `1px solid ${alpha(t.palette.text.primary, 0.08)}`,
-        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
-        fontSize: '0.85rem',
-        '& code': { bgcolor: 'transparent', p: 0 },
-      }}
+      // A code block sits in a well: Classic's faint grey one, or the skin's inset.
+      sx={skinned(
+        {
+          my: 1.5,
+          p: 2,
+          borderRadius: 2,
+          overflowX: 'auto',
+          bgcolor: (t) => alpha(t.palette.text.primary, 0.04),
+          border: (t) => `1px solid ${alpha(t.palette.text.primary, 0.08)}`,
+          fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+          fontSize: '0.85rem',
+          '& code': { bgcolor: 'transparent', p: 0 },
+        },
+        surfaceSx.inset,
+      )}
     >
       {children}
     </Box>
@@ -113,18 +119,26 @@ const components: Components = {
     <Box sx={{ overflowX: 'auto', my: 2 }}>
       <Box
         component="table"
-        sx={{
-          borderCollapse: 'collapse',
-          width: '100%',
-          '& th, & td': {
-            border: (t) => `1px solid ${alpha(t.palette.primary.main, 0.14)}`,
-            px: 1.5,
-            py: 1,
-            textAlign: 'left',
-            fontSize: '0.875rem',
+        // Classic's own faint green rules and header; a skin rules it and
+        // heads it like its data tables, so a table reads the same everywhere.
+        sx={skinned(
+          {
+            borderCollapse: 'collapse',
+            width: '100%',
+            '& th, & td': {
+              border: (t) => `1px solid ${alpha(t.palette.primary.main, 0.14)}`,
+              px: 1.5,
+              py: 1,
+              textAlign: 'left',
+              fontSize: '0.875rem',
+            },
+            '& th': { bgcolor: (t) => alpha(t.palette.primary.main, 0.05), fontWeight: 700 },
           },
-          '& th': { bgcolor: (t) => alpha(t.palette.primary.main, 0.05), fontWeight: 700 },
-        }}
+          {
+            '& th, & td': { border: `1px solid ${tokenVar('gridRule')}` },
+            '& th': gridSx.header,
+          },
+        )}
       >
         {children}
       </Box>

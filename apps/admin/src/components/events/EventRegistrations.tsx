@@ -15,6 +15,7 @@ import { useState } from 'react';
 
 import { useEventRegistrations } from '../../lib/admin-hooks';
 import { formatUtcShort } from '../../lib/date';
+import { skinned, surfaceSx, tokenVar } from '../../theme/surfaces';
 import { InformationItem } from '../InformationItem';
 
 /** Columns everyone answers, in the order the form asks for them. */
@@ -82,6 +83,12 @@ const download = (csv: string, filename: string): void => {
   URL.revokeObjectURL(url);
 };
 
+/**
+ * A well inside the section (question responses). Classic shades it with the
+ * hover grey; a skin sinks it into the card as one of its wells.
+ */
+const wellSx = skinned({ bgcolor: 'action.hover' }, surfaceSx.inset);
+
 const RegistrationRow = ({ registration }: { registration: EventRegistration }): JSX.Element => (
   <Box
     component="details"
@@ -94,33 +101,38 @@ const RegistrationRow = ({ registration }: { registration: EventRegistration }):
   >
     <Box
       component="summary"
-      sx={{
-        display: 'grid',
-        gridTemplateColumns: {
-          xs: '1fr auto',
-          md: 'minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) auto',
+      sx={[
+        {
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: '1fr auto',
+            md: 'minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) auto',
+          },
+          gap: 2,
+          alignItems: 'center',
+          px: { xs: 2, sm: 3 },
+          py: 2.5,
+          cursor: 'pointer',
+          listStyle: 'none',
+          '&::-webkit-details-marker': { display: 'none' },
+          // Inside the row, so the section's rounded edge never clips it.
+          '&:focus-visible': { outline: tokenVar('focusRing'), outlineOffset: -2 },
         },
-        gap: 2,
-        alignItems: 'center',
-        px: { xs: 2, sm: 3 },
-        py: 2.5,
-        cursor: 'pointer',
-        listStyle: 'none',
-        '&::-webkit-details-marker': { display: 'none' },
-        '&:hover': { bgcolor: 'action.hover' },
-        '&:focus-visible': {
-          outline: '2px solid',
-          outlineColor: 'primary.main',
-          outlineOffset: -2,
-        },
-      }}
+        // An attendee row is a list item: a skin gives it the hover every list in it has.
+        skinned(
+          { '&:hover': { bgcolor: 'action.hover' } },
+          {
+            '&:hover': { bgcolor: tokenVar('itemHoverBg'), boxShadow: tokenVar('itemHoverShadow') },
+          },
+        ),
+      ]}
     >
       <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
         <Avatar
           variant="rounded"
           sx={{
-            bgcolor: (theme) => alpha(theme.palette.primary.main, 0.1),
-            color: 'primary.main',
+            bgcolor: tokenVar('tileBg'),
+            color: tokenVar('accentText'),
             fontSize: 14,
             fontWeight: 700,
           }}
@@ -188,7 +200,7 @@ const RegistrationRow = ({ registration }: { registration: EventRegistration }):
         )}
       </Box>
       {registration.answers.length > 0 && (
-        <Box sx={{ mt: 3, p: 2.5, borderRadius: 2, bgcolor: 'action.hover' }}>
+        <Box sx={[{ mt: 3, p: 2.5, borderRadius: 2 }, wellSx]}>
           <Typography variant="subtitle2" sx={{ mb: 2 }}>
             Question responses
           </Typography>
@@ -255,7 +267,14 @@ export const EventRegistrations = ({
         <Stack alignItems="center" spacing={1.5} sx={{ px: 3, py: 6, textAlign: 'center' }}>
           <Avatar
             variant="rounded"
-            sx={{ width: 64, height: 64, bgcolor: 'action.hover', color: 'primary.main' }}
+            sx={[
+              { width: 64, height: 64, color: tokenVar('accentText') },
+              // Nobody yet: a skin sinks the medallion in rather than greying it.
+              skinned(
+                { bgcolor: 'action.hover' },
+                { bgcolor: tokenVar('tileBg'), boxShadow: tokenVar('tileInsetShadow') },
+              ),
+            ]}
           >
             <PeopleOutlineRoundedIcon sx={{ fontSize: 32 }} />
           </Avatar>
@@ -312,22 +331,18 @@ export const EventRegistrations = ({
     <Box
       component="section"
       aria-label="Registrations"
-      sx={{
-        mt: 4,
-        border: 1,
-        borderColor: 'divider',
-        borderRadius: 3,
-        overflow: 'hidden',
-        bgcolor: 'background.paper',
-      }}
+      sx={{ mt: 4, borderRadius: 3, overflow: 'hidden', ...surfaceSx.card }}
     >
       <Box
-        sx={{
-          position: 'relative',
-          overflow: 'hidden',
-          p: { xs: 2.5, sm: 3 },
-          bgcolor: (theme) => alpha(theme.palette.primary.main, 0.055),
-        }}
+        sx={[
+          { position: 'relative', overflow: 'hidden', p: { xs: 2.5, sm: 3 } },
+          // Classic's header is a touch stronger than the other section strips;
+          // a skin uses its own section-header tint.
+          skinned(
+            { bgcolor: (theme) => alpha(theme.palette.primary.main, 0.055) },
+            surfaceSx.tinted,
+          ),
+        ]}
       >
         <PeopleOutlineRoundedIcon
           aria-hidden
@@ -360,7 +375,7 @@ export const EventRegistrations = ({
                   sx={{
                     fontSize: 32,
                     fontWeight: 800,
-                    color: 'primary.main',
+                    color: tokenVar('accentText'),
                     fontVariantNumeric: 'tabular-nums',
                   }}
                 >

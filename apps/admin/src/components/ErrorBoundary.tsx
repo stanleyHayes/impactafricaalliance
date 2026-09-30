@@ -4,6 +4,8 @@ import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 
+import { skinned, surfaceSx } from '../theme/surfaces';
+
 interface Props {
   children: ReactNode;
 }
@@ -25,7 +27,6 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   override componentDidCatch(error: Error, info: ErrorInfo): void {
-     
     console.error('Admin ErrorBoundary caught an error:', error, info.componentStack);
   }
 
@@ -50,15 +51,19 @@ export class ErrorBoundary extends Component<Props, State> {
           {import.meta.env.DEV && this.state.error && (
             <Box
               component="pre"
-              sx={{
-                mt: 4,
-                p: 2,
-                textAlign: 'left',
-                bgcolor: 'background.paper',
-                borderRadius: 1,
-                overflow: 'auto',
-                fontSize: '0.75rem',
-              }}
+              // The stack trace sits in a well: Classic's paper strip, a skin's inset.
+              sx={skinned(
+                {
+                  mt: 4,
+                  p: 2,
+                  textAlign: 'left',
+                  bgcolor: 'background.paper',
+                  borderRadius: 1,
+                  overflow: 'auto',
+                  fontSize: '0.75rem',
+                },
+                surfaceSx.inset,
+              )}
             >
               {this.state.error.stack}
             </Box>

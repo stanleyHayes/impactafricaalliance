@@ -31,6 +31,7 @@ import { EventQrDialog } from '../components/events/EventQrDialog';
 import { EventRegistrations } from '../components/events/EventRegistrations';
 import { InformationItem } from '../components/InformationItem';
 import { api } from '../lib/api-client';
+import { backLinkSx, skinned, surfaceSx, tokenVar } from '../theme/surfaces';
 
 import { ReviewQueue } from './Reviews';
 
@@ -41,6 +42,19 @@ const formatDate = (value?: string): string =>
 
 const Detail = InformationItem;
 
+/**
+ * A well set into a section card (the joining link, one question). Classic
+ * gives it its own faint tint; a skin sinks it into the card as one of its
+ * wells, so the section's parts read as inset rather than stuck on.
+ */
+const sectionWellSx = (classic: Parameters<typeof skinned>[0]) => skinned(classic, surfaceSx.inset);
+
+/**
+ * One section of the event page: the skin's card with a tinted header strip
+ * and a sunken icon square, the same recipe as DetailSection elsewhere. The
+ * strip and square are drawn from the tokens whose Classic values are the
+ * tint and square this page always had.
+ */
 const Section = ({ title, children }: { title: string; children: ReactNode }): JSX.Element => {
   const icons = [
     { match: /question/i, icon: <QuestionAnswerOutlinedIcon /> },
@@ -60,7 +74,7 @@ const Section = ({ title, children }: { title: string; children: ReactNode }): J
           py: 2.5,
           position: 'relative',
           overflow: 'hidden',
-          bgcolor: (theme) => alpha(theme.palette.primary.main, 0.045),
+          ...surfaceSx.tinted,
           borderBottom: 1,
           borderColor: 'divider',
         }}
@@ -85,7 +99,7 @@ const Section = ({ title, children }: { title: string; children: ReactNode }): J
             placeItems: 'center',
             p: 1,
             borderRadius: 1.5,
-            bgcolor: (theme) => alpha(theme.palette.primary.main, 0.1),
+            ...surfaceSx.tileInset,
           }}
         >
           {icon}
@@ -112,12 +126,10 @@ const EventRegistration = ({ event }: { event: Event }): JSX.Element => (
       </Detail>
     </Box>
     <Box
-      sx={{
-        mt: 3,
-        p: 2,
-        bgcolor: (theme) => alpha(theme.palette.primary.main, 0.06),
-        borderRadius: 2,
-      }}
+      sx={[
+        { mt: 3, p: 2, borderRadius: 2 },
+        sectionWellSx({ bgcolor: (theme) => alpha(theme.palette.primary.main, 0.06) }),
+      ]}
     >
       <Detail label="Private joining link">
         {event.meetingUrl ? (
@@ -147,26 +159,33 @@ const EventQuestions = ({ event }: { event: Event }): JSX.Element => (
         {event.questions.map((question, index) => (
           <Box
             key={question.id}
-            sx={{
-              border: 1,
-              borderColor: 'divider',
-              p: 2.5,
-              borderRadius: 2.5,
-              bgcolor: (theme) => alpha(theme.palette.primary.main, 0.035),
-            }}
+            sx={[
+              { p: 2.5, borderRadius: 2.5 },
+              sectionWellSx({
+                border: 1,
+                borderColor: 'divider',
+                bgcolor: (theme) => alpha(theme.palette.primary.main, 0.035),
+              }),
+            ]}
           >
             <Stack direction="row" flexWrap="wrap" gap={1} alignItems="center">
               <Box
                 aria-hidden
-                sx={{
-                  display: 'grid',
-                  placeItems: 'center',
-                  width: 36,
-                  height: 36,
-                  borderRadius: 1.5,
-                  bgcolor: (theme) => alpha(theme.palette.primary.main, 0.12),
-                  fontWeight: 800,
-                }}
+                sx={[
+                  {
+                    display: 'grid',
+                    placeItems: 'center',
+                    width: 36,
+                    height: 36,
+                    borderRadius: 1.5,
+                    fontWeight: 800,
+                  },
+                  // The question's number stands proud of its well as one of the skin's tiles.
+                  skinned(
+                    { bgcolor: (theme) => alpha(theme.palette.primary.main, 0.12) },
+                    { bgcolor: tokenVar('tileBg'), boxShadow: tokenVar('tileShadow') },
+                  ),
+                ]}
               >
                 {String(index + 1).padStart(2, '0')}
               </Box>
@@ -255,13 +274,14 @@ const EventRatings = ({ eventId }: { eventId: string }): JSX.Element => {
                   {star} stars
                 </Typography>
                 <Box
-                  sx={{
-                    flex: 1,
-                    height: 8,
-                    bgcolor: 'action.hover',
-                    borderRadius: 9,
-                    overflow: 'hidden',
-                  }}
+                  sx={[
+                    { flex: 1, height: 8, borderRadius: 9, overflow: 'hidden' },
+                    // A skin draws the track the way it draws its progress bars.
+                    skinned(
+                      { bgcolor: 'action.hover' },
+                      { bgcolor: tokenVar('trackBg'), boxShadow: tokenVar('surfaceInsetShadow') },
+                    ),
+                  ]}
                 >
                   <Box
                     sx={{
@@ -445,7 +465,7 @@ const EventDetail = (): JSX.Element => {
         component={RouterLink}
         to="/events"
         startIcon={<ArrowBackRoundedIcon />}
-        sx={{ mb: 2 }}
+        sx={[{ mb: 2 }, backLinkSx]}
       >
         Back to events
       </Button>

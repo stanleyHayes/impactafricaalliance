@@ -4,7 +4,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { QueryClientProvider } from '@tanstack/react-query';
 import 'dayjs/locale/en-gb';
-import { StrictMode } from 'react';
+import { StrictMode, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 
@@ -18,8 +18,8 @@ import { createAppTheme } from './theme/theme';
 import { ThemeProvider, useThemeSettings } from './theme/ThemeContext';
 
 const ThemedApp = (): JSX.Element => {
-  const { preset, mode } = useThemeSettings();
-  const theme = createAppTheme(preset, mode);
+  const { preset, mode, skin } = useThemeSettings();
+  const theme = useMemo(() => createAppTheme(preset, mode, skin), [preset, mode, skin]);
   return (
     <MuiThemeProvider theme={theme}>
       <CssBaseline />

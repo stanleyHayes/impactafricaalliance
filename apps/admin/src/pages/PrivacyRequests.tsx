@@ -21,6 +21,7 @@ import { usePrivacyRequests, useUpdatePrivacyRequest } from '../lib/admin-hooks'
 import { formatUtcDate } from '../lib/date';
 import { pageGuides } from '../lib/page-guides';
 import { PRIVACY_STATUS_OPTIONS } from '../lib/select-options';
+import { skinned, tokenVar } from '../theme/surfaces';
 
 const TYPE_LABELS: Record<string, string> = {
   access: 'Access',
@@ -106,6 +107,21 @@ const columns: GridColDef[] = [
   },
 ];
 
+/**
+ * A record card under the pointer. Classic edges it in the light primary and
+ * lifts it on the third shadow; a skin lifts it on its own card shadow and
+ * keeps its material's edge.
+ */
+const recordCardHoverSx = skinned(
+  { '&:hover': { borderColor: 'primary.light', boxShadow: 3 } },
+  {
+    '&:hover': {
+      borderColor: tokenVar('surfaceBorderColor'),
+      boxShadow: tokenVar('surfaceHoverShadow'),
+    },
+  },
+);
+
 const PrivacyRequestCard = ({ row }: { row: GridRowModel }): JSX.Element => {
   const theme = useTheme();
   const email = String(row.email ?? '');
@@ -115,14 +131,16 @@ const PrivacyRequestCard = ({ row }: { row: GridRowModel }): JSX.Element => {
   return (
     <Card
       variant="outlined"
-      sx={{
-        height: '100%',
-        borderRadius: 2.5,
-        transition: theme.transitions.create(['box-shadow', 'border-color'], {
-          duration: theme.transitions.duration.shorter,
-        }),
-        '&:hover': { borderColor: 'primary.light', boxShadow: theme.shadows[3] },
-      }}
+      sx={[
+        {
+          height: '100%',
+          borderRadius: 2.5,
+          transition: theme.transitions.create(['box-shadow', 'border-color'], {
+            duration: theme.transitions.duration.shorter,
+          }),
+        },
+        recordCardHoverSx,
+      ]}
     >
       <Box sx={{ p: 2 }}>
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1.5}>

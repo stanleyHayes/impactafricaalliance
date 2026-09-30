@@ -5,6 +5,7 @@ import StepButton from '@mui/material/StepButton';
 import Stepper from '@mui/material/Stepper';
 import Typography from '@mui/material/Typography';
 
+import { skinned, surfaceSx, tokenVar } from '../../theme/surfaces';
 import { OptionSelect, type SelectChoice } from '../fields/OptionSelect';
 
 interface FormStepNavigationProps {
@@ -30,6 +31,41 @@ const stepChoices = (steps: readonly string[], maxStep: number): SelectChoice[] 
   }));
 
 /**
+ * A step's button. Classic marks the current step with MUI's selected fill
+ * and rings keyboard focus in the primary. A skin marks it the way it marks
+ * any selected item (Neumorphism presses it in), answers the pointer like
+ * its list items, and rings focus in its own ring.
+ */
+const stepButtonSx = (current: boolean) =>
+  skinned(
+    {
+      // Contain MUI's expanded hit area within the horizontal scroll track.
+      m: 0,
+      p: 0,
+      boxSizing: 'border-box',
+      borderRadius: 2,
+      py: 1.5,
+      bgcolor: current ? 'action.selected' : 'transparent',
+      '&.Mui-focusVisible': {
+        outline: '2px solid',
+        outlineColor: 'primary.main',
+        outlineOffset: 3,
+      },
+    },
+    {
+      bgcolor: current ? tokenVar('itemSelectedBg') : 'transparent',
+      boxShadow: current ? tokenVar('itemSelectedShadow') : 'none',
+      '&:hover': current
+        ? {}
+        : { bgcolor: tokenVar('itemHoverBg'), boxShadow: tokenVar('itemHoverShadow') },
+      '&.Mui-focusVisible': {
+        outline: tokenVar('focusRing'),
+        outlineColor: tokenVar('focusRingColor'),
+      },
+    },
+  );
+
+/**
  * Shared progress navigation for dedicated create/edit pages.
  *
  * On a phone the stepper does not fit, so a "Go to step" menu stands in for
@@ -50,9 +86,8 @@ export const FormStepNavigation = ({
     sx={{
       mb: 3,
       p: { xs: 2, md: 2.5 },
-      bgcolor: 'background.paper',
-      border: 1,
-      borderColor: 'divider',
+      // The skin's card (Classic: paper with a hairline).
+      ...surfaceSx.card,
       borderRadius: 3,
     }}
   >
@@ -93,20 +128,7 @@ export const FormStepNavigation = ({
               onClick={() => onStepChange(index)}
               disabled={disabled || index > maxStep}
               aria-current={index === activeStep ? 'step' : undefined}
-              sx={{
-                // Contain MUI's expanded hit area within the horizontal scroll track.
-                m: 0,
-                p: 0,
-                boxSizing: 'border-box',
-                borderRadius: 2,
-                py: 1.5,
-                bgcolor: index === activeStep ? 'action.selected' : 'transparent',
-                '&.Mui-focusVisible': {
-                  outline: '2px solid',
-                  outlineColor: 'primary.main',
-                  outlineOffset: 3,
-                },
-              }}
+              sx={stepButtonSx(index === activeStep)}
             >
               {label}
             </StepButton>

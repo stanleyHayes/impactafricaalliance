@@ -14,9 +14,26 @@ import { useForm, type Resolver } from 'react-hook-form';
 
 import { useSaveResource } from '../../resources/hooks';
 import type { ResourceConfig, ResourceRow } from '../../resources/types';
-import { DialogFooter, DialogHeader, dialogPaperSx } from '../dialogs/DialogShell';
+import { skinned, surfaceSx } from '../../theme/surfaces';
+import { DialogFooter, DialogHeader, dialogBodySx, dialogPaperSx } from '../dialogs/DialogShell';
 
 import { FieldRenderer } from './FieldRenderer';
+
+/**
+ * Edit and Preview. Classic: a tab strip ruled off from the form. A skin's
+ * tabs are a segmented track (see the theme's MuiTabs), which sits inset in
+ * the dialog's gutter rather than padded out to its edges.
+ */
+const EDIT_PREVIEW_TABS_SX = skinned(
+  {
+    minHeight: 46,
+    px: 3,
+    borderBottom: 1,
+    borderColor: 'divider',
+    '& .MuiTab-root': { minHeight: 46 },
+  },
+  { minHeight: 0, px: '3px', mx: 3, mt: 1, '& .MuiTab-root': { minHeight: 40 } },
+);
 
 interface ResourceFormDialogProps {
   resource: ResourceConfig;
@@ -84,13 +101,7 @@ export const ResourceFormDialog = ({
         <Tabs
           value={tab}
           onChange={(_event, next) => setTab(next as 'edit' | 'preview')}
-          sx={{
-            minHeight: 46,
-            px: 3,
-            borderBottom: 1,
-            borderColor: 'divider',
-            '& .MuiTab-root': { minHeight: 46 },
-          }}
+          sx={EDIT_PREVIEW_TABS_SX}
         >
           <Tab value="edit" label="Edit" icon={<EditNoteRoundedIcon />} iconPosition="start" />
           <Tab
@@ -102,7 +113,7 @@ export const ResourceFormDialog = ({
         </Tabs>
       )}
 
-      <DialogContent sx={{ bgcolor: 'background.default', py: 3 }}>
+      <DialogContent sx={[dialogBodySx, { py: 3 }]}>
         {/* Form stays mounted (hidden while previewing) so RHF state + submit persist. */}
         <Box sx={{ display: tab === 'edit' ? 'block' : 'none' }}>
           <Box
@@ -117,10 +128,8 @@ export const ResourceFormDialog = ({
               gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
               gap: 2.25,
               p: { xs: 2, sm: 3 },
-              border: 1,
-              borderColor: 'divider',
               borderRadius: 2.5,
-              bgcolor: 'background.paper',
+              ...surfaceSx.card,
             }}
           >
             {resource.fields.map((field) => (
@@ -144,10 +153,8 @@ export const ResourceFormDialog = ({
             sx={{
               display: tab === 'preview' ? 'block' : 'none',
               p: { xs: 2, sm: 3 },
-              border: 1,
-              borderColor: 'divider',
               borderRadius: 2.5,
-              bgcolor: 'background.paper',
+              ...surfaceSx.card,
             }}
           >
             {resource.renderPreview?.(values)}

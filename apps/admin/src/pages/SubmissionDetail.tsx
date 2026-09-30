@@ -1,8 +1,4 @@
-import {
-  submissionSchema,
-  type Submission,
-  type SubmissionStatus,
-} from '@iaa/shared';
+import { submissionSchema, type Submission, type SubmissionStatus } from '@iaa/shared';
 import { Alert, Button, Paper, Skeleton, Stack, TextField } from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
@@ -15,6 +11,7 @@ import { FormStepNavigation } from '../components/forms/FormStepNavigation';
 import { PageHeader } from '../components/PageHeader';
 import { api } from '../lib/api-client';
 import { SUBMISSION_STATUS_OPTIONS } from '../lib/select-options';
+import { backLinkSx } from '../theme/surfaces';
 
 const groups: Record<Submission['type'], { label: string; fields: string[] }[]> = {
   contact: [
@@ -172,7 +169,11 @@ const SubmissionDetail = ({ edit = false }: { edit?: boolean }): JSX.Element => 
     );
   return (
     <Stack spacing={2}>
-      <Button component={RouterLink} to="/submissions" sx={{ alignSelf: 'flex-start' }}>
+      <Button
+        component={RouterLink}
+        to="/submissions"
+        sx={[{ alignSelf: 'flex-start' }, backLinkSx]}
+      >
         Back to submissions
       </Button>
       <PageHeader

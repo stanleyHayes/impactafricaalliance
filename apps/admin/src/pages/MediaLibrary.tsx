@@ -34,6 +34,7 @@ import { PageHeader } from '../components/PageHeader';
 import { MediaLibrarySkeleton } from '../components/PageSkeleton';
 import { useDeleteMediaItem, useMediaLibrary, useSaveMediaItem } from '../lib/media-library';
 import { MEDIA_FOLDER_OPTIONS } from '../lib/select-options';
+import { skinned, surfaceSx, tokenVar } from '../theme/surfaces';
 
 const splitTags = (value: string): string[] => [
   ...new Set(
@@ -267,16 +268,7 @@ const MediaLibraryPage = (): JSX.Element => {
         </Alert>
       )}
 
-      <Box
-        sx={{
-          p: { xs: 2, md: 2.5 },
-          mb: 3,
-          border: 1,
-          borderColor: 'divider',
-          borderRadius: 3,
-          bgcolor: 'background.paper',
-        }}
-      >
+      <Box sx={{ p: { xs: 2, md: 2.5 }, mb: 3, borderRadius: 3, ...surfaceSx.card }}>
         <RequirePermission resource="media" action="create">
           <MediaUploadField
             label="Add to the library"
@@ -362,22 +354,32 @@ const MediaLibraryPage = (): JSX.Element => {
             <Box
               key={item.id}
               component="article"
-              sx={{
-                p: 0,
-                border: 1,
-                borderColor: 'divider',
-                borderRadius: 2.5,
-                overflow: 'hidden',
-                bgcolor: 'background.paper',
-                // A native button does not inherit the page's colour — the
-                // browser applies its own `buttontext`, which is black — so
-                // every Typography inside rendered black on the dark card.
-                color: 'text.primary',
-                cursor: 'pointer',
-                textAlign: 'left',
-                transition: (theme) => theme.transitions.create(['border-color', 'transform']),
-                '&:hover': { borderColor: 'primary.main', transform: 'translateY(-2px)' },
-              }}
+              sx={[
+                {
+                  p: 0,
+                  borderRadius: 2.5,
+                  overflow: 'hidden',
+                  ...surfaceSx.card,
+                  // A native button does not inherit the page's colour — the
+                  // browser applies its own `buttontext`, which is black — so
+                  // every Typography inside rendered black on the dark card.
+                  color: 'text.primary',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: (theme) => theme.transitions.create(['border-color', 'transform']),
+                },
+                // Classic edges the card in the primary as it rises; a skin keeps
+                // its material's edge and rises on its own card shadow.
+                skinned(
+                  { '&:hover': { borderColor: 'primary.main', transform: 'translateY(-2px)' } },
+                  {
+                    '&:hover': {
+                      borderColor: tokenVar('surfaceBorderColor'),
+                      boxShadow: tokenVar('surfaceHoverShadow'),
+                    },
+                  },
+                ),
+              ]}
             >
               <Box sx={{ aspectRatio: '4 / 3', bgcolor: 'action.hover' }}>
                 <Box

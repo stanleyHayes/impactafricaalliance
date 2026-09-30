@@ -5,12 +5,12 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import LinearProgress from '@mui/material/LinearProgress';
 import Stack from '@mui/material/Stack';
-import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import { useRef, useState, type DragEvent } from 'react';
 
 import { uploadToCloudinary } from '../../lib/cloudinary';
 import { downscaleImage } from '../../lib/downscale-image';
+import { dropZoneActiveSx, dropZoneSx } from '../../theme/surfaces';
 import { UPLOAD_PERMISSION_NOTE, useCanUploadFiles } from '../files/upload-permission';
 
 /** The image profile's limit; bigger photos are shrunk first and only refused if still too big. */
@@ -112,10 +112,12 @@ export const ProjectPhotoUpload = ({
           p: { xs: 2.5, md: 3 },
           border: 2,
           borderStyle: 'dashed',
-          borderColor: dragging ? 'primary.main' : 'divider',
           borderRadius: 3,
           textAlign: 'center',
-          bgcolor: (theme) => (dragging ? alpha(theme.palette.primary.main, 0.06) : 'transparent'),
+          // The skin's drop zone: divider dashes at rest and primary ones with
+          // a light tint while photos are dragged over it, in Classic.
+          ...dropZoneSx,
+          ...(dragging && dropZoneActiveSx.dragging),
         }}
       >
         <AddPhotoAlternateOutlinedIcon sx={{ fontSize: 36, color: 'text.secondary' }} aria-hidden />

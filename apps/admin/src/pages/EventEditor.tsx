@@ -33,6 +33,7 @@ import {
   scheduleErrors,
   type EventFormState,
 } from '../lib/event-form';
+import { backLinkSx, surfaceSx, tokenVar } from '../theme/surfaces';
 
 type DateField = 'startAt' | 'endAt' | 'registrationClosesAt';
 
@@ -146,6 +147,7 @@ const EventEditorForm = ({
             to="/events"
             startIcon={<ArrowBackRoundedIcon />}
             disabled={busy}
+            sx={backLinkSx}
           >
             All events
           </Button>
@@ -163,13 +165,7 @@ const EventEditorForm = ({
           component="form"
           noValidate
           onSubmit={submit}
-          sx={{
-            border: 1,
-            borderColor: 'divider',
-            borderRadius: 3,
-            bgcolor: 'background.paper',
-            overflow: 'hidden',
-          }}
+          sx={{ borderRadius: 3, overflow: 'hidden', ...surfaceSx.card }}
         >
           <Box sx={{ p: { xs: 2.5, md: 4 } }}>
             <Typography
@@ -219,7 +215,9 @@ const EventEditorForm = ({
             spacing={2}
             sx={{
               p: { xs: 2, md: 3 },
-              bgcolor: 'background.default',
+              // The card's action bar: the page colour in Classic, and in a skin
+              // the same footer its tables have (a well in Glass and Clay).
+              bgcolor: tokenVar('gridFooterBg'),
               borderTop: 1,
               borderColor: 'divider',
             }}

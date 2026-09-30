@@ -6,6 +6,8 @@ import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
+import { surfaceSx } from '../../theme/surfaces';
+
 export interface DetailSectionProps {
   title: string;
   /** Shown in the tinted square and, faintly, as a watermark. Defaults to a document. */
@@ -22,6 +24,11 @@ export interface DetailSectionProps {
 /**
  * A card section with a tinted header, for detail pages: a project's
  * milestones, an application's answers, a task's checklist.
+ *
+ * The card is MUI's, so it follows the skin from the theme; the header strip
+ * and the icon square read the skin's tint and tile tokens, whose Classic
+ * values are the ones this section always had. The watermark is decoration
+ * in the text colour and is the same in every skin.
  *
  * The same look as the sections on the event page, which keeps its own
  * private copy. That one guesses its icon from the title with patterns; here
@@ -55,7 +62,7 @@ export const DetailSection = ({
           py: 2.5,
           position: 'relative',
           overflow: 'hidden',
-          bgcolor: (theme) => alpha(theme.palette.primary.main, 0.045),
+          ...surfaceSx.tinted,
           borderBottom: 1,
           borderColor: 'divider',
         }}
@@ -80,7 +87,7 @@ export const DetailSection = ({
             placeItems: 'center',
             p: 1,
             borderRadius: 1.5,
-            bgcolor: (theme) => alpha(theme.palette.primary.main, 0.1),
+            ...surfaceSx.tileInset,
           }}
         >
           {glyph}

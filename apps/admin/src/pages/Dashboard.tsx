@@ -55,6 +55,7 @@ import { useDashboardSummary, useSubmissions, useUpdatePaymentSettings } from '.
 import { formatUtcShort } from '../lib/date';
 import { pageGuides } from '../lib/page-guides';
 import { RESOURCES } from '../resources/registry';
+import { skinned, surfaceSx, tokenVar } from '../theme/surfaces';
 
 /** USD formatter — Donation.amountUsd is whole dollars (see payment.ts), not minor units. */
 const usd = new Intl.NumberFormat('en-US', {
@@ -146,7 +147,42 @@ const describeSubmission = (submission: Submission): { title: string; detail: st
   return { title, detail };
 };
 
-/** A single tappable row in the recent-submissions feed. */
+/**
+ * An icon tile tinted in its own tone, with a hairline ring of the same tone.
+ *
+ * The tone says which kind of thing the row is (a partner, a donation, a
+ * gateway), so every skin keeps the tint. What a skin changes is the ring: it
+ * becomes that skin's tile depth, raised, frosted or clay, which is what makes
+ * the tile read as part of the skin rather than a flat sticker on it. Classic
+ * keeps exactly the tint and ring it always had.
+ */
+const toneTileSx = (tone: string, fill: number, ring: number) =>
+  skinned(
+    { bgcolor: alpha(tone, fill), boxShadow: `inset 0 0 0 1px ${alpha(tone, ring)}` },
+    { boxShadow: tokenVar('tileShadow') },
+  );
+
+/**
+ * A row in a list inside a panel, tinted in its tone under the pointer.
+ *
+ * In Classic the row only takes a faint wash of its tone. A skin uses its own
+ * list-item hover instead (the row lifts in Neumorphism and Clay, brightens in
+ * Glass), the same hover every menu and list in that skin has.
+ */
+const toneRowHoverSx = (tone: string) =>
+  skinned(
+    { '&:hover': { bgcolor: alpha(tone, 0.05) } },
+    { '&:hover': { bgcolor: tokenVar('itemHoverBg'), boxShadow: tokenVar('itemHoverShadow') } },
+  );
+
+/**
+ * A thin bar track in the bar's own tone. A skin sinks it into the panel the
+ * way it sinks its progress bars, so the filled part reads as sitting in a
+ * groove; the tone stays, since it is the colour of the data.
+ */
+const toneTrackSx = (tone: string) =>
+  skinned({ bgcolor: alpha(tone, 0.14) }, { boxShadow: tokenVar('surfaceInsetShadow') });
+
 /** How many recent submissions the panel shows, and so how many it draws while loading. */
 const RECENT_SUBMISSION_LIMIT = 5;
 
@@ -183,25 +219,23 @@ const SubmissionRow = ({ submission }: { submission: Submission }): JSX.Element 
     <CardActionArea
       component={RouterLink}
       to="/submissions"
-      sx={{
-        px: 2.5,
-        py: 1.75,
-        transition: (t) => t.transitions.create('background-color'),
-        '&:hover': { bgcolor: alpha(meta.color, 0.05) },
-        '& .MuiCardActionArea-focusHighlight': { opacity: 0 },
-      }}
+      sx={[
+        {
+          px: 2.5,
+          py: 1.75,
+          transition: (t) => t.transitions.create('background-color'),
+          '& .MuiCardActionArea-focusHighlight': { opacity: 0 },
+        },
+        toneRowHoverSx(meta.color),
+      ]}
     >
       <Stack direction="row" spacing={1.75} alignItems="center">
         <Avatar
           variant="rounded"
-          sx={{
-            bgcolor: alpha(meta.color, 0.12),
-            color: 'text.secondary',
-            width: 42,
-            height: 42,
-            borderRadius: 2.5,
-            boxShadow: `inset 0 0 0 1px ${alpha(meta.color, 0.16)}`,
-          }}
+          sx={[
+            { color: 'text.secondary', width: 42, height: 42, borderRadius: 2.5 },
+            toneTileSx(meta.color, 0.12, 0.16),
+          ]}
         >
           <Icon fontSize="small" />
         </Avatar>
@@ -213,16 +247,23 @@ const SubmissionRow = ({ submission }: { submission: Submission }): JSX.Element 
             <Chip
               label={meta.label}
               size="small"
-              sx={{
-                height: 19,
-                fontSize: 10.5,
-                letterSpacing: 0.3,
-                fontWeight: 700,
-                textTransform: 'uppercase',
-                bgcolor: alpha(meta.color, 0.12),
-                color: 'text.secondary',
-                '& .MuiChip-label': { px: 0.9 },
-              }}
+              sx={[
+                {
+                  height: 19,
+                  fontSize: 10.5,
+                  letterSpacing: 0.3,
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  // On the filled class, or a skin's default chip fill (a stronger
+                  // rule than a plain bgcolor) would replace the tone with grey.
+                  '&.MuiChip-filled': { bgcolor: alpha(meta.color, 0.12) },
+                  color: 'text.secondary',
+                  '& .MuiChip-label': { px: 0.9 },
+                },
+                // A skin's darker ground under the tint leaves secondary text
+                // short of 4.5:1 at this size; the label takes the body colour.
+                skinned({}, { color: 'text.primary' }),
+              ]}
             />
           </Stack>
           {detail && (
@@ -242,20 +283,24 @@ const SubmissionRow = ({ submission }: { submission: Submission }): JSX.Element 
           {isNew ? (
             <Box
               aria-label="new"
-              sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 0.5,
-                px: 0.75,
-                height: 18,
-                borderRadius: 999,
-                bgcolor: 'secondary.main',
-                color: 'secondary.contrastText',
-                fontSize: 9.5,
-                fontWeight: 800,
-                letterSpacing: 0.4,
-                textTransform: 'uppercase',
-              }}
+              sx={[
+                {
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                  px: 0.75,
+                  height: 18,
+                  borderRadius: 999,
+                  bgcolor: 'secondary.main',
+                  color: 'secondary.contrastText',
+                  fontSize: 9.5,
+                  fontWeight: 800,
+                  letterSpacing: 0.4,
+                  textTransform: 'uppercase',
+                },
+                // A status pill: its colour stays, and a skin gives it the depth of its chips.
+                skinned({}, { boxShadow: tokenVar('chipShadow') }),
+              ]}
             >
               New
             </Box>
@@ -290,13 +335,14 @@ const RecentSubmissions = ({
       <Stack alignItems="center" spacing={1.25} sx={{ py: 7, px: 3, textAlign: 'center' }}>
         <Avatar
           variant="rounded"
-          sx={{
-            width: 56,
-            height: 56,
-            borderRadius: 3,
-            bgcolor: 'action.hover',
-            color: 'text.disabled',
-          }}
+          sx={[
+            { width: 56, height: 56, borderRadius: 3, color: 'text.disabled' },
+            // An empty inbox: a skin sinks the medallion in rather than tinting it.
+            skinned(
+              { bgcolor: 'action.hover' },
+              { bgcolor: tokenVar('tileBg'), boxShadow: tokenVar('tileInsetShadow') },
+            ),
+          ]}
         >
           <InboxIcon />
         </Avatar>
@@ -339,47 +385,62 @@ const StatCard = ({
 }: StatCardProps): JSX.Element => (
   <Card
     variant="outlined"
-    sx={{
-      height: '100%',
-      borderRadius: 3,
-      position: 'relative',
-      overflow: 'hidden',
-      borderColor: 'divider',
-      transition: (t) =>
-        t.transitions.create(['box-shadow', 'border-color', 'transform'], {
-          duration: t.transitions.duration.shorter,
-        }),
-      // Soft radial accent wash, top-right corner.
-      '&::after': {
-        content: '""',
-        position: 'absolute',
-        top: -48,
-        insetInlineEnd: -48,
-        width: 140,
-        height: 140,
-        borderRadius: '50%',
-        background: `radial-gradient(circle, ${alpha(accent, 0.14)} 0%, ${alpha(accent, 0)} 70%)`,
-        pointerEvents: 'none',
+    sx={[
+      {
+        height: '100%',
+        borderRadius: 3,
+        position: 'relative',
+        overflow: 'hidden',
+        borderColor: tokenVar('surfaceBorderColor'),
+        transition: (t) =>
+          t.transitions.create(['box-shadow', 'border-color', 'transform'], {
+            duration: t.transitions.duration.shorter,
+          }),
+        // Soft radial accent wash, top-right corner.
+        '&::after': {
+          content: '""',
+          position: 'absolute',
+          top: -48,
+          insetInlineEnd: -48,
+          width: 140,
+          height: 140,
+          borderRadius: '50%',
+          background: `radial-gradient(circle, ${alpha(accent, 0.14)} 0%, ${alpha(accent, 0)} 70%)`,
+          pointerEvents: 'none',
+        },
+        // Accent left-bar, grows on hover.
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          insetInlineStart: 0,
+          top: 0,
+          bottom: 0,
+          width: 4,
+          bgcolor: accent,
+          transition: (t) => t.transitions.create('width'),
+          zIndex: 1,
+        },
+        '&:hover::before': { width: 6 },
       },
-      // Accent left-bar, grows on hover.
-      '&::before': {
-        content: '""',
-        position: 'absolute',
-        insetInlineStart: 0,
-        top: 0,
-        bottom: 0,
-        width: 4,
-        bgcolor: accent,
-        transition: (t) => t.transitions.create('width'),
-        zIndex: 1,
-      },
-      '&:hover': {
-        borderColor: alpha(accent, 0.45),
-        boxShadow: `0 14px 30px -16px ${alpha(accent, 0.55)}`,
-        transform: 'translateY(-3px)',
-      },
-      '&:hover::before': { width: 6 },
-    }}
+      // Classic lifts the tile on a glow of its accent. A skin lifts it on its
+      // own card shadow and leaves the edge its material's: the accent bar and
+      // the tinted icon already carry the tone.
+      skinned(
+        {
+          '&:hover': {
+            borderColor: alpha(accent, 0.45),
+            boxShadow: `0 14px 30px -16px ${alpha(accent, 0.55)}`,
+            transform: 'translateY(-3px)',
+          },
+        },
+        {
+          '&:hover': {
+            borderColor: tokenVar('surfaceBorderColor'),
+            boxShadow: tokenVar('surfaceHoverShadow'),
+          },
+        },
+      ),
+    ]}
   >
     <CardActionArea
       component={RouterLink}
@@ -410,34 +471,37 @@ const StatCard = ({
         <Stack direction="row" alignItems="center" justifyContent="space-between">
           <Avatar
             variant="rounded"
-            sx={{
-              bgcolor: alpha(accent, 0.12),
-              color: 'text.primary',
-              width: 46,
-              height: 46,
-              borderRadius: 2.5,
-              boxShadow: `inset 0 0 0 1px ${alpha(accent, 0.18)}`,
-            }}
+            sx={[
+              { color: 'text.primary', width: 46, height: 46, borderRadius: 2.5 },
+              toneTileSx(accent, 0.12, 0.18),
+            ]}
           >
             <Icon fontSize="small" />
           </Avatar>
           <Box
             aria-hidden
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 28,
-              height: 28,
-              borderRadius: '50%',
-              color: 'text.disabled',
-              transition: (t) => t.transitions.create(['color', 'background-color', 'transform']),
-              '.MuiCardActionArea-root:hover &': {
-                color: 'text.primary',
-                bgcolor: alpha(accent, 0.12),
-                transform: 'translate(2px, -2px)',
+            sx={[
+              {
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 28,
+                height: 28,
+                borderRadius: '50%',
+                color: 'text.disabled',
+                transition: (t) => t.transitions.create(['color', 'background-color', 'transform']),
+                '.MuiCardActionArea-root:hover &': {
+                  color: 'text.primary',
+                  bgcolor: alpha(accent, 0.12),
+                  transform: 'translate(2px, -2px)',
+                },
               },
-            }}
+              // The arrow's disc becomes one of the skin's small raised controls when it appears.
+              skinned(
+                {},
+                { '.MuiCardActionArea-root:hover &': { boxShadow: tokenVar('controlShadow') } },
+              ),
+            ]}
           >
             <ArrowOutwardIcon sx={{ fontSize: 17 }} />
           </Box>
@@ -488,13 +552,20 @@ interface PanelProps {
   children: ReactNode;
 }
 
+/**
+ * A dashboard panel: the skin's card, with a tinted header strip.
+ *
+ * The strip is fainter than the other section headers in Classic (0.035
+ * against their 0.045), so Classic keeps its own tint and a skin uses its
+ * section-header tint, which it tunes to its surfaces.
+ */
 const Panel = ({ title, subtitle, action, children }: PanelProps): JSX.Element => (
   <Card
     variant="outlined"
     sx={{
       height: '100%',
       borderRadius: 3,
-      borderColor: 'divider',
+      borderColor: tokenVar('surfaceBorderColor'),
       display: 'flex',
       flexDirection: 'column',
     }}
@@ -504,7 +575,10 @@ const Panel = ({ title, subtitle, action, children }: PanelProps): JSX.Element =
       alignItems="center"
       justifyContent="space-between"
       spacing={1}
-      sx={{ px: 2.75, py: 2.5, bgcolor: (theme) => alpha(theme.palette.primary.main, 0.035) }}
+      sx={[
+        { px: 2.75, py: 2.5 },
+        skinned({ bgcolor: (theme) => alpha(theme.palette.primary.main, 0.035) }, surfaceSx.tinted),
+      ]}
     >
       <Box sx={{ minWidth: 0 }}>
         <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2 }} noWrap>
@@ -535,17 +609,32 @@ const ContentTile = ({
 }): JSX.Element => (
   <Card
     variant="outlined"
-    sx={{
-      height: '100%',
-      borderRadius: 2.5,
-      borderColor: 'divider',
-      transition: (t) => t.transitions.create(['border-color', 'background-color', 'box-shadow']),
-      '&:hover': {
-        borderColor: alpha(brandColors.forestGreen, 0.4),
-        bgcolor: alpha(brandColors.forestGreen, 0.04),
-        boxShadow: `0 8px 18px -14px ${alpha(brandColors.forestGreen, 0.6)}`,
+    sx={[
+      {
+        height: '100%',
+        borderRadius: 2.5,
+        borderColor: tokenVar('surfaceBorderColor'),
+        transition: (t) => t.transitions.create(['border-color', 'background-color', 'box-shadow']),
       },
-    }}
+      // Classic washes the tile green under the pointer. A skin keeps its own
+      // card material (a wash would thin Glass's frost) and lifts it instead.
+      skinned(
+        {
+          '&:hover': {
+            borderColor: alpha(brandColors.forestGreen, 0.4),
+            bgcolor: alpha(brandColors.forestGreen, 0.04),
+            boxShadow: `0 8px 18px -14px ${alpha(brandColors.forestGreen, 0.6)}`,
+          },
+        },
+        {
+          '&:hover': {
+            borderColor: tokenVar('surfaceBorderColor'),
+            bgcolor: tokenVar('surfaceBg'),
+            boxShadow: tokenVar('surfaceHoverShadow'),
+          },
+        },
+      ),
+    ]}
   >
     <CardActionArea
       component={RouterLink}
@@ -559,16 +648,17 @@ const ContentTile = ({
       <Stack direction="row" alignItems="center" spacing={1.25} sx={{ overflow: 'hidden' }}>
         <Avatar
           variant="rounded"
-          sx={{
-            width: 36,
-            height: 36,
-            borderRadius: 2,
-            bgcolor: alpha(brandColors.forestGreen, 0.1),
-            color: 'text.primary',
-            fontSize: 15,
-            fontWeight: 800,
-            boxShadow: `inset 0 0 0 1px ${alpha(brandColors.forestGreen, 0.16)}`,
-          }}
+          sx={[
+            {
+              width: 36,
+              height: 36,
+              borderRadius: 2,
+              color: 'text.primary',
+              fontSize: 15,
+              fontWeight: 800,
+            },
+            toneTileSx(brandColors.forestGreen, 0.1, 0.16),
+          ]}
         >
           {RESOURCES.find((resource) => resource.key === resourceKey)?.icon}
         </Avatar>
@@ -641,6 +731,26 @@ const providerHelperText = (status: PaymentProviderStatus, envHint: string): str
   return 'API key configured · webhook secret missing';
 };
 
+/**
+ * The box around one payment gateway. Classic draws a hairline box, washed
+ * green while the gateway is taking donations. A skin sinks the box into the
+ * panel as one of its wells and keeps the green wash, because the wash says
+ * the gateway is live.
+ */
+const providerWellSx = (accepting: boolean) =>
+  skinned(
+    {
+      border: '1px solid',
+      borderColor: 'divider',
+      bgcolor: accepting ? alpha(brandColors.forestGreen, 0.04) : 'transparent',
+    },
+    {
+      bgcolor: accepting ? alpha(brandColors.forestGreen, 0.04) : tokenVar('surfaceInsetBg'),
+      border: tokenVar('surfaceInsetBorder'),
+      boxShadow: tokenVar('surfaceInsetShadow'),
+    },
+  );
+
 const ProviderRow = ({
   providerKey,
   status,
@@ -662,24 +772,14 @@ const ProviderRow = ({
       direction="row"
       spacing={1.75}
       alignItems="center"
-      sx={{
-        p: 1.75,
-        borderRadius: 2.5,
-        border: '1px solid',
-        borderColor: 'divider',
-        bgcolor: status.accepting ? alpha(brandColors.forestGreen, 0.04) : 'transparent',
-      }}
+      sx={[{ p: 1.75, borderRadius: 2.5 }, providerWellSx(status.accepting)]}
     >
       <Avatar
         variant="rounded"
-        sx={{
-          width: 40,
-          height: 40,
-          borderRadius: 2,
-          bgcolor: alpha(brandColors.forestGreen, 0.1),
-          color: 'text.primary',
-          boxShadow: `inset 0 0 0 1px ${alpha(brandColors.forestGreen, 0.16)}`,
-        }}
+        sx={[
+          { width: 40, height: 40, borderRadius: 2, color: 'text.primary' },
+          toneTileSx(brandColors.forestGreen, 0.1, 0.16),
+        ]}
       >
         <CreditCardIcon fontSize="small" />
       </Avatar>
@@ -714,7 +814,7 @@ const ProviderRowSkeleton = (): JSX.Element => (
     direction="row"
     spacing={1.75}
     alignItems="center"
-    sx={{ p: 1.75, borderRadius: 2.5, border: '1px solid', borderColor: 'divider' }}
+    sx={[{ p: 1.75, borderRadius: 2.5 }, providerWellSx(false)]}
   >
     <Skeleton variant="rounded" width={40} height={40} sx={{ borderRadius: 2, flexShrink: 0 }} />
     <Box sx={{ flexGrow: 1, minWidth: 0 }}>
@@ -816,7 +916,7 @@ const ProviderSplitBar = ({
         {usd.format(amount)}
       </Typography>
     </Stack>
-    <Box sx={{ height: 6, borderRadius: 99, bgcolor: alpha(color, 0.14), overflow: 'hidden' }}>
+    <Box sx={[{ height: 6, borderRadius: 99, overflow: 'hidden' }, toneTrackSx(color)]}>
       <Box
         sx={{
           height: '100%',
@@ -1089,6 +1189,31 @@ const ContentInventoryPanel = ({
   </Panel>
 );
 
+/**
+ * A collection row you can open. Classic outlines it and washes it green under
+ * the pointer. A skin makes it one of its raised controls instead: lifted at
+ * rest, higher under the pointer, pressed in while held.
+ */
+const inventoryRowSx = skinned(
+  {
+    border: '1px solid',
+    borderColor: 'divider',
+    '&:hover': {
+      borderColor: alpha(brandColors.forestGreen, 0.4),
+      bgcolor: alpha(brandColors.forestGreen, 0.04),
+    },
+  },
+  {
+    ...surfaceSx.raised,
+    '&:hover': {
+      bgcolor: tokenVar('surfaceRaisedBg'),
+      border: tokenVar('surfaceRaisedBorder'),
+      boxShadow: tokenVar('controlHoverShadow'),
+    },
+    '&:active': surfaceSx.pressed,
+  },
+);
+
 const ContentInventoryRow = ({
   entry,
 }: {
@@ -1099,19 +1224,16 @@ const ContentInventoryRow = ({
     <CardActionArea
       component={RouterLink}
       to={`/content/${entry.key}`}
-      sx={{
-        display: 'block',
-        p: 1.75,
-        borderRadius: 2.5,
-        border: '1px solid',
-        borderColor: 'divider',
-        transition: (t) => t.transitions.create(['border-color', 'background-color']),
-        '&:hover': {
-          borderColor: alpha(brandColors.forestGreen, 0.4),
-          bgcolor: alpha(brandColors.forestGreen, 0.04),
+      sx={[
+        {
+          display: 'block',
+          p: 1.75,
+          borderRadius: 2.5,
+          transition: (t) => t.transitions.create(['border-color', 'background-color']),
+          '& .MuiCardActionArea-focusHighlight': { opacity: 0 },
         },
-        '& .MuiCardActionArea-focusHighlight': { opacity: 0 },
-      }}
+        inventoryRowSx,
+      ]}
     >
       <Stack direction="row" justifyContent="space-between" alignItems="baseline" sx={{ mb: 0.75 }}>
         <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
@@ -1122,12 +1244,10 @@ const ContentInventoryRow = ({
         </Typography>
       </Stack>
       <Box
-        sx={{
-          height: 6,
-          borderRadius: 99,
-          bgcolor: alpha(brandColors.forestGreen, 0.14),
-          overflow: 'hidden',
-        }}
+        sx={[
+          { height: 6, borderRadius: 99, overflow: 'hidden' },
+          toneTrackSx(brandColors.forestGreen),
+        ]}
       >
         <Box
           sx={{
@@ -1160,25 +1280,23 @@ const SystemRow = ({
   <CardActionArea
     component={RouterLink}
     to={to}
-    sx={{
-      px: 1.5,
-      py: 1.25,
-      borderRadius: 2,
-      '&:hover': { bgcolor: alpha(accent, 0.05) },
-      '& .MuiCardActionArea-focusHighlight': { opacity: 0 },
-    }}
+    sx={[
+      {
+        px: 1.5,
+        py: 1.25,
+        borderRadius: 2,
+        '& .MuiCardActionArea-focusHighlight': { opacity: 0 },
+      },
+      toneRowHoverSx(accent),
+    ]}
   >
     <Stack direction="row" spacing={1.5} alignItems="center">
       <Avatar
         variant="rounded"
-        sx={{
-          width: 34,
-          height: 34,
-          borderRadius: 2,
-          bgcolor: alpha(accent, 0.12),
-          color: 'text.secondary',
-          boxShadow: `inset 0 0 0 1px ${alpha(accent, 0.16)}`,
-        }}
+        sx={[
+          { width: 34, height: 34, borderRadius: 2, color: 'text.secondary' },
+          toneTileSx(accent, 0.12, 0.16),
+        ]}
       >
         <Icon sx={{ fontSize: 18 }} />
       </Avatar>
@@ -1359,7 +1477,12 @@ const HeaderActions = (): JSX.Element => (
       to="/submissions"
       variant="contained"
       endIcon={<ArrowForwardIcon />}
-      sx={{ borderRadius: 2.5, px: 2.5, fontWeight: 600, width: { xs: '100%', sm: 'auto' } }}
+      sx={{
+        borderRadius: tokenVar('buttonRadius'),
+        px: 2.5,
+        fontWeight: 600,
+        width: { xs: '100%', sm: 'auto' },
+      }}
     >
       Review submissions
     </Button>
@@ -1368,7 +1491,7 @@ const HeaderActions = (): JSX.Element => (
       to="/subscribers"
       variant="outlined"
       startIcon={<MailOutlineIcon />}
-      sx={{ borderRadius: 2.5, px: 2.5, width: { xs: '100%', sm: 'auto' } }}
+      sx={{ borderRadius: tokenVar('buttonRadius'), px: 2.5, width: { xs: '100%', sm: 'auto' } }}
     >
       Newsletter
     </Button>

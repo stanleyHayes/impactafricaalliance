@@ -15,6 +15,7 @@ import { useRef } from 'react';
 import { api } from '../../lib/api-client';
 import { formatInstant } from '../../lib/forms';
 import { initials } from '../../lib/initials';
+import { timelineSx } from '../../theme/surfaces';
 import { ServerPagination, usePageParam } from '../data/ServerPagination';
 import { EmptyState } from '../EmptyState';
 
@@ -155,7 +156,8 @@ const Entry = ({
               top: 40,
               bottom: 4,
               width: '1px',
-              bgcolor: 'divider',
+              // The skin's timeline rail (Classic: the divider).
+              ...timelineSx.rail,
             },
       }}
     >

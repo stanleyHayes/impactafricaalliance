@@ -380,7 +380,7 @@ const FormsPage = (): JSX.Element => {
             onDelete={clearFilters}
             deleteIcon={<FilterAltOffIcon />}
             variant="outlined"
-            sx={{ borderRadius: 2, alignSelf: 'center', justifySelf: 'start' }}
+            sx={{ alignSelf: 'center', justifySelf: 'start' }}
           />
         )}
       </Box>

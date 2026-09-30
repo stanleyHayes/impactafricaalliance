@@ -5,6 +5,8 @@ import { alpha, useTheme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
+import { surfaceSx } from '../theme/surfaces';
+
 import type { PageGuide } from './PageHelp';
 import { PageHelp } from './PageHelp';
 
@@ -21,7 +23,15 @@ interface PageHeaderProps {
   help?: PageGuide;
 }
 
-/** Consistent page header: branded context, title, count, description, and optional action. */
+/**
+ * Consistent page header: branded context, title, count, description, and optional action.
+ *
+ * The panel and its icon square are drawn from the skin tokens (`surfaceSx.hero`
+ * and `surfaceSx.tile`), whose Classic values are the tint, border and bottom
+ * rule this header always had; the other skins turn it into a raised, frosted
+ * or clay panel. The watermark and the gold rule are brand art and stay as
+ * they are in every skin.
+ */
 export const PageHeader = ({
   title,
   description,
@@ -47,10 +57,8 @@ export const PageHeader = ({
         overflow: 'hidden',
         isolation: 'isolate',
         borderRadius: 3,
-        bgcolor: alpha(green, 0.075),
-        border: `1px solid ${alpha(green, 0.14)}`,
+        ...surfaceSx.hero,
         '& > *': { position: 'relative', zIndex: 1 },
-        borderBottom: `1px solid ${alpha(green, 0.11)}`,
         '&::after': {
           position: 'absolute',
           bottom: -1,
@@ -98,8 +106,7 @@ export const PageHeader = ({
               alignItems: 'center',
               justifyContent: 'center',
               color: 'text.primary',
-              bgcolor: alpha(green, 0.1),
-              border: `1px solid ${alpha(green, 0.16)}`,
+              ...surfaceSx.tile,
               '& > svg': { fontSize: 26 },
             }}
           >

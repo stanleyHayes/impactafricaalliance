@@ -18,7 +18,7 @@ import Pagination from '@mui/material/Pagination';
 import Skeleton from '@mui/material/Skeleton';
 import Snackbar from '@mui/material/Snackbar';
 import Stack from '@mui/material/Stack';
-import { alpha } from '@mui/material/styles';
+import { alpha, type Theme } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
@@ -33,6 +33,7 @@ import { EmptyState } from '../components/EmptyState';
 import { PageHeader } from '../components/PageHeader';
 import { useModerateReview, useReviews } from '../lib/admin-hooks';
 import { formatUtcShort } from '../lib/date';
+import { backLinkSx, skinned, surfaceSx } from '../theme/surfaces';
 
 const STATUS_TABS: { value: ReviewStatus; label: string }[] = [
   { value: 'pending', label: 'Waiting' },
@@ -50,6 +51,20 @@ const Stars = ({ rating }: { rating: number }): JSX.Element => (
     ))}
   </Stack>
 );
+
+/**
+ * The quoted comment. Classic tints it and rules its left edge in the primary.
+ * A skin sets it into the card as one of its wells and draws the rule again
+ * after the well's own border, so the quote still reads as a quote.
+ */
+const quoteSx = [
+  {
+    borderLeft: 3,
+    borderColor: 'primary.main',
+    bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.04),
+  },
+  skinned({}, { ...surfaceSx.inset, borderLeft: 3, borderLeftColor: 'primary.main' }),
+];
 
 const ReviewCard = ({
   review,
@@ -110,18 +125,18 @@ const ReviewCard = ({
 
     {review.comment && (
       <Typography
-        sx={{
-          my: 2.5,
-          p: 2.5,
-          borderLeft: 3,
-          borderColor: 'primary.main',
-          bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04),
-          borderRadius: 1,
-          whiteSpace: 'pre-wrap',
-          overflowWrap: 'anywhere',
-          lineHeight: 1.8,
-          position: 'relative',
-        }}
+        sx={[
+          {
+            my: 2.5,
+            p: 2.5,
+            borderRadius: 1,
+            whiteSpace: 'pre-wrap',
+            overflowWrap: 'anywhere',
+            lineHeight: 1.8,
+            position: 'relative',
+          },
+          ...quoteSx,
+        ]}
       >
         {review.comment}
       </Typography>
@@ -365,7 +380,7 @@ const Reviews = (): JSX.Element => {
     <>
       {eventId && (
         <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
-          <Button component={RouterLink} to={`/events/${eventId}`}>
+          <Button component={RouterLink} to={`/events/${eventId}`} sx={backLinkSx}>
             Back to event
           </Button>
           <Button component={RouterLink} to="/reviews">

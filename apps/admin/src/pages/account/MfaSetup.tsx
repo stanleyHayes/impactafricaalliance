@@ -22,12 +22,8 @@ import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 
 import { AccountPanel, AccountSectionHeader } from '../../components/account/AccountSurface';
-import {
-  useDisableMfa,
-  useMfaStatus,
-  useSetupMfa,
-  useVerifyMfaSetup,
-} from '../../lib/admin-hooks';
+import { useDisableMfa, useMfaStatus, useSetupMfa, useVerifyMfaSetup } from '../../lib/admin-hooks';
+import { skinned, surfaceSx } from '../../theme/surfaces';
 
 const passwordSchema = z.object({
   password: z.string().min(1, 'Password is required'),
@@ -37,14 +33,14 @@ type PasswordForm = z.infer<typeof passwordSchema>;
 
 type TotpForm = { totpCode: string };
 
-const SetupStep = ({
-  onComplete,
-}: {
-  onComplete: () => void;
-}): JSX.Element => {
+const SetupStep = ({ onComplete }: { onComplete: () => void }): JSX.Element => {
   const setup = useSetupMfa();
   const verify = useVerifyMfaSetup();
-  const [setupData, setSetupData] = useState<{ secret: string; qrCodeUrl: string; manualEntry: string } | null>(null);
+  const [setupData, setSetupData] = useState<{
+    secret: string;
+    qrCodeUrl: string;
+    manualEntry: string;
+  } | null>(null);
   const [setupPassword, setSetupPassword] = useState<string>('');
   const [recoveryCodes, setRecoveryCodes] = useState<string[] | null>(null);
   const [copied, setCopied] = useState(false);
@@ -104,15 +100,18 @@ const SetupStep = ({
           </Alert>
           <Box
             component="pre"
-            sx={{
-              p: 2,
-              bgcolor: 'rgba(0,30,20,0.04)',
-              borderRadius: 2,
-              fontFamily: 'ui-monospace, monospace',
-              fontSize: '0.9rem',
-              lineHeight: 1.6,
-              position: 'relative',
-            }}
+            sx={[
+              {
+                p: 2,
+                borderRadius: 2,
+                fontFamily: 'ui-monospace, monospace',
+                fontSize: '0.9rem',
+                lineHeight: 1.6,
+                position: 'relative',
+              },
+              // The codes sit in a faint grey block in Classic; in a skin, in one of its wells.
+              skinned({ bgcolor: 'rgba(0,30,20,0.04)' }, surfaceSx.inset),
+            ]}
           >
             {recoveryCodes.join('\n')}
             <Tooltip title={copied ? 'Copied' : 'Copy all'}>
@@ -174,7 +173,9 @@ const SetupStep = ({
               type="submit"
               variant="contained"
               disabled={verify.isPending}
-              endIcon={verify.isPending ? <CircularProgress size={18} color="inherit" /> : undefined}
+              endIcon={
+                verify.isPending ? <CircularProgress size={18} color="inherit" /> : undefined
+              }
             >
               {verify.isPending ? 'Verifying…' : 'Enable MFA'}
             </Button>
@@ -225,11 +226,7 @@ const SetupStep = ({
   );
 };
 
-const DisableStep = ({
-  onComplete,
-}: {
-  onComplete: () => void;
-}): JSX.Element => {
+const DisableStep = ({ onComplete }: { onComplete: () => void }): JSX.Element => {
   const disable = useDisableMfa();
   const {
     register,
@@ -356,15 +353,18 @@ const MfaSetup = (): JSX.Element => {
         <Grid size={{ xs: 12, md: 5 }}>
           <AccountPanel sx={{ height: '100%', p: 3 }}>
             <Box
-              sx={{
-                display: 'grid',
-                width: 56,
-                height: 56,
-                placeItems: 'center',
-                borderRadius: 2.5,
-                bgcolor: 'rgba(0,30,20,0.06)',
-                color: 'text.primary',
-              }}
+              sx={[
+                {
+                  display: 'grid',
+                  width: 56,
+                  height: 56,
+                  placeItems: 'center',
+                  borderRadius: 2.5,
+                  color: 'text.primary',
+                },
+                // Classic's grey square; the skin's icon tile elsewhere.
+                skinned({ bgcolor: 'rgba(0,30,20,0.06)' }, surfaceSx.tile),
+              ]}
             >
               <LockResetRoundedIcon sx={{ fontSize: 30 }} />
             </Box>

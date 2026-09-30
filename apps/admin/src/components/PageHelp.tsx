@@ -10,6 +10,10 @@ import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import { useState } from 'react';
 
+import { skinned, tokenVar } from '../theme/surfaces';
+
+import { topBarActionSkin } from './layout/top-bar-action';
+
 export interface PageGuide {
   title: string;
   steps: string[];
@@ -42,12 +46,17 @@ export const PageHelp = ({ guide }: PageHelpProps): JSX.Element => {
         aria-label={`About ${guide.title}`}
         aria-expanded={open}
         onClick={(event) => setAnchor(event.currentTarget)}
-        sx={{
-          color: 'text.secondary',
-          bgcolor: (t) => alpha(t.palette.primary.main, 0.06),
-          border: (t) => `1px solid ${alpha(t.palette.primary.main, 0.12)}`,
-          '&:hover': { bgcolor: (t) => alpha(t.palette.primary.main, 0.12) },
-        }}
+        // Classic's tinted square; in a skin, one of its raised controls, like
+        // the actions in the top bar.
+        sx={skinned(
+          {
+            color: 'text.secondary',
+            bgcolor: (t) => alpha(t.palette.primary.main, 0.06),
+            border: (t) => `1px solid ${alpha(t.palette.primary.main, 0.12)}`,
+            '&:hover': { bgcolor: (t) => alpha(t.palette.primary.main, 0.12) },
+          },
+          topBarActionSkin,
+        )}
       >
         <HelpOutlineRoundedIcon fontSize="small" />
       </IconButton>
@@ -59,13 +68,21 @@ export const PageHelp = ({ guide }: PageHelpProps): JSX.Element => {
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
         slotProps={{
           paper: {
-            sx: {
-              width: 320,
-              p: 2,
-              borderRadius: 2.5,
-              border: (t) => `1px solid ${t.palette.divider}`,
-              boxShadow: (t) => t.shadows[8],
-            },
+            // Classic's own hairline and shadow; a skin's overlay panel.
+            sx: skinned(
+              {
+                width: 320,
+                p: 2,
+                borderRadius: 2.5,
+                border: (t) => `1px solid ${t.palette.divider}`,
+                boxShadow: (t) => t.shadows[8],
+              },
+              {
+                borderRadius: tokenVar('overlayRadius'),
+                border: tokenVar('overlayBorder'),
+                boxShadow: tokenVar('overlayShadow'),
+              },
+            ),
           },
         }}
       >

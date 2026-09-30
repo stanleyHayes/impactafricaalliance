@@ -17,9 +17,20 @@ import {
   useRemoveChecklistItem,
   useUpdateChecklistItem,
 } from '../../lib/tasks';
+import { skinned, tokenVar } from '../../theme/surfaces';
 import { ActionIcon } from '../data/ActionIcon';
 
 const TEXT_MAX = 300;
+
+/**
+ * The words of a line, which reword it when pressed. Classic shows nothing
+ * under the pointer; the other skins answer as their list items do, so the
+ * line reads as something to press.
+ */
+const lineTextStatesSx = skinned(
+  {},
+  { '&:hover': { bgcolor: tokenVar('itemHoverBg'), boxShadow: tokenVar('itemHoverShadow') } },
+);
 
 const ChecklistLine = ({
   item,
@@ -99,16 +110,20 @@ const ChecklistLine = ({
           disabled={!canEdit || busy}
           title={doneBy}
           aria-label={canEdit ? `Reword ${item.text}` : item.text}
-          sx={{
-            justifyContent: 'flex-start',
-            textAlign: 'left',
-            borderRadius: 1.5,
-            px: 0.75,
-            py: 0.5,
-            minWidth: 0,
-            '&.Mui-disabled': { color: 'inherit' },
-            '&.Mui-focusVisible': { outline: '2px solid', outlineColor: 'primary.main' },
-          }}
+          sx={[
+            {
+              justifyContent: 'flex-start',
+              textAlign: 'left',
+              borderRadius: 1.5,
+              px: 0.75,
+              py: 0.5,
+              minWidth: 0,
+              '&.Mui-disabled': { color: 'inherit' },
+              // Classic: 2px solid primary.
+              '&.Mui-focusVisible': { outline: tokenVar('focusRing') },
+            },
+            lineTextStatesSx,
+          ]}
         >
           <Typography
             variant="body2"

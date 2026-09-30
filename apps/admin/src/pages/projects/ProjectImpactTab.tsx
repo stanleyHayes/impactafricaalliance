@@ -35,6 +35,7 @@ import {
 import { MetricDialog, RiskDialog } from '../../components/projects/ProjectDialogs';
 import { READ_ONLY_NOTE, useProjectPlanEditing } from '../../components/projects/useProjectOutlet';
 import { RISK_LEVEL_OPTIONS, RISK_STATUS_OPTIONS } from '../../lib/select-options';
+import { skinned, surfaceSx } from '../../theme/surfaces';
 
 type Editing<T> = { id: string | null; draft: T } | null;
 type Removing =
@@ -76,13 +77,19 @@ const RowActions = ({
   </Stack>
 );
 
+/**
+ * A number or a risk. Classic outlines it on the section's paper; the other
+ * skins give it their card, so each entry stands on its own there too.
+ */
+const rowSx = skinned({ border: 1, borderColor: 'divider' }, surfaceSx.card);
+
 const Row = ({ children, actions }: { children: ReactNode; actions?: ReactNode }): JSX.Element => (
   <Stack
     component="li"
     direction="row"
     spacing={1.5}
     alignItems="flex-start"
-    sx={{ p: 1.5, border: 1, borderColor: 'divider', borderRadius: 2.5, minWidth: 0 }}
+    sx={[{ p: 1.5, borderRadius: 2.5, minWidth: 0 }, rowSx]}
   >
     <Box sx={{ flex: 1, minWidth: 0 }}>{children}</Box>
     {actions}

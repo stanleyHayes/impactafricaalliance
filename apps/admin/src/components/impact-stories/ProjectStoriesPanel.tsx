@@ -12,6 +12,7 @@ import { Link as RouterLink, useNavigate } from 'react-router-dom';
 
 import { useHasPermission } from '../../auth/useCan';
 import { useProjectImpactStories } from '../../lib/impact-stories';
+import { skinned, surfaceSx } from '../../theme/surfaces';
 import { DetailSection } from '../detail/DetailSection';
 import { EmptyState } from '../EmptyState';
 
@@ -23,13 +24,16 @@ export interface ProjectStoriesPanelProps {
   projectId: string;
 }
 
+/**
+ * One story's row in the section. Classic outlines it on the card; the other
+ * skins raise it from the card, as their list rows are.
+ */
+const ROW_SX = skinned({ border: 1, borderColor: 'divider' }, surfaceSx.raised);
+
 const PanelSkeleton = (): JSX.Element => (
   <Stack spacing={1.25} role="status" aria-label="Loading impact stories">
     {[0, 1].map((row) => (
-      <Box
-        key={row}
-        sx={{ display: 'flex', gap: 2, p: 2, border: 1, borderColor: 'divider', borderRadius: 2 }}
-      >
+      <Box key={row} sx={[{ display: 'flex', gap: 2, p: 2, borderRadius: 2 }, ROW_SX]}>
         <Box sx={{ flexGrow: 1 }}>
           <Skeleton width="55%" />
           <Skeleton width="30%" sx={{ fontSize: '0.8rem' }} />
@@ -107,16 +111,17 @@ export const ProjectStoriesPanel = ({ projectId }: ProjectStoriesPanelProps): JS
           <Box
             component="li"
             key={story.id}
-            sx={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              alignItems: 'center',
-              gap: 1.5,
-              p: 2,
-              border: 1,
-              borderColor: 'divider',
-              borderRadius: 2,
-            }}
+            sx={[
+              {
+                display: 'flex',
+                flexWrap: 'wrap',
+                alignItems: 'center',
+                gap: 1.5,
+                p: 2,
+                borderRadius: 2,
+              },
+              ROW_SX,
+            ]}
           >
             <Box sx={{ flex: '1 1 220px', minWidth: 0 }}>
               {canUpdate ? (

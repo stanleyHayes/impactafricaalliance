@@ -6,7 +6,10 @@ import Tooltip from '@mui/material/Tooltip';
 import { useRef } from 'react';
 import { flushSync } from 'react-dom';
 
+import { skinned } from '../../theme/surfaces';
 import { useThemeSettings } from '../../theme/ThemeContext';
+
+import { topBarActionSkin } from './top-bar-action';
 
 /**
  * The reveal itself. The browser snapshots the page before and after the
@@ -77,16 +80,21 @@ export const ThemeToggle = (): JSX.Element => {
           size="small"
           aria-label={label}
           onClick={handleClick}
-          sx={{
-            color: 'text.secondary',
-            bgcolor: (t) =>
-              isDark ? t.palette.primary.dark + '22' : t.palette.primary.main + '12',
-            border: (t) => `1px solid ${t.palette.divider}`,
-            '&:hover': {
-              color: 'text.primary',
-              bgcolor: (t) => t.palette.primary.main + '18',
+          // A top-bar action: Classic keeps its tinted square; a skin makes it
+          // one of its raised controls, like the theme picker beside it.
+          sx={skinned(
+            {
+              color: 'text.secondary',
+              bgcolor: (t) =>
+                isDark ? t.palette.primary.dark + '22' : t.palette.primary.main + '12',
+              border: (t) => `1px solid ${t.palette.divider}`,
+              '&:hover': {
+                color: 'text.primary',
+                bgcolor: (t) => t.palette.primary.main + '18',
+              },
             },
-          }}
+            topBarActionSkin,
+          )}
         >
           {isDark ? (
             <LightModeOutlinedIcon fontSize="small" />

@@ -12,6 +12,8 @@ import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
+import { skinned, surfaceSx } from '../theme/surfaces';
+
 const detailIcon = (label: string): JSX.Element => {
   if (/date|deadline|start|end|time|created|updated/i.test(label))
     return <CalendarMonthRoundedIcon />;
@@ -42,17 +44,21 @@ export const InformationItem = ({
   >
     <Box
       aria-hidden
-      sx={{
-        display: 'grid',
-        placeItems: 'center',
-        flexShrink: 0,
-        width: 36,
-        height: 36,
-        borderRadius: 1.5,
-        bgcolor: (theme) => alpha(theme.palette.primary.main, 0.09),
-        color: 'text.secondary',
-        '& svg': { fontSize: 19 },
-      }}
+      // An icon tile: Classic's own faint tint; a skin's tile, sunk into the section.
+      sx={skinned(
+        {
+          display: 'grid',
+          placeItems: 'center',
+          flexShrink: 0,
+          width: 36,
+          height: 36,
+          borderRadius: 1.5,
+          bgcolor: (theme) => alpha(theme.palette.primary.main, 0.09),
+          color: 'text.secondary',
+          '& svg': { fontSize: 19 },
+        },
+        surfaceSx.tileInset,
+      )}
     >
       {icon ?? detailIcon(label)}
     </Box>

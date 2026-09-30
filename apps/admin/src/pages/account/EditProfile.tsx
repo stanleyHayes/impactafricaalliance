@@ -19,6 +19,7 @@ import { useForm } from 'react-hook-form';
 import { useAuth } from '../../auth/AuthContext';
 import { AccountPanel, AccountSectionHeader } from '../../components/account/AccountSurface';
 import { useUpdateProfile } from '../../lib/admin-hooks';
+import { skinned, surfaceSx } from '../../theme/surfaces';
 
 const initials = (name: string): string =>
   name
@@ -51,14 +52,18 @@ const ProfilePreview = ({ name, email }: { name: string; email: string }): JSX.E
     </Stack>
 
     <Box
-      sx={{
-        mt: 3,
-        p: 2,
-        border: 1,
-        borderColor: (theme) => alpha(theme.palette.primary.main, 0.12),
-        borderRadius: 2,
-        bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04),
-      }}
+      sx={[
+        { mt: 3, p: 2, borderRadius: 2 },
+        // A tinted note in Classic; one of the skin's wells, set into the panel, elsewhere.
+        skinned(
+          {
+            border: 1,
+            borderColor: (theme) => alpha(theme.palette.primary.main, 0.12),
+            bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04),
+          },
+          surfaceSx.inset,
+        ),
+      ]}
     >
       <Stack spacing={1.25}>
         {[

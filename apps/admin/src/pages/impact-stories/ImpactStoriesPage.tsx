@@ -61,6 +61,7 @@ import { pageGuides } from '../../lib/page-guides';
 import { PROGRAMME_OPTIONS, withAnyOption } from '../../lib/select-options';
 import { useDebouncedValue } from '../../lib/use-debounced-value';
 import { VISUALLY_HIDDEN } from '../../lib/visually-hidden';
+import { skinned, surfaceSx, tokenVar } from '../../theme/surfaces';
 
 export interface ImpactStoriesPageProps {
   /**
@@ -122,8 +123,27 @@ const apiView = (view: 'drafts' | 'published', includeArchived: boolean): Impact
   return includeArchived ? 'published-and-archived' : 'published';
 };
 
+/**
+ * A loading card's outline. Classic draws only the border; the other skins
+ * draw their whole card, so the grid does not change material when the
+ * stories arrive.
+ */
+const CARD_SKELETON_SX = skinned(
+  { border: 1, borderColor: 'divider', borderRadius: 3, overflow: 'hidden' },
+  surfaceSx.card,
+);
+
+/**
+ * Where a story without a cover shows its picture. Classic greys it with the
+ * hover tint; the other skins sink it into the card as a well.
+ */
+const NO_COVER_SX = skinned(
+  { bgcolor: 'action.hover' },
+  { bgcolor: tokenVar('surfaceInsetBg'), boxShadow: tokenVar('surfaceInsetShadow') },
+);
+
 const CardSkeleton = (): JSX.Element => (
-  <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 3, overflow: 'hidden' }}>
+  <Box sx={CARD_SKELETON_SX}>
     <Skeleton variant="rectangular" sx={{ aspectRatio: '16 / 9', height: 'auto' }} />
     <Box sx={{ p: 2 }}>
       <Skeleton variant="rounded" width={86} height={22} sx={{ borderRadius: 99, mb: 1.5 }} />
@@ -287,11 +307,10 @@ const StoryCard = ({ story }: { story: ImpactStoryListItem }): JSX.Element => {
         display: 'flex',
         flexDirection: 'column',
         minWidth: 0,
-        border: 1,
-        borderColor: 'divider',
         borderRadius: 3,
         overflow: 'hidden',
-        bgcolor: 'background.paper',
+        // The skin's card: in Classic, paper with a divider border.
+        ...surfaceSx.card,
       }}
     >
       {story.cover ? (
@@ -305,13 +324,15 @@ const StoryCard = ({ story }: { story: ImpactStoryListItem }): JSX.Element => {
       ) : (
         <Box
           aria-hidden
-          sx={{
-            display: 'grid',
-            placeItems: 'center',
-            aspectRatio: '16 / 9',
-            bgcolor: 'action.hover',
-            color: 'text.secondary',
-          }}
+          sx={[
+            {
+              display: 'grid',
+              placeItems: 'center',
+              aspectRatio: '16 / 9',
+              color: 'text.secondary',
+            },
+            NO_COVER_SX,
+          ]}
         >
           <ImageOutlinedIcon />
         </Box>

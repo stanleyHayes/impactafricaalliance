@@ -13,12 +13,14 @@ import MenuItem from '@mui/material/MenuItem';
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
 import Stack from '@mui/material/Stack';
-import { alpha } from '@mui/material/styles';
+import { alpha, type Theme } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useState } from 'react';
 
+import { dropZoneSx, skinned, surfaceSx } from '../../theme/surfaces';
 import { DateField } from '../fields/DateField';
+
 
 type PreviewInput = (props: { field: FormField; name: string }) => JSX.Element;
 
@@ -113,19 +115,38 @@ const ConsentPreview: PreviewInput = ({ field }) => (
   />
 );
 
+/**
+ * The stand-in upload box. Classic keeps its dashed divider and faint primary
+ * wash; the other skins draw it as their drop zone at rest, so it looks like
+ * the upload field applicants will meet.
+ */
+const FILE_BOX_SX = skinned(
+  {
+    border: '1px dashed',
+    borderColor: 'divider',
+    bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.04),
+  },
+  dropZoneSx,
+);
+
+/**
+ * The preview pane beside the editor. Classic tints it with the page colour;
+ * the other skins sink it into the question card as a well.
+ */
+const PREVIEW_PANE_SX = skinned(
+  {
+    border: 1,
+    borderColor: 'divider',
+    bgcolor: (theme: Theme) => alpha(theme.palette.background.default, 0.6),
+  },
+  surfaceSx.inset,
+);
+
 const FilePreview: PreviewInput = ({ field }) => {
   const formats = acceptedFormatsFor(field).map((format) => format.toUpperCase());
   const files = maxFilesFor(field);
   return (
-    <Box
-      sx={(theme) => ({
-        p: 2,
-        textAlign: 'center',
-        border: `1px dashed ${theme.palette.divider}`,
-        borderRadius: 2,
-        bgcolor: alpha(theme.palette.primary.main, 0.04),
-      })}
-    >
+    <Box sx={[{ p: 2, textAlign: 'center', borderRadius: 2 }, FILE_BOX_SX]}>
       <CloudUploadOutlinedIcon sx={{ color: 'text.secondary' }} />
       <Typography variant="body2" sx={{ fontWeight: 600 }}>
         {files === 1 ? 'Add a file' : `Add up to ${files} files`}
@@ -167,13 +188,7 @@ export const FieldPreview = ({ field }: { field: FormField }): JSX.Element => {
     <Box
       aria-label={`Preview of ${name}`}
       role="group"
-      sx={(theme) => ({
-        p: 2,
-        borderRadius: 2.5,
-        border: 1,
-        borderColor: 'divider',
-        bgcolor: alpha(theme.palette.background.default, 0.6),
-      })}
+      sx={[{ p: 2, borderRadius: 2.5 }, PREVIEW_PANE_SX]}
     >
       <Typography
         variant="overline"

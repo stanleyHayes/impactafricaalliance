@@ -39,12 +39,13 @@ import ListItemText from '@mui/material/ListItemText';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
-import { alpha } from '@mui/material/styles';
+import { alpha, type Theme } from '@mui/material/styles';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useEffect, useId, useRef, useState, type ComponentType, type ReactNode } from 'react';
 
 import { STORY_BLOCK_TYPE_OPTIONS } from '../../lib/select-options';
+import { dropZoneSx, handleSx, skinned, surfaceSx, tokenVar } from '../../theme/surfaces';
 import { ConfirmDialog } from '../dialogs/ConfirmDialog';
 
 import { BLOCK_FIELD_EDITORS, type BlockFieldsProps } from './blocks';
@@ -129,6 +130,39 @@ type StoryBlockDraftData<T extends StoryBlockType> = Extract<StoryBlockDraft, { 
 
 const blockSummary = (block: StoryBlockDraft): string =>
   (BLOCK_SUMMARIES[block.type] as (data: StoryBlockDraft['data']) => string)(block.data);
+
+/**
+ * A block card picked up by its handle. Classic lifts it on elevation 8; the
+ * other skins use their floating shadow, because their elevation 8 is about
+ * the depth a card already has at rest.
+ */
+const DRAGGING_SX = skinned({ boxShadow: 8 }, { boxShadow: tokenVar('overlayShadow') });
+
+/**
+ * The square holding the block's icon. Classic keeps its own 12% primary
+ * square; the other skins make it one of their icon tiles.
+ */
+const ICON_TILE_SX = skinned(
+  { bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.12) },
+  surfaceSx.tile,
+);
+
+/**
+ * The summary row that opens a block. Classic has no hover of its own and a
+ * flush 2px ring; the ring takes the skin's colour everywhere, and the other
+ * skins add their list-row hover so the row reads as a control.
+ */
+const TOGGLE_STATES_SX = skinned(
+  { '&.Mui-focusVisible': { outline: tokenVar('focusRing') } },
+  { '&:hover': { bgcolor: tokenVar('itemHoverBg'), boxShadow: tokenVar('itemHoverShadow') } },
+);
+
+/**
+ * The "Add block" menu's corners. Classic keeps the 12px this menu has always
+ * had; the other skins round it like every other menu of theirs, since a
+ * number here would scale with the skin but not match its overlays.
+ */
+const MENU_PAPER_SX = skinned({ borderRadius: 3 }, { borderRadius: tokenVar('overlayRadius') });
 
 const ICONS = Object.fromEntries(
   STORY_BLOCK_TYPE_OPTIONS.map((option) => [option.value, option.icon]),
@@ -216,18 +250,24 @@ const BlockCard = ({
       ref={setNodeRef}
       component="section"
       aria-label={name}
-      sx={{
-        position: 'relative',
-        zIndex: isDragging ? 2 : 'auto',
-        transform: CSS.Transform.toString(transform),
-        transition,
-        border: 1,
-        borderColor: problems.length > 0 ? 'error.main' : 'divider',
-        borderRadius: 3,
-        bgcolor: 'background.paper',
-        boxShadow: isDragging ? 8 : 'none',
-        opacity: isDragging ? 0.92 : 1,
-      }}
+      sx={[
+        {
+          position: 'relative',
+          zIndex: isDragging ? 2 : 'auto',
+          transform: CSS.Transform.toString(transform),
+          transition,
+          borderRadius: 3,
+          opacity: isDragging ? 0.92 : 1,
+          // A card inside the editor's card: the skin's nested card, quieter
+          // than the editor so depth does not double up (in Classic, paper
+          // with a divider border and no shadow).
+          ...surfaceSx.nested,
+        },
+        // A whole border in the error colour, since some skins draw raised
+        // elements without one and the problem must still show.
+        problems.length > 0 && { border: 1, borderColor: 'error.main' },
+        isDragging && DRAGGING_SX,
+      ]}
     >
       <Box
         sx={{
@@ -244,7 +284,7 @@ const BlockCard = ({
             size="small"
             aria-label={`Drag ${name} to reorder`}
             disabled={disabled}
-            sx={{ cursor: disabled ? 'default' : 'grab', touchAction: 'none' }}
+            sx={{ cursor: disabled ? 'default' : 'grab', touchAction: 'none', ...handleSx }}
             {...attributes}
             {...listeners}
           >
@@ -256,31 +296,35 @@ const BlockCard = ({
           onClick={onToggle}
           aria-expanded={expanded}
           aria-controls={panelId}
-          sx={{
-            flex: '1 1 180px',
-            minWidth: 0,
-            justifyContent: 'flex-start',
-            gap: 1.25,
-            px: 1,
-            py: 0.75,
-            borderRadius: 2,
-            textAlign: 'left',
-            '&.Mui-focusVisible': { outline: '2px solid', outlineColor: 'primary.main' },
-          }}
+          sx={[
+            {
+              flex: '1 1 180px',
+              minWidth: 0,
+              justifyContent: 'flex-start',
+              gap: 1.25,
+              px: 1,
+              py: 0.75,
+              borderRadius: 2,
+              textAlign: 'left',
+            },
+            TOGGLE_STATES_SX,
+          ]}
         >
           <Box
             aria-hidden
-            sx={{
-              display: 'grid',
-              placeItems: 'center',
-              width: 34,
-              height: 34,
-              flexShrink: 0,
-              borderRadius: 2,
-              color: 'text.primary',
-              bgcolor: (theme) => alpha(theme.palette.primary.main, 0.12),
-              '& svg': { fontSize: 19 },
-            }}
+            sx={[
+              {
+                display: 'grid',
+                placeItems: 'center',
+                width: 34,
+                height: 34,
+                flexShrink: 0,
+                borderRadius: 2,
+                color: 'text.primary',
+                '& svg': { fontSize: 19 },
+              },
+              ICON_TILE_SX,
+            ]}
           >
             {ICONS[block.type]}
           </Box>
@@ -390,7 +434,7 @@ const AddBlockButton = ({
         anchorEl={anchor}
         open={Boolean(anchor)}
         onClose={() => setAnchor(null)}
-        slotProps={{ paper: { sx: { maxWidth: 380, borderRadius: 3 } } }}
+        slotProps={{ paper: { sx: [{ maxWidth: 380 }, MENU_PAPER_SX] } }}
       >
         {STORY_BLOCK_TYPE_OPTIONS.map((option) => (
           <MenuItem
@@ -496,8 +540,10 @@ export const BlockEditor = ({
             p: 2.5,
             border: 1,
             borderStyle: 'dashed',
-            borderColor: 'divider',
             borderRadius: 3,
+            // Where the first block will go: the skin's empty drop zone (in
+            // Classic, divider dashes on nothing).
+            ...dropZoneSx,
           }}
         >
           <ViewAgendaOutlinedIcon sx={{ color: 'text.secondary' }} aria-hidden />

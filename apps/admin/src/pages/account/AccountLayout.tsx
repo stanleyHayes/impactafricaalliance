@@ -10,11 +10,12 @@ import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
-import { alpha } from '@mui/material/styles';
+import { alpha, type Theme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import { NavLink, Outlet } from 'react-router-dom';
 
 import { useAuth } from '../../auth/AuthContext';
+import { navSx, skinned, surfaceSx, tokenVar } from '../../theme/surfaces';
 
 const ACCOUNT_LINKS = [
   { to: '/account/profile', label: 'Profile', icon: <PersonRoundedIcon /> },
@@ -40,6 +41,29 @@ const formatRole = (role: string): string =>
     .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
     .join(' ');
 
+/**
+ * A link in the account navigation. Classic draws its own: a faint primary
+ * wash under the pointer and a filled primary pill for the current page. A
+ * skin draws it as the sidebar's links, so the two navigations match: in
+ * Neumorphism the current page is pressed in, in Glass and Clay it is the
+ * skin's own current row.
+ */
+const accountLinkSx = skinned(
+  {
+    color: 'text.secondary',
+    '&:hover': {
+      bgcolor: (theme: Theme) => alpha(theme.palette.primary.main, 0.06),
+      color: 'text.primary',
+    },
+    '&.active': {
+      bgcolor: 'primary.main',
+      color: 'common.white',
+      boxShadow: '0 9px 20px -14px rgba(18,63,41,0.85)',
+    },
+  },
+  { ...navSx.link, '&.active': navSx.active },
+);
+
 /** Shared identity banner and local navigation for every account page. */
 const AccountLayout = (): JSX.Element => {
   const { user } = useAuth();
@@ -54,6 +78,9 @@ const AccountLayout = (): JSX.Element => {
           mb: 3,
           p: { xs: 3, sm: 4 },
           borderRadius: 3.5,
+          // The banner is brand art and keeps its fill in every skin; a skin
+          // only gives it the page header's depth.
+          boxShadow: tokenVar('heroShadow'),
           bgcolor: 'primary.dark',
           color: 'common.white',
           background:
@@ -111,17 +138,28 @@ const AccountLayout = (): JSX.Element => {
             </Box>
           </Stack>
 
+          {/*
+            The chips are part of the banner art, so their glass fill stays in
+            every skin. It sits on the filled class: a skin fills default chips
+            through a stronger rule than a plain bgcolor, which would leave
+            white text on a pale pill.
+          */}
           <Stack direction="row" useFlexGap flexWrap="wrap" gap={1}>
             <Chip
               size="small"
               label={formatRole(user?.role ?? 'member')}
-              sx={{ bgcolor: 'rgba(255,255,255,0.1)', color: 'common.white' }}
+              sx={{
+                '&.MuiChip-filled': { bgcolor: 'rgba(255,255,255,0.1)' },
+                color: 'common.white',
+              }}
             />
             <Chip
               size="small"
               label={user?.isActive ? 'Active account' : 'Inactive account'}
               sx={{
-                bgcolor: user?.isActive ? 'rgba(70,180,112,0.18)' : 'rgba(255,255,255,0.1)',
+                '&.MuiChip-filled': {
+                  bgcolor: user?.isActive ? 'rgba(70,180,112,0.18)' : 'rgba(255,255,255,0.1)',
+                },
                 color: user?.isActive ? '#B8F0CC' : 'common.white',
               }}
             />
@@ -145,10 +183,8 @@ const AccountLayout = (): JSX.Element => {
             gap: 0.75,
             overflowX: { xs: 'auto', lg: 'visible' },
             p: 1,
-            border: 1,
-            borderColor: 'divider',
             borderRadius: 3,
-            bgcolor: 'background.paper',
+            ...surfaceSx.card,
             scrollbarWidth: 'none',
             '&::-webkit-scrollbar': { display: 'none' },
           }}
@@ -158,30 +194,23 @@ const AccountLayout = (): JSX.Element => {
               key={link.to}
               component={NavLink}
               to={link.to}
-              sx={{
-                display: 'flex',
-                minWidth: { xs: 'max-content', lg: 0 },
-                minHeight: 44,
-                alignItems: 'center',
-                gap: 1.25,
-                px: 1.5,
-                borderRadius: 2,
-                color: 'text.secondary',
-                fontSize: '0.85rem',
-                fontWeight: 650,
-                textDecoration: 'none',
-                transition: 'background-color 160ms ease, color 160ms ease',
-                '& svg': { fontSize: 20 },
-                '&:hover': {
-                  bgcolor: (theme) => alpha(theme.palette.primary.main, 0.06),
-                  color: 'text.primary',
+              sx={[
+                {
+                  display: 'flex',
+                  minWidth: { xs: 'max-content', lg: 0 },
+                  minHeight: 44,
+                  alignItems: 'center',
+                  gap: 1.25,
+                  px: 1.5,
+                  borderRadius: 2,
+                  fontSize: '0.85rem',
+                  fontWeight: 650,
+                  textDecoration: 'none',
+                  transition: 'background-color 160ms ease, color 160ms ease',
+                  '& svg': { fontSize: 20 },
                 },
-                '&.active': {
-                  bgcolor: 'primary.main',
-                  color: 'common.white',
-                  boxShadow: '0 9px 20px -14px rgba(18,63,41,0.85)',
-                },
-              }}
+                accountLinkSx,
+              ]}
             >
               {link.icon}
               {link.label}

@@ -8,6 +8,7 @@ import Typography from '@mui/material/Typography';
 
 import type { ResourceFormStep } from '../../resources/form-steps';
 import type { FieldConfig, ResourceConfig } from '../../resources/types';
+import { surfaceSx } from '../../theme/surfaces';
 import { Markdown } from '../markdown/Markdown';
 
 import { ReviewSummary } from './ReviewSummary';
@@ -114,15 +115,7 @@ export const ResourceReview = ({
       </Typography>
     </Box>
     {resource.renderPreview && (
-      <Box
-        sx={{
-          p: 2.5,
-          border: 1,
-          borderColor: 'divider',
-          borderRadius: 2,
-          bgcolor: 'background.paper',
-        }}
-      >
+      <Box sx={{ p: 2.5, ...surfaceSx.card, borderRadius: 2 }}>
         <Typography variant="h6" sx={{ mb: 2 }}>
           Preview
         </Typography>

@@ -3,6 +3,25 @@ import { alpha } from '@mui/material/styles';
 import { useEffect, useRef } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 
+import { focusRingSx, navSx, skinned, surfaceSx, tokenVar } from '../../theme/surfaces';
+
+/**
+ * A tab in the strip. Classic's look is its own (a primary hover tint, a
+ * deeper shadow under the current tab), so it is kept exactly; a skin makes
+ * the tabs behave like its sidebar rows: the same hover, the same current
+ * row (a filled pill, or Neumorphism's pressed-in row) and its focus ring.
+ */
+const tabSkin = {
+  transition: 'background-color 160ms ease, color 160ms ease, box-shadow 160ms ease',
+  '&:hover': {
+    bgcolor: tokenVar('navHoverBg'),
+    color: tokenVar('navHoverColor'),
+    boxShadow: tokenVar('navHoverShadow'),
+  },
+  '&:focus-visible': { ...focusRingSx, outlineColor: tokenVar('focusRingColor') },
+  '&.active': navSx.active,
+};
+
 export interface DetailTab {
   /**
    * Where the tab goes, resolved like any router link: relative to the route
@@ -68,10 +87,8 @@ export const DetailTabs = ({ tabs, ariaLabel }: DetailTabsProps): JSX.Element =>
         mb: 3,
         p: 0.75,
         overflowX: 'auto',
-        border: 1,
-        borderColor: 'divider',
         borderRadius: 3,
-        bgcolor: 'background.paper',
+        ...surfaceSx.card,
         scrollbarWidth: 'none',
         '&::-webkit-scrollbar': { display: 'none' },
       }}
@@ -82,38 +99,41 @@ export const DetailTabs = ({ tabs, ariaLabel }: DetailTabsProps): JSX.Element =>
           component={NavLink}
           to={tab.to}
           end={tab.end}
-          sx={{
-            display: 'inline-flex',
-            flexShrink: 0,
-            minHeight: 40,
-            alignItems: 'center',
-            gap: 1,
-            px: 1.75,
-            borderRadius: 2,
-            color: 'text.secondary',
-            fontSize: '0.875rem',
-            fontWeight: 650,
-            whiteSpace: 'nowrap',
-            textDecoration: 'none',
-            transition: 'background-color 160ms ease, color 160ms ease',
-            '& svg': { fontSize: 19 },
-            '&:hover': {
-              bgcolor: (theme) => alpha(theme.palette.primary.main, 0.06),
-              color: 'text.primary',
+          sx={skinned(
+            {
+              display: 'inline-flex',
+              flexShrink: 0,
+              minHeight: 40,
+              alignItems: 'center',
+              gap: 1,
+              px: 1.75,
+              borderRadius: 2,
+              color: 'text.secondary',
+              fontSize: '0.875rem',
+              fontWeight: 650,
+              whiteSpace: 'nowrap',
+              textDecoration: 'none',
+              transition: 'background-color 160ms ease, color 160ms ease',
+              '& svg': { fontSize: 19 },
+              '&:hover': {
+                bgcolor: (theme) => alpha(theme.palette.primary.main, 0.06),
+                color: 'text.primary',
+              },
+              '&:focus-visible': {
+                outline: 2,
+                outlineColor: 'primary.main',
+                outlineOffset: 2,
+              },
+              '&.active': {
+                bgcolor: 'primary.main',
+                // Black read well on the green presets but not on Aura's
+                // violet; the palette picks whichever contrasts, as the sidebar does.
+                color: (theme) => theme.palette.getContrastText(theme.palette.primary.main),
+                boxShadow: '0 9px 20px -14px rgba(18,63,41,0.85)',
+              },
             },
-            '&:focus-visible': {
-              outline: 2,
-              outlineColor: 'primary.main',
-              outlineOffset: 2,
-            },
-            '&.active': {
-              bgcolor: 'primary.main',
-              // Black read well on the green presets but not on Aura's
-              // violet; the palette picks whichever contrasts, as the sidebar does.
-              color: (theme) => theme.palette.getContrastText(theme.palette.primary.main),
-              boxShadow: '0 9px 20px -14px rgba(18,63,41,0.85)',
-            },
-          }}
+            tabSkin,
+          )}
         >
           {tab.icon}
           {tab.label}

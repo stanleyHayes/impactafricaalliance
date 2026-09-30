@@ -5,7 +5,25 @@ import type { DateTimeValidationError } from '@mui/x-date-pickers/models';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
 
+import { skinned, surfaceSx, tokenVar } from '../../theme/surfaces';
+
 const INCOMPLETE = 'Finish typing the date and time, or clear the field.';
+
+/**
+ * The calendar's panel. Classic keeps its own 12px corners, divider border
+ * and elevation 8; the other skins use their overlay, so the calendar opens
+ * like every other panel over the page.
+ */
+const DESKTOP_PAPER_SX = skinned(
+  { borderRadius: 3, border: 1, borderColor: 'divider', boxShadow: 8 },
+  surfaceSx.overlay,
+);
+
+/** On a phone the picker is a dialog: Classic's border and corners, or the skin's dialog. */
+const MOBILE_PAPER_SX = skinned(
+  { borderRadius: 3, border: 1, borderColor: 'divider' },
+  { ...surfaceSx.overlay, borderRadius: tokenVar('dialogRadius') },
+);
 
 const toPickerValue = (value: string | null | undefined): Dayjs | null => {
   if (!value) return null;
@@ -152,11 +170,12 @@ export const InstantField = ({
           error: Boolean(message),
           helperText: message || helperText,
           inputRef: hiddenInputRef,
-          sx: { '& .MuiPickersOutlinedInput-root': { borderRadius: 2.5 } },
+          // The skin's field corners, as on every other field (10px in Classic).
+          sx: { '& .MuiPickersOutlinedInput-root': { borderRadius: tokenVar('inputRadius') } },
         },
         actionBar: { actions: ['clear', 'cancel', 'accept'] },
-        desktopPaper: { sx: { borderRadius: 3, border: 1, borderColor: 'divider', boxShadow: 8 } },
-        mobilePaper: { sx: { borderRadius: 3, border: 1, borderColor: 'divider' } },
+        desktopPaper: { sx: DESKTOP_PAPER_SX },
+        mobilePaper: { sx: MOBILE_PAPER_SX },
         popper: { sx: { zIndex: (theme) => theme.zIndex.modal + 1 } },
       }}
     />

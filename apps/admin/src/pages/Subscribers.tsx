@@ -19,6 +19,7 @@ import { PageHeader } from '../components/PageHeader';
 import { useSubscribers } from '../lib/admin-hooks';
 import { formatUtcDate } from '../lib/date';
 import { pageGuides } from '../lib/page-guides';
+import { skinned, tokenVar } from '../theme/surfaces';
 
 const columns: GridColDef[] = [
   { field: 'email', headerName: 'Email', flex: 1, minWidth: 240 },
@@ -51,6 +52,21 @@ const SubscriberActions = ({ row }: { row: GridRowModel }): JSX.Element => (
   />
 );
 
+/**
+ * A record card under the pointer. Classic edges it in the light primary and
+ * lifts it on the third shadow; a skin lifts it on its own card shadow and
+ * keeps its material's edge.
+ */
+const recordCardHoverSx = skinned(
+  { '&:hover': { borderColor: 'primary.light', boxShadow: 3 } },
+  {
+    '&:hover': {
+      borderColor: tokenVar('surfaceBorderColor'),
+      boxShadow: tokenVar('surfaceHoverShadow'),
+    },
+  },
+);
+
 const SubscriberCard = ({ row }: { row: GridRowModel }): JSX.Element => {
   const theme = useTheme();
   const email = String(row.email ?? '');
@@ -60,14 +76,16 @@ const SubscriberCard = ({ row }: { row: GridRowModel }): JSX.Element => {
   return (
     <Card
       variant="outlined"
-      sx={{
-        height: '100%',
-        borderRadius: 2.5,
-        transition: theme.transitions.create(['box-shadow', 'border-color'], {
-          duration: theme.transitions.duration.shorter,
-        }),
-        '&:hover': { borderColor: 'primary.light', boxShadow: theme.shadows[3] },
-      }}
+      sx={[
+        {
+          height: '100%',
+          borderRadius: 2.5,
+          transition: theme.transitions.create(['box-shadow', 'border-color'], {
+            duration: theme.transitions.duration.shorter,
+          }),
+        },
+        recordCardHoverSx,
+      ]}
     >
       <Box sx={{ p: 2 }}>
         <Stack direction="row" spacing={1.5} alignItems="center">

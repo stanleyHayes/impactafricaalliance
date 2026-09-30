@@ -2,6 +2,8 @@ import Box from '@mui/material/Box';
 import { alpha, useTheme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 
+import { skinned, tokenVar } from '../../theme/surfaces';
+
 export interface BarDatum {
   label: string;
   value: number;
@@ -46,15 +48,20 @@ export const BarChart = ({
   if (!hasData) {
     return (
       <Box
-        sx={{
-          height,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          border: '1px dashed',
-          borderColor: 'divider',
-          borderRadius: 2,
-        }}
+        // The empty chart area keeps its dashed outline; a skin sinks it into
+        // the panel as one of its wells.
+        sx={skinned(
+          {
+            height,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: '1px dashed',
+            borderColor: 'divider',
+            borderRadius: 2,
+          },
+          { bgcolor: tokenVar('surfaceInsetBg'), boxShadow: tokenVar('surfaceInsetShadow') },
+        )}
       >
         <Typography variant="body2" color="text.secondary">
           {emptyMessage}

@@ -21,6 +21,7 @@ import { z } from 'zod';
 
 import { AccountPanel, AccountSectionHeader } from '../../components/account/AccountSurface';
 import { useChangePassword } from '../../lib/admin-hooks';
+import { skinned, surfaceSx } from '../../theme/surfaces';
 
 const passwordFormSchema = z
   .object({
@@ -48,15 +49,18 @@ const SECURITY_NOTES = [
 const SecurityGuidance = (): JSX.Element => (
   <AccountPanel sx={{ height: '100%', p: 3 }}>
     <Box
-      sx={{
-        display: 'grid',
-        width: 56,
-        height: 56,
-        placeItems: 'center',
-        borderRadius: 2.5,
-        bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
-        color: 'text.primary',
-      }}
+      sx={[
+        {
+          display: 'grid',
+          width: 56,
+          height: 56,
+          placeItems: 'center',
+          borderRadius: 2.5,
+          color: 'text.primary',
+        },
+        // Classic's primary tint; the skin's icon tile elsewhere.
+        skinned({ bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08) }, surfaceSx.tile),
+      ]}
     >
       <SecurityRoundedIcon sx={{ fontSize: 30 }} />
     </Box>

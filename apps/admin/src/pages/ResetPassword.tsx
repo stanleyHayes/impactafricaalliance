@@ -1,10 +1,6 @@
 import { keyframes } from '@emotion/react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  ORG,
-  passwordSchema,
-  resetPasswordSchema,
-} from '@iaa/shared';
+import { ORG, passwordSchema, resetPasswordSchema } from '@iaa/shared';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
@@ -26,8 +22,16 @@ import type { z } from 'zod';
 
 import { ThemeToggle } from '../components/layout/ThemeToggle';
 import { useResetPassword } from '../lib/admin-hooks';
+import { surfaceSx, tokenVar } from '../theme/surfaces';
 
-import { BrandPanel, fieldSx } from './Login';
+import {
+  authCardSx,
+  authLinkSx,
+  BrandPanel,
+  fieldSx,
+  quietButtonSx,
+  submitButtonSx,
+} from './Login';
 
 const fadeUp = keyframes`from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; }`;
 
@@ -97,7 +101,10 @@ const PasswordField = ({
           ),
         },
         inputLabel: {
-          sx: { color: theme.palette.text.secondary, '&.Mui-focused': { color: theme.palette.text.primary } },
+          sx: {
+            color: theme.palette.text.secondary,
+            '&.Mui-focused': { color: theme.palette.text.primary },
+          },
         },
       }}
       {...registration}
@@ -116,7 +123,7 @@ const ResetSuccess = (): JSX.Element => (
       variant="contained"
       size="large"
       endIcon={<ArrowForwardRoundedIcon />}
-      sx={{ py: 1.4, borderRadius: 2.5, fontSize: '1rem' }}
+      sx={{ py: 1.4, borderRadius: tokenVar('buttonRadius'), fontSize: '1rem' }}
     >
       Go to sign in
     </Button>
@@ -129,7 +136,6 @@ interface ResetPasswordFormProps {
 }
 
 const ResetPasswordForm = ({ token, onSuccess }: ResetPasswordFormProps): JSX.Element => {
-  const theme = useTheme();
   const reset = useResetPassword();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -181,20 +187,18 @@ const ResetPasswordForm = ({ token, onSuccess }: ResetPasswordFormProps): JSX.El
         size="large"
         disabled={reset.isPending}
         endIcon={
-          reset.isPending ? <CircularProgress size={20} color="inherit" /> : <ArrowForwardRoundedIcon />
+          reset.isPending ? (
+            <CircularProgress size={20} color="inherit" />
+          ) : (
+            <ArrowForwardRoundedIcon />
+          )
         }
-        sx={{
-          mt: 0.5,
-          py: 1.4,
-          borderRadius: 2.5,
-          fontSize: '1rem',
-          boxShadow: '0 10px 24px -10px rgba(0,0,0,0.18)',
-        }}
+        sx={[{ mt: 0.5, py: 1.4, fontSize: '1rem' }, submitButtonSx]}
       >
         {reset.isPending ? 'Resetting…' : 'Reset password'}
       </Button>
 
-      <Button component={Link} to="/login" variant="text" size="small" sx={{ color: theme.palette.text.secondary }}>
+      <Button component={Link} to="/login" variant="text" size="small" sx={quietButtonSx}>
         Back to sign in
       </Button>
     </Stack>
@@ -212,7 +216,7 @@ const ResetPassword = (): JSX.Element => {
       return (
         <Alert severity="error" sx={{ borderRadius: 2, mb: 2 }}>
           This reset link is missing a token. Please request a new link from the{' '}
-          <Box component={Link} to="/login" sx={{ color: theme.palette.primary.main, fontWeight: 600 }}>
+          <Box component={Link} to="/login" sx={[{ fontWeight: 600 }, ...authLinkSx]}>
             sign-in page
           </Box>
           .
@@ -231,7 +235,7 @@ const ResetPassword = (): JSX.Element => {
         minHeight: '100vh',
         display: 'grid',
         gridTemplateColumns: { xs: '1fr', md: '1.08fr 0.92fr' },
-        bgcolor: theme.palette.background.default,
+        ...surfaceSx.page,
       }}
     >
       <BrandPanel />
@@ -245,21 +249,28 @@ const ResetPassword = (): JSX.Element => {
           p: { xs: 3, sm: 5 },
         }}
       >
-        <Box sx={{ position: 'absolute', top: { xs: 16, sm: 24 }, right: { xs: 16, sm: 24 }, zIndex: 1 }}>
+        <Box
+          sx={{
+            position: 'absolute',
+            top: { xs: 16, sm: 24 },
+            right: { xs: 16, sm: 24 },
+            zIndex: 1,
+          }}
+        >
           <ThemeToggle />
         </Box>
 
         <Box
-          sx={{
-            width: '100%',
-            maxWidth: 430,
-            p: { xs: 3.5, sm: 5 },
-            border: `1px solid ${theme.palette.divider}`,
-            borderRadius: 4,
-            bgcolor: theme.palette.background.paper,
-            boxShadow: '0 32px 80px -40px rgba(0,0,0,0.10)',
-            animation: `${fadeUp} 0.6s ease 0.15s both`,
-          }}
+          sx={[
+            {
+              width: '100%',
+              maxWidth: 430,
+              p: { xs: 3.5, sm: 5 },
+              borderRadius: 4,
+              animation: `${fadeUp} 0.6s ease 0.15s both`,
+            },
+            ...authCardSx,
+          ]}
         >
           <Box
             component="img"
@@ -268,10 +279,16 @@ const ResetPassword = (): JSX.Element => {
             sx={{ height: 40, mb: 4, display: { xs: 'block', md: 'none' } }}
           />
 
-          <Typography variant="overline" sx={{ color: theme.palette.primary.main, fontWeight: 700, letterSpacing: 2 }}>
+          <Typography
+            variant="overline"
+            sx={{ color: tokenVar('accentText'), fontWeight: 700, letterSpacing: 2 }}
+          >
             Admin Console
           </Typography>
-          <Typography variant="h4" sx={{ fontWeight: 700, mt: 0.5, color: theme.palette.text.primary }}>
+          <Typography
+            variant="h4"
+            sx={{ fontWeight: 700, mt: 0.5, color: theme.palette.text.primary }}
+          >
             Create a new password
           </Typography>
           <Typography sx={{ mt: 1, mb: 4, color: theme.palette.text.secondary }}>
@@ -282,7 +299,11 @@ const ResetPassword = (): JSX.Element => {
 
           <Typography variant="body2" sx={{ mt: 4, color: theme.palette.text.secondary }}>
             Need help? Contact an administrator at{' '}
-            <Box component="a" href={`mailto:${ORG.email}`} sx={{ color: theme.palette.primary.main, fontWeight: 600 }}>
+            <Box
+              component="a"
+              href={`mailto:${ORG.email}`}
+              sx={[{ fontWeight: 600 }, ...authLinkSx]}
+            >
               {ORG.email}
             </Box>
             .

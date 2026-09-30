@@ -1,0 +1,1813 @@
+{
+  "note": "Captured from the theme code before skins existed (feat/admin-skins). Classic must keep matching it: see theme.test.ts.",
+  "shared": {
+    "shape": { "borderRadius": 4 },
+    "shadows": [
+      "none",
+      "0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12)",
+      "0px 3px 1px -2px rgba(0,0,0,0.2),0px 2px 2px 0px rgba(0,0,0,0.14),0px 1px 5px 0px rgba(0,0,0,0.12)",
+      "0px 3px 3px -2px rgba(0,0,0,0.2),0px 3px 4px 0px rgba(0,0,0,0.14),0px 1px 8px 0px rgba(0,0,0,0.12)",
+      "0px 2px 4px -1px rgba(0,0,0,0.2),0px 4px 5px 0px rgba(0,0,0,0.14),0px 1px 10px 0px rgba(0,0,0,0.12)",
+      "0px 3px 5px -1px rgba(0,0,0,0.2),0px 5px 8px 0px rgba(0,0,0,0.14),0px 1px 14px 0px rgba(0,0,0,0.12)",
+      "0px 3px 5px -1px rgba(0,0,0,0.2),0px 6px 10px 0px rgba(0,0,0,0.14),0px 1px 18px 0px rgba(0,0,0,0.12)",
+      "0px 4px 5px -2px rgba(0,0,0,0.2),0px 7px 10px 1px rgba(0,0,0,0.14),0px 2px 16px 1px rgba(0,0,0,0.12)",
+      "0px 5px 5px -3px rgba(0,0,0,0.2),0px 8px 10px 1px rgba(0,0,0,0.14),0px 3px 14px 2px rgba(0,0,0,0.12)",
+      "0px 5px 6px -3px rgba(0,0,0,0.2),0px 9px 12px 1px rgba(0,0,0,0.14),0px 3px 16px 2px rgba(0,0,0,0.12)",
+      "0px 6px 6px -3px rgba(0,0,0,0.2),0px 10px 14px 1px rgba(0,0,0,0.14),0px 4px 18px 3px rgba(0,0,0,0.12)",
+      "0px 6px 7px -4px rgba(0,0,0,0.2),0px 11px 15px 1px rgba(0,0,0,0.14),0px 4px 20px 3px rgba(0,0,0,0.12)",
+      "0px 7px 8px -4px rgba(0,0,0,0.2),0px 12px 17px 2px rgba(0,0,0,0.14),0px 5px 22px 4px rgba(0,0,0,0.12)",
+      "0px 7px 8px -4px rgba(0,0,0,0.2),0px 13px 19px 2px rgba(0,0,0,0.14),0px 5px 24px 4px rgba(0,0,0,0.12)",
+      "0px 7px 9px -4px rgba(0,0,0,0.2),0px 14px 21px 2px rgba(0,0,0,0.14),0px 5px 26px 4px rgba(0,0,0,0.12)",
+      "0px 8px 9px -5px rgba(0,0,0,0.2),0px 15px 22px 2px rgba(0,0,0,0.14),0px 6px 28px 5px rgba(0,0,0,0.12)",
+      "0px 8px 10px -5px rgba(0,0,0,0.2),0px 16px 24px 2px rgba(0,0,0,0.14),0px 6px 30px 5px rgba(0,0,0,0.12)",
+      "0px 8px 11px -5px rgba(0,0,0,0.2),0px 17px 26px 2px rgba(0,0,0,0.14),0px 6px 32px 5px rgba(0,0,0,0.12)",
+      "0px 9px 11px -5px rgba(0,0,0,0.2),0px 18px 28px 2px rgba(0,0,0,0.14),0px 7px 34px 6px rgba(0,0,0,0.12)",
+      "0px 9px 12px -6px rgba(0,0,0,0.2),0px 19px 29px 2px rgba(0,0,0,0.14),0px 7px 36px 6px rgba(0,0,0,0.12)",
+      "0px 10px 13px -6px rgba(0,0,0,0.2),0px 20px 31px 3px rgba(0,0,0,0.14),0px 8px 38px 7px rgba(0,0,0,0.12)",
+      "0px 10px 13px -6px rgba(0,0,0,0.2),0px 21px 33px 3px rgba(0,0,0,0.14),0px 8px 40px 7px rgba(0,0,0,0.12)",
+      "0px 10px 14px -6px rgba(0,0,0,0.2),0px 22px 35px 3px rgba(0,0,0,0.14),0px 8px 42px 7px rgba(0,0,0,0.12)",
+      "0px 11px 14px -7px rgba(0,0,0,0.2),0px 23px 36px 3px rgba(0,0,0,0.14),0px 9px 44px 8px rgba(0,0,0,0.12)",
+      "0px 11px 15px -7px rgba(0,0,0,0.2),0px 24px 38px 3px rgba(0,0,0,0.14),0px 9px 46px 8px rgba(0,0,0,0.12)"
+    ],
+    "typography": {
+      "fontFamily": "'Outfit', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+      "h1": {
+        "fontFamily": "'Fraunces', Georgia, 'Times New Roman', serif",
+        "fontWeight": 600,
+        "letterSpacing": "-0.02em",
+        "fontSize": "6rem",
+        "lineHeight": 1.167
+      },
+      "h2": {
+        "fontFamily": "'Fraunces', Georgia, 'Times New Roman', serif",
+        "fontWeight": 600,
+        "letterSpacing": "-0.018em",
+        "fontSize": "3.75rem",
+        "lineHeight": 1.2
+      },
+      "h3": {
+        "fontFamily": "'Outfit', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        "fontWeight": 700,
+        "letterSpacing": "-0.012em",
+        "fontSize": "3rem",
+        "lineHeight": 1.167
+      },
+      "h4": {
+        "fontFamily": "'Outfit', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        "fontWeight": 700,
+        "letterSpacing": "-0.01em",
+        "fontSize": "2.125rem",
+        "lineHeight": 1.235
+      },
+      "h5": {
+        "fontFamily": "'Outfit', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        "fontWeight": 700,
+        "fontSize": "1.5rem",
+        "lineHeight": 1.334
+      },
+      "h6": {
+        "fontFamily": "'Outfit', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        "fontWeight": 700,
+        "letterSpacing": "-0.02em",
+        "fontSize": "1.25rem",
+        "lineHeight": 1.6
+      },
+      "button": {
+        "textTransform": "none",
+        "fontWeight": 600,
+        "fontFamily": "'Outfit', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        "fontSize": "0.875rem",
+        "lineHeight": 1.75
+      },
+      "body1": {
+        "lineHeight": 1.6,
+        "fontFamily": "'Outfit', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        "fontWeight": 400,
+        "fontSize": "1rem"
+      },
+      "htmlFontSize": 16,
+      "pxToRem": "[Function anonymous]",
+      "fontSize": 14,
+      "fontWeightLight": 300,
+      "fontWeightRegular": 400,
+      "fontWeightMedium": 500,
+      "fontWeightBold": 700,
+      "subtitle1": {
+        "fontFamily": "'Outfit', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        "fontWeight": 400,
+        "fontSize": "1rem",
+        "lineHeight": 1.75
+      },
+      "subtitle2": {
+        "fontFamily": "'Outfit', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        "fontWeight": 500,
+        "fontSize": "0.875rem",
+        "lineHeight": 1.57
+      },
+      "body2": {
+        "fontFamily": "'Outfit', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        "fontWeight": 400,
+        "fontSize": "0.875rem",
+        "lineHeight": 1.43
+      },
+      "caption": {
+        "fontFamily": "'Outfit', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        "fontWeight": 400,
+        "fontSize": "0.75rem",
+        "lineHeight": 1.66
+      },
+      "overline": {
+        "fontFamily": "'Outfit', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        "fontWeight": 400,
+        "fontSize": "0.75rem",
+        "lineHeight": 2.66,
+        "textTransform": "uppercase"
+      },
+      "inherit": {
+        "fontFamily": "inherit",
+        "fontWeight": "inherit",
+        "fontSize": "inherit",
+        "lineHeight": "inherit",
+        "letterSpacing": "inherit"
+      }
+    }
+  },
+  "themes": {
+    "iaa-light": {
+      "palette": {
+        "mode": "light",
+        "primary": {
+          "main": "#00D68B",
+          "dark": "#00B878",
+          "light": "#4DE7AD",
+          "contrastText": "#0E2A22"
+        },
+        "secondary": {
+          "main": "#F5B800",
+          "dark": "#D49E00",
+          "light": "#FFD44D",
+          "contrastText": "#0E2A22"
+        },
+        "background": { "default": "#F7F5F0", "paper": "#FFFFFF" },
+        "text": { "primary": "#0A0F0D", "secondary": "#5E6B66", "disabled": "rgba(0, 0, 0, 0.38)" },
+        "divider": "#E2E0DA",
+        "warning": {
+          "main": "#B45309",
+          "light": "#D97706",
+          "dark": "#92400E",
+          "contrastText": "#FFFFFF"
+        },
+        "info": {
+          "main": "#0369A1",
+          "light": "#0284C7",
+          "dark": "#075985",
+          "contrastText": "#FFFFFF"
+        },
+        "common": { "black": "#000", "white": "#fff" },
+        "error": {
+          "main": "#d32f2f",
+          "light": "#ef5350",
+          "dark": "#c62828",
+          "contrastText": "#fff"
+        },
+        "success": {
+          "main": "#2e7d32",
+          "light": "#4caf50",
+          "dark": "#1b5e20",
+          "contrastText": "#fff"
+        },
+        "grey": {
+          "50": "#fafafa",
+          "100": "#f5f5f5",
+          "200": "#eeeeee",
+          "300": "#e0e0e0",
+          "400": "#bdbdbd",
+          "500": "#9e9e9e",
+          "600": "#757575",
+          "700": "#616161",
+          "800": "#424242",
+          "900": "#212121",
+          "A100": "#f5f5f5",
+          "A200": "#eeeeee",
+          "A400": "#bdbdbd",
+          "A700": "#616161"
+        },
+        "contrastThreshold": 3,
+        "getContrastText": "[Function getContrastText]",
+        "augmentColor": "[Function augmentColor]",
+        "tonalOffset": 0.2,
+        "action": {
+          "active": "rgba(0, 0, 0, 0.54)",
+          "hover": "rgba(0, 0, 0, 0.04)",
+          "hoverOpacity": 0.04,
+          "selected": "rgba(0, 0, 0, 0.08)",
+          "selectedOpacity": 0.08,
+          "disabled": "rgba(0, 0, 0, 0.26)",
+          "disabledBackground": "rgba(0, 0, 0, 0.12)",
+          "disabledOpacity": 0.38,
+          "focus": "rgba(0, 0, 0, 0.12)",
+          "focusOpacity": 0.12,
+          "activatedOpacity": 0.12
+        }
+      },
+      "components": {
+        "MuiCssBaseline": {
+          "styleOverrides": {
+            "body": {
+              "backgroundColor": "#F7F5F0",
+              "backgroundImage": "radial-gradient(circle at 90% 0%, rgba(0, 214, 139, 0.045), transparent 30rem)"
+            },
+            "button, a, input, textarea": { "touchAction": "manipulation" },
+            "@media (prefers-reduced-motion: reduce)": {
+              "*, *::before, *::after": {
+                "animationDuration": "0.01ms !important",
+                "animationIterationCount": "1 !important",
+                "transitionDuration": "0.01ms !important",
+                "scrollBehavior": "auto !important"
+              }
+            },
+            "::selection": { "backgroundColor": "rgba(0, 214, 139, 0.28)", "color": "#0A0F0D" }
+          }
+        },
+        "MuiButton": {
+          "defaultProps": { "disableElevation": true },
+          "styleOverrides": {
+            "root": {
+              "minHeight": 40,
+              "borderRadius": 10,
+              "paddingInline": 18,
+              "transition": "transform 160ms ease, box-shadow 160ms ease",
+              "&:active": { "transform": "translateY(1px)" },
+              "&:focus-visible": {
+                "outline": "3px solid rgba(0, 214, 139, 0.32)",
+                "outlineOffset": 2
+              }
+            }
+          }
+        },
+        "MuiCard": {
+          "defaultProps": { "elevation": 0 },
+          "styleOverrides": {
+            "root": {
+              "border": "1px solid #E2E0DA",
+              "borderRadius": 14,
+              "backgroundColor": "#FFFFFF"
+            }
+          }
+        },
+        "MuiPaper": { "defaultProps": { "elevation": 0 } },
+        "MuiDialog": {
+          "styleOverrides": {
+            "paper": {
+              "border": "1px solid #E2E0DA",
+              "borderRadius": 16,
+              "boxShadow": "0 32px 80px -40px rgba(0,0,0,0.35)",
+              "backgroundColor": "#FFFFFF"
+            }
+          }
+        },
+        "MuiDialogTitle": { "styleOverrides": { "root": { "padding": "24px 28px 18px" } } },
+        "MuiDialogContent": { "styleOverrides": { "root": { "paddingInline": 28 } } },
+        "MuiDialogActions": {
+          "styleOverrides": { "root": { "gap": 8, "padding": "16px 28px 20px" } }
+        },
+        "MuiOutlinedInput": {
+          "styleOverrides": {
+            "root": {
+              "borderRadius": 10,
+              "backgroundColor": "#FFFFFF",
+              "&:hover .MuiOutlinedInput-notchedOutline": {
+                "borderColor": "rgba(0, 214, 139, 0.5)"
+              },
+              "&.Mui-focused": { "boxShadow": "0 0 0 3px rgba(0, 214, 139, 0.12)" }
+            },
+            "input": { "&::placeholder": { "color": "text.secondary", "opacity": 0.8 } },
+            "notchedOutline": { "borderColor": "#E2E0DA" }
+          }
+        },
+        "MuiInputLabel": {
+          "styleOverrides": {
+            "root": {
+              "color": "text.secondary",
+              "fontWeight": 600,
+              "&.Mui-focused": { "color": "text.primary" }
+            }
+          }
+        },
+        "MuiIconButton": {
+          "styleOverrides": {
+            "root": {
+              "borderRadius": 10,
+              "&.Mui-focusVisible": { "outline": "2px solid #0A0F0D", "outlineOffset": 2 }
+            }
+          }
+        },
+        "MuiTab": {
+          "styleOverrides": {
+            "root": { "textTransform": "none", "minHeight": 48, "fontWeight": 650 }
+          }
+        },
+        "MuiCheckbox": {
+          "defaultProps": {
+            "disableRipple": true,
+            "icon": { "$element": "CheckboxIcon", "props": {} },
+            "checkedIcon": { "$element": "CheckboxCheckedIcon", "props": {} },
+            "indeterminateIcon": { "$element": "CheckboxIndeterminateIcon", "props": {} }
+          },
+          "styleOverrides": {
+            "root": {
+              "borderRadius": 8,
+              "&.Mui-focusVisible": { "outline": "2px solid #00D68B", "outlineOffset": -2 }
+            }
+          }
+        },
+        "MuiRadio": {
+          "defaultProps": {
+            "disableRipple": true,
+            "icon": { "$element": "RadioIcon", "props": {} },
+            "checkedIcon": { "$element": "RadioCheckedIcon", "props": {} }
+          },
+          "styleOverrides": {
+            "root": {
+              "borderRadius": "50%",
+              "&.Mui-focusVisible": { "outline": "2px solid #00D68B", "outlineOffset": -2 }
+            }
+          }
+        },
+        "MuiChip": { "styleOverrides": { "root": { "fontWeight": 600, "borderRadius": 8 } } },
+        "MuiTooltip": {
+          "styleOverrides": { "tooltip": { "borderRadius": 7, "fontSize": "0.75rem" } }
+        }
+      }
+    },
+    "iaa-dark": {
+      "palette": {
+        "mode": "dark",
+        "primary": {
+          "main": "#2EE89F",
+          "dark": "#00D68B",
+          "light": "#6DF0BC",
+          "contrastText": "#0E2A22"
+        },
+        "secondary": {
+          "main": "#FFD133",
+          "dark": "#F5B800",
+          "light": "#FFE066",
+          "contrastText": "#0E2A22"
+        },
+        "background": { "default": "#171A17", "paper": "#0E2A22" },
+        "text": {
+          "primary": "#F2F0EA",
+          "secondary": "#9EAAA4",
+          "disabled": "rgba(255, 255, 255, 0.5)",
+          "icon": "rgba(255, 255, 255, 0.5)"
+        },
+        "divider": "rgba(255,255,255,0.10)",
+        "common": { "black": "#000", "white": "#fff" },
+        "error": {
+          "main": "#f44336",
+          "light": "#e57373",
+          "dark": "#d32f2f",
+          "contrastText": "#fff"
+        },
+        "warning": {
+          "main": "#ffa726",
+          "light": "#ffb74d",
+          "dark": "#f57c00",
+          "contrastText": "rgba(0, 0, 0, 0.87)"
+        },
+        "info": {
+          "main": "#29b6f6",
+          "light": "#4fc3f7",
+          "dark": "#0288d1",
+          "contrastText": "rgba(0, 0, 0, 0.87)"
+        },
+        "success": {
+          "main": "#66bb6a",
+          "light": "#81c784",
+          "dark": "#388e3c",
+          "contrastText": "rgba(0, 0, 0, 0.87)"
+        },
+        "grey": {
+          "50": "#fafafa",
+          "100": "#f5f5f5",
+          "200": "#eeeeee",
+          "300": "#e0e0e0",
+          "400": "#bdbdbd",
+          "500": "#9e9e9e",
+          "600": "#757575",
+          "700": "#616161",
+          "800": "#424242",
+          "900": "#212121",
+          "A100": "#f5f5f5",
+          "A200": "#eeeeee",
+          "A400": "#bdbdbd",
+          "A700": "#616161"
+        },
+        "contrastThreshold": 3,
+        "getContrastText": "[Function getContrastText]",
+        "augmentColor": "[Function augmentColor]",
+        "tonalOffset": 0.2,
+        "action": {
+          "active": "#fff",
+          "hover": "rgba(255, 255, 255, 0.08)",
+          "hoverOpacity": 0.08,
+          "selected": "rgba(255, 255, 255, 0.16)",
+          "selectedOpacity": 0.16,
+          "disabled": "rgba(255, 255, 255, 0.3)",
+          "disabledBackground": "rgba(255, 255, 255, 0.12)",
+          "disabledOpacity": 0.38,
+          "focus": "rgba(255, 255, 255, 0.12)",
+          "focusOpacity": 0.12,
+          "activatedOpacity": 0.24
+        }
+      },
+      "components": {
+        "MuiCssBaseline": {
+          "styleOverrides": {
+            "body": {
+              "backgroundColor": "#171A17",
+              "backgroundImage": "radial-gradient(circle at 90% 0%, rgba(0, 214, 139, 0.06), transparent 30rem)"
+            },
+            "button, a, input, textarea": { "touchAction": "manipulation" },
+            "@media (prefers-reduced-motion: reduce)": {
+              "*, *::before, *::after": {
+                "animationDuration": "0.01ms !important",
+                "animationIterationCount": "1 !important",
+                "transitionDuration": "0.01ms !important",
+                "scrollBehavior": "auto !important"
+              }
+            },
+            "::selection": { "backgroundColor": "rgba(0, 214, 139, 0.32)", "color": "#171A17" }
+          }
+        },
+        "MuiButton": {
+          "defaultProps": { "disableElevation": true },
+          "styleOverrides": {
+            "root": {
+              "minHeight": 40,
+              "borderRadius": 10,
+              "paddingInline": 18,
+              "transition": "transform 160ms ease, box-shadow 160ms ease",
+              "&:active": { "transform": "translateY(1px)" },
+              "&:focus-visible": {
+                "outline": "3px solid rgba(0, 214, 139, 0.32)",
+                "outlineOffset": 2
+              }
+            }
+          }
+        },
+        "MuiCard": {
+          "defaultProps": { "elevation": 0 },
+          "styleOverrides": {
+            "root": {
+              "border": "1px solid rgba(255,255,255,0.10)",
+              "borderRadius": 14,
+              "backgroundColor": "#0E2A22"
+            }
+          }
+        },
+        "MuiPaper": { "defaultProps": { "elevation": 0 } },
+        "MuiDialog": {
+          "styleOverrides": {
+            "paper": {
+              "border": "1px solid rgba(255,255,255,0.10)",
+              "borderRadius": 16,
+              "boxShadow": "0 32px 80px -40px rgba(0,0,0,0.35)",
+              "backgroundColor": "#0E2A22"
+            }
+          }
+        },
+        "MuiDialogTitle": { "styleOverrides": { "root": { "padding": "24px 28px 18px" } } },
+        "MuiDialogContent": { "styleOverrides": { "root": { "paddingInline": 28 } } },
+        "MuiDialogActions": {
+          "styleOverrides": { "root": { "gap": 8, "padding": "16px 28px 20px" } }
+        },
+        "MuiOutlinedInput": {
+          "styleOverrides": {
+            "root": {
+              "borderRadius": 10,
+              "backgroundColor": "rgba(255, 255, 255, 0.04)",
+              "&:hover .MuiOutlinedInput-notchedOutline": {
+                "borderColor": "rgba(0, 214, 139, 0.5)"
+              },
+              "&.Mui-focused": { "boxShadow": "0 0 0 3px rgba(0, 214, 139, 0.12)" }
+            },
+            "input": { "&::placeholder": { "color": "text.secondary", "opacity": 0.8 } },
+            "notchedOutline": { "borderColor": "rgba(255,255,255,0.10)" }
+          }
+        },
+        "MuiInputLabel": {
+          "styleOverrides": {
+            "root": {
+              "color": "text.secondary",
+              "fontWeight": 600,
+              "&.Mui-focused": { "color": "text.primary" }
+            }
+          }
+        },
+        "MuiIconButton": {
+          "styleOverrides": {
+            "root": {
+              "borderRadius": 10,
+              "&.Mui-focusVisible": { "outline": "2px solid #F2F0EA", "outlineOffset": 2 }
+            }
+          }
+        },
+        "MuiTab": {
+          "styleOverrides": {
+            "root": { "textTransform": "none", "minHeight": 48, "fontWeight": 650 }
+          }
+        },
+        "MuiCheckbox": {
+          "defaultProps": {
+            "disableRipple": true,
+            "icon": { "$element": "CheckboxIcon", "props": {} },
+            "checkedIcon": { "$element": "CheckboxCheckedIcon", "props": {} },
+            "indeterminateIcon": { "$element": "CheckboxIndeterminateIcon", "props": {} }
+          },
+          "styleOverrides": {
+            "root": {
+              "borderRadius": 8,
+              "&.Mui-focusVisible": { "outline": "2px solid #2EE89F", "outlineOffset": -2 }
+            }
+          }
+        },
+        "MuiRadio": {
+          "defaultProps": {
+            "disableRipple": true,
+            "icon": { "$element": "RadioIcon", "props": {} },
+            "checkedIcon": { "$element": "RadioCheckedIcon", "props": {} }
+          },
+          "styleOverrides": {
+            "root": {
+              "borderRadius": "50%",
+              "&.Mui-focusVisible": { "outline": "2px solid #2EE89F", "outlineOffset": -2 }
+            }
+          }
+        },
+        "MuiChip": { "styleOverrides": { "root": { "fontWeight": 600, "borderRadius": 8 } } },
+        "MuiTooltip": {
+          "styleOverrides": { "tooltip": { "borderRadius": 7, "fontSize": "0.75rem" } }
+        }
+      }
+    },
+    "aura-light": {
+      "palette": {
+        "mode": "light",
+        "primary": {
+          "main": "#7C3AED",
+          "dark": "#6D28D9",
+          "light": "#A78BFA",
+          "contrastText": "#FFFFFF"
+        },
+        "secondary": {
+          "main": "#22D3EE",
+          "dark": "#06B6D4",
+          "light": "#67E8F9",
+          "contrastText": "#0F172A"
+        },
+        "background": { "default": "#FAF9FE", "paper": "#FFFFFF" },
+        "text": { "primary": "#1E1B2E", "secondary": "#6B6680", "disabled": "rgba(0, 0, 0, 0.38)" },
+        "divider": "#E7E5F1",
+        "warning": {
+          "main": "#B45309",
+          "light": "#D97706",
+          "dark": "#92400E",
+          "contrastText": "#FFFFFF"
+        },
+        "info": {
+          "main": "#0369A1",
+          "light": "#0284C7",
+          "dark": "#075985",
+          "contrastText": "#FFFFFF"
+        },
+        "common": { "black": "#000", "white": "#fff" },
+        "error": {
+          "main": "#d32f2f",
+          "light": "#ef5350",
+          "dark": "#c62828",
+          "contrastText": "#fff"
+        },
+        "success": {
+          "main": "#2e7d32",
+          "light": "#4caf50",
+          "dark": "#1b5e20",
+          "contrastText": "#fff"
+        },
+        "grey": {
+          "50": "#fafafa",
+          "100": "#f5f5f5",
+          "200": "#eeeeee",
+          "300": "#e0e0e0",
+          "400": "#bdbdbd",
+          "500": "#9e9e9e",
+          "600": "#757575",
+          "700": "#616161",
+          "800": "#424242",
+          "900": "#212121",
+          "A100": "#f5f5f5",
+          "A200": "#eeeeee",
+          "A400": "#bdbdbd",
+          "A700": "#616161"
+        },
+        "contrastThreshold": 3,
+        "getContrastText": "[Function getContrastText]",
+        "augmentColor": "[Function augmentColor]",
+        "tonalOffset": 0.2,
+        "action": {
+          "active": "rgba(0, 0, 0, 0.54)",
+          "hover": "rgba(0, 0, 0, 0.04)",
+          "hoverOpacity": 0.04,
+          "selected": "rgba(0, 0, 0, 0.08)",
+          "selectedOpacity": 0.08,
+          "disabled": "rgba(0, 0, 0, 0.26)",
+          "disabledBackground": "rgba(0, 0, 0, 0.12)",
+          "disabledOpacity": 0.38,
+          "focus": "rgba(0, 0, 0, 0.12)",
+          "focusOpacity": 0.12,
+          "activatedOpacity": 0.12
+        }
+      },
+      "components": {
+        "MuiCssBaseline": {
+          "styleOverrides": {
+            "body": {
+              "backgroundColor": "#F5F3FF",
+              "backgroundImage": "radial-gradient(circle at 90% 0%, rgba(124, 58, 237, 0.045), transparent 30rem)"
+            },
+            "button, a, input, textarea": { "touchAction": "manipulation" },
+            "@media (prefers-reduced-motion: reduce)": {
+              "*, *::before, *::after": {
+                "animationDuration": "0.01ms !important",
+                "animationIterationCount": "1 !important",
+                "transitionDuration": "0.01ms !important",
+                "scrollBehavior": "auto !important"
+              }
+            },
+            "::selection": { "backgroundColor": "rgba(124, 58, 237, 0.28)", "color": "#1E1B2E" }
+          }
+        },
+        "MuiButton": {
+          "defaultProps": { "disableElevation": true },
+          "styleOverrides": {
+            "root": {
+              "minHeight": 40,
+              "borderRadius": 10,
+              "paddingInline": 18,
+              "transition": "transform 160ms ease, box-shadow 160ms ease",
+              "&:active": { "transform": "translateY(1px)" },
+              "&:focus-visible": {
+                "outline": "3px solid rgba(124, 58, 237, 0.32)",
+                "outlineOffset": 2
+              }
+            }
+          }
+        },
+        "MuiCard": {
+          "defaultProps": { "elevation": 0 },
+          "styleOverrides": {
+            "root": {
+              "border": "1px solid #E7E5F1",
+              "borderRadius": 14,
+              "backgroundColor": "#FFFFFF"
+            }
+          }
+        },
+        "MuiPaper": { "defaultProps": { "elevation": 0 } },
+        "MuiDialog": {
+          "styleOverrides": {
+            "paper": {
+              "border": "1px solid #E7E5F1",
+              "borderRadius": 16,
+              "boxShadow": "0 32px 80px -40px rgba(0,0,0,0.35)",
+              "backgroundColor": "#FFFFFF"
+            }
+          }
+        },
+        "MuiDialogTitle": { "styleOverrides": { "root": { "padding": "24px 28px 18px" } } },
+        "MuiDialogContent": { "styleOverrides": { "root": { "paddingInline": 28 } } },
+        "MuiDialogActions": {
+          "styleOverrides": { "root": { "gap": 8, "padding": "16px 28px 20px" } }
+        },
+        "MuiOutlinedInput": {
+          "styleOverrides": {
+            "root": {
+              "borderRadius": 10,
+              "backgroundColor": "#FFFFFF",
+              "&:hover .MuiOutlinedInput-notchedOutline": {
+                "borderColor": "rgba(124, 58, 237, 0.5)"
+              },
+              "&.Mui-focused": { "boxShadow": "0 0 0 3px rgba(124, 58, 237, 0.12)" }
+            },
+            "input": { "&::placeholder": { "color": "text.secondary", "opacity": 0.8 } },
+            "notchedOutline": { "borderColor": "#E7E5F1" }
+          }
+        },
+        "MuiInputLabel": {
+          "styleOverrides": {
+            "root": {
+              "color": "text.secondary",
+              "fontWeight": 600,
+              "&.Mui-focused": { "color": "text.primary" }
+            }
+          }
+        },
+        "MuiIconButton": {
+          "styleOverrides": {
+            "root": {
+              "borderRadius": 10,
+              "&.Mui-focusVisible": { "outline": "2px solid #1E1B2E", "outlineOffset": 2 }
+            }
+          }
+        },
+        "MuiTab": {
+          "styleOverrides": {
+            "root": { "textTransform": "none", "minHeight": 48, "fontWeight": 650 }
+          }
+        },
+        "MuiCheckbox": {
+          "defaultProps": {
+            "disableRipple": true,
+            "icon": { "$element": "CheckboxIcon", "props": {} },
+            "checkedIcon": { "$element": "CheckboxCheckedIcon", "props": {} },
+            "indeterminateIcon": { "$element": "CheckboxIndeterminateIcon", "props": {} }
+          },
+          "styleOverrides": {
+            "root": {
+              "borderRadius": 8,
+              "&.Mui-focusVisible": { "outline": "2px solid #7C3AED", "outlineOffset": -2 }
+            }
+          }
+        },
+        "MuiRadio": {
+          "defaultProps": {
+            "disableRipple": true,
+            "icon": { "$element": "RadioIcon", "props": {} },
+            "checkedIcon": { "$element": "RadioCheckedIcon", "props": {} }
+          },
+          "styleOverrides": {
+            "root": {
+              "borderRadius": "50%",
+              "&.Mui-focusVisible": { "outline": "2px solid #7C3AED", "outlineOffset": -2 }
+            }
+          }
+        },
+        "MuiChip": { "styleOverrides": { "root": { "fontWeight": 600, "borderRadius": 8 } } },
+        "MuiTooltip": {
+          "styleOverrides": { "tooltip": { "borderRadius": 7, "fontSize": "0.75rem" } }
+        }
+      }
+    },
+    "aura-dark": {
+      "palette": {
+        "mode": "dark",
+        "primary": {
+          "main": "#A78BFA",
+          "dark": "#8B5CF6",
+          "light": "#C4B5FD",
+          "contrastText": "#1E1B2E"
+        },
+        "secondary": {
+          "main": "#22D3EE",
+          "dark": "#06B6D4",
+          "light": "#67E8F9",
+          "contrastText": "#0F172A"
+        },
+        "background": { "default": "#13111C", "paper": "#1E1B2E" },
+        "text": {
+          "primary": "#F0EEFB",
+          "secondary": "#9E9CB3",
+          "disabled": "rgba(255, 255, 255, 0.5)",
+          "icon": "rgba(255, 255, 255, 0.5)"
+        },
+        "divider": "rgba(255,255,255,0.10)",
+        "common": { "black": "#000", "white": "#fff" },
+        "error": {
+          "main": "#f44336",
+          "light": "#e57373",
+          "dark": "#d32f2f",
+          "contrastText": "#fff"
+        },
+        "warning": {
+          "main": "#ffa726",
+          "light": "#ffb74d",
+          "dark": "#f57c00",
+          "contrastText": "rgba(0, 0, 0, 0.87)"
+        },
+        "info": {
+          "main": "#29b6f6",
+          "light": "#4fc3f7",
+          "dark": "#0288d1",
+          "contrastText": "rgba(0, 0, 0, 0.87)"
+        },
+        "success": {
+          "main": "#66bb6a",
+          "light": "#81c784",
+          "dark": "#388e3c",
+          "contrastText": "rgba(0, 0, 0, 0.87)"
+        },
+        "grey": {
+          "50": "#fafafa",
+          "100": "#f5f5f5",
+          "200": "#eeeeee",
+          "300": "#e0e0e0",
+          "400": "#bdbdbd",
+          "500": "#9e9e9e",
+          "600": "#757575",
+          "700": "#616161",
+          "800": "#424242",
+          "900": "#212121",
+          "A100": "#f5f5f5",
+          "A200": "#eeeeee",
+          "A400": "#bdbdbd",
+          "A700": "#616161"
+        },
+        "contrastThreshold": 3,
+        "getContrastText": "[Function getContrastText]",
+        "augmentColor": "[Function augmentColor]",
+        "tonalOffset": 0.2,
+        "action": {
+          "active": "#fff",
+          "hover": "rgba(255, 255, 255, 0.08)",
+          "hoverOpacity": 0.08,
+          "selected": "rgba(255, 255, 255, 0.16)",
+          "selectedOpacity": 0.16,
+          "disabled": "rgba(255, 255, 255, 0.3)",
+          "disabledBackground": "rgba(255, 255, 255, 0.12)",
+          "disabledOpacity": 0.38,
+          "focus": "rgba(255, 255, 255, 0.12)",
+          "focusOpacity": 0.12,
+          "activatedOpacity": 0.24
+        }
+      },
+      "components": {
+        "MuiCssBaseline": {
+          "styleOverrides": {
+            "body": {
+              "backgroundColor": "#13111C",
+              "backgroundImage": "radial-gradient(circle at 90% 0%, rgba(167, 139, 250, 0.06), transparent 30rem)"
+            },
+            "button, a, input, textarea": { "touchAction": "manipulation" },
+            "@media (prefers-reduced-motion: reduce)": {
+              "*, *::before, *::after": {
+                "animationDuration": "0.01ms !important",
+                "animationIterationCount": "1 !important",
+                "transitionDuration": "0.01ms !important",
+                "scrollBehavior": "auto !important"
+              }
+            },
+            "::selection": { "backgroundColor": "rgba(167, 139, 250, 0.32)", "color": "#13111C" }
+          }
+        },
+        "MuiButton": {
+          "defaultProps": { "disableElevation": true },
+          "styleOverrides": {
+            "root": {
+              "minHeight": 40,
+              "borderRadius": 10,
+              "paddingInline": 18,
+              "transition": "transform 160ms ease, box-shadow 160ms ease",
+              "&:active": { "transform": "translateY(1px)" },
+              "&:focus-visible": {
+                "outline": "3px solid rgba(167, 139, 250, 0.32)",
+                "outlineOffset": 2
+              }
+            }
+          }
+        },
+        "MuiCard": {
+          "defaultProps": { "elevation": 0 },
+          "styleOverrides": {
+            "root": {
+              "border": "1px solid rgba(255,255,255,0.10)",
+              "borderRadius": 14,
+              "backgroundColor": "#1E1B2E"
+            }
+          }
+        },
+        "MuiPaper": { "defaultProps": { "elevation": 0 } },
+        "MuiDialog": {
+          "styleOverrides": {
+            "paper": {
+              "border": "1px solid rgba(255,255,255,0.10)",
+              "borderRadius": 16,
+              "boxShadow": "0 32px 80px -40px rgba(0,0,0,0.35)",
+              "backgroundColor": "#1E1B2E"
+            }
+          }
+        },
+        "MuiDialogTitle": { "styleOverrides": { "root": { "padding": "24px 28px 18px" } } },
+        "MuiDialogContent": { "styleOverrides": { "root": { "paddingInline": 28 } } },
+        "MuiDialogActions": {
+          "styleOverrides": { "root": { "gap": 8, "padding": "16px 28px 20px" } }
+        },
+        "MuiOutlinedInput": {
+          "styleOverrides": {
+            "root": {
+              "borderRadius": 10,
+              "backgroundColor": "rgba(255, 255, 255, 0.04)",
+              "&:hover .MuiOutlinedInput-notchedOutline": {
+                "borderColor": "rgba(167, 139, 250, 0.5)"
+              },
+              "&.Mui-focused": { "boxShadow": "0 0 0 3px rgba(167, 139, 250, 0.12)" }
+            },
+            "input": { "&::placeholder": { "color": "text.secondary", "opacity": 0.8 } },
+            "notchedOutline": { "borderColor": "rgba(255,255,255,0.10)" }
+          }
+        },
+        "MuiInputLabel": {
+          "styleOverrides": {
+            "root": {
+              "color": "text.secondary",
+              "fontWeight": 600,
+              "&.Mui-focused": { "color": "text.primary" }
+            }
+          }
+        },
+        "MuiIconButton": {
+          "styleOverrides": {
+            "root": {
+              "borderRadius": 10,
+              "&.Mui-focusVisible": { "outline": "2px solid #F0EEFB", "outlineOffset": 2 }
+            }
+          }
+        },
+        "MuiTab": {
+          "styleOverrides": {
+            "root": { "textTransform": "none", "minHeight": 48, "fontWeight": 650 }
+          }
+        },
+        "MuiCheckbox": {
+          "defaultProps": {
+            "disableRipple": true,
+            "icon": { "$element": "CheckboxIcon", "props": {} },
+            "checkedIcon": { "$element": "CheckboxCheckedIcon", "props": {} },
+            "indeterminateIcon": { "$element": "CheckboxIndeterminateIcon", "props": {} }
+          },
+          "styleOverrides": {
+            "root": {
+              "borderRadius": 8,
+              "&.Mui-focusVisible": { "outline": "2px solid #A78BFA", "outlineOffset": -2 }
+            }
+          }
+        },
+        "MuiRadio": {
+          "defaultProps": {
+            "disableRipple": true,
+            "icon": { "$element": "RadioIcon", "props": {} },
+            "checkedIcon": { "$element": "RadioCheckedIcon", "props": {} }
+          },
+          "styleOverrides": {
+            "root": {
+              "borderRadius": "50%",
+              "&.Mui-focusVisible": { "outline": "2px solid #A78BFA", "outlineOffset": -2 }
+            }
+          }
+        },
+        "MuiChip": { "styleOverrides": { "root": { "fontWeight": 600, "borderRadius": 8 } } },
+        "MuiTooltip": {
+          "styleOverrides": { "tooltip": { "borderRadius": 7, "fontSize": "0.75rem" } }
+        }
+      }
+    },
+    "ocean-light": {
+      "palette": {
+        "mode": "light",
+        "primary": {
+          "main": "#0EA5E9",
+          "dark": "#0284C7",
+          "light": "#38BDF8",
+          "contrastText": "#FFFFFF"
+        },
+        "secondary": {
+          "main": "#F97316",
+          "dark": "#EA580C",
+          "light": "#FB923C",
+          "contrastText": "#FFFFFF"
+        },
+        "background": { "default": "#F0F9FF", "paper": "#FFFFFF" },
+        "text": { "primary": "#0B1220", "secondary": "#546A7B", "disabled": "rgba(0, 0, 0, 0.38)" },
+        "divider": "#D6E8F2",
+        "warning": {
+          "main": "#B45309",
+          "light": "#D97706",
+          "dark": "#92400E",
+          "contrastText": "#FFFFFF"
+        },
+        "info": {
+          "main": "#0369A1",
+          "light": "#0284C7",
+          "dark": "#075985",
+          "contrastText": "#FFFFFF"
+        },
+        "common": { "black": "#000", "white": "#fff" },
+        "error": {
+          "main": "#d32f2f",
+          "light": "#ef5350",
+          "dark": "#c62828",
+          "contrastText": "#fff"
+        },
+        "success": {
+          "main": "#2e7d32",
+          "light": "#4caf50",
+          "dark": "#1b5e20",
+          "contrastText": "#fff"
+        },
+        "grey": {
+          "50": "#fafafa",
+          "100": "#f5f5f5",
+          "200": "#eeeeee",
+          "300": "#e0e0e0",
+          "400": "#bdbdbd",
+          "500": "#9e9e9e",
+          "600": "#757575",
+          "700": "#616161",
+          "800": "#424242",
+          "900": "#212121",
+          "A100": "#f5f5f5",
+          "A200": "#eeeeee",
+          "A400": "#bdbdbd",
+          "A700": "#616161"
+        },
+        "contrastThreshold": 3,
+        "getContrastText": "[Function getContrastText]",
+        "augmentColor": "[Function augmentColor]",
+        "tonalOffset": 0.2,
+        "action": {
+          "active": "rgba(0, 0, 0, 0.54)",
+          "hover": "rgba(0, 0, 0, 0.04)",
+          "hoverOpacity": 0.04,
+          "selected": "rgba(0, 0, 0, 0.08)",
+          "selectedOpacity": 0.08,
+          "disabled": "rgba(0, 0, 0, 0.26)",
+          "disabledBackground": "rgba(0, 0, 0, 0.12)",
+          "disabledOpacity": 0.38,
+          "focus": "rgba(0, 0, 0, 0.12)",
+          "focusOpacity": 0.12,
+          "activatedOpacity": 0.12
+        }
+      },
+      "components": {
+        "MuiCssBaseline": {
+          "styleOverrides": {
+            "body": {
+              "backgroundColor": "#F0F9FF",
+              "backgroundImage": "radial-gradient(circle at 90% 0%, rgba(14, 165, 233, 0.045), transparent 30rem)"
+            },
+            "button, a, input, textarea": { "touchAction": "manipulation" },
+            "@media (prefers-reduced-motion: reduce)": {
+              "*, *::before, *::after": {
+                "animationDuration": "0.01ms !important",
+                "animationIterationCount": "1 !important",
+                "transitionDuration": "0.01ms !important",
+                "scrollBehavior": "auto !important"
+              }
+            },
+            "::selection": { "backgroundColor": "rgba(14, 165, 233, 0.28)", "color": "#0B1220" }
+          }
+        },
+        "MuiButton": {
+          "defaultProps": { "disableElevation": true },
+          "styleOverrides": {
+            "root": {
+              "minHeight": 40,
+              "borderRadius": 10,
+              "paddingInline": 18,
+              "transition": "transform 160ms ease, box-shadow 160ms ease",
+              "&:active": { "transform": "translateY(1px)" },
+              "&:focus-visible": {
+                "outline": "3px solid rgba(14, 165, 233, 0.32)",
+                "outlineOffset": 2
+              }
+            }
+          }
+        },
+        "MuiCard": {
+          "defaultProps": { "elevation": 0 },
+          "styleOverrides": {
+            "root": {
+              "border": "1px solid #D6E8F2",
+              "borderRadius": 14,
+              "backgroundColor": "#FFFFFF"
+            }
+          }
+        },
+        "MuiPaper": { "defaultProps": { "elevation": 0 } },
+        "MuiDialog": {
+          "styleOverrides": {
+            "paper": {
+              "border": "1px solid #D6E8F2",
+              "borderRadius": 16,
+              "boxShadow": "0 32px 80px -40px rgba(0,0,0,0.35)",
+              "backgroundColor": "#FFFFFF"
+            }
+          }
+        },
+        "MuiDialogTitle": { "styleOverrides": { "root": { "padding": "24px 28px 18px" } } },
+        "MuiDialogContent": { "styleOverrides": { "root": { "paddingInline": 28 } } },
+        "MuiDialogActions": {
+          "styleOverrides": { "root": { "gap": 8, "padding": "16px 28px 20px" } }
+        },
+        "MuiOutlinedInput": {
+          "styleOverrides": {
+            "root": {
+              "borderRadius": 10,
+              "backgroundColor": "#FFFFFF",
+              "&:hover .MuiOutlinedInput-notchedOutline": {
+                "borderColor": "rgba(14, 165, 233, 0.5)"
+              },
+              "&.Mui-focused": { "boxShadow": "0 0 0 3px rgba(14, 165, 233, 0.12)" }
+            },
+            "input": { "&::placeholder": { "color": "text.secondary", "opacity": 0.8 } },
+            "notchedOutline": { "borderColor": "#D6E8F2" }
+          }
+        },
+        "MuiInputLabel": {
+          "styleOverrides": {
+            "root": {
+              "color": "text.secondary",
+              "fontWeight": 600,
+              "&.Mui-focused": { "color": "text.primary" }
+            }
+          }
+        },
+        "MuiIconButton": {
+          "styleOverrides": {
+            "root": {
+              "borderRadius": 10,
+              "&.Mui-focusVisible": { "outline": "2px solid #0B1220", "outlineOffset": 2 }
+            }
+          }
+        },
+        "MuiTab": {
+          "styleOverrides": {
+            "root": { "textTransform": "none", "minHeight": 48, "fontWeight": 650 }
+          }
+        },
+        "MuiCheckbox": {
+          "defaultProps": {
+            "disableRipple": true,
+            "icon": { "$element": "CheckboxIcon", "props": {} },
+            "checkedIcon": { "$element": "CheckboxCheckedIcon", "props": {} },
+            "indeterminateIcon": { "$element": "CheckboxIndeterminateIcon", "props": {} }
+          },
+          "styleOverrides": {
+            "root": {
+              "borderRadius": 8,
+              "&.Mui-focusVisible": { "outline": "2px solid #0EA5E9", "outlineOffset": -2 }
+            }
+          }
+        },
+        "MuiRadio": {
+          "defaultProps": {
+            "disableRipple": true,
+            "icon": { "$element": "RadioIcon", "props": {} },
+            "checkedIcon": { "$element": "RadioCheckedIcon", "props": {} }
+          },
+          "styleOverrides": {
+            "root": {
+              "borderRadius": "50%",
+              "&.Mui-focusVisible": { "outline": "2px solid #0EA5E9", "outlineOffset": -2 }
+            }
+          }
+        },
+        "MuiChip": { "styleOverrides": { "root": { "fontWeight": 600, "borderRadius": 8 } } },
+        "MuiTooltip": {
+          "styleOverrides": { "tooltip": { "borderRadius": 7, "fontSize": "0.75rem" } }
+        }
+      }
+    },
+    "ocean-dark": {
+      "palette": {
+        "mode": "dark",
+        "primary": {
+          "main": "#38BDF8",
+          "dark": "#0EA5E9",
+          "light": "#7DD3FC",
+          "contrastText": "#0B1220"
+        },
+        "secondary": {
+          "main": "#FDBA74",
+          "dark": "#F97316",
+          "light": "#FED7AA",
+          "contrastText": "#0B1220"
+        },
+        "background": { "default": "#0B1220", "paper": "#111B2E" },
+        "text": {
+          "primary": "#E8F4FC",
+          "secondary": "#8AA2B8",
+          "disabled": "rgba(255, 255, 255, 0.5)",
+          "icon": "rgba(255, 255, 255, 0.5)"
+        },
+        "divider": "rgba(255,255,255,0.10)",
+        "common": { "black": "#000", "white": "#fff" },
+        "error": {
+          "main": "#f44336",
+          "light": "#e57373",
+          "dark": "#d32f2f",
+          "contrastText": "#fff"
+        },
+        "warning": {
+          "main": "#ffa726",
+          "light": "#ffb74d",
+          "dark": "#f57c00",
+          "contrastText": "rgba(0, 0, 0, 0.87)"
+        },
+        "info": {
+          "main": "#29b6f6",
+          "light": "#4fc3f7",
+          "dark": "#0288d1",
+          "contrastText": "rgba(0, 0, 0, 0.87)"
+        },
+        "success": {
+          "main": "#66bb6a",
+          "light": "#81c784",
+          "dark": "#388e3c",
+          "contrastText": "rgba(0, 0, 0, 0.87)"
+        },
+        "grey": {
+          "50": "#fafafa",
+          "100": "#f5f5f5",
+          "200": "#eeeeee",
+          "300": "#e0e0e0",
+          "400": "#bdbdbd",
+          "500": "#9e9e9e",
+          "600": "#757575",
+          "700": "#616161",
+          "800": "#424242",
+          "900": "#212121",
+          "A100": "#f5f5f5",
+          "A200": "#eeeeee",
+          "A400": "#bdbdbd",
+          "A700": "#616161"
+        },
+        "contrastThreshold": 3,
+        "getContrastText": "[Function getContrastText]",
+        "augmentColor": "[Function augmentColor]",
+        "tonalOffset": 0.2,
+        "action": {
+          "active": "#fff",
+          "hover": "rgba(255, 255, 255, 0.08)",
+          "hoverOpacity": 0.08,
+          "selected": "rgba(255, 255, 255, 0.16)",
+          "selectedOpacity": 0.16,
+          "disabled": "rgba(255, 255, 255, 0.3)",
+          "disabledBackground": "rgba(255, 255, 255, 0.12)",
+          "disabledOpacity": 0.38,
+          "focus": "rgba(255, 255, 255, 0.12)",
+          "focusOpacity": 0.12,
+          "activatedOpacity": 0.24
+        }
+      },
+      "components": {
+        "MuiCssBaseline": {
+          "styleOverrides": {
+            "body": {
+              "backgroundColor": "#0B1220",
+              "backgroundImage": "radial-gradient(circle at 90% 0%, rgba(56, 189, 248, 0.06), transparent 30rem)"
+            },
+            "button, a, input, textarea": { "touchAction": "manipulation" },
+            "@media (prefers-reduced-motion: reduce)": {
+              "*, *::before, *::after": {
+                "animationDuration": "0.01ms !important",
+                "animationIterationCount": "1 !important",
+                "transitionDuration": "0.01ms !important",
+                "scrollBehavior": "auto !important"
+              }
+            },
+            "::selection": { "backgroundColor": "rgba(56, 189, 248, 0.32)", "color": "#0B1220" }
+          }
+        },
+        "MuiButton": {
+          "defaultProps": { "disableElevation": true },
+          "styleOverrides": {
+            "root": {
+              "minHeight": 40,
+              "borderRadius": 10,
+              "paddingInline": 18,
+              "transition": "transform 160ms ease, box-shadow 160ms ease",
+              "&:active": { "transform": "translateY(1px)" },
+              "&:focus-visible": {
+                "outline": "3px solid rgba(56, 189, 248, 0.32)",
+                "outlineOffset": 2
+              }
+            }
+          }
+        },
+        "MuiCard": {
+          "defaultProps": { "elevation": 0 },
+          "styleOverrides": {
+            "root": {
+              "border": "1px solid rgba(255,255,255,0.10)",
+              "borderRadius": 14,
+              "backgroundColor": "#111B2E"
+            }
+          }
+        },
+        "MuiPaper": { "defaultProps": { "elevation": 0 } },
+        "MuiDialog": {
+          "styleOverrides": {
+            "paper": {
+              "border": "1px solid rgba(255,255,255,0.10)",
+              "borderRadius": 16,
+              "boxShadow": "0 32px 80px -40px rgba(0,0,0,0.35)",
+              "backgroundColor": "#111B2E"
+            }
+          }
+        },
+        "MuiDialogTitle": { "styleOverrides": { "root": { "padding": "24px 28px 18px" } } },
+        "MuiDialogContent": { "styleOverrides": { "root": { "paddingInline": 28 } } },
+        "MuiDialogActions": {
+          "styleOverrides": { "root": { "gap": 8, "padding": "16px 28px 20px" } }
+        },
+        "MuiOutlinedInput": {
+          "styleOverrides": {
+            "root": {
+              "borderRadius": 10,
+              "backgroundColor": "rgba(255, 255, 255, 0.04)",
+              "&:hover .MuiOutlinedInput-notchedOutline": {
+                "borderColor": "rgba(56, 189, 248, 0.5)"
+              },
+              "&.Mui-focused": { "boxShadow": "0 0 0 3px rgba(56, 189, 248, 0.12)" }
+            },
+            "input": { "&::placeholder": { "color": "text.secondary", "opacity": 0.8 } },
+            "notchedOutline": { "borderColor": "rgba(255,255,255,0.10)" }
+          }
+        },
+        "MuiInputLabel": {
+          "styleOverrides": {
+            "root": {
+              "color": "text.secondary",
+              "fontWeight": 600,
+              "&.Mui-focused": { "color": "text.primary" }
+            }
+          }
+        },
+        "MuiIconButton": {
+          "styleOverrides": {
+            "root": {
+              "borderRadius": 10,
+              "&.Mui-focusVisible": { "outline": "2px solid #E8F4FC", "outlineOffset": 2 }
+            }
+          }
+        },
+        "MuiTab": {
+          "styleOverrides": {
+            "root": { "textTransform": "none", "minHeight": 48, "fontWeight": 650 }
+          }
+        },
+        "MuiCheckbox": {
+          "defaultProps": {
+            "disableRipple": true,
+            "icon": { "$element": "CheckboxIcon", "props": {} },
+            "checkedIcon": { "$element": "CheckboxCheckedIcon", "props": {} },
+            "indeterminateIcon": { "$element": "CheckboxIndeterminateIcon", "props": {} }
+          },
+          "styleOverrides": {
+            "root": {
+              "borderRadius": 8,
+              "&.Mui-focusVisible": { "outline": "2px solid #38BDF8", "outlineOffset": -2 }
+            }
+          }
+        },
+        "MuiRadio": {
+          "defaultProps": {
+            "disableRipple": true,
+            "icon": { "$element": "RadioIcon", "props": {} },
+            "checkedIcon": { "$element": "RadioCheckedIcon", "props": {} }
+          },
+          "styleOverrides": {
+            "root": {
+              "borderRadius": "50%",
+              "&.Mui-focusVisible": { "outline": "2px solid #38BDF8", "outlineOffset": -2 }
+            }
+          }
+        },
+        "MuiChip": { "styleOverrides": { "root": { "fontWeight": 600, "borderRadius": 8 } } },
+        "MuiTooltip": {
+          "styleOverrides": { "tooltip": { "borderRadius": 7, "fontSize": "0.75rem" } }
+        }
+      }
+    },
+    "sunset-light": {
+      "palette": {
+        "mode": "light",
+        "primary": {
+          "main": "#F97316",
+          "dark": "#EA580C",
+          "light": "#FB923C",
+          "contrastText": "#FFFFFF"
+        },
+        "secondary": {
+          "main": "#EC4899",
+          "dark": "#DB2777",
+          "light": "#F472B6",
+          "contrastText": "#FFFFFF"
+        },
+        "background": { "default": "#FFF7ED", "paper": "#FFFFFF" },
+        "text": { "primary": "#1F1410", "secondary": "#7C6A60", "disabled": "rgba(0, 0, 0, 0.38)" },
+        "divider": "#F5E0D0",
+        "warning": {
+          "main": "#B45309",
+          "light": "#D97706",
+          "dark": "#92400E",
+          "contrastText": "#FFFFFF"
+        },
+        "info": {
+          "main": "#0369A1",
+          "light": "#0284C7",
+          "dark": "#075985",
+          "contrastText": "#FFFFFF"
+        },
+        "common": { "black": "#000", "white": "#fff" },
+        "error": {
+          "main": "#d32f2f",
+          "light": "#ef5350",
+          "dark": "#c62828",
+          "contrastText": "#fff"
+        },
+        "success": {
+          "main": "#2e7d32",
+          "light": "#4caf50",
+          "dark": "#1b5e20",
+          "contrastText": "#fff"
+        },
+        "grey": {
+          "50": "#fafafa",
+          "100": "#f5f5f5",
+          "200": "#eeeeee",
+          "300": "#e0e0e0",
+          "400": "#bdbdbd",
+          "500": "#9e9e9e",
+          "600": "#757575",
+          "700": "#616161",
+          "800": "#424242",
+          "900": "#212121",
+          "A100": "#f5f5f5",
+          "A200": "#eeeeee",
+          "A400": "#bdbdbd",
+          "A700": "#616161"
+        },
+        "contrastThreshold": 3,
+        "getContrastText": "[Function getContrastText]",
+        "augmentColor": "[Function augmentColor]",
+        "tonalOffset": 0.2,
+        "action": {
+          "active": "rgba(0, 0, 0, 0.54)",
+          "hover": "rgba(0, 0, 0, 0.04)",
+          "hoverOpacity": 0.04,
+          "selected": "rgba(0, 0, 0, 0.08)",
+          "selectedOpacity": 0.08,
+          "disabled": "rgba(0, 0, 0, 0.26)",
+          "disabledBackground": "rgba(0, 0, 0, 0.12)",
+          "disabledOpacity": 0.38,
+          "focus": "rgba(0, 0, 0, 0.12)",
+          "focusOpacity": 0.12,
+          "activatedOpacity": 0.12
+        }
+      },
+      "components": {
+        "MuiCssBaseline": {
+          "styleOverrides": {
+            "body": {
+              "backgroundColor": "#FFF7ED",
+              "backgroundImage": "radial-gradient(circle at 90% 0%, rgba(249, 115, 22, 0.045), transparent 30rem)"
+            },
+            "button, a, input, textarea": { "touchAction": "manipulation" },
+            "@media (prefers-reduced-motion: reduce)": {
+              "*, *::before, *::after": {
+                "animationDuration": "0.01ms !important",
+                "animationIterationCount": "1 !important",
+                "transitionDuration": "0.01ms !important",
+                "scrollBehavior": "auto !important"
+              }
+            },
+            "::selection": { "backgroundColor": "rgba(249, 115, 22, 0.28)", "color": "#1F1410" }
+          }
+        },
+        "MuiButton": {
+          "defaultProps": { "disableElevation": true },
+          "styleOverrides": {
+            "root": {
+              "minHeight": 40,
+              "borderRadius": 10,
+              "paddingInline": 18,
+              "transition": "transform 160ms ease, box-shadow 160ms ease",
+              "&:active": { "transform": "translateY(1px)" },
+              "&:focus-visible": {
+                "outline": "3px solid rgba(249, 115, 22, 0.32)",
+                "outlineOffset": 2
+              }
+            }
+          }
+        },
+        "MuiCard": {
+          "defaultProps": { "elevation": 0 },
+          "styleOverrides": {
+            "root": {
+              "border": "1px solid #F5E0D0",
+              "borderRadius": 14,
+              "backgroundColor": "#FFFFFF"
+            }
+          }
+        },
+        "MuiPaper": { "defaultProps": { "elevation": 0 } },
+        "MuiDialog": {
+          "styleOverrides": {
+            "paper": {
+              "border": "1px solid #F5E0D0",
+              "borderRadius": 16,
+              "boxShadow": "0 32px 80px -40px rgba(0,0,0,0.35)",
+              "backgroundColor": "#FFFFFF"
+            }
+          }
+        },
+        "MuiDialogTitle": { "styleOverrides": { "root": { "padding": "24px 28px 18px" } } },
+        "MuiDialogContent": { "styleOverrides": { "root": { "paddingInline": 28 } } },
+        "MuiDialogActions": {
+          "styleOverrides": { "root": { "gap": 8, "padding": "16px 28px 20px" } }
+        },
+        "MuiOutlinedInput": {
+          "styleOverrides": {
+            "root": {
+              "borderRadius": 10,
+              "backgroundColor": "#FFFFFF",
+              "&:hover .MuiOutlinedInput-notchedOutline": {
+                "borderColor": "rgba(249, 115, 22, 0.5)"
+              },
+              "&.Mui-focused": { "boxShadow": "0 0 0 3px rgba(249, 115, 22, 0.12)" }
+            },
+            "input": { "&::placeholder": { "color": "text.secondary", "opacity": 0.8 } },
+            "notchedOutline": { "borderColor": "#F5E0D0" }
+          }
+        },
+        "MuiInputLabel": {
+          "styleOverrides": {
+            "root": {
+              "color": "text.secondary",
+              "fontWeight": 600,
+              "&.Mui-focused": { "color": "text.primary" }
+            }
+          }
+        },
+        "MuiIconButton": {
+          "styleOverrides": {
+            "root": {
+              "borderRadius": 10,
+              "&.Mui-focusVisible": { "outline": "2px solid #1F1410", "outlineOffset": 2 }
+            }
+          }
+        },
+        "MuiTab": {
+          "styleOverrides": {
+            "root": { "textTransform": "none", "minHeight": 48, "fontWeight": 650 }
+          }
+        },
+        "MuiCheckbox": {
+          "defaultProps": {
+            "disableRipple": true,
+            "icon": { "$element": "CheckboxIcon", "props": {} },
+            "checkedIcon": { "$element": "CheckboxCheckedIcon", "props": {} },
+            "indeterminateIcon": { "$element": "CheckboxIndeterminateIcon", "props": {} }
+          },
+          "styleOverrides": {
+            "root": {
+              "borderRadius": 8,
+              "&.Mui-focusVisible": { "outline": "2px solid #F97316", "outlineOffset": -2 }
+            }
+          }
+        },
+        "MuiRadio": {
+          "defaultProps": {
+            "disableRipple": true,
+            "icon": { "$element": "RadioIcon", "props": {} },
+            "checkedIcon": { "$element": "RadioCheckedIcon", "props": {} }
+          },
+          "styleOverrides": {
+            "root": {
+              "borderRadius": "50%",
+              "&.Mui-focusVisible": { "outline": "2px solid #F97316", "outlineOffset": -2 }
+            }
+          }
+        },
+        "MuiChip": { "styleOverrides": { "root": { "fontWeight": 600, "borderRadius": 8 } } },
+        "MuiTooltip": {
+          "styleOverrides": { "tooltip": { "borderRadius": 7, "fontSize": "0.75rem" } }
+        }
+      }
+    },
+    "sunset-dark": {
+      "palette": {
+        "mode": "dark",
+        "primary": {
+          "main": "#FB923C",
+          "dark": "#F97316",
+          "light": "#FDBA74",
+          "contrastText": "#1F1410"
+        },
+        "secondary": {
+          "main": "#F472B6",
+          "dark": "#EC4899",
+          "light": "#F9A8D4",
+          "contrastText": "#1F1410"
+        },
+        "background": { "default": "#1F1410", "paper": "#2E1B14" },
+        "text": {
+          "primary": "#FFF0E8",
+          "secondary": "#B8A198",
+          "disabled": "rgba(255, 255, 255, 0.5)",
+          "icon": "rgba(255, 255, 255, 0.5)"
+        },
+        "divider": "rgba(255,255,255,0.10)",
+        "common": { "black": "#000", "white": "#fff" },
+        "error": {
+          "main": "#f44336",
+          "light": "#e57373",
+          "dark": "#d32f2f",
+          "contrastText": "#fff"
+        },
+        "warning": {
+          "main": "#ffa726",
+          "light": "#ffb74d",
+          "dark": "#f57c00",
+          "contrastText": "rgba(0, 0, 0, 0.87)"
+        },
+        "info": {
+          "main": "#29b6f6",
+          "light": "#4fc3f7",
+          "dark": "#0288d1",
+          "contrastText": "rgba(0, 0, 0, 0.87)"
+        },
+        "success": {
+          "main": "#66bb6a",
+          "light": "#81c784",
+          "dark": "#388e3c",
+          "contrastText": "rgba(0, 0, 0, 0.87)"
+        },
+        "grey": {
+          "50": "#fafafa",
+          "100": "#f5f5f5",
+          "200": "#eeeeee",
+          "300": "#e0e0e0",
+          "400": "#bdbdbd",
+          "500": "#9e9e9e",
+          "600": "#757575",
+          "700": "#616161",
+          "800": "#424242",
+          "900": "#212121",
+          "A100": "#f5f5f5",
+          "A200": "#eeeeee",
+          "A400": "#bdbdbd",
+          "A700": "#616161"
+        },
+        "contrastThreshold": 3,
+        "getContrastText": "[Function getContrastText]",
+        "augmentColor": "[Function augmentColor]",
+        "tonalOffset": 0.2,
+        "action": {
+          "active": "#fff",
+          "hover": "rgba(255, 255, 255, 0.08)",
+          "hoverOpacity": 0.08,
+          "selected": "rgba(255, 255, 255, 0.16)",
+          "selectedOpacity": 0.16,
+          "disabled": "rgba(255, 255, 255, 0.3)",
+          "disabledBackground": "rgba(255, 255, 255, 0.12)",
+          "disabledOpacity": 0.38,
+          "focus": "rgba(255, 255, 255, 0.12)",
+          "focusOpacity": 0.12,
+          "activatedOpacity": 0.24
+        }
+      },
+      "components": {
+        "MuiCssBaseline": {
+          "styleOverrides": {
+            "body": {
+              "backgroundColor": "#1F1410",
+              "backgroundImage": "radial-gradient(circle at 90% 0%, rgba(251, 146, 60, 0.06), transparent 30rem)"
+            },
+            "button, a, input, textarea": { "touchAction": "manipulation" },
+            "@media (prefers-reduced-motion: reduce)": {
+              "*, *::before, *::after": {
+                "animationDuration": "0.01ms !important",
+                "animationIterationCount": "1 !important",
+                "transitionDuration": "0.01ms !important",
+                "scrollBehavior": "auto !important"
+              }
+            },
+            "::selection": { "backgroundColor": "rgba(251, 146, 60, 0.32)", "color": "#1F1410" }
+          }
+        },
+        "MuiButton": {
+          "defaultProps": { "disableElevation": true },
+          "styleOverrides": {
+            "root": {
+              "minHeight": 40,
+              "borderRadius": 10,
+              "paddingInline": 18,
+              "transition": "transform 160ms ease, box-shadow 160ms ease",
+              "&:active": { "transform": "translateY(1px)" },
+              "&:focus-visible": {
+                "outline": "3px solid rgba(251, 146, 60, 0.32)",
+                "outlineOffset": 2
+              }
+            }
+          }
+        },
+        "MuiCard": {
+          "defaultProps": { "elevation": 0 },
+          "styleOverrides": {
+            "root": {
+              "border": "1px solid rgba(255,255,255,0.10)",
+              "borderRadius": 14,
+              "backgroundColor": "#2E1B14"
+            }
+          }
+        },
+        "MuiPaper": { "defaultProps": { "elevation": 0 } },
+        "MuiDialog": {
+          "styleOverrides": {
+            "paper": {
+              "border": "1px solid rgba(255,255,255,0.10)",
+              "borderRadius": 16,
+              "boxShadow": "0 32px 80px -40px rgba(0,0,0,0.35)",
+              "backgroundColor": "#2E1B14"
+            }
+          }
+        },
+        "MuiDialogTitle": { "styleOverrides": { "root": { "padding": "24px 28px 18px" } } },
+        "MuiDialogContent": { "styleOverrides": { "root": { "paddingInline": 28 } } },
+        "MuiDialogActions": {
+          "styleOverrides": { "root": { "gap": 8, "padding": "16px 28px 20px" } }
+        },
+        "MuiOutlinedInput": {
+          "styleOverrides": {
+            "root": {
+              "borderRadius": 10,
+              "backgroundColor": "rgba(255, 255, 255, 0.04)",
+              "&:hover .MuiOutlinedInput-notchedOutline": {
+                "borderColor": "rgba(251, 146, 60, 0.5)"
+              },
+              "&.Mui-focused": { "boxShadow": "0 0 0 3px rgba(251, 146, 60, 0.12)" }
+            },
+            "input": { "&::placeholder": { "color": "text.secondary", "opacity": 0.8 } },
+            "notchedOutline": { "borderColor": "rgba(255,255,255,0.10)" }
+          }
+        },
+        "MuiInputLabel": {
+          "styleOverrides": {
+            "root": {
+              "color": "text.secondary",
+              "fontWeight": 600,
+              "&.Mui-focused": { "color": "text.primary" }
+            }
+          }
+        },
+        "MuiIconButton": {
+          "styleOverrides": {
+            "root": {
+              "borderRadius": 10,
+              "&.Mui-focusVisible": { "outline": "2px solid #FFF0E8", "outlineOffset": 2 }
+            }
+          }
+        },
+        "MuiTab": {
+          "styleOverrides": {
+            "root": { "textTransform": "none", "minHeight": 48, "fontWeight": 650 }
+          }
+        },
+        "MuiCheckbox": {
+          "defaultProps": {
+            "disableRipple": true,
+            "icon": { "$element": "CheckboxIcon", "props": {} },
+            "checkedIcon": { "$element": "CheckboxCheckedIcon", "props": {} },
+            "indeterminateIcon": { "$element": "CheckboxIndeterminateIcon", "props": {} }
+          },
+          "styleOverrides": {
+            "root": {
+              "borderRadius": 8,
+              "&.Mui-focusVisible": { "outline": "2px solid #FB923C", "outlineOffset": -2 }
+            }
+          }
+        },
+        "MuiRadio": {
+          "defaultProps": {
+            "disableRipple": true,
+            "icon": { "$element": "RadioIcon", "props": {} },
+            "checkedIcon": { "$element": "RadioCheckedIcon", "props": {} }
+          },
+          "styleOverrides": {
+            "root": {
+              "borderRadius": "50%",
+              "&.Mui-focusVisible": { "outline": "2px solid #FB923C", "outlineOffset": -2 }
+            }
+          }
+        },
+        "MuiChip": { "styleOverrides": { "root": { "fontWeight": 600, "borderRadius": 8 } } },
+        "MuiTooltip": {
+          "styleOverrides": { "tooltip": { "borderRadius": 7, "fontSize": "0.75rem" } }
+        }
+      }
+    }
+  }
+}

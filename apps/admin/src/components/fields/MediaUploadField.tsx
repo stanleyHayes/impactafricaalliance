@@ -19,6 +19,7 @@ import { useRef, useState } from 'react';
 
 import { uploadToCloudinary } from '../../lib/cloudinary';
 import { downscaleImage } from '../../lib/downscale-image';
+import { dropZoneActiveSx, dropZoneSx, skinned, surfaceSx } from '../../theme/surfaces';
 import { UPLOAD_PERMISSION_NOTE, useCanUploadFiles } from '../files/upload-permission';
 import { MediaPickerDialog } from '../media/MediaPickerDialog';
 
@@ -105,10 +106,13 @@ const DropZone = ({
         borderRadius: 2,
         cursor: locked ? 'default' : 'pointer',
         opacity: mayUpload ? 1 : 0.6,
-        border: `1.5px dashed ${dragging ? green : theme.palette.divider}`,
-        bgcolor: dragging ? alpha(green, 0.06) : 'transparent',
+        // The skin's drop zone (Classic: transparent with divider dashes, a
+        // primary edge and faint tint under the pointer or a dragged file).
+        border: '1.5px dashed',
+        ...dropZoneSx,
+        ...(dragging && dropZoneActiveSx.dragging),
         transition: theme.transitions.create(['border-color', 'background-color']),
-        '&:hover': mayUpload ? { borderColor: green, bgcolor: alpha(green, 0.04) } : {},
+        '&:hover': mayUpload ? dropZoneActiveSx.hover : {},
       }}
     >
       <input
@@ -125,15 +129,19 @@ const DropZone = ({
         <CircularProgress size={26} color="primary" />
       ) : (
         <Box
-          sx={{
-            width: 40,
-            height: 40,
-            borderRadius: '50%',
-            display: 'grid',
-            placeItems: 'center',
-            color: 'text.primary',
-            bgcolor: alpha(green, 0.1),
-          }}
+          // A medallion: Classic's flat tint, a skin's raised tile in the well.
+          sx={skinned(
+            {
+              width: 40,
+              height: 40,
+              borderRadius: '50%',
+              display: 'grid',
+              placeItems: 'center',
+              color: 'text.primary',
+              bgcolor: alpha(green, 0.1),
+            },
+            surfaceSx.tile,
+          )}
         >
           <CloudUploadOutlinedIcon fontSize="small" />
         </Box>
@@ -227,12 +235,16 @@ export const MediaUploadField = ({
           direction="row"
           spacing={1.5}
           alignItems="center"
-          sx={{
-            p: 1.25,
-            borderRadius: 2,
-            border: `1px solid ${theme.palette.divider}`,
-            bgcolor: 'background.default',
-          }}
+          // The chosen file sits in a well: Classic's page-coloured strip, a skin's inset.
+          sx={skinned(
+            {
+              p: 1.25,
+              borderRadius: 2,
+              border: `1px solid ${theme.palette.divider}`,
+              bgcolor: 'background.default',
+            },
+            surfaceSx.inset,
+          )}
         >
           {isImage && preview ? (
             <Box
@@ -243,16 +255,19 @@ export const MediaUploadField = ({
             />
           ) : (
             <Box
-              sx={{
-                width: 56,
-                height: 56,
-                borderRadius: 1.5,
-                flexShrink: 0,
-                display: 'grid',
-                placeItems: 'center',
-                color: 'text.primary',
-                bgcolor: alpha(green, 0.1),
-              }}
+              sx={skinned(
+                {
+                  width: 56,
+                  height: 56,
+                  borderRadius: 1.5,
+                  flexShrink: 0,
+                  display: 'grid',
+                  placeItems: 'center',
+                  color: 'text.primary',
+                  bgcolor: alpha(green, 0.1),
+                },
+                surfaceSx.tile,
+              )}
             >
               <DescriptionOutlinedIcon />
             </Box>

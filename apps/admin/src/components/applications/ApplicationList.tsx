@@ -15,6 +15,7 @@ import Typography from '@mui/material/Typography';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 
 import { formatInstant } from '../../lib/forms';
+import { surfaceSx } from '../../theme/surfaces';
 
 import { ApplicationStatusChip, RecommendationChip } from './ApplicationChips';
 
@@ -27,15 +28,14 @@ const reviewText = (item: ApplicationListItem): string =>
     : `${item.reviewCount} ${item.reviewCount === 1 ? 'review' : 'reviews'}`;
 
 /**
- * The table's frame: bordered and on paper, like the submissions and project
- * tables, rather than showing the page's canvas through it.
+ * The table's frame: the skin's card, like the submissions and project
+ * tables, rather than showing the page's canvas through it. In Classic that
+ * is paper with a divider border.
  */
 const TABLE_FRAME_SX = {
   display: { xs: 'none', md: 'block' },
-  border: 1,
-  borderColor: 'divider',
   borderRadius: 3,
-  bgcolor: 'background.paper',
+  ...surfaceSx.card,
 } as const;
 
 const COLUMNS = ['Applicant', 'Form', 'Submitted', 'Status', 'Reviews'] as const;

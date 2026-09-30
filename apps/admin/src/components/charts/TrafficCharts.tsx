@@ -9,6 +9,8 @@ import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useState } from 'react';
 
+import { focusRingSx } from '../../theme/surfaces';
+
 const dateLabel = (date: string) =>
   new Date(`${date}T00:00:00Z`).toLocaleDateString('en-GB', {
     day: 'numeric',
@@ -191,11 +193,8 @@ export const HourlyActivity = ({ hours }: { hours: AnalyticsBucket[] }): JSX.Ele
                     theme.palette.primary.main,
                     hour.count > 0 ? 0.16 + (hour.count / peak) * 0.65 : 0.035,
                   ),
-                '&:focus-visible': {
-                  outline: '2px solid',
-                  outlineColor: 'primary.main',
-                  outlineOffset: 2,
-                },
+                // The skin's ring (Classic's is this same 2px primary outline).
+                '&:focus-visible': focusRingSx,
               }}
             >
               <Typography sx={{ fontSize: '0.65rem', opacity: 0.8 }}>

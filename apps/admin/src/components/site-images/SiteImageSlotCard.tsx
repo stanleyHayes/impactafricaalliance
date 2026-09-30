@@ -21,6 +21,7 @@ import {
   thumbnailUrl,
   type SlotView,
 } from '../../lib/site-images';
+import { surfaceSx } from '../../theme/surfaces';
 
 export interface SlotPermissions {
   /** Upload a first picture for a slot that has no record. */
@@ -146,11 +147,10 @@ export const SiteImageSlotCard = ({
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        border: 1,
-        borderColor: 'divider',
-        borderRadius: 2.5,
         overflow: 'hidden',
-        bgcolor: 'background.paper',
+        // The skin's card (Classic: paper with a hairline).
+        ...surfaceSx.card,
+        borderRadius: 2.5,
       }}
     >
       <Box

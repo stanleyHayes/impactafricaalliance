@@ -5,6 +5,8 @@ import FormHelperText from '@mui/material/FormHelperText';
 import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
+import { choiceSx, tokenVar } from '../../theme/surfaces';
+
 export interface ChoiceOption {
   value: string;
   label: string;
@@ -70,7 +72,7 @@ export const ChoiceCards = ({
           <Typography
             role="status"
             component="span"
-            sx={{ color: 'primary.main', fontSize: '0.7rem', fontWeight: 700 }}
+            sx={{ color: tokenVar('accentText'), fontSize: '0.7rem', fontWeight: 700 }}
           >
             {selected.label} selected
           </Typography>
@@ -120,6 +122,8 @@ const ChoiceCard = ({
     role="radio"
     aria-checked={selected}
     onClick={onSelect}
+    // The skin's selectable card: Classic's paper with a divider or primary
+    // edge and a lift when chosen; raised, then pressed in, in the tactile skins.
     sx={{
       display: 'flex',
       flexDirection: 'column',
@@ -129,13 +133,9 @@ const ChoiceCard = ({
       overflow: 'hidden',
       borderRadius: 3,
       border: 2,
-      borderColor: selected ? 'primary.main' : 'divider',
-      bgcolor: 'background.paper',
       color: 'text.primary',
       transition: (theme) => theme.transitions.create(['border-color', 'box-shadow']),
-      boxShadow: selected ? 4 : 0,
-      '&:hover': { borderColor: selected ? 'primary.main' : 'text.secondary' },
-      '&.Mui-focusVisible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 },
+      ...choiceSx(selected),
     }}
   >
     {option.preview && (
@@ -148,7 +148,7 @@ const ChoiceCard = ({
         {option.icon && (
           <Box
             aria-hidden
-            sx={{ display: 'flex', color: 'primary.main', '& svg': { fontSize: 19 } }}
+            sx={{ display: 'flex', color: tokenVar('accentText'), '& svg': { fontSize: 19 } }}
           >
             {option.icon}
           </Box>
@@ -156,7 +156,7 @@ const ChoiceCard = ({
         <Typography component="span" sx={{ fontWeight: 700, fontSize: '0.85rem', flex: 1 }}>
           {option.label}
         </Typography>
-        {selected && <CheckRoundedIcon sx={{ fontSize: 18, color: 'primary.main' }} />}
+        {selected && <CheckRoundedIcon sx={{ fontSize: 18, color: tokenVar('accentText') }} />}
       </Box>
       {option.description && (
         <Typography

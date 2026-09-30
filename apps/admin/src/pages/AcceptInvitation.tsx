@@ -18,6 +18,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { useAcceptInvitation } from '../lib/admin-hooks';
 import { tokenStore } from '../lib/token-store';
+import { surfaceSx, tokenVar } from '../theme/surfaces';
+
+import { authCardSx } from './Login';
 
 const AcceptInvitation = (): JSX.Element => {
   const [searchParams] = useSearchParams();
@@ -58,28 +61,44 @@ const AcceptInvitation = (): JSX.Element => {
 
   if (!token) {
     return (
-      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 3 }}>
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          p: 3,
+        }}
+      >
         <Alert severity="error" sx={{ maxWidth: 400 }}>
-          This invitation link is missing a token. Please ask the administrator to resend your invitation.
+          This invitation link is missing a token. Please ask the administrator to resend your
+          invitation.
         </Alert>
       </Box>
     );
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 3, bgcolor: 'background.default' }}>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        p: 3,
+        ...surfaceSx.page,
+      }}
+    >
       <Box
-        sx={{
-          width: '100%',
-          maxWidth: 430,
-          p: { xs: 3.5, sm: 5 },
-          border: (theme) => `1px solid ${theme.palette.divider}`,
-          borderRadius: 4,
-          bgcolor: 'background.paper',
-          boxShadow: '0 32px 80px -40px rgba(0,0,0,0.10)',
-        }}
+        sx={[
+          { width: '100%', maxWidth: 430, p: { xs: 3.5, sm: 5 }, borderRadius: 4 },
+          ...authCardSx,
+        ]}
       >
-        <Typography variant="overline" sx={{ color: 'primary.main', fontWeight: 700, letterSpacing: 2 }}>
+        <Typography
+          variant="overline"
+          sx={{ color: tokenVar('accentText'), fontWeight: 700, letterSpacing: 2 }}
+        >
           Admin Console
         </Typography>
         <Typography variant="h4" sx={{ fontWeight: 700, mt: 0.5, color: 'text.primary' }}>
@@ -157,8 +176,14 @@ const AcceptInvitation = (): JSX.Element => {
             variant="contained"
             size="large"
             disabled={accept.isPending}
-            endIcon={accept.isPending ? <CircularProgress size={20} color="inherit" /> : <ArrowForwardRoundedIcon />}
-            sx={{ mt: 0.5, py: 1.4, borderRadius: 2.5, fontSize: '1rem' }}
+            endIcon={
+              accept.isPending ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : (
+                <ArrowForwardRoundedIcon />
+              )
+            }
+            sx={{ mt: 0.5, py: 1.4, borderRadius: tokenVar('buttonRadius'), fontSize: '1rem' }}
           >
             {accept.isPending ? 'Creating account…' : 'Create account'}
           </Button>

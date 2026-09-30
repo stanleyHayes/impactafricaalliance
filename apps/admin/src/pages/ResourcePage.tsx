@@ -22,6 +22,7 @@ import { usesResourceFormPage } from '../resources/form-steps';
 import { useResourceList } from '../resources/hooks';
 import { findResource } from '../resources/registry';
 import type { ResourceConfig, ResourceRow } from '../resources/types';
+import { tokenVar } from '../theme/surfaces';
 
 interface EmptyCopy {
   icon: JSX.Element;
@@ -157,7 +158,7 @@ const ResourcePage = (): JSX.Element => {
               variant="contained"
               startIcon={<AddIcon />}
               onClick={openCreate}
-              sx={{ borderRadius: 2.5, px: 2.5 }}
+              sx={{ borderRadius: tokenVar('buttonRadius'), px: 2.5 }}
             >
               New {resource.singular}
             </Button>

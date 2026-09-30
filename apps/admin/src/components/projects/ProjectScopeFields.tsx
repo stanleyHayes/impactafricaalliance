@@ -16,6 +16,8 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useId } from 'react';
 
+import { choiceSx, focusRingSx, skinned, surfaceSx, tokenVar } from '../../theme/surfaces';
+
 import type { FieldErrors, PartnerRow } from './project-form';
 
 /** Most objectives and partners a project keeps; the API refuses more. */
@@ -162,6 +164,12 @@ export interface PartnersFieldProps {
   disabled?: boolean;
 }
 
+/**
+ * One partner's fields. Classic draws only an outline on the form's paper; the
+ * other skins give it their card, so the group reads as one thing there too.
+ */
+const partnerGroupSx = skinned({ border: 1, borderColor: 'divider' }, surfaceSx.card);
+
 /** Organisations the project works with: a name, what they do, and a link if they have one. */
 export const PartnersField = ({
   value,
@@ -180,7 +188,7 @@ export const PartnersField = ({
       {value.map((row, index) => (
         <Box
           key={index}
-          sx={{ p: 1.5, border: 1, borderColor: 'divider', borderRadius: 2.5 }}
+          sx={[{ p: 1.5, borderRadius: 2.5 }, partnerGroupSx]}
           role="group"
           aria-label={`Partner ${index + 1}`}
         >
@@ -257,6 +265,34 @@ export interface SdgFieldProps {
 }
 
 /**
+ * A goal card. Classic keeps its own look (an outline, a light primary fill
+ * when chosen, no shadow); the other skins make it their selectable card,
+ * raised when free and pressed in when chosen.
+ */
+const goalCardSx = (selected: boolean) =>
+  skinned(
+    {
+      border: 1,
+      borderColor: selected ? 'primary.main' : 'divider',
+      bgcolor: (theme) => (selected ? alpha(theme.palette.primary.main, 0.1) : 'transparent'),
+    },
+    choiceSx(selected),
+  );
+
+/**
+ * The goal's number in its square. Classic: a grey square, primary when
+ * chosen. The other skins sink the free square into the card and raise the
+ * chosen one, keeping the primary fill that says it is chosen.
+ */
+const goalNumberSx = (selected: boolean) =>
+  selected
+    ? skinned({ bgcolor: 'primary.main' }, { boxShadow: tokenVar('tileShadow') })
+    : skinned(
+        { bgcolor: 'action.hover' },
+        { bgcolor: tokenVar('tileBg'), boxShadow: tokenVar('tileInsetShadow') },
+      );
+
+/**
  * The UN Sustainable Development Goals the project contributes to. Offers the
  * goals the website already describes; a goal saved earlier that the website
  * does not describe stays selected and can be removed.
@@ -305,38 +341,36 @@ export const SdgField = ({ value, onChange, error, disabled }: SdgFieldProps): J
               aria-checked={selected}
               disabled={disabled}
               onClick={() => toggle(goal.number)}
-              sx={{
-                justifyContent: 'flex-start',
-                alignItems: 'flex-start',
-                textAlign: 'left',
-                gap: 1.25,
-                p: 1.5,
-                borderRadius: 2.5,
-                border: 1,
-                borderColor: selected ? 'primary.main' : 'divider',
-                bgcolor: (theme) =>
-                  selected ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
-                '&.Mui-focusVisible': {
-                  outline: 2,
-                  outlineColor: 'primary.main',
-                  outlineOffset: 2,
+              sx={[
+                {
+                  justifyContent: 'flex-start',
+                  alignItems: 'flex-start',
+                  textAlign: 'left',
+                  gap: 1.25,
+                  p: 1.5,
+                  borderRadius: 2.5,
                 },
-              }}
+                goalCardSx(selected),
+                // Classic: 2px solid primary, 2px out, as before.
+                { '&.Mui-focusVisible': focusRingSx },
+              ]}
             >
               <Box
                 aria-hidden
-                sx={{
-                  display: 'grid',
-                  placeItems: 'center',
-                  flexShrink: 0,
-                  width: 30,
-                  height: 30,
-                  borderRadius: 1.5,
-                  fontWeight: 800,
-                  fontSize: '0.85rem',
-                  color: selected ? 'common.black' : 'text.primary',
-                  bgcolor: selected ? 'primary.main' : 'action.hover',
-                }}
+                sx={[
+                  {
+                    display: 'grid',
+                    placeItems: 'center',
+                    flexShrink: 0,
+                    width: 30,
+                    height: 30,
+                    borderRadius: 1.5,
+                    fontWeight: 800,
+                    fontSize: '0.85rem',
+                    color: selected ? 'common.black' : 'text.primary',
+                  },
+                  goalNumberSx(selected),
+                ]}
               >
                 {selected ? <CheckCircleRoundedIcon sx={{ fontSize: 18 }} /> : goal.number}
               </Box>

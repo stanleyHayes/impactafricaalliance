@@ -34,6 +34,7 @@ import { useAuth } from '../auth/AuthContext';
 import { AllianceArtwork } from '../components/auth/AllianceArtwork';
 import { ThemeToggle } from '../components/layout/ThemeToggle';
 import { useForgotPassword } from '../lib/admin-hooks';
+import { focusRingSx, skinned, surfaceSx, tokenVar } from '../theme/surfaces';
 
 interface LocationState {
   from?: string;
@@ -113,23 +114,112 @@ export const BrandPanel = (): JSX.Element => (
   </Box>
 );
 
-export const fieldSx = (theme: Theme) => ({
-  '& .MuiOutlinedInput-root': {
-    borderRadius: 2.5,
-    backgroundColor: alpha(theme.palette.text.secondary, 0.045),
-    transition: 'box-shadow .2s, border-color .2s',
-    '& fieldset': { borderColor: theme.palette.divider },
-    '&:hover fieldset': { borderColor: theme.palette.primary.main },
-    '&.Mui-focused fieldset': { borderColor: brandColors.gold, borderWidth: 2 },
-    '&.Mui-focused': { boxShadow: `0 0 0 4px ${alpha(brandColors.gold, 0.15)}` },
-    '& input': { color: theme.palette.text.primary },
-    '& input::placeholder': { color: theme.palette.text.secondary, opacity: 1 },
-    '& input:-webkit-autofill': {
-      WebkitTextFillColor: theme.palette.text.primary,
-      WebkitBoxShadow: `0 0 0 100px ${theme.palette.background.paper} inset`,
+/**
+ * The sign-in fields. Classic gives them a look of their own: a grey wash,
+ * a hairline and a gold focus with a gold halo. A skin draws them as its own
+ * fields instead (sunk in Neumorphism, frosted in Glass, clay wells in Clay),
+ * with its focus colour, because gold on those surfaces falls well short of
+ * the 3:1 a field's edge and focus need.
+ */
+export const fieldSx = (theme: Theme) =>
+  skinned(
+    {
+      '& .MuiOutlinedInput-root': {
+        borderRadius: 2.5,
+        backgroundColor: alpha(theme.palette.text.secondary, 0.045),
+        transition: 'box-shadow .2s, border-color .2s',
+        '& fieldset': { borderColor: theme.palette.divider },
+        '&:hover fieldset': { borderColor: theme.palette.primary.main },
+        '&.Mui-focused fieldset': { borderColor: brandColors.gold, borderWidth: 2 },
+        '&.Mui-focused': { boxShadow: `0 0 0 4px ${alpha(brandColors.gold, 0.15)}` },
+        '& input': { color: theme.palette.text.primary },
+        '& input::placeholder': { color: theme.palette.text.secondary, opacity: 1 },
+        '& input:-webkit-autofill': {
+          WebkitTextFillColor: theme.palette.text.primary,
+          WebkitBoxShadow: `0 0 0 100px ${theme.palette.background.paper} inset`,
+        },
+      },
     },
+    {
+      '& .MuiOutlinedInput-root': {
+        borderRadius: tokenVar('inputRadius'),
+        backgroundColor: tokenVar('inputBg'),
+        boxShadow: tokenVar('inputShadow'),
+        backdropFilter: tokenVar('inputBackdrop'),
+        '& fieldset': { borderColor: tokenVar('inputBorderColor') },
+        '&:hover fieldset': { borderColor: tokenVar('focusRingColor') },
+        '&.Mui-focused fieldset': { borderColor: tokenVar('focusRingColor') },
+        '&.Mui-focused': { boxShadow: tokenVar('inputFocusShadow') },
+      },
+    },
+  )(theme);
+
+/**
+ * The page's main button. Classic rests it on a soft drop shadow of its own;
+ * a skin gives it that skin's button depth (the theme then lifts and presses
+ * it). Its corners are the skin's button radius, 10px in Classic as before.
+ */
+export const submitButtonSx = skinned(
+  { borderRadius: tokenVar('buttonRadius'), boxShadow: '0 10px 24px -10px rgba(0,0,0,0.18)' },
+  { boxShadow: tokenVar('buttonShadow') },
+);
+
+/**
+ * The card the password pages (reset, accept an invitation) set their form
+ * in. Classic floats it on a faint shadow of its own; a skin makes it one of
+ * its cards, with that skin's depth.
+ */
+export const authCardSx = [
+  surfaceSx.card,
+  skinned(
+    { boxShadow: '0 32px 80px -40px rgba(0,0,0,0.10)' },
+    { boxShadow: tokenVar('surfaceShadow') },
+  ),
+];
+
+/**
+ * A primary link written by hand (a mailto under a form). Its colour is the
+ * skin's link colour, the primary in Classic as before; a skin also gives it
+ * its underline tint, hover colour and focus ring.
+ */
+export const authLinkSx = [
+  { color: tokenVar('linkColor') },
+  skinned(
+    {},
+    {
+      borderRadius: '4px',
+      textDecorationColor: tokenVar('linkUnderline'),
+      '&:hover': { color: tokenVar('linkHoverColor') },
+      '&:visited': { color: tokenVar('linkVisitedColor') },
+      '&:focus-visible': focusRingSx,
+    },
+  ),
+];
+
+/**
+ * A quiet text button under a form ("Forgot password?", "Back to sign in"),
+ * in the secondary text colour. A skin paints primary text buttons in its
+ * accent through a stronger rule than a plain `color` in `sx`, so the skin's
+ * layer restates the colour on the button's class to keep it quiet.
+ */
+export const quietButtonSx = skinned(
+  { color: 'text.secondary' },
+  { '&.MuiButton-root:not(.Mui-disabled)': { color: 'text.secondary' } },
+);
+
+/**
+ * The quiet support link under the form. Classic leaves its hover and focus
+ * to the browser; a skin gives it the hover colour and focus ring its other
+ * links have.
+ */
+const supportLinkSx = skinned(
+  {},
+  {
+    borderRadius: '4px',
+    '&:hover': { color: tokenVar('linkHoverColor') },
+    '&:focus-visible': focusRingSx,
   },
-});
+);
 
 interface MfaFormInput {
   totpCode: string;
@@ -254,20 +344,21 @@ const CredentialsForm = ({
             <ArrowForwardRoundedIcon />
           )
         }
-        sx={{
-          mt: 0.5,
-          py: 1.4,
-          borderRadius: 2.5,
-          fontSize: '1rem',
-          boxShadow: '0 10px 24px -10px rgba(0,0,0,0.18)',
-          '& .MuiButton-endIcon': { transition: 'transform .2s' },
-          '&:hover .MuiButton-endIcon': { transform: 'translateX(4px)' },
-          '&.Mui-disabled': {
-            bgcolor: 'primary.main',
-            color: 'primary.contrastText',
-            opacity: 0.85,
+        sx={[
+          {
+            mt: 0.5,
+            py: 1.4,
+            fontSize: '1rem',
+            '& .MuiButton-endIcon': { transition: 'transform .2s' },
+            '&:hover .MuiButton-endIcon': { transform: 'translateX(4px)' },
+            '&.Mui-disabled': {
+              bgcolor: 'primary.main',
+              color: 'primary.contrastText',
+              opacity: 0.85,
+            },
           },
-        }}
+          submitButtonSx,
+        ]}
       >
         {isSubmitting ? 'Signing in…' : 'Sign In'}
       </Button>
@@ -278,7 +369,7 @@ const CredentialsForm = ({
           variant="text"
           size="small"
           onClick={onForgotPassword}
-          sx={{ color: theme.palette.text.secondary, textTransform: 'none', fontWeight: 600 }}
+          sx={[{ textTransform: 'none', fontWeight: 600 }, quietButtonSx]}
         >
           Forgot password?
         </Button>
@@ -335,22 +426,11 @@ const MfaForm = ({ onSubmit, onBack, error, isSubmitting }: MfaFormProps): JSX.E
             <ArrowForwardRoundedIcon />
           )
         }
-        sx={{
-          mt: 0.5,
-          py: 1.4,
-          borderRadius: 2.5,
-          fontSize: '1rem',
-          boxShadow: '0 10px 24px -10px rgba(0,0,0,0.18)',
-        }}
+        sx={[{ mt: 0.5, py: 1.4, fontSize: '1rem' }, submitButtonSx]}
       >
         {isSubmitting ? 'Verifying…' : 'Verify'}
       </Button>
-      <Button
-        variant="text"
-        size="small"
-        onClick={onBack}
-        sx={{ color: theme.palette.text.secondary }}
-      >
+      <Button variant="text" size="small" onClick={onBack} sx={quietButtonSx}>
         Back to sign in
       </Button>
     </Stack>
@@ -384,12 +464,7 @@ const ForgotPasswordForm = ({ onBack }: ForgotPasswordFormProps): JSX.Element =>
         <Alert severity="success" sx={{ borderRadius: 2 }}>
           If an account exists for that email, you will receive a password-reset link shortly.
         </Alert>
-        <Button
-          variant="text"
-          size="small"
-          onClick={onBack}
-          sx={{ color: theme.palette.text.secondary }}
-        >
+        <Button variant="text" size="small" onClick={onBack} sx={quietButtonSx}>
           Back to sign in
         </Button>
       </Stack>
@@ -445,21 +520,11 @@ const ForgotPasswordForm = ({ onBack }: ForgotPasswordFormProps): JSX.Element =>
             <ArrowForwardRoundedIcon />
           )
         }
-        sx={{
-          mt: 0.5,
-          py: 1.4,
-          borderRadius: 2.5,
-          fontSize: '1rem',
-        }}
+        sx={{ mt: 0.5, py: 1.4, borderRadius: tokenVar('buttonRadius'), fontSize: '1rem' }}
       >
         {forgot.isPending ? 'Sending…' : 'Send reset link'}
       </Button>
-      <Button
-        variant="text"
-        size="small"
-        onClick={onBack}
-        sx={{ color: theme.palette.text.secondary }}
-      >
+      <Button variant="text" size="small" onClick={onBack} sx={quietButtonSx}>
         Back to sign in
       </Button>
     </Stack>
@@ -564,7 +629,8 @@ const Login = (): JSX.Element => {
         gap: { xs: 0, md: 3 },
         gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
         p: { xs: 1.5, md: 3 },
-        bgcolor: 'background.default',
+        // Clear in the skins whose canvas carries a wash, so the wash shows.
+        ...surfaceSx.page,
         '@media (prefers-reduced-motion: reduce)': {
           '& *': { animation: 'none !important', transition: 'none !important' },
         },
@@ -631,12 +697,15 @@ const Login = (): JSX.Element => {
             <Box
               component="a"
               href={`mailto:${ORG.email}`}
-              sx={{
-                color: theme.palette.text.secondary,
-                fontWeight: 600,
-                overflowWrap: 'anywhere',
-                textUnderlineOffset: 3,
-              }}
+              sx={[
+                {
+                  color: theme.palette.text.secondary,
+                  fontWeight: 600,
+                  overflowWrap: 'anywhere',
+                  textUnderlineOffset: 3,
+                },
+                supportLinkSx,
+              ]}
             >
               {ORG.email}
             </Box>

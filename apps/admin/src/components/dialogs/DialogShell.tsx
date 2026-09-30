@@ -7,12 +7,22 @@ import { alpha, useTheme, type SxProps, type Theme } from '@mui/material/styles'
 import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
-/** Consistent paper chrome for every admin dialog. */
+import { skinned, surfaceSx, tokenVar } from '../../theme/surfaces';
+
+/**
+ * Consistent paper chrome for every admin dialog.
+ *
+ * A plain object, because callers spread it into their own paper `sx`. The
+ * dialog itself follows the skin from the theme; this keeps its hairline and
+ * sheen on the skin's tokens (Classic: a divider hairline, no image) and its
+ * corner on the skin's dialog radius, except in Classic, whose dialogs have
+ * always been a little squarer than the theme's.
+ */
 export const dialogPaperSx: SxProps<Theme> = {
-  borderRadius: 3.5,
-  border: '1px solid',
-  borderColor: 'divider',
-  backgroundImage: 'none',
+  borderRadius: (theme: Theme) =>
+    !theme.skin || theme.skin === 'classic' ? 3.5 : tokenVar('dialogRadius'),
+  border: tokenVar('overlayBorder'),
+  backgroundImage: tokenVar('surfaceSheen'),
 };
 
 interface DialogHeaderProps {
@@ -67,19 +77,25 @@ export const DialogHeader = ({
         {icon && (
           <Box
             aria-hidden
-            sx={{
-              width: 44,
-              height: 44,
-              flexShrink: 0,
-              borderRadius: 2.5,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'text.primary',
-              bgcolor: alpha(accent, 0.1),
-              border: `1px solid ${alpha(accent, 0.18)}`,
-              '& > svg': { fontSize: 24 },
-            }}
+            // Classic's tinted square. In a skin, the skin's icon tile; a
+            // destructive dialog's square keeps its error tint and takes the
+            // tile's depth.
+            sx={skinned(
+              {
+                width: 44,
+                height: 44,
+                flexShrink: 0,
+                borderRadius: 2.5,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'text.primary',
+                bgcolor: alpha(accent, 0.1),
+                border: `1px solid ${alpha(accent, 0.18)}`,
+                '& > svg': { fontSize: 24 },
+              },
+              tone === 'error' ? { boxShadow: tokenVar('tileShadow') } : surfaceSx.tile,
+            )}
           >
             {icon}
           </Box>
@@ -88,7 +104,12 @@ export const DialogHeader = ({
           {eyebrow && (
             <Typography
               variant="overline"
-              sx={{ display: 'block', color: 'text.secondary', fontWeight: 700, letterSpacing: '0.1em' }}
+              sx={{
+                display: 'block',
+                color: 'text.secondary',
+                fontWeight: 700,
+                letterSpacing: '0.1em',
+              }}
             >
               {eyebrow}
             </Typography>
@@ -117,29 +138,54 @@ interface DialogFooterProps {
   sx?: SxProps<Theme>;
 }
 
+/**
+ * The footer's muted strip and button corners. Classic's page colour and
+ * 10px buttons; in a skin, the skin's well (translucent in Glass, where a
+ * solid page colour would be an opaque band across the frosted dialog) and
+ * the skin's own button radius.
+ */
+const footerSkinSx = skinned(
+  { bgcolor: 'background.default', '& .MuiButton-root': { borderRadius: 2.5 } },
+  {
+    bgcolor: tokenVar('surfaceInsetBg'),
+    '& .MuiButton-root': { borderRadius: tokenVar('buttonRadius') },
+  },
+);
+
 /** Consistent dialog action bar: hairline divider, muted backdrop, padded buttons. */
 export const DialogFooter = ({ children, sx }: DialogFooterProps): JSX.Element => (
   <DialogActions
-    sx={{
-      borderTop: '1px solid',
-      borderColor: 'divider',
-      bgcolor: 'background.default',
-      px: 3,
-      py: 2,
-      gap: 1.5,
-      '& .MuiButton-root': { borderRadius: 2.5, px: 2.5 },
-      ...sx,
-    }}
+    sx={[
+      {
+        borderTop: '1px solid',
+        borderColor: 'divider',
+        px: 3,
+        py: 2,
+        gap: 1.5,
+        '& .MuiButton-root': { px: 2.5 },
+      },
+      footerSkinSx,
+      ...(Array.isArray(sx) ? sx : [sx]),
+    ]}
   >
     {children}
   </DialogActions>
 );
 
-/** Card wrapper for form sections inside dialog content areas. */
+/**
+ * The body of a dialog whose content sits in cards, for `DialogContent`.
+ * Classic paints it in the page colour; a skin sinks it into the dialog as a
+ * well (in Glass a solid page colour would be an opaque band across the
+ * frosted panel). An `sx` callback: put it in an `sx` array.
+ */
+export const dialogBodySx = skinned(
+  { bgcolor: 'background.default' },
+  { bgcolor: tokenVar('surfaceInsetBg') },
+);
+
+/** Card wrapper for form sections inside dialog content areas (the skin's card). */
 export const dialogSectionSx: SxProps<Theme> = {
   p: { xs: 2, sm: 2.5 },
-  border: '1px solid',
-  borderColor: 'divider',
   borderRadius: 2.5,
-  bgcolor: 'background.paper',
+  ...surfaceSx.card,
 };

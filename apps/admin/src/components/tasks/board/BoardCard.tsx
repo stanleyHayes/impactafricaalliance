@@ -20,6 +20,7 @@ import Typography from '@mui/material/Typography';
 import { useCallback, useState, type KeyboardEventHandler, type MouseEvent } from 'react';
 
 import { TASK_STATUS_OPTIONS } from '../../../lib/select-options';
+import { handleSx, skinned, surfaceSx, tokenVar } from '../../../theme/surfaces';
 import { PersonAvatars } from '../PersonAvatars';
 import { TaskDueChip } from '../TaskDueChip';
 import { TaskPriorityChip } from '../TaskPriorityChip';
@@ -59,17 +60,24 @@ export const CardFace = ({ task }: { task: TaskListItem }): JSX.Element => (
   </Stack>
 );
 
-const cardSx = {
+const cardLayoutSx = {
   position: 'relative',
   p: 1.5,
   borderRadius: 2.5,
-  border: 1,
-  borderColor: 'divider',
-  bgcolor: 'background.paper',
   cursor: 'grab',
   touchAction: 'manipulation',
-  '&:hover': { borderColor: 'primary.light' },
+  // The skin's card: paper with a divider edge in Classic.
+  ...surfaceSx.card,
 } as const;
+
+/**
+ * Under the pointer Classic tints the edge; the other skins keep their own
+ * edge and lift the card instead, which is how their clickable cards answer.
+ */
+const cardHoverSx = skinned(
+  { '&:hover': { borderColor: 'primary.light' } },
+  { '&:hover': { borderColor: tokenVar('surfaceBorderColor'), ...surfaceSx.cardHover } },
+);
 
 /**
  * One task on the board.
@@ -133,14 +141,19 @@ export const BoardCard = ({
       ref={setNodeRef}
       {...pointerListeners}
       onClick={() => actions.onOpen(task.key)}
-      sx={{
-        ...cardSx,
-        listStyle: 'none',
-        opacity: isDragging ? 0.4 : 1,
-        cursor: canMove ? 'grab' : 'pointer',
-        transform: CSS.Translate.toString(transform),
-        transition: reducedMotion ? undefined : transition,
-      }}
+      sx={[
+        cardLayoutSx,
+        cardHoverSx,
+        {
+          listStyle: 'none',
+          opacity: isDragging ? 0.4 : 1,
+          cursor: canMove ? 'grab' : 'pointer',
+          transform: CSS.Translate.toString(transform),
+          transition: reducedMotion ? undefined : transition,
+        },
+        // The gap a lifted card leaves is pressed into the column (no shadow in Classic).
+        isDragging && { boxShadow: tokenVar('surfacePressedShadow') },
+      ]}
     >
       <Stack direction="row" spacing={0.5} alignItems="flex-start">
         {canMove && (
@@ -151,7 +164,7 @@ export const BoardCard = ({
             onClick={stop}
             size="small"
             aria-label={`Drag ${task.key}`}
-            sx={{ ml: -0.75, mt: -0.25, color: 'text.secondary', cursor: 'grab' }}
+            sx={{ ml: -0.75, mt: -0.25, color: 'text.secondary', cursor: 'grab', ...handleSx }}
           >
             <DragIndicatorRoundedIcon fontSize="small" />
           </IconButton>
@@ -167,7 +180,7 @@ export const BoardCard = ({
             display: 'block',
             textAlign: 'left',
             borderRadius: 1,
-            '&.Mui-focusVisible': { outline: '2px solid', outlineColor: 'primary.main' },
+            '&.Mui-focusVisible': { outline: tokenVar('focusRing') },
           }}
         >
           <Typography variant="caption" sx={{ fontWeight: 750, color: 'text.secondary' }}>
@@ -247,13 +260,17 @@ export const BoardCard = ({
 /** The card as it follows the pointer while dragging. */
 export const BoardCardOverlay = ({ task }: { task: TaskListItem }): JSX.Element => (
   <Box
-    sx={{
-      ...cardSx,
-      cursor: 'grabbing',
-      boxShadow: 12,
-      transform: 'rotate(1.5deg)',
-      '@media (prefers-reduced-motion: reduce)': { transform: 'none' },
-    }}
+    sx={[
+      cardLayoutSx,
+      cardHoverSx,
+      {
+        cursor: 'grabbing',
+        // It is always under the pointer, so the hover lift must not replace the drag shadow.
+        '&, &:hover': { boxShadow: 12 },
+        transform: 'rotate(1.5deg)',
+        '@media (prefers-reduced-motion: reduce)': { transform: 'none' },
+      },
+    ]}
   >
     <Typography variant="caption" sx={{ fontWeight: 750, color: 'text.secondary' }}>
       {task.key}

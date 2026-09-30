@@ -5,6 +5,8 @@ import type { DateTimeValidationError } from '@mui/x-date-pickers/models';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 
+import { pickerDesktopPaperSx, pickerFieldSx, pickerMobilePaperSx } from './picker-surface';
+
 interface EventDateTimeFieldProps {
   label: string;
   value: Dayjs | null;
@@ -58,11 +60,11 @@ export const EventDateTimeField = ({
         required,
         error: Boolean(error),
         helperText: error || helperText,
-        sx: { '& .MuiPickersOutlinedInput-root': { borderRadius: 2.5 } },
+        sx: pickerFieldSx,
       },
       actionBar: { actions: required ? ['cancel', 'accept'] : ['clear', 'cancel', 'accept'] },
-      desktopPaper: { sx: { borderRadius: 3, border: 1, borderColor: 'divider', boxShadow: 8 } },
-      mobilePaper: { sx: { borderRadius: 3, border: 1, borderColor: 'divider' } },
+      desktopPaper: { sx: pickerDesktopPaperSx },
+      mobilePaper: { sx: pickerMobilePaperSx },
       popper: { sx: { zIndex: (theme) => theme.zIndex.modal + 1 } },
     }}
   />

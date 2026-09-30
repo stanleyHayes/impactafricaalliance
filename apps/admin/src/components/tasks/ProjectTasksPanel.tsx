@@ -15,6 +15,7 @@ import { Link as RouterLink } from 'react-router-dom';
 
 import { useHasPermission } from '../../auth/useCan';
 import { useTaskBoard } from '../../lib/tasks';
+import { skinned, surfaceSx } from '../../theme/surfaces';
 import { DetailSection } from '../detail/DetailSection';
 import { EmptyState } from '../EmptyState';
 
@@ -28,6 +29,12 @@ export interface ProjectTasksPanelProps {
   /** The project whose tasks to list. */
   projectId: string;
 }
+
+/**
+ * A status group's frame. Classic outlines it on the section's paper; the
+ * other skins give it their card, so each group stands on its own there too.
+ */
+const groupSx = skinned({ border: 1, borderColor: 'divider' }, surfaceSx.card);
 
 /** One status group: its heading and count, then its tasks. */
 const StatusGroup = ({
@@ -44,7 +51,7 @@ const StatusGroup = ({
     <Box
       component="section"
       aria-labelledby={headingId}
-      sx={{ border: 1, borderColor: 'divider', borderRadius: 3, overflow: 'hidden' }}
+      sx={[{ borderRadius: 3, overflow: 'hidden' }, groupSx]}
     >
       <Stack
         direction="row"

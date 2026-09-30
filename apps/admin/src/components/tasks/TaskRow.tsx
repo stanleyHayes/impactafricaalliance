@@ -10,6 +10,7 @@ import Typography from '@mui/material/Typography';
 import { useId } from 'react';
 
 import { VISUALLY_HIDDEN } from '../../lib/visually-hidden';
+import { skinned, tokenVar } from '../../theme/surfaces';
 
 import { PersonAvatars } from './PersonAvatars';
 import { dueState, taskPriorityLabel, taskStatusLabel } from './task-display';
@@ -60,6 +61,21 @@ export const taskRowSummary = (task: TaskListItem): string =>
     .join('. ');
 
 /**
+ * A row's answer to the pointer. Classic tints it with the primary, as the
+ * All tasks table tints its rows. The other skins keep that table's row tint
+ * (their list-item fill is frosted white in Glass, which vanishes on a frosted
+ * card), add their list item's depth (a lift, an edge, a soft clay bump), and
+ * press the row in while it is pushed.
+ */
+const rowStatesSx = skinned(
+  { '&:hover': { bgcolor: (theme) => alpha(theme.palette.primary.main, 0.06) } },
+  {
+    '&:hover': { bgcolor: tokenVar('gridRowHover'), boxShadow: tokenVar('itemHoverShadow') },
+    '&:active': { boxShadow: tokenVar('surfacePressedShadow') },
+  },
+);
+
+/**
  * One task in a compact list: My tasks, a project's Tasks tab. The whole row
  * opens the task; on a phone the chips wrap under the title rather than
  * pushing the page sideways.
@@ -85,23 +101,22 @@ export const TaskRow = ({
         onClick={() => onOpen(task.key)}
         aria-labelledby={`${id}-key ${id}-title`}
         aria-describedby={`${id}-summary`}
-        sx={{
-          width: '100%',
-          display: 'grid',
-          gridTemplateColumns: { xs: 'minmax(0, 1fr) auto', md: 'minmax(0, 1fr) auto auto' },
-          alignItems: 'center',
-          gap: { xs: 1, md: 2 },
-          px: { xs: 1.5, md: 2 },
-          py: 1.25,
-          textAlign: 'left',
-          borderRadius: 2,
-          '&:hover': { bgcolor: (theme) => alpha(theme.palette.primary.main, 0.06) },
-          '&.Mui-focusVisible': {
-            outline: '2px solid',
-            outlineColor: 'primary.main',
-            outlineOffset: -2,
+        sx={[
+          {
+            width: '100%',
+            display: 'grid',
+            gridTemplateColumns: { xs: 'minmax(0, 1fr) auto', md: 'minmax(0, 1fr) auto auto' },
+            alignItems: 'center',
+            gap: { xs: 1, md: 2 },
+            px: { xs: 1.5, md: 2 },
+            py: 1.25,
+            textAlign: 'left',
+            borderRadius: 2,
+            // Inside the row, where the list's edge cannot clip it. Classic: 2px solid primary.
+            '&.Mui-focusVisible': { outline: tokenVar('focusRing'), outlineOffset: -2 },
           },
-        }}
+          rowStatesSx,
+        ]}
       >
         <Box sx={{ minWidth: 0 }}>
           <Stack direction="row" spacing={1} alignItems="baseline" sx={{ minWidth: 0 }}>

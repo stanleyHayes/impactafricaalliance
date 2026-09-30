@@ -3,6 +3,7 @@ import {
   alpha,
   createTheme,
   type PaletteColorOptions,
+  type Theme,
   type ThemeOptions,
 } from '@mui/material/styles';
 import { createElement } from 'react';
@@ -14,6 +15,28 @@ import {
   RadioCheckedIcon,
   RadioIcon,
 } from './control-icons';
+import {
+  DEFAULT_SKIN,
+  getSkin,
+  readableStatus,
+  readingGroundsOf,
+  skinFallbacks,
+  toCssVars,
+  type SkinKey,
+  type SkinTokens,
+} from './skins';
+
+declare module '@mui/material/styles' {
+  interface Theme {
+    /**
+     * Which skin built this theme. Absent on themes made with `createTheme`
+     * directly (tests), which read as Classic.
+     */
+    skin?: SkinKey;
+    /** The skin's token values, as published on `:root` (see theme/surfaces.ts). */
+    skinTokens?: SkinTokens;
+  }
+}
 
 export type ThemePresetKey = 'iaa' | 'aura' | 'ocean' | 'sunset';
 
@@ -27,7 +50,7 @@ export interface ThemePreset {
   dark: PresetPalette;
 }
 
-interface PresetPalette {
+export interface PresetPalette {
   mode: 'light' | 'dark';
   primary: PaletteColorOptions;
   secondary: PaletteColorOptions;
@@ -360,11 +383,65 @@ const baseOptions = (palette: PresetPalette): ThemeOptions => ({
   },
 });
 
-/** Admin console theme — shares brand tokens with the marketing site. */
-export const createAppTheme = (preset: ThemePresetKey, mode: 'light' | 'dark') => {
-  const colors = PRESETS[preset][mode];
-  return createTheme(baseOptions(colors));
+/**
+ * Publishes a skin's tokens as CSS custom properties on `:root`, after the
+ * house baseline styles, followed by any fallback blocks the skin needs (Glass
+ * turns opaque where blur is unavailable). Written onto the finished theme
+ * because the tokens are computed from MUI's finished palette.
+ */
+const publishTokens = (theme: Theme, skin: SkinKey, tokens: SkinTokens): void => {
+  const baseline = theme.components?.MuiCssBaseline?.styleOverrides as Record<string, unknown>;
+  const fallbacks = Object.fromEntries(
+    Object.entries(skinFallbacks(skin, tokens)).map(([condition, values]) => [
+      condition,
+      { ':root': toCssVars(values) },
+    ]),
+  );
+  Object.assign(baseline, { ':root': toCssVars(tokens) }, fallbacks);
+  theme.skin = skin;
+  theme.skinTokens = tokens;
 };
+
+/**
+ * Admin console theme — shares brand tokens with the marketing site.
+ *
+ * Three independent choices: the colour `preset`, light or dark `mode`, and
+ * the `skin` that decides how surfaces and controls are built. Classic (the
+ * default) is the house theme untouched plus its token variables, whose
+ * values are what the console already painted; the other skins adjust the
+ * palette for their surfaces and lay their overrides over the house theme.
+ */
+export const createAppTheme = (
+  preset: ThemePresetKey,
+  mode: 'light' | 'dark',
+  skin: SkinKey = DEFAULT_SKIN,
+): Theme => {
+  const definition = getSkin(skin);
+  const source = definition.palette(PRESETS[preset][mode]);
+  const extra = definition.options?.(source);
+  const build = (...more: object[]): Theme =>
+    createTheme(baseOptions(source), ...(extra ? [extra] : []), ...more);
+  const tokensOf = (built: Theme): SkinTokens =>
+    definition.tokens({ palette: built.palette, source, shadows: built.shadows });
+  let theme = build();
+  let tokens = tokensOf(theme);
+  // A skin's surfaces can be darker than Classic's white: status colours used
+  // as text are deepened where they would no longer read (see status.ts).
+  if (skin !== 'classic') {
+    const grounds = readingGroundsOf(tokens, definition.backdrops(source), mode);
+    const status = readableStatus(theme.palette, grounds);
+    if (Object.keys(status).length > 0) {
+      theme = build({ palette: status });
+      tokens = tokensOf(theme);
+    }
+  }
+  publishTokens(theme, skin, tokens);
+  return theme;
+};
+
+/** A preset's palette for one mode, before any skin adjusts it. */
+export const getPresetPalette = (preset: ThemePresetKey, mode: 'light' | 'dark'): PresetPalette =>
+  PRESETS[preset][mode];
 
 /** Default light IAA theme for tests and storybook. */
 export const theme = createAppTheme('iaa', 'light');

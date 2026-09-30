@@ -23,10 +23,10 @@ import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
-import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
+import { columnSx, dropZoneSx, skinned } from '../../../theme/surfaces';
 import { taskStatusLabel } from '../task-display';
 import { TaskStatusChip } from '../TaskStatusChip';
 
@@ -78,9 +78,12 @@ const BoardColumnView = ({
         scrollSnapAlign: 'start',
         borderRadius: 3,
         border: 1,
-        borderColor: isOver ? 'primary.main' : 'divider',
-        bgcolor: (theme) => alpha(theme.palette.primary.main, isOver ? 0.08 : 0.03),
-        transition: reducedMotion ? 'none' : 'border-color 120ms ease, background-color 120ms ease',
+        // The skin's column: a faint primary well in Classic (stronger, with a
+        // primary edge, while a card is over it), sunk in the tactile skins.
+        ...columnSx(isOver),
+        transition: reducedMotion
+          ? 'none'
+          : 'border-color 120ms ease, background-color 120ms ease, box-shadow 120ms ease',
       }}
     >
       <Stack direction="row" alignItems="center" spacing={1} sx={{ px: 1.5, pt: 1.5, pb: 1 }}>
@@ -132,8 +135,9 @@ const BoardColumnView = ({
                 textAlign: 'center',
                 border: 1,
                 borderStyle: 'dashed',
-                borderColor: 'divider',
                 borderRadius: 2.5,
+                // It invites a drop, so it is drawn as one: divider dashes in Classic.
+                ...dropZoneSx,
               }}
             >
               {canMove ? 'Nothing here. Drop a card to move it here.' : 'Nothing here.'}
@@ -293,20 +297,23 @@ export const TaskBoardView = ({
   );
 };
 
+/**
+ * A column while the board loads. Classic draws only its outline; the other
+ * skins draw the column itself, so the board does not change material when
+ * the cards arrive.
+ */
+const skeletonColumnSx = skinned({ border: 1, borderColor: 'divider' }, columnSx(false));
+
 /** The loading shape of the board: its columns, each with a few cards. */
 export const TaskBoardSkeleton = (): JSX.Element => (
   <Box sx={boardRowSx} aria-hidden>
     {[3, 2, 4, 1, 2, 2].map((cards, index) => (
       <Box
         key={index}
-        sx={{
-          flex: `0 0 ${COLUMN_WIDTH}px`,
-          maxWidth: '85vw',
-          p: 1.5,
-          borderRadius: 3,
-          border: 1,
-          borderColor: 'divider',
-        }}
+        sx={[
+          { flex: `0 0 ${COLUMN_WIDTH}px`, maxWidth: '85vw', p: 1.5, borderRadius: 3 },
+          skeletonColumnSx,
+        ]}
       >
         <Stack direction="row" spacing={1} sx={{ mb: 1.5 }}>
           <Skeleton variant="rounded" width={96} height={24} sx={{ borderRadius: 4 }} />

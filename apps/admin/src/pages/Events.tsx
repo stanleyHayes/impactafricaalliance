@@ -38,6 +38,7 @@ import { PageHeader } from '../components/PageHeader';
 import { CalendarPageSkeleton } from '../components/PageSkeleton';
 import { useDeleteEvent, useEvents, useRegistrationCounts } from '../lib/admin-hooks';
 import { useEventView } from '../lib/use-event-view';
+import { focusRingSx, skinned, tokenVar } from '../theme/surfaces';
 
 const STATUS_TONE: Record<
   ContentStatus,
@@ -157,6 +158,29 @@ const DeleteConfirmDialog = ({ open, event, onClose }: DeleteConfirmDialogProps)
   );
 };
 
+/**
+ * The event card's hover. Classic lifts it on a primary glow and edge; a skin
+ * lifts it on its own card shadow and keeps its material's edge.
+ */
+const eventCardHoverSx = skinned(
+  {
+    '&:hover': {
+      borderColor: (theme) => alpha(theme.palette.primary.main, 0.4),
+      boxShadow: (theme) => `0 10px 30px -18px ${alpha(theme.palette.primary.main, 0.5)}`,
+      transform: 'translateY(-1px)',
+    },
+  },
+  {
+    '&:hover': {
+      borderColor: tokenVar('surfaceBorderColor'),
+      boxShadow: tokenVar('surfaceHoverShadow'),
+    },
+  },
+);
+
+/** Classic keeps the browser's focus mark on the card's plain buttons; a skin draws its ring. */
+const skinFocusSx = skinned({}, { '&:focus-visible': focusRingSx });
+
 interface EventCardProps {
   event: Event;
   onView: (event: Event) => void;
@@ -180,15 +204,13 @@ const EventCard = ({
   return (
     <Card
       variant="outlined"
-      sx={{
-        p: 2.5,
-        transition: theme.transitions.create(['box-shadow', 'border-color', 'transform']),
-        '&:hover': {
-          borderColor: alpha(theme.palette.primary.main, 0.4),
-          boxShadow: `0 10px 30px -18px ${alpha(theme.palette.primary.main, 0.5)}`,
-          transform: 'translateY(-1px)',
+      sx={[
+        {
+          p: 2.5,
+          transition: theme.transitions.create(['box-shadow', 'border-color', 'transform']),
         },
-      }}
+        eventCardHoverSx,
+      ]}
     >
       <Stack
         direction={{ xs: 'column', sm: 'row' }}
@@ -200,16 +222,19 @@ const EventCard = ({
           component="button"
           aria-label={`View ${event.title}`}
           onClick={() => onView(event)}
-          sx={{
-            p: 0,
-            border: 0,
-            cursor: 'pointer',
-            width: { xs: '100%', sm: 180 },
-            height: 140,
-            borderRadius: 2,
-            overflow: 'hidden',
-            flexShrink: 0,
-          }}
+          sx={[
+            {
+              p: 0,
+              border: 0,
+              cursor: 'pointer',
+              width: { xs: '100%', sm: 180 },
+              height: 140,
+              borderRadius: 2,
+              overflow: 'hidden',
+              flexShrink: 0,
+            },
+            skinFocusSx,
+          ]}
         >
           <EventImage src={event.image?.url} />
         </Box>
@@ -218,16 +243,19 @@ const EventCard = ({
             component="button"
             onClick={() => onView(event)}
             variant="h6"
-            sx={{
-              fontWeight: 700,
-              lineHeight: 1.25,
-              bgcolor: 'transparent',
-              border: 0,
-              p: 0,
-              color: 'text.primary',
-              textAlign: 'left',
-              cursor: 'pointer',
-            }}
+            sx={[
+              {
+                fontWeight: 700,
+                lineHeight: 1.25,
+                bgcolor: 'transparent',
+                border: 0,
+                p: 0,
+                color: 'text.primary',
+                textAlign: 'left',
+                cursor: 'pointer',
+              },
+              skinned({}, { borderRadius: '4px', '&:focus-visible': focusRingSx }),
+            ]}
           >
             {event.title}
           </Typography>
@@ -259,7 +287,7 @@ const EventCard = ({
                 onClick={() => onView(event)}
                 sx={{
                   bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
-                  color: 'primary.main',
+                  color: tokenVar('accentText'),
                   borderColor: 'transparent',
                   fontWeight: 700,
                   fontVariantNumeric: 'tabular-nums',

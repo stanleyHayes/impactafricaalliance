@@ -22,6 +22,7 @@ import {
   useTaskComments,
   useUpdateTaskComment,
 } from '../../lib/tasks';
+import { surfaceSx } from '../../theme/surfaces';
 import { relativeTime } from '../audit/ActivityTimeline';
 import { ActionIcon } from '../data/ActionIcon';
 import { ServerPagination, usePageParam } from '../data/ServerPagination';
@@ -140,13 +141,12 @@ const DeleteCommentDialog = ({
   );
 };
 
+/** A comment's bubble: the skin's card (paper with a divider edge in Classic). */
 const commentBoxSx = {
   minWidth: 0,
   p: 1.5,
   borderRadius: 2.5,
-  border: 1,
-  borderColor: 'divider',
-  bgcolor: 'background.paper',
+  ...surfaceSx.card,
 } as const;
 
 const CommentItem = ({

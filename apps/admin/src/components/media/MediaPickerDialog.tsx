@@ -24,6 +24,7 @@ import Typography from '@mui/material/Typography';
 import { useMemo, useState } from 'react';
 
 import { useMediaLibrary } from '../../lib/media-library';
+import { focusRingSx, skinned, surfaceSx } from '../../theme/surfaces';
 import { DialogFooter, DialogHeader, dialogPaperSx } from '../dialogs/DialogShell';
 
 /** The library entry, reduced to what a content field actually stores. */
@@ -166,25 +167,37 @@ export const MediaPickerDialog = ({
                   component="button"
                   type="button"
                   onClick={() => choose(item)}
-                  sx={{
-                    p: 0,
-                    border: 1,
-                    borderColor: 'divider',
-                    borderRadius: 2,
-                    overflow: 'hidden',
-                    bgcolor: 'background.paper',
-                    // See MediaLibrary: a native button defaults to the
-                    // browser's black `buttontext` rather than inheriting.
-                    color: 'text.primary',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    transition: (theme) => theme.transitions.create(['border-color', 'transform']),
-                    '&:hover': {
-                      borderColor: 'primary.main',
-                      transform: 'translateY(-2px)',
-                      '& .pick': { opacity: 1 },
+                  sx={[
+                    {
+                      p: 0,
+                      borderRadius: 2,
+                      overflow: 'hidden',
+                      // The skin's card (Classic: paper with a hairline).
+                      ...surfaceSx.card,
+                      // See MediaLibrary: a native button defaults to the
+                      // browser's black `buttontext` rather than inheriting.
+                      color: 'text.primary',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      transition: (theme) =>
+                        theme.transitions.create(['border-color', 'transform']),
+                      '&:hover': {
+                        ...surfaceSx.cardHover,
+                        borderColor: 'primary.main',
+                        transform: 'translateY(-2px)',
+                        '& .pick': { opacity: 1 },
+                      },
                     },
-                  }}
+                    // A skin also lifts it on its shadow and rings it for the keyboard.
+                    skinned(
+                      {},
+                      {
+                        transition: (theme) =>
+                          theme.transitions.create(['border-color', 'transform', 'box-shadow']),
+                        '&:focus-visible': focusRingSx,
+                      },
+                    ),
+                  ]}
                 >
                   <Box sx={{ position: 'relative', aspectRatio: '4 / 3', bgcolor: 'action.hover' }}>
                     <Box

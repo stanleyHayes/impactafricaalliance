@@ -26,6 +26,7 @@ import {
   type SocialPublishSource,
 } from '../components/social/SocialPublishDialog';
 import { useDisconnectSocial, useSocialAccounts, type SocialAccount } from '../lib/admin-hooks';
+import { tokenVar } from '../theme/surfaces';
 
 const API_BASE = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? '';
 
@@ -115,8 +116,8 @@ const PlatformCard = ({
       <Card
         elevation={0}
         sx={{
-          border: 1,
-          borderColor: 'divider',
+          border: tokenVar('surfaceBorder'),
+          borderColor: tokenVar('surfaceBorderColor'),
           borderRadius: 3,
           height: '100%',
           display: 'flex',

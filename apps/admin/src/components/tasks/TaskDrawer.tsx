@@ -1,8 +1,28 @@
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
 
+import { skinned, tokenVar } from '../../theme/surfaces';
+
 import { TaskDetailContent } from './TaskDetailContent';
 import { useTaskDrawer } from './use-task-drawer';
+
+/**
+ * The drawer is a page of its own: its sections and comment cards sit on the
+ * page colour, as they do on the task's full page. Classic uses the page
+ * colour with no image. A skin paints its sheet material: the canvas in
+ * Neumorphism, the canvas and its wash in Clay (pinned to the window as the
+ * page's is), and in Glass frosted overlay glass over the blurred page, so
+ * the page's colour pools are not painted a second time behind the title.
+ */
+const drawerPaperSx = skinned(
+  { bgcolor: 'background.default', backgroundImage: 'none' },
+  {
+    bgcolor: tokenVar('sheetBg'),
+    backgroundImage: tokenVar('sheetImage'),
+    backgroundAttachment: tokenVar('canvasAttachment'),
+    backdropFilter: tokenVar('sheetBackdrop'),
+  },
+);
 
 export interface TaskDrawerProps {
   /** The task to show, by key. Null closes the drawer. */
@@ -30,12 +50,7 @@ export const TaskDrawer = ({ taskKey, onClose }: TaskDrawerProps): JSX.Element =
     slotProps={{
       paper: {
         'aria-label': taskKey ? `Task ${taskKey.toUpperCase()}` : 'Task',
-        sx: {
-          width: { xs: '100%', sm: 560, md: 680 },
-          maxWidth: '100%',
-          bgcolor: 'background.default',
-          backgroundImage: 'none',
-        },
+        sx: [{ width: { xs: '100%', sm: 560, md: 680 }, maxWidth: '100%' }, drawerPaperSx],
       },
     }}
   >

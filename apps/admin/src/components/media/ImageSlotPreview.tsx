@@ -7,6 +7,8 @@ import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
+import { skinned, surfaceSx } from '../../theme/surfaces';
+
 const SITE_URL = (import.meta.env.VITE_SITE_URL ?? 'https://www.impactafricaalliance.org').replace(
   /\/$/,
   '',
@@ -72,18 +74,23 @@ export const ImageSlotPreview = ({
       </Typography>
 
       <Box
-        sx={{
-          position: 'relative',
-          width: '100%',
-          aspectRatio: aspect,
-          borderRadius: 2,
-          overflow: 'hidden',
-          border: 1,
-          borderColor: 'divider',
-          bgcolor: 'action.hover',
-          display: 'grid',
-          placeItems: 'center',
-        }}
+        // The frame is a well the picture sits in: Classic's grey hairline
+        // box, a skin's inset. The picture itself is never restyled.
+        sx={skinned(
+          {
+            position: 'relative',
+            width: '100%',
+            aspectRatio: aspect,
+            borderRadius: 2,
+            overflow: 'hidden',
+            border: 1,
+            borderColor: 'divider',
+            bgcolor: 'action.hover',
+            display: 'grid',
+            placeItems: 'center',
+          },
+          surfaceSx.inset,
+        )}
       >
         {source ? (
           <Box

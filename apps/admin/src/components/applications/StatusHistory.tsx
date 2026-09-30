@@ -4,6 +4,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 
 import { formatInstant } from '../../lib/forms';
+import { timelineSx } from '../../theme/surfaces';
 import { DetailSection } from '../detail/DetailSection';
 
 import { applicationStatusLabel } from './ApplicationChips';
@@ -42,7 +43,9 @@ export const StatusHistory = ({
               width: 9,
               height: 9,
               borderRadius: '50%',
-              bgcolor: index === 0 ? 'primary.main' : 'action.disabled',
+              // The newest dot in the accent, older ones muted: Classic's
+              // primary and `action.disabled`, the skin's dots elsewhere.
+              ...(index === 0 ? timelineSx.dotActive : timelineSx.dot),
             },
             // The rail from one dot to the next, centred under the 9px dot
             // (6 + 4.5). A pixel string, because `sx` reads a bare 1 as 100%:
@@ -54,7 +57,7 @@ export const StatusHistory = ({
               top: 18,
               bottom: 0,
               width: '1px',
-              bgcolor: 'divider',
+              ...timelineSx.rail,
             },
           }}
         >

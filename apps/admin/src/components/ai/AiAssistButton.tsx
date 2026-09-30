@@ -16,6 +16,7 @@ import Typography from '@mui/material/Typography';
 import { useRef, useState } from 'react';
 
 import { useAiAssist } from '../../lib/admin-hooks';
+import { skinned, surfaceSx, tokenVar } from '../../theme/surfaces';
 
 const ACTION_LABELS: Record<AiAssistAction, string> = {
   improve: 'Improve writing',
@@ -34,7 +35,11 @@ interface AiAssistButtonProps {
 }
 
 /** A ✨ button that rewrites the bound field's text via the Claude writing assistant. */
-export const AiAssistButton = ({ value, onChange, size = 'small' }: AiAssistButtonProps): JSX.Element => {
+export const AiAssistButton = ({
+  value,
+  onChange,
+  size = 'small',
+}: AiAssistButtonProps): JSX.Element => {
   const assist = useAiAssist();
   const anchorRef = useRef<HTMLButtonElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -88,7 +93,15 @@ export const AiAssistButton = ({ value, onChange, size = 'small' }: AiAssistButt
         onClose={() => setMenuOpen(false)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-        slotProps={{ paper: { sx: { mt: 0.5, minWidth: 210, borderRadius: 2 } } }}
+        // Classic's squarer menu; a skin's overlay corner.
+        slotProps={{
+          paper: {
+            sx: skinned(
+              { mt: 0.5, minWidth: 210, borderRadius: 2 },
+              { borderRadius: tokenVar('overlayRadius') },
+            ),
+          },
+        }}
       >
         <Typography
           variant="overline"
@@ -111,7 +124,12 @@ export const AiAssistButton = ({ value, onChange, size = 'small' }: AiAssistButt
         onClose={closeResult}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-        slotProps={{ paper: { sx: { mt: 1, width: 440, maxWidth: '92vw', borderRadius: 2.5 } } }}
+        // The skin's overlay corner (Classic's is this panel's 10px).
+        slotProps={{
+          paper: {
+            sx: { mt: 1, width: 440, maxWidth: '92vw', borderRadius: tokenVar('overlayRadius') },
+          },
+        }}
       >
         <Box sx={{ p: 2 }}>
           <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
@@ -137,19 +155,23 @@ export const AiAssistButton = ({ value, onChange, size = 'small' }: AiAssistButt
           {!assist.isPending && !assist.isError && (
             <>
               <Box
-                sx={{
-                  maxHeight: 280,
-                  overflowY: 'auto',
-                  p: 1.5,
-                  bgcolor: 'background.default',
-                  border: 1,
-                  borderColor: 'divider',
-                  borderRadius: 2,
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-word',
-                  fontSize: '0.875rem',
-                  lineHeight: 1.6,
-                }}
+                // The suggestion sits in a well: Classic's page-coloured box, a skin's inset.
+                sx={skinned(
+                  {
+                    maxHeight: 280,
+                    overflowY: 'auto',
+                    p: 1.5,
+                    bgcolor: 'background.default',
+                    border: 1,
+                    borderColor: 'divider',
+                    borderRadius: 2,
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word',
+                    fontSize: '0.875rem',
+                    lineHeight: 1.6,
+                  },
+                  surfaceSx.inset,
+                )}
               >
                 {result}
               </Box>

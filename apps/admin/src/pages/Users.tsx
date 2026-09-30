@@ -43,6 +43,14 @@ import { PageHeader } from '../components/PageHeader';
 import { useSaveUser, useUsers } from '../lib/admin-hooks';
 import { pageGuides } from '../lib/page-guides';
 import { ROLE_OPTIONS } from '../lib/select-options';
+import { skinned, surfaceSx, tokenVar } from '../theme/surfaces';
+
+/**
+ * The dialog's body behind its form section. Classic sets it on the page
+ * colour; a skin sinks it into the dialog as one of its wells, which in Glass
+ * also keeps it frosted rather than a solid block inside a frosted panel.
+ */
+const dialogWellSx = skinned({ bgcolor: 'background.default' }, surfaceSx.inset);
 
 const CreateUserDialog = ({
   open,
@@ -90,7 +98,7 @@ const CreateUserDialog = ({
         description="Add a teammate directly with a temporary password."
         onClose={onClose}
       />
-      <DialogContent sx={{ bgcolor: 'background.default', py: 3 }}>
+      <DialogContent sx={[{ py: 3 }, dialogWellSx]}>
         {/* noValidate: the schema's messages show under each field, never the
             browser's own bubble for a malformed email. */}
         <Stack
@@ -210,6 +218,21 @@ const UserActions = ({
   </Stack>
 );
 
+/**
+ * A record card under the pointer. Classic edges it in the light primary and
+ * lifts it on the third shadow; a skin lifts it on its own card shadow and
+ * keeps its material's edge.
+ */
+const recordCardHoverSx = skinned(
+  { '&:hover': { borderColor: 'primary.light', boxShadow: 3 } },
+  {
+    '&:hover': {
+      borderColor: tokenVar('surfaceBorderColor'),
+      boxShadow: tokenVar('surfaceHoverShadow'),
+    },
+  },
+);
+
 interface UserCardProps {
   user: PublicUser;
   onManage: (user: PublicUser) => void;
@@ -220,16 +243,18 @@ const UserCard = ({ user, onManage }: UserCardProps): JSX.Element => {
   return (
     <Card
       variant="outlined"
-      sx={{
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        borderRadius: 2.5,
-        transition: theme.transitions.create(['box-shadow', 'border-color'], {
-          duration: theme.transitions.duration.shorter,
-        }),
-        '&:hover': { borderColor: 'primary.light', boxShadow: theme.shadows[3] },
-      }}
+      sx={[
+        {
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          borderRadius: 2.5,
+          transition: theme.transitions.create(['box-shadow', 'border-color'], {
+            duration: theme.transitions.duration.shorter,
+          }),
+        },
+        recordCardHoverSx,
+      ]}
     >
       <Box sx={{ p: 2, flexGrow: 1, minWidth: 0 }}>
         <Stack direction="row" spacing={1.5} alignItems="center">
@@ -355,7 +380,7 @@ const Users = (): JSX.Element => {
                 variant="outlined"
                 startIcon={<AddIcon />}
                 onClick={() => setCreateOpen(true)}
-                sx={{ borderRadius: 2.5, px: 2.5 }}
+                sx={{ borderRadius: tokenVar('buttonRadius'), px: 2.5 }}
               >
                 Create
               </Button>
@@ -364,7 +389,7 @@ const Users = (): JSX.Element => {
                 startIcon={<MailOutlineIcon />}
                 component={RouterLink}
                 to="/users/invite"
-                sx={{ borderRadius: 2.5, px: 2.5 }}
+                sx={{ borderRadius: tokenVar('buttonRadius'), px: 2.5 }}
               >
                 Invite
               </Button>

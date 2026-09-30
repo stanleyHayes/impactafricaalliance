@@ -6,7 +6,6 @@ import Divider from '@mui/material/Divider';
 import Drawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
-import { alpha } from '@mui/material/styles';
 import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
@@ -14,6 +13,7 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 
 import { usePreferences } from '../../lib/preferences';
+import { focusRingSx, skinned, surfaceSx } from '../../theme/surfaces';
 import { RouteSkeleton } from '../PageSkeleton';
 import { QuickCreateTaskButton } from '../tasks/QuickCreateTaskButton';
 import { Tour } from '../tour';
@@ -50,11 +50,7 @@ export const AppShell = (): JSX.Element => {
         display: 'flex',
         height: '100%',
         flexDirection: 'column',
-        background: (t) =>
-          `linear-gradient(180deg, ${alpha(t.palette.primary.main, 0.055)} 0, ${alpha(
-            t.palette.background.paper,
-            0,
-          )} 190px)`,
+        ...surfaceSx.sidebarWash,
       }}
     >
       <Toolbar
@@ -73,10 +69,8 @@ export const AppShell = (): JSX.Element => {
             height: 42,
             flexShrink: 0,
             placeItems: 'center',
-            border: 1,
-            borderColor: 'divider',
             borderRadius: 2,
-            bgcolor: 'background.paper',
+            ...surfaceSx.raised,
           }}
         >
           <Box component="img" src="/brand/icon-512.png" alt="IAA" sx={{ width: 34 }} />
@@ -107,17 +101,24 @@ export const AppShell = (): JSX.Element => {
       <Box
         component="a"
         href="#admin-main"
-        sx={{
-          position: 'fixed',
-          top: -100,
-          left: 16,
-          zIndex: 1500,
-          p: 1.5,
-          borderRadius: 2,
-          bgcolor: 'background.paper',
-          color: 'text.primary',
-          '&:focus': { top: 12 },
-        }}
+        // Classic's skip link is a plain paper chip with the browser's focus
+        // outline. In a skin it floats over the top bar like the skin's other
+        // floating panels (opaque enough, and blurred in Glass, that the bar's
+        // title never shows through the words), with the skin's ring.
+        sx={skinned(
+          {
+            position: 'fixed',
+            top: -100,
+            left: 16,
+            zIndex: 1500,
+            p: 1.5,
+            borderRadius: 2,
+            bgcolor: 'background.paper',
+            color: 'text.primary',
+            '&:focus': { top: 12 },
+          },
+          { ...surfaceSx.overlay, '&:focus-visible': focusRingSx },
+        )}
       >
         Skip to content
       </Box>
@@ -127,10 +128,7 @@ export const AppShell = (): JSX.Element => {
         elevation={0}
         sx={{
           zIndex: (t) => t.zIndex.drawer + 1,
-          borderBottom: 1,
-          borderColor: 'divider',
-          bgcolor: (t) => alpha(t.palette.background.paper, 0.88),
-          backdropFilter: 'blur(14px)',
+          ...surfaceSx.appBar,
         }}
       >
         <Toolbar sx={{ minHeight: 72 }}>
@@ -213,9 +211,7 @@ export const AppShell = (): JSX.Element => {
             '& .MuiDrawer-paper': {
               width: desktopWidth,
               boxSizing: 'border-box',
-              borderRight: 1,
-              borderColor: 'divider',
-              bgcolor: (t) => alpha(t.palette.background.paper, 0.96),
+              ...surfaceSx.sidebar,
               overflowX: 'hidden',
               transition: (t) =>
                 t.transitions.create('width', { duration: t.transitions.duration.shorter }),
@@ -239,7 +235,8 @@ export const AppShell = (): JSX.Element => {
           minHeight: '100dvh',
           p: { xs: 2, sm: 3, lg: 4 },
           width: { md: `calc(100% - ${desktopWidth}px)` },
-          bgcolor: 'background.default',
+          // Transparent where a skin's canvas carries a backdrop (Glass, Clay).
+          ...surfaceSx.page,
           transition: (t) =>
             t.transitions.create(['width', 'margin'], { duration: t.transitions.duration.shorter }),
         }}

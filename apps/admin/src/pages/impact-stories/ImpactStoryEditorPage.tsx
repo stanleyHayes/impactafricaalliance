@@ -52,6 +52,7 @@ import {
   useSaveImpactStory,
 } from '../../lib/impact-stories';
 import { pageGuides } from '../../lib/page-guides';
+import { backLinkSx, skinned, surfaceSx, tokenVar } from '../../theme/surfaces';
 
 /** What the editor is told when it opens straight after creating a story. */
 interface EditorLocationState {
@@ -98,6 +99,23 @@ const STATUS_PHRASES: Record<ImpactStoryStatus, string> = {
   archived: 'archived',
 };
 
+/**
+ * The status panel on the Review step. Classic outlines it on the card; the
+ * other skins sink it into the card as a well, so its buttons stand out.
+ */
+const STATUS_PANEL_SX = skinned({ border: 1, borderColor: 'divider' }, surfaceSx.inset);
+
+/**
+ * The Back and Continue strip under each step. Classic paints it in the page
+ * colour. The other skins make it a well in the card instead: their page
+ * colour is an opaque canvas that would lie across a frosted or clay card as a
+ * flat band.
+ */
+const FOOTER_SX = skinned(
+  { bgcolor: 'background.default', borderTop: 1, borderColor: 'divider' },
+  { bgcolor: tokenVar('surfaceInsetBg') },
+);
+
 /** Preview and status moves for a saved story, on the Review step. */
 const StoryReviewActions = ({
   story,
@@ -120,7 +138,7 @@ const StoryReviewActions = ({
   const actions = canUpdate ? storyStatusActions(story.status, { isAdmin }) : [];
 
   return (
-    <Box sx={{ p: { xs: 1.5, sm: 2 }, border: 1, borderColor: 'divider', borderRadius: 2 }}>
+    <Box sx={[{ p: { xs: 1.5, sm: 2 }, borderRadius: 2 }, STATUS_PANEL_SX]}>
       <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
         <Typography component="h3" variant="subtitle1" sx={{ fontWeight: 700 }}>
           Status
@@ -395,14 +413,17 @@ const EditorFooter = ({
       direction="row"
       justifyContent="space-between"
       spacing={2}
-      sx={{
-        p: { xs: 2, md: 3 },
-        bgcolor: 'background.default',
-        borderTop: 1,
-        borderColor: 'divider',
-        borderBottomLeftRadius: 12,
-        borderBottomRightRadius: 12,
-      }}
+      sx={[
+        {
+          p: { xs: 2, md: 3 },
+          // The card's own corners (12px in Classic), because the card does
+          // not clip: each skin rounds cards more, and a fixed radius would
+          // let the strip show past the curve.
+          borderBottomLeftRadius: 'inherit',
+          borderBottomRightRadius: 'inherit',
+        },
+        FOOTER_SX,
+      ]}
     >
       <Button
         onClick={() => (step > 0 ? changeStep(step - 1) : void navigate('/impact-stories'))}
@@ -453,6 +474,7 @@ const StoryEditorForm = ({
             to="/impact-stories"
             startIcon={<ArrowBackRoundedIcon />}
             disabled={editor.busy}
+            sx={backLinkSx}
           >
             All stories
           </Button>
@@ -477,7 +499,8 @@ const StoryEditorForm = ({
           noValidate
           onSubmit={editor.submit}
           aria-busy={editor.busy}
-          sx={{ border: 1, borderColor: 'divider', borderRadius: 3, bgcolor: 'background.paper' }}
+          // The skin's card: in Classic, paper with a divider border.
+          sx={{ borderRadius: 3, ...surfaceSx.card }}
         >
           <Box sx={{ p: { xs: 2, md: 4 } }}>
             <Typography

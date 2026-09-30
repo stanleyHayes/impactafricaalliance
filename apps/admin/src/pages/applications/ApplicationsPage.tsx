@@ -335,7 +335,6 @@ const FilterBar = ({
           deleteIcon={<FilterAltOffIcon />}
           variant="outlined"
           sx={{
-            borderRadius: 2,
             alignSelf: 'center',
             justifySelf: 'start',
             gridColumn: { sm: '1 / -1', lg: 'auto' },

@@ -1,8 +1,4 @@
-import {
-  SubmissionStatus,
-  SubmissionType,
-  type Submission,
-} from '@iaa/shared';
+import { SubmissionStatus, SubmissionType, type Submission } from '@iaa/shared';
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import FilterAltOffIcon from '@mui/icons-material/FilterAltOff';
 import HandshakeOutlinedIcon from '@mui/icons-material/HandshakeOutlined';
@@ -49,6 +45,7 @@ import {
   SUBMISSION_TYPE_OPTIONS,
   withAnyOption,
 } from '../lib/select-options';
+import { skinned, surfaceSx, tokenVar } from '../theme/surfaces';
 
 /**
  * Dedicated inboxes. The combined list still lives at /submissions; these give
@@ -189,15 +186,21 @@ const SubmissionStatusSelect = ({
         fullWidth={false}
         value={status}
         disabled={update.isPending}
-        onChange={(value: string) =>
-          update.mutate({ id, status: value as SubmissionStatus })
-        }
+        onChange={(value: string) => update.mutate({ id, status: value as SubmissionStatus })}
         options={SUBMISSION_STATUS_OPTIONS}
-        sx={{
-          minWidth: 150,
-          '& .MuiInputBase-root': { bgcolor: 'background.default', fontSize: 13 },
-          '& .MuiSelect-select': { py: 0.75 },
-        }}
+        sx={[
+          {
+            minWidth: 150,
+            '& .MuiInputBase-root': { fontSize: 13 },
+            '& .MuiSelect-select': { py: 0.75 },
+          },
+          // Classic sets this compact select on the page colour so it stands off
+          // the card; a skin keeps its own field material (sunk, frosted, clay).
+          skinned(
+            { '& .MuiInputBase-root': { bgcolor: 'background.default' } },
+            { '& .MuiInputBase-root': { bgcolor: tokenVar('inputBg') } },
+          ),
+        ]}
       />
       <Snackbar open={update.isError} onClose={() => update.reset()}>
         <Alert severity="error" onClose={() => update.reset()}>
@@ -335,7 +338,13 @@ const ContactChip = ({ contact }: { contact: ContactLink }): JSX.Element => {
   );
 };
 
-/** Tinted panel that previews the submission's message / summary line. */
+/**
+ * Tinted panel that previews the submission's message / summary line.
+ *
+ * The tint is the submission type's, so every skin keeps it. A skin sinks the
+ * panel into the card as one of its wells, in place of Classic's tinted
+ * hairline, so the quoted message reads as set into the card.
+ */
 const MessagePanel = ({
   message,
   accentColor,
@@ -344,14 +353,13 @@ const MessagePanel = ({
   accentColor: string;
 }): JSX.Element => (
   <Box
-    sx={{
-      mt: 2,
-      px: 2,
-      py: 1.5,
-      borderRadius: 2,
-      bgcolor: alpha(accentColor, 0.06),
-      border: `1px solid ${alpha(accentColor, 0.16)}`,
-    }}
+    sx={[
+      { mt: 2, px: 2, py: 1.5, borderRadius: 2 },
+      skinned(
+        { bgcolor: alpha(accentColor, 0.06), border: `1px solid ${alpha(accentColor, 0.16)}` },
+        { border: tokenVar('surfaceInsetBorder'), boxShadow: tokenVar('surfaceInsetShadow') },
+      ),
+    ]}
   >
     <Typography
       variant="body2"
@@ -426,29 +434,44 @@ const SubmissionCard = ({ submission }: { submission: Submission }): JSX.Element
   return (
     <Card
       variant="outlined"
-      sx={{
-        position: 'relative',
-        overflow: 'hidden',
-        borderRadius: 2.5,
-        // Colored left accent rail keyed to the submission type.
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          left: 0,
-          top: 0,
-          bottom: 0,
-          width: 4,
-          bgcolor: accentColor,
+      sx={[
+        {
+          position: 'relative',
+          overflow: 'hidden',
+          borderRadius: 2.5,
+          // Colored left accent rail keyed to the submission type.
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: 4,
+            bgcolor: accentColor,
+          },
+          transition: theme.transitions.create(['box-shadow', 'border-color', 'transform'], {
+            duration: theme.transitions.duration.shorter,
+          }),
         },
-        transition: theme.transitions.create(['box-shadow', 'border-color', 'transform'], {
-          duration: theme.transitions.duration.shorter,
-        }),
-        '&:hover': {
-          borderColor: alpha(accentColor, 0.5),
-          boxShadow: `0 10px 30px -18px ${alpha(accentColor, 0.7)}`,
-          transform: 'translateY(-1px)',
-        },
-      }}
+        // Classic lifts the card on a glow of its type's colour. A skin lifts it
+        // on its own card shadow and keeps its material's edge; the rail and the
+        // tinted avatar still say which type it is.
+        skinned(
+          {
+            '&:hover': {
+              borderColor: alpha(accentColor, 0.5),
+              boxShadow: `0 10px 30px -18px ${alpha(accentColor, 0.7)}`,
+              transform: 'translateY(-1px)',
+            },
+          },
+          {
+            '&:hover': {
+              borderColor: tokenVar('surfaceBorderColor'),
+              boxShadow: tokenVar('surfaceHoverShadow'),
+            },
+          },
+        ),
+      ]}
     >
       <Box sx={{ pl: 3, pr: 2.5, py: 2.25 }}>
         {/* Header: avatar + title block on the left, time + status control on the right. */}
@@ -456,14 +479,17 @@ const SubmissionCard = ({ submission }: { submission: Submission }): JSX.Element
           <Stack direction="row" spacing={1.75} alignItems="flex-start" sx={{ minWidth: 0 }}>
             <Avatar
               variant="rounded"
-              sx={{
-                width: 44,
-                height: 44,
-                color: 'text.secondary',
-                bgcolor: alpha(accentColor, 0.12),
-                border: `1px solid ${alpha(accentColor, 0.22)}`,
-                borderRadius: 2,
-              }}
+              sx={[
+                { width: 44, height: 44, color: 'text.secondary', borderRadius: 2 },
+                // The type's tint stays; a skin swaps the tinted hairline for its tile depth.
+                skinned(
+                  {
+                    bgcolor: alpha(accentColor, 0.12),
+                    border: `1px solid ${alpha(accentColor, 0.22)}`,
+                  },
+                  { border: tokenVar('tileBorder'), boxShadow: tokenVar('tileShadow') },
+                ),
+              ]}
             >
               {meta.icon}
             </Avatar>
@@ -504,7 +530,9 @@ const SubmissionCard = ({ submission }: { submission: Submission }): JSX.Element
                     height: 22,
                     fontWeight: 600,
                     color: 'text.secondary',
-                    bgcolor: alpha(accentColor, 0.1),
+                    // On the filled class, or a skin's default chip fill (a stronger
+                    // rule than a plain bgcolor) would replace the type's tint with grey.
+                    '&.MuiChip-filled': { bgcolor: alpha(accentColor, 0.1) },
                     '& .MuiChip-label': { px: 1 },
                   }}
                 />
@@ -664,12 +692,11 @@ const SubmissionsEmpty = ({
   onClear: () => void;
 }): JSX.Element => (
   <Box
-    sx={{
-      bgcolor: 'background.paper',
-      borderRadius: 3,
-      display: 'flex',
-      justifyContent: 'center',
-    }}
+    sx={[
+      { borderRadius: 3, display: 'flex', justifyContent: 'center' },
+      // A borderless paper panel in Classic; the skin's card elsewhere.
+      skinned({ bgcolor: 'background.paper' }, surfaceSx.card),
+    ]}
   >
     <EmptyState
       icon={<InboxOutlinedIcon />}
@@ -889,7 +916,6 @@ const Submissions = (): JSX.Element => {
             onDelete={clearFilters}
             deleteIcon={<FilterAltOffIcon />}
             variant="outlined"
-            sx={{ borderRadius: 2 }}
           />
         )}
         <Box sx={{ ml: { sm: 'auto' } }}>

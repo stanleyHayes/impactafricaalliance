@@ -28,6 +28,7 @@ import {
 import { useResourceDetail, useSaveResource } from '../resources/hooks';
 import { findResource } from '../resources/registry';
 import type { ResourceConfig, ResourceRow } from '../resources/types';
+import { backLinkSx, skinned, surfaceSx, tokenVar } from '../theme/surfaces';
 
 const saveButtonLabel = (saving: boolean, activeStep: number, count: number): string => {
   if (saving) return 'Saving…';
@@ -131,7 +132,12 @@ const ResourceEditor = ({ resource, initial }: ResourceEditorProps): JSX.Element
 
   return (
     <Box sx={{ maxWidth: 1120, mx: 'auto' }}>
-      <Button onClick={goBack} disabled={busy} startIcon={<ArrowBackRoundedIcon />} sx={{ mb: 2 }}>
+      <Button
+        onClick={goBack}
+        disabled={busy}
+        startIcon={<ArrowBackRoundedIcon />}
+        sx={[{ mb: 2 }, backLinkSx]}
+      >
         Back to {resource.label.toLowerCase()}
       </Button>
       <PageHeader
@@ -166,13 +172,7 @@ const ResourceEditor = ({ resource, initial }: ResourceEditorProps): JSX.Element
             <Box
               key={step.label}
               hidden={index !== activeStep}
-              sx={{
-                p: { xs: 2.5, md: 4 },
-                border: 1,
-                borderColor: 'divider',
-                borderRadius: 3,
-                bgcolor: 'background.paper',
-              }}
+              sx={{ p: { xs: 2.5, md: 4 }, borderRadius: 3, ...surfaceSx.card }}
             >
               <Typography variant="overline" color="text.secondary">
                 Step {index + 1} of {steps.length}
@@ -229,16 +229,24 @@ const ResourceEditor = ({ resource, initial }: ResourceEditorProps): JSX.Element
           direction="row"
           spacing={1.5}
           justifyContent="space-between"
-          sx={{
-            position: 'sticky',
-            bottom: 0,
-            mt: 3,
-            py: 2,
-            bgcolor: 'background.default',
-            borderTop: 1,
-            borderColor: 'divider',
-            zIndex: 2,
-          }}
+          sx={[
+            {
+              position: 'sticky',
+              bottom: 0,
+              mt: 3,
+              py: 2,
+              borderTop: 1,
+              borderColor: 'divider',
+              zIndex: 2,
+            },
+            // The bar stays over the form as it scrolls, like the top bar does: the
+            // page colour in Classic, the top bar's material in a skin (frosted in
+            // Glass, where the page itself is clear over the canvas wash).
+            skinned(
+              { bgcolor: 'background.default' },
+              { bgcolor: tokenVar('appbarBg'), backdropFilter: tokenVar('appbarBackdrop') },
+            ),
+          ]}
         >
           <Button onClick={goBack} disabled={busy}>
             Cancel
@@ -304,7 +312,7 @@ const ResourceFormLoader = ({
             : 'Could not load this record. Please try again.'}
         </Alert>
         <Button
-          sx={{ alignSelf: 'flex-start' }}
+          sx={[{ alignSelf: 'flex-start' }, backLinkSx]}
           onClick={() => void navigate(`/content/${resource.key}`)}
           startIcon={<ArrowBackRoundedIcon />}
         >

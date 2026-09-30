@@ -5,6 +5,8 @@ import Stack from '@mui/material/Stack';
 import { alpha, useTheme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 
+import { skinned, tokenVar } from '../theme/surfaces';
+
 export interface EmptyStateAction {
   label: string;
   onClick: () => void;
@@ -149,22 +151,32 @@ export const EmptyState = ({
           />
         </Box>
 
-        {/* Medallion face holding the enlarged icon. */}
+        {/* Medallion face holding the enlarged icon. Classic's green glass
+            bead; in a skin, the skin's raised icon tile (the halo, the orbit
+            and the sheen are the empty state's own art and stay). */}
         <Box
-          sx={{
-            position: 'absolute',
-            inset: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderRadius: '50%',
-            overflow: 'hidden',
-            color: 'text.primary',
-            background: `linear-gradient(155deg, ${alpha(greenLight, 0.16)} 0%, ${alpha(green, 0.1)} 100%)`,
-            border: `1px solid ${alpha(green, 0.18)}`,
-            boxShadow: `inset 0 1px 0 ${alpha('#ffffff', 0.6)}, 0 12px 28px -16px ${alpha(green, 0.55)}`,
-            '& > svg': { fontSize: compact ? 30 : 44, position: 'relative', zIndex: 1 },
-          }}
+          sx={skinned(
+            {
+              position: 'absolute',
+              inset: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '50%',
+              overflow: 'hidden',
+              color: 'text.primary',
+              background: `linear-gradient(155deg, ${alpha(greenLight, 0.16)} 0%, ${alpha(green, 0.1)} 100%)`,
+              border: `1px solid ${alpha(green, 0.18)}`,
+              boxShadow: `inset 0 1px 0 ${alpha('#ffffff', 0.6)}, 0 12px 28px -16px ${alpha(green, 0.55)}`,
+              '& > svg': { fontSize: compact ? 30 : 44, position: 'relative', zIndex: 1 },
+            },
+            {
+              background: 'none',
+              bgcolor: tokenVar('tileBg'),
+              border: tokenVar('tileBorder'),
+              boxShadow: tokenVar('tileShadow'),
+            },
+          )}
         >
           {/* Sweeping light sheen across the medallion face. */}
           <Box
@@ -224,7 +236,12 @@ export const EmptyState = ({
               size="large"
               startIcon={primaryAction.icon}
               onClick={primaryAction.onClick}
-              sx={{ borderRadius: 2.5, px: 3, boxShadow: `0 10px 24px -12px ${alpha(green, 0.6)}` }}
+              // Classic's green glow; a skin's own button radius and depth
+              // (the theme's, for whichever variant this is).
+              sx={skinned(
+                { borderRadius: 2.5, px: 3, boxShadow: `0 10px 24px -12px ${alpha(green, 0.6)}` },
+                { borderRadius: tokenVar('buttonRadius'), boxShadow: undefined },
+              )}
             >
               {primaryAction.label}
             </Button>
@@ -235,7 +252,7 @@ export const EmptyState = ({
               size="large"
               startIcon={secondaryAction.icon}
               onClick={secondaryAction.onClick}
-              sx={{ borderRadius: 2.5, px: 3 }}
+              sx={skinned({ borderRadius: 2.5, px: 3 }, { borderRadius: tokenVar('buttonRadius') })}
             >
               {secondaryAction.label}
             </Button>

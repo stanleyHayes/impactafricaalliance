@@ -37,6 +37,7 @@ import { PageHeader } from '../components/PageHeader';
 import { FormPageSkeleton } from '../components/PageSkeleton';
 import { useInviteUser, useUpdateUserPermissions, useUsers } from '../lib/admin-hooks';
 import { ROLE_OPTIONS } from '../lib/select-options';
+import { backLinkSx } from '../theme/surfaces';
 
 const steps = ['Identity', 'Permissions', 'Review'] as const;
 
@@ -222,6 +223,7 @@ const AccessHeader = ({
         to="/users"
         startIcon={<ArrowBackRoundedIcon />}
         disabled={disabled}
+        sx={backLinkSx}
       >
         Back to users
       </Button>

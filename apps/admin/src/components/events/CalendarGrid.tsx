@@ -10,6 +10,7 @@ import Typography from '@mui/material/Typography';
 import { useState } from 'react';
 
 import { shiftMonth } from '../../lib/event-calendar';
+import { skinned, surfaceSx, tokenVar } from '../../theme/surfaces';
 
 import { EventImage } from './EventImage';
 
@@ -21,6 +22,31 @@ interface CalendarGridProps {
   onSelectEvent: (event: Event) => void;
 }
 const dateKey = (date: Date): string => date.toLocaleDateString('sv-SE');
+
+/**
+ * The month grid. Classic draws its rules by letting a divider-coloured
+ * container show through 1px gaps between paper cells. That trick cannot work
+ * in a skin whose card is translucent (Glass) or the canvas colour
+ * (Neumorphism): the cells would stop being the card's material. So a skin
+ * makes the container its card and the cells clear, and each cell draws the
+ * rule on its right and bottom edges into the gap instead.
+ */
+const gridSx = skinned({ bgcolor: 'divider', border: 1, borderColor: 'divider' }, surfaceSx.card);
+const RULE = tokenVar('gridRule');
+const cellSx = skinned(
+  { bgcolor: 'background.paper' },
+  { bgcolor: 'transparent', boxShadow: `1px 0 0 ${RULE}, 0 1px 0 ${RULE}, 1px 1px 0 ${RULE}` },
+);
+
+/**
+ * Something you can open on the calendar (an event pill, an agenda row). A
+ * skin makes it one of its raised controls: lifted at rest, higher under the
+ * pointer, pressed in while held.
+ */
+const raisedControlSx = {
+  '&:hover': { bgcolor: tokenVar('surfaceRaisedBg'), boxShadow: tokenVar('controlHoverShadow') },
+  '&:active': surfaceSx.pressed,
+};
 
 export const CalendarGrid = ({
   events,
@@ -71,20 +97,20 @@ export const CalendarGrid = ({
         {Intl.DateTimeFormat().resolvedOptions().timeZone}.
       </Typography>
       <Box
-        sx={{
-          mt: 2,
-          display: 'grid',
-          gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
-          gap: '1px',
-          bgcolor: 'divider',
-          border: 1,
-          borderColor: 'divider',
-          borderRadius: 3,
-          overflow: 'hidden',
-        }}
+        sx={[
+          {
+            mt: 2,
+            display: 'grid',
+            gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
+            gap: '1px',
+            borderRadius: 3,
+            overflow: 'hidden',
+          },
+          gridSx,
+        ]}
       >
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-          <Box key={day} sx={{ bgcolor: 'background.paper', py: 1, textAlign: 'center' }}>
+          <Box key={day} sx={[{ py: 1, textAlign: 'center' }, cellSx]}>
             <Typography variant="caption">{day}</Typography>
           </Box>
         ))}
@@ -94,13 +120,15 @@ export const CalendarGrid = ({
           return (
             <Box
               key={key}
-              sx={{
-                minHeight: { xs: 85, md: 140 },
-                minWidth: 0,
-                p: { xs: 0.5, md: 1 },
-                bgcolor: 'background.paper',
-                opacity: day.getMonth() === month.getMonth() ? 1 : 0.6,
-              }}
+              sx={[
+                {
+                  minHeight: { xs: 85, md: 140 },
+                  minWidth: 0,
+                  p: { xs: 0.5, md: 1 },
+                  opacity: day.getMonth() === month.getMonth() ? 1 : 0.6,
+                },
+                cellSx,
+              ]}
             >
               <Button
                 aria-label={`Create event on ${day.toLocaleDateString('en-GB')}`}
@@ -121,16 +149,31 @@ export const CalendarGrid = ({
                   <Button
                     key={event.id}
                     onClick={() => onSelectEvent(event)}
-                    sx={{
-                      display: 'block',
-                      textAlign: 'left',
-                      minWidth: 0,
-                      p: 0.75,
-                      borderLeft: '2px solid',
-                      borderColor: event.status === 'draft' ? 'warning.main' : 'primary.main',
-                      bgcolor: 'action.hover',
-                      color: 'text.primary',
-                    }}
+                    sx={[
+                      {
+                        display: 'block',
+                        textAlign: 'left',
+                        minWidth: 0,
+                        p: 0.75,
+                        borderLeft: '2px solid',
+                        borderColor: event.status === 'draft' ? 'warning.main' : 'primary.main',
+                        color: 'text.primary',
+                      },
+                      // The status rule stays; the grey block becomes a raised
+                      // block. It takes a list row's corner rather than the
+                      // button's, which in Clay is a pill: on a two- or
+                      // three-line block that bends the status rule and
+                      // crowds the time into the curve.
+                      skinned(
+                        { bgcolor: 'action.hover' },
+                        {
+                          borderRadius: tokenVar('itemRadius'),
+                          bgcolor: tokenVar('surfaceRaisedBg'),
+                          boxShadow: tokenVar('surfaceRaisedShadow'),
+                          ...raisedControlSx,
+                        },
+                      ),
+                    ]}
                   >
                     <Typography variant="caption" component="span" sx={{ display: 'block' }}>
                       {new Date(event.startAt).toLocaleTimeString('en-GB', {
@@ -193,16 +236,20 @@ export const CalendarGrid = ({
           <Button
             key={event.id}
             onClick={() => onSelectEvent(event)}
-            sx={{
-              justifyContent: 'flex-start',
-              textAlign: 'left',
-              color: 'text.primary',
-              p: 1.5,
-              gap: 2,
-              border: 1,
-              borderColor: 'divider',
-              borderRadius: 2,
-            }}
+            sx={[
+              {
+                justifyContent: 'flex-start',
+                textAlign: 'left',
+                color: 'text.primary',
+                p: 1.5,
+                gap: 2,
+                borderRadius: 2,
+              },
+              skinned(
+                { border: 1, borderColor: 'divider' },
+                { ...surfaceSx.raised, ...raisedControlSx },
+              ),
+            ]}
           >
             <EventImage
               src={event.image?.url}

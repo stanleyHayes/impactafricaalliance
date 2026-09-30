@@ -36,6 +36,7 @@ import { MilestoneDialog, ProgressOverrideDialog } from '../../components/projec
 import { ProjectProgressBar } from '../../components/projects/ProjectProgressBar';
 import { READ_ONLY_NOTE, useProjectPlanEditing } from '../../components/projects/useProjectOutlet';
 import { MILESTONE_STATUS_OPTIONS } from '../../lib/select-options';
+import { surfaceSx } from '../../theme/surfaces';
 
 type Editing = { id: string | null; draft: MilestoneDraft } | null;
 
@@ -57,13 +58,18 @@ const opposite = (offset: Offset): Offset => (offset === -1 ? 1 : -1);
  * How a row control looks while a change is saving. It is marked
  * `aria-disabled` rather than disabled: a disabled button drops keyboard focus
  * to the page, so someone moving an item two places would have to tab back
- * from the top after every step. This keeps the look of a disabled control.
+ * from the top after every step. This keeps the look of a disabled control,
+ * including in the skins that raise icon buttons: flat, with no surface, and
+ * no press. Classic's icon buttons have no fill or shadow, so there it is
+ * only the colour and the cursor.
  */
 const BUSY_SX = {
   '&[aria-disabled="true"]': {
     color: 'action.disabled',
     cursor: 'default',
-    '&:hover': { backgroundColor: 'transparent' },
+    backgroundColor: 'transparent',
+    boxShadow: 'none',
+    '&:hover, &:active': { backgroundColor: 'transparent', boxShadow: 'none' },
   },
 } as const;
 
@@ -182,10 +188,9 @@ const MilestoneRow = ({ canUpdate, onToggle, ...actions }: MilestoneRowProps): J
         gap: 1.5,
         alignItems: 'start',
         p: 1.5,
-        border: 1,
-        borderColor: 'divider',
         borderRadius: 2.5,
-        bgcolor: 'background.paper',
+        // The skin's card: paper with a divider edge in Classic.
+        ...surfaceSx.card,
       }}
     >
       <Checkbox

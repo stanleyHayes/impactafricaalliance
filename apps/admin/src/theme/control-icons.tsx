@@ -10,7 +10,14 @@ import Box from '@mui/material/Box';
  *
  * Wired in as `defaultProps` on MuiCheckbox and MuiRadio, so every checkbox
  * and radio in the console gets them without touching a call site.
+ *
+ * Each box carries the `iaa-control-box` class so a skin can give it depth
+ * (an inset well, a raised tick) from the theme without replacing the marks.
+ * Classic does not use the class.
  */
+
+/** The hook a skin's MuiCheckbox and MuiRadio overrides style. */
+export const CONTROL_BOX_CLASS = 'iaa-control-box';
 
 const BOX_SIZE = 20;
 
@@ -26,6 +33,7 @@ const base = {
 
 export const CheckboxIcon = (): JSX.Element => (
   <Box
+    className={CONTROL_BOX_CLASS}
     sx={{
       ...base,
       borderRadius: 1.5,
@@ -38,6 +46,7 @@ export const CheckboxIcon = (): JSX.Element => (
 
 export const CheckboxCheckedIcon = (): JSX.Element => (
   <Box
+    className={CONTROL_BOX_CLASS}
     sx={{
       ...base,
       borderRadius: 1.5,
@@ -59,6 +68,7 @@ export const CheckboxCheckedIcon = (): JSX.Element => (
 
 export const CheckboxIndeterminateIcon = (): JSX.Element => (
   <Box
+    className={CONTROL_BOX_CLASS}
     sx={{
       ...base,
       borderRadius: 1.5,
@@ -73,6 +83,7 @@ export const CheckboxIndeterminateIcon = (): JSX.Element => (
 
 export const RadioIcon = (): JSX.Element => (
   <Box
+    className={CONTROL_BOX_CLASS}
     sx={{
       ...base,
       borderRadius: '50%',
@@ -84,7 +95,10 @@ export const RadioIcon = (): JSX.Element => (
 );
 
 export const RadioCheckedIcon = (): JSX.Element => (
-  <Box sx={{ ...base, borderRadius: '50%', borderColor: 'primary.main', bgcolor: 'transparent' }}>
+  <Box
+    className={CONTROL_BOX_CLASS}
+    sx={{ ...base, borderRadius: '50%', borderColor: 'primary.main', bgcolor: 'transparent' }}
+  >
     <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: 'primary.main' }} />
   </Box>
 );

@@ -27,6 +27,7 @@ import { TrafficTrend, HourlyActivity } from '../components/charts/TrafficCharts
 import { EmptyState } from '../components/EmptyState';
 import { PageHeader } from '../components/PageHeader';
 import { useAnalyticsSummary } from '../lib/admin-hooks';
+import { skinned, surfaceSx, tokenVar } from '../theme/surfaces';
 
 const WINDOWS = [
   { days: 7, label: '7 days' },
@@ -57,7 +58,9 @@ const StatTile = ({
       borderRadius: 3,
       position: 'relative',
       overflow: 'hidden',
-      bgcolor: featured ? 'primary.main' : 'background.paper',
+      // The featured tile is the preset's primary fill in every skin; the others
+      // are the skin's card material (frosted in Glass rather than solid paper).
+      bgcolor: featured ? 'primary.main' : tokenVar('surfaceBg'),
       color: featured ? 'primary.contrastText' : 'text.primary',
     }}
   >
@@ -190,12 +193,14 @@ const RankedList = ({
                     </Typography>
                   </Stack>
                   <Box
-                    sx={{
-                      height: 6,
-                      borderRadius: 99,
-                      bgcolor: (t) => alpha(t.palette.primary.main, 0.12),
-                      overflow: 'hidden',
-                    }}
+                    sx={[
+                      { height: 6, borderRadius: 99, overflow: 'hidden' },
+                      // The bar's track sinks into the card in a skin, as its progress bars do.
+                      skinned(
+                        { bgcolor: (t) => alpha(t.palette.primary.main, 0.12) },
+                        { boxShadow: tokenVar('surfaceInsetShadow') },
+                      ),
+                    ]}
                   >
                     <Box
                       sx={{
@@ -441,16 +446,7 @@ const Analytics = (): JSX.Element => {
 
   return (
     <>
-      <Box
-        sx={{
-          mb: 3,
-          p: { xs: 2.5, md: 3 },
-          border: 1,
-          borderColor: 'divider',
-          borderRadius: 3,
-          bgcolor: 'background.paper',
-        }}
-      >
+      <Box sx={{ mb: 3, p: { xs: 2.5, md: 3 }, borderRadius: 3, ...surfaceSx.card }}>
         <Typography
           variant="overline"
           sx={{ fontSize: '0.65rem', letterSpacing: 1.8, color: 'text.secondary' }}

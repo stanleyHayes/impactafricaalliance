@@ -6,12 +6,19 @@ import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import { Link as RouterLink } from 'react-router-dom';
 
+import { skinned, surfaceSx } from '../../theme/surfaces';
+
 interface DonationChartEmptyProps {
   hasHistory: boolean;
   needsReview: boolean;
 }
 
-/** A real empty state, without illustrative bars that could be mistaken for donation data. */
+/**
+ * A real empty state, without illustrative bars that could be mistaken for donation data.
+ *
+ * It sits in a well where the chart would be: Classic's faint grey tint, or
+ * the skin's inset well.
+ */
 export const DonationChartEmpty = ({
   hasHistory,
   needsReview,
@@ -19,19 +26,22 @@ export const DonationChartEmpty = ({
   <Box
     component="section"
     aria-label="Donation chart empty state"
-    sx={{
-      position: 'relative',
-      overflow: 'hidden',
-      display: 'grid',
-      gridTemplateColumns: { xs: '1fr', sm: 'auto 1fr' },
-      alignItems: 'center',
-      gap: { xs: 1.5, sm: 2.5 },
-      p: { xs: 2, sm: 2.5 },
-      borderRadius: 3,
-      border: 1,
-      borderColor: 'divider',
-      bgcolor: (theme) => alpha(theme.palette.text.secondary, 0.045),
-    }}
+    sx={skinned(
+      {
+        position: 'relative',
+        overflow: 'hidden',
+        display: 'grid',
+        gridTemplateColumns: { xs: '1fr', sm: 'auto 1fr' },
+        alignItems: 'center',
+        gap: { xs: 1.5, sm: 2.5 },
+        p: { xs: 2, sm: 2.5 },
+        borderRadius: 3,
+        border: 1,
+        borderColor: 'divider',
+        bgcolor: (theme) => alpha(theme.palette.text.secondary, 0.045),
+      },
+      surfaceSx.inset,
+    )}
   >
     <VolunteerActivismOutlinedIcon
       aria-hidden="true"
@@ -127,13 +137,18 @@ export const DonationChartEmpty = ({
         size="small"
         color="inherit"
         endIcon={<ArrowForwardRoundedIcon sx={{ fontSize: 16 }} />}
-        sx={{
-          mt: 1,
-          px: 0,
-          minHeight: 36,
-          color: 'text.primary',
-          '&:hover': { bgcolor: 'transparent', textDecoration: 'underline' },
-        }}
+        // A link in a button's clothes: it underlines under the pointer and,
+        // in a skin, does not also rise like a text button.
+        sx={skinned(
+          {
+            mt: 1,
+            px: 0,
+            minHeight: 36,
+            color: 'text.primary',
+            '&:hover': { bgcolor: 'transparent', textDecoration: 'underline' },
+          },
+          { '&:hover': { boxShadow: 'none' } },
+        )}
       >
         {needsReview ? 'Review donations' : 'View donations'}
       </Button>
