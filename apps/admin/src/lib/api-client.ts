@@ -93,10 +93,61 @@ interface RequestOptions {
   auth?: boolean;
 }
 
-let refreshInFlight: Promise<boolean> | null = null;
+/**
+ * Where the client trades its refresh token for a new pair. A refusal from
+ * here is never answered with another refresh, which could only loop.
+ */
+const REFRESH_PATH = '/auth/refresh';
+
+/**
+ * What became of an attempt to trade the refresh token for a new pair.
+ *
+ * - `refreshed`: a new pair is stored, carrying the account's current
+ *   permissions.
+ * - `rejected`: the API refused the refresh token, so the session is over and
+ *   the stored pair has been cleared.
+ * - `unavailable`: there was no refresh token, or the API failed to answer
+ *   properly; the stored pair is left as it was.
+ */
+type RefreshOutcome = 'refreshed' | 'rejected' | 'unavailable';
+
+let refreshInFlight: Promise<RefreshOutcome> | null = null;
 
 type SessionExpiredHandler = () => void;
 let onSessionExpired: SessionExpiredHandler | null = null;
+
+type SessionRefreshedListener = () => void;
+const sessionRefreshedListeners = new Set<SessionRefreshedListener>();
+
+/**
+ * Calls `listener` each time the client stores a fresh token pair, and returns
+ * the function that stops it.
+ *
+ * Permissions travel inside the access token, and a refresh is the moment the
+ * API reads them again from the account. AuthContext listens so the console's
+ * own copy of the account — which decides the navigation, routes and buttons
+ * shown — catches up at the same moment instead of on the next reload. That
+ * covers a module granted since sign-in as well as one taken away.
+ */
+export const onSessionRefreshed = (listener: SessionRefreshedListener): (() => void) => {
+  sessionRefreshedListeners.add(listener);
+  return () => {
+    sessionRefreshedListeners.delete(listener);
+  };
+};
+
+/** Tells every listener a fresh pair is stored. */
+const announceRefresh = (): void => {
+  for (const listener of sessionRefreshedListeners) {
+    try {
+      listener();
+    } catch (error) {
+      // A listener's failure must not undo a refresh that worked, or fail the
+      // request that is about to be resent with the new token.
+      console.error('Session refresh listener failed:', error);
+    }
+  }
+};
 
 /**
  * Registered by AuthContext so an unrecoverable 401 can end the session.
@@ -254,24 +305,37 @@ export const startKeepAlive = (): (() => void) => {
   return () => clearInterval(timer);
 };
 
-const tryRefresh = async (): Promise<boolean> => {
+/**
+ * Trades the refresh token for a new pair, sharing one request between every
+ * caller that asks while it is out.
+ *
+ * The API reads the account afresh to mint the new access token, so this is
+ * also how permissions granted or removed since sign-in reach the client.
+ */
+const tryRefresh = async (): Promise<RefreshOutcome> => {
   const refreshToken = tokenStore.refresh;
   if (!refreshToken) {
-    return false;
+    return 'unavailable';
   }
-  refreshInFlight ??= (async () => {
-    const response = await sendRequest('/auth/refresh', {
+  refreshInFlight ??= (async (): Promise<RefreshOutcome> => {
+    const response = await sendRequest(REFRESH_PATH, {
       method: 'POST',
       body: { refreshToken },
       auth: false,
     });
+    if (response.status >= 500) {
+      // The API could not answer, which says nothing about the refresh token.
+      // Signing someone out over a server hiccup would lose their work.
+      return 'unavailable';
+    }
     if (!response.ok) {
       tokenStore.clear();
-      return false;
+      return 'rejected';
     }
     const data = (await response.json()) as LoginResponse;
     tokenStore.set(data.tokens);
-    return true;
+    announceRefresh();
+    return 'refreshed';
   })();
   try {
     return await refreshInFlight;
@@ -280,28 +344,129 @@ const tryRefresh = async (): Promise<boolean> => {
   }
 };
 
-/** Authenticated fetch with one transparent token-refresh retry on 401. */
+/** Signs the person out wherever the discovery happens. */
+const endSession = (): void => {
+  tokenStore.clear();
+  onSessionExpired?.();
+};
+
+/**
+ * True when another request's refresh has already replaced the token this
+ * one carried. Resending with the new token is then enough; refreshing again
+ * would only rotate the pair a second time for nothing.
+ */
+const tokenReplacedSince = (sentWith: string | null): boolean => {
+  const current = tokenStore.access;
+  return current !== null && current !== sentWith;
+};
+
+/** A refused request, with what is needed to resend it once. */
+interface Refusal {
+  path: string;
+  options: RequestOptions;
+  /** The refusal itself, handed back untouched when it cannot be recovered. */
+  response: Response;
+  /** The access token the refused request carried. */
+  sentWith: string | null;
+}
+
+/**
+ * Answers a 401: the access token has expired. Refresh and resend once, or
+ * end the session.
+ */
+const recoverFromExpiry = async ({
+  path,
+  options,
+  response,
+  sentWith,
+}: Refusal): Promise<Response> => {
+  if (tokenReplacedSince(sentWith)) {
+    return sendRequest(path, options);
+  }
+  if ((await tryRefresh()) === 'refreshed') {
+    return sendRequest(path, options);
+  }
+  // The refresh token is gone or rejected: the session is genuinely over.
+  // End it rather than showing "Unauthorized" on every subsequent action.
+  endSession();
+  return response;
+};
+
+/**
+ * Answers a 403: the token may carry permissions from before an administrator
+ * changed them.
+ *
+ * Permissions live in the access token for its whole fifteen minutes, so a
+ * module granted a moment ago was refused until the token happened to expire,
+ * however often the person tried. One refresh mints a token from the account
+ * as it is now, and one resend then tells a stale token apart from a genuine
+ * refusal. If the resend is refused too, that answer is the real one and is
+ * returned as it is — never refreshed again, so nothing can loop.
+ *
+ * The resend is allowed for every method, POST included. A dropped connection
+ * may hide a POST that arrived, which is why a failed connection never repeats
+ * one; a 403 is the API saying it did not run the request at all. Its
+ * permission and role checks come before any change is written, so sending it
+ * again cannot create a second record.
+ */
+const recoverFromRefusal = async ({
+  path,
+  options,
+  response,
+  sentWith,
+}: Refusal): Promise<Response> => {
+  if (tokenReplacedSince(sentWith)) {
+    return sendRequest(path, options);
+  }
+  // A refresh that cannot reach the API leaves the refusal as the answer, the
+  // same as before this recovery existed.
+  const outcome = await tryRefresh().catch((): RefreshOutcome => 'unavailable');
+  if (outcome === 'refreshed') {
+    return sendRequest(path, options);
+  }
+  if (outcome === 'rejected') {
+    endSession();
+  }
+  return response;
+};
+
+/**
+ * Sends the request and recovers, at most once, from a refusal the stored
+ * token may be to blame for. The resend is never inspected again, so a single
+ * call makes at most one refresh.
+ */
+const sendWithRecovery = async (path: string, options: RequestOptions): Promise<Response> => {
+  const sentWith = tokenStore.access;
+  const response = await sendRequest(path, options);
+  if (options.auth === false || path.split('?')[0] === REFRESH_PATH) {
+    return response;
+  }
+  if (response.status === 401) {
+    return recoverFromExpiry({ path, options, response, sentWith });
+  }
+  if (response.status === 403) {
+    return recoverFromRefusal({ path, options, response, sentWith });
+  }
+  return response;
+};
+
+/**
+ * Authenticated fetch. A 401 is answered with one token refresh and resend; a
+ * 403 with one refresh and resend too, in case permissions changed since the
+ * token was minted.
+ */
 export const apiRequest = async <T>(path: string, options: RequestOptions = {}): Promise<T> => {
   // A write sent to a sleeping instance is simply lost, and a POST cannot be
   // repeated to recover it. Knock first whenever the API has not been heard
   // from lately, so the write goes to a server already known to be up.
-  if (MUTATION_METHODS.has(options.method ?? 'GET') && Date.now() - lastContactAt > CONTACT_STALE_MS) {
+  if (
+    MUTATION_METHODS.has(options.method ?? 'GET') &&
+    Date.now() - lastContactAt > CONTACT_STALE_MS
+  ) {
     await wakeServer();
   }
 
-  let response = await sendRequest(path, options);
-
-  if (response.status === 401 && options.auth !== false) {
-    const refreshed = await tryRefresh();
-    if (refreshed) {
-      response = await sendRequest(path, options);
-    } else {
-      // The refresh token is gone or rejected: the session is genuinely over.
-      // End it rather than showing "Unauthorized" on every subsequent action.
-      tokenStore.clear();
-      onSessionExpired?.();
-    }
-  }
+  const response = await sendWithRecovery(path, options);
 
   if (!response.ok) {
     throw await buildError(response);
