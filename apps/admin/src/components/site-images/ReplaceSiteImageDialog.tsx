@@ -137,7 +137,7 @@ export const ReplaceSiteImageDialog = ({
         onClose={busy ? undefined : onClose}
       />
       <DialogContent dividers>
-        <Stack component="form" id="replace-site-image" spacing={2.5} onSubmit={submit}>
+        <Stack component="form" id="replace-site-image" noValidate spacing={2.5} onSubmit={submit}>
           <MediaUploadField
             label="New picture"
             accept="image/*"

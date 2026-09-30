@@ -61,7 +61,7 @@ export const SiteImageAltDialog = ({
         onClose={save.isPending ? undefined : onClose}
       />
       <DialogContent dividers>
-        <Stack component="form" id="site-image-alt" spacing={2} onSubmit={submit}>
+        <Stack component="form" id="site-image-alt" noValidate spacing={2} onSubmit={submit}>
           <Box
             component="img"
             src={thumbnailUrl(record.image.url)}
