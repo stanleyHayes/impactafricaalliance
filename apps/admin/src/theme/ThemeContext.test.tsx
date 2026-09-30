@@ -1,7 +1,7 @@
 import { act, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { SKIN_STORAGE_KEY, ThemeProvider, useThemeSettings } from './ThemeContext';
+import { SKIN_STORAGE_KEY, ThemeProvider, useThemeSettings, type ColorMode } from './ThemeContext';
 
 /** Shows the context and exposes its setters, so tests read what a component would. */
 let settings: ReturnType<typeof useThemeSettings> | undefined;
@@ -97,5 +97,52 @@ describe('theme skin setting', () => {
     } finally {
       Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: saved });
     }
+  });
+});
+
+describe('colour mode setting', () => {
+  afterEach(() => {
+    document.documentElement.classList.remove('dark');
+    delete document.documentElement.dataset.theme;
+  });
+
+  it('chooses light or dark outright, saves it and marks <html>', () => {
+    renderProvider();
+    act(() => settings?.setMode('dark'));
+    expect(screen.getByTestId('probe')).toHaveTextContent('iaa-dark-classic');
+    expect(localStorage.getItem('iaa.admin.theme.mode')).toBe('dark');
+    expect(document.documentElement).toHaveClass('dark');
+    expect(document.documentElement.dataset.theme).toBe('iaa-dark');
+
+    act(() => settings?.setMode('light'));
+    expect(screen.getByTestId('probe')).toHaveTextContent('iaa-light-classic');
+    expect(localStorage.getItem('iaa.admin.theme.mode')).toBe('light');
+    expect(document.documentElement).not.toHaveClass('dark');
+  });
+
+  it('keeps the mode when the one in use is chosen again, and agrees with the toggle', () => {
+    renderProvider();
+    act(() => settings?.setMode('light'));
+    expect(screen.getByTestId('probe')).toHaveTextContent('iaa-light-classic');
+    act(() => settings?.toggleMode());
+    act(() => settings?.setMode('dark'));
+    expect(screen.getByTestId('probe')).toHaveTextContent('iaa-dark-classic');
+    act(() => settings?.toggleMode());
+    expect(screen.getByTestId('probe')).toHaveTextContent('iaa-light-classic');
+  });
+
+  it('keeps the palette and skin when the mode is chosen', () => {
+    localStorage.setItem('iaa.admin.theme.preset', 'sunset');
+    localStorage.setItem(SKIN_STORAGE_KEY, 'glassmorphism');
+    renderProvider();
+    act(() => settings?.setMode('dark'));
+    expect(screen.getByTestId('probe')).toHaveTextContent('sunset-dark-glassmorphism');
+  });
+
+  it('leaves the mode as it is for a value that is not a mode', () => {
+    renderProvider();
+    act(() => settings?.setMode('sepia' as ColorMode));
+    expect(screen.getByTestId('probe')).toHaveTextContent('iaa-light-classic');
+    expect(localStorage.getItem('iaa.admin.theme.mode')).toBe('light');
   });
 });

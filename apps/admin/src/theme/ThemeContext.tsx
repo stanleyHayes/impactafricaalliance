@@ -10,6 +10,9 @@ interface ThemeContextValue {
   preset: ThemePresetKey;
   setPreset: (preset: ThemePresetKey) => void;
   mode: ColorMode;
+  /** Chooses light or dark outright (the mode cards in Settings). */
+  setMode: (mode: ColorMode) => void;
+  /** Flips between light and dark (the top bar's toggle). */
   toggleMode: () => void;
   /** How surfaces and controls are built; independent of preset and mode. */
   skin: SkinKey;
@@ -66,7 +69,7 @@ const loadSkin = (): SkinKey => {
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
 export const ThemeProvider = ({ children }: { children: ReactNode }): JSX.Element => {
-  const [mode, setMode] = useState<ColorMode>(loadMode);
+  const [mode, setModeState] = useState<ColorMode>(loadMode);
   const [preset, setPresetState] = useState<ThemePresetKey>(loadPreset);
   const [skin, setSkinState] = useState<SkinKey>(loadSkin);
 
@@ -92,8 +95,14 @@ export const ThemeProvider = ({ children }: { children: ReactNode }): JSX.Elemen
     document.documentElement.dataset.skin = skin;
   }, [skin]);
 
+  // Anything that is not a mode (from untyped code) leaves the mode as it is,
+  // rather than being read as a choice of light.
+  const setMode = useCallback((next: ColorMode): void => {
+    if (isColorMode(next)) setModeState(next);
+  }, []);
+
   const toggleMode = useCallback((): void => {
-    setMode((current) => (current === 'light' ? 'dark' : 'light'));
+    setModeState((current) => (current === 'light' ? 'dark' : 'light'));
   }, []);
 
   const setPreset = useCallback((next: ThemePresetKey): void => {
@@ -105,8 +114,8 @@ export const ThemeProvider = ({ children }: { children: ReactNode }): JSX.Elemen
   }, []);
 
   const value = useMemo(
-    () => ({ mode, preset, skin, toggleMode, setPreset, setSkin }),
-    [mode, preset, skin, toggleMode, setPreset, setSkin],
+    () => ({ mode, preset, skin, setMode, toggleMode, setPreset, setSkin }),
+    [mode, preset, skin, setMode, toggleMode, setPreset, setSkin],
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

@@ -101,6 +101,8 @@ export const AccountSectionHeader = ({
 
 interface AccountPanelProps {
   children: ReactNode;
+  /** Lets a link open the page at this panel (`/account/settings#appearance`). */
+  id?: string;
   sx?: SxProps<Theme>;
 }
 
@@ -121,6 +123,8 @@ const accountPanelSx = skinned(
 );
 
 /** Shared bordered surface for account forms, details, and preferences. */
-export const AccountPanel = ({ children, sx }: AccountPanelProps): JSX.Element => (
-  <Box sx={[accountPanelSx, ...(Array.isArray(sx) ? sx : [sx])]}>{children}</Box>
+export const AccountPanel = ({ children, id, sx }: AccountPanelProps): JSX.Element => (
+  <Box id={id} sx={[accountPanelSx, ...(Array.isArray(sx) ? sx : [sx])]}>
+    {children}
+  </Box>
 );

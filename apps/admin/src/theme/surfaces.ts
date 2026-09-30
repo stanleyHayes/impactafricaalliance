@@ -29,9 +29,9 @@
  * sets by hand still wins, which is why hand-built surfaces need the helpers.
  *
  * Two shell notes: `<main>` must use `surfaceSx.page`, or its solid
- * `background.default` hides the Glass and Clay washes on the body; and
- * ThemeToggle's reveal should pass the skin to `createAppTheme` so its circle
- * is the skin's canvas colour.
+ * `background.default` hides the Glass and Clay washes on the body; and the
+ * light/dark reveal (`theme/mode-reveal.ts`) animates snapshots of the real
+ * page, so it needs no skin colours of its own.
  *
  * WHICH HELPER FOR WHICH SURFACE
  *

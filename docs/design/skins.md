@@ -2,9 +2,15 @@
 
 The admin console has three independent looks: a colour **preset** (IAA, Aura, Ocean, Sunset),
 light or dark **mode**, and a **skin**. The preset decides the colours; the skin decides how surfaces
-and controls are built. Every skin works with every preset in both modes. People choose a skin in the
-theme picker in the top bar; it is stored per browser in `iaa.admin.theme.skin`. The marketing site
-has no skins.
+and controls are built. Every skin works with every preset in both modes. The marketing site has no
+skins.
+
+People choose them in two places that always agree: the top bar (the palette button's popover for
+the preset and skin, the sun and moon button for the mode) and the Appearance panel in Settings
+(`/account/settings#appearance`), which offers all three. Both draw the same pickers,
+`apps/admin/src/components/theme/AppearancePickers.tsx`, and both change the mode with the same
+circular reveal, `apps/admin/src/theme/mode-reveal.ts`. The choices are stored per browser in
+`iaa.admin.theme.preset`, `iaa.admin.theme.mode` and `iaa.admin.theme.skin`.
 
 ## The skins
 
@@ -55,8 +61,8 @@ gets `classic` untouched. Two checks hold this in place:
 - `theme.test.ts` compares Classic's palette, shape, shadows, typography and component overrides
   with a fixture captured before skins.
 - The visual baseline: Classic screenshots are compared with the baseline set and must stay within
-  0.05% of pixels on every screen. The theme picker is the one screen that differs, because it now
-  lists the skins.
+  0.05% of pixels on every screen. The theme picker and Settings are the screens that differ: the
+  picker lists the skins, and Settings has the Appearance panel.
 
 ## Accessibility guards
 

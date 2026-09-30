@@ -210,6 +210,9 @@ const AccountLayout = (): JSX.Element => {
                   textDecoration: 'none',
                   transition: 'background-color 160ms ease, color 160ms ease',
                   '& svg': { fontSize: 20 },
+                  // Shift+Tab back up a long account page scrolls a link to
+                  // the top edge; this keeps it clear of the fixed top bar.
+                  scrollMarginTop: '88px',
                 },
                 accountLinkSx,
               ]}

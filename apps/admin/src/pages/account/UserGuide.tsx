@@ -42,7 +42,7 @@ const SECTIONS: GuideSection[] = [
   },
   {
     title: 'Themes',
-    body: 'Use the palette icon in the top bar to switch brand themes (IAA, Aura, Ocean, Sunset). The sun / moon icon toggles between light and dark modes. Your choices are remembered on this device.',
+    body: 'Use the palette icon in the top bar to choose a theme (IAA, Aura, Ocean, Sunset) and a skin (Classic, Neumorphism, Glassmorphism, Claymorphism), and the sun / moon icon to switch between light and dark. Account → Settings → Appearance offers all three in one place. Your choices are remembered on this browser.',
   },
 ];
 
@@ -60,7 +60,12 @@ const UserGuide = (): JSX.Element => {
   return (
     <Container maxWidth="md" sx={{ py: 2 }}>
       <Stack spacing={3}>
-        <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} spacing={2}>
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          justifyContent="space-between"
+          alignItems={{ xs: 'flex-start', sm: 'center' }}
+          spacing={2}
+        >
           <Box>
             <Typography variant="h4" sx={{ fontWeight: 700 }}>
               User guide

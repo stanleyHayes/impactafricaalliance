@@ -3,83 +3,39 @@ import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';
 import GlobalStyles from '@mui/material/GlobalStyles';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
-import { useRef } from 'react';
-import { flushSync } from 'react-dom';
 
+import { revealModeChange, revealStyles } from '../../theme/mode-reveal';
 import { skinned } from '../../theme/surfaces';
 import { useThemeSettings } from '../../theme/ThemeContext';
 
 import { topBarActionSkin } from './top-bar-action';
 
 /**
- * The reveal itself. The browser snapshots the page before and after the
- * switch, and the new snapshot grows out of the button in a circle, so the
- * content stays visible throughout: nothing is painted over it.
- */
-const revealStyles = {
-  '@supports (view-transition-name: root)': {
-    '::view-transition-old(root), ::view-transition-new(root)': {
-      animation: 'none',
-      mixBlendMode: 'normal',
-    },
-    '::view-transition-new(root)': {
-      clipPath: 'circle(0% at var(--reveal-x, 50%) var(--reveal-y, 50%))',
-      animation: 'admin-theme-reveal 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards',
-    },
-    '@keyframes admin-theme-reveal': {
-      to: { clipPath: 'circle(150% at var(--reveal-x, 50%) var(--reveal-y, 50%))' },
-    },
-  },
-} as const;
-
-const prefersReducedMotion = (): boolean =>
-  typeof window.matchMedia === 'function' &&
-  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-/**
  * Circular-reveal dark / light toggle for the admin console, the same reveal
- * the website uses.
+ * the website uses. The reveal lives in theme/mode-reveal.ts, which the mode
+ * cards in Settings share, so both change mode the same way.
  *
  * This used to grow an opaque circle in the new background colour over the
  * whole console and only switch the theme underneath it halfway through, so
  * for most of the animation the page was a blank sheet of the new colour.
- * A view transition animates real snapshots of both themes instead. The switch
- * runs inside flushSync so React has painted the new theme before the browser
- * takes the "after" snapshot. Browsers without view transitions, and anyone
- * who asks their system for less motion, get an instant switch.
+ * A view transition animates real snapshots of both themes instead, growing
+ * out of this button.
  */
 export const ThemeToggle = (): JSX.Element => {
   const { mode, toggleMode } = useThemeSettings();
   const isDark = mode === 'dark';
-  const buttonRef = useRef<HTMLButtonElement>(null);
   const label = isDark ? 'Switch to light mode' : 'Switch to dark mode';
-
-  const handleClick = (): void => {
-    if (typeof document.startViewTransition !== 'function' || prefersReducedMotion()) {
-      toggleMode();
-      return;
-    }
-    const rect = buttonRef.current?.getBoundingClientRect();
-    if (rect) {
-      const root = document.documentElement.style;
-      root.setProperty('--reveal-x', `${rect.left + rect.width / 2}px`);
-      root.setProperty('--reveal-y', `${rect.top + rect.height / 2}px`);
-    }
-    document.startViewTransition(() => {
-      flushSync(toggleMode);
-    });
-  };
 
   return (
     <>
+      {/* The reveal's styles, once for the whole console: Settings' mode cards use them too. */}
       <GlobalStyles styles={revealStyles} />
       <Tooltip title={label}>
         <IconButton
           id="admin-theme-toggle"
-          ref={buttonRef}
           size="small"
           aria-label={label}
-          onClick={handleClick}
+          onClick={(event) => revealModeChange(event.currentTarget, toggleMode)}
           // A top-bar action: Classic keeps its tinted square; a skin makes it
           // one of its raised controls, like the theme picker beside it.
           sx={skinned(
