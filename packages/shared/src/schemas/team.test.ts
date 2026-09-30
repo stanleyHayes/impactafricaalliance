@@ -16,6 +16,12 @@ describe('ambassadors', () => {
     expect(TEAM_TIER_LABELS.ambassador).toBe('Ambassadors');
   });
 
+  it('keeps Ambassadors last, so every country director is listed above them', () => {
+    // Country directors sit in Functional Directors or Country & Regional
+    // Teams; whatever order the other groups take, Ambassadors come after both.
+    expect(TEAM_TIERS.at(-1)).toBe('ambassador');
+  });
+
   it('refuses an ambassador without a country, on the country field', () => {
     const result = teamMemberInputSchema.safeParse({ ...member, tier: 'ambassador' });
     expect(result.success).toBe(false);
