@@ -12,6 +12,7 @@ import {
   BANNER_TONES,
   sitePopupInputSchema,
   SITE_IMAGE_SLOTS,
+  siteImagePage,
   siteImageSlot,
   siteImageInputSchema,
   officeInputSchema,
@@ -43,13 +44,18 @@ import { ArticlePreview } from '../components/markdown/ArticlePreview';
 import { PageSettingPreview } from '../components/markdown/PageSettingPreview';
 import { ImageSlotPreview } from '../components/media/ImageSlotPreview';
 import { formatUtcDate } from '../lib/date';
-import {
-  CONTENT_STATUS_OPTIONS,
-  JOB_TYPE_OPTIONS,
-  TEAM_TIER_OPTIONS,
-} from '../lib/select-options';
+import { CONTENT_STATUS_OPTIONS, JOB_TYPE_OPTIONS, TEAM_TIER_OPTIONS } from '../lib/select-options';
 
 import type { ResourceConfig, SelectOption } from './types';
+
+/**
+ * The pages whose banner a published Page Settings hero image replaces, from
+ * the shared slot catalogue, so the field says which pages it affects.
+ */
+const HERO_IMAGE_PAGES = SITE_IMAGE_SLOTS.filter((slot) => slot.pageSetting).map(
+  (slot) => siteImagePage(slot.page).label,
+);
+const HERO_IMAGE_HELP = `Optional. Once published, it replaces this page's banner from Site images. Used on ${HERO_IMAGE_PAGES.slice(0, -1).join(', ')} and ${HERO_IMAGE_PAGES.at(-1) ?? ''}; other pages ignore it.`;
 
 /**
  * A banner tone shown as the banner, not as the word "warning".
@@ -164,8 +170,7 @@ const dateColumn = (field: string, headerName: string): GridColDef => ({
   field,
   headerName,
   width: 130,
-  renderCell: (params) =>
-    params.value ? formatUtcDate(String(params.value)) : '—',
+  renderCell: (params) => (params.value ? formatUtcDate(String(params.value)) : '—'),
 });
 
 const tagsColumn: GridColDef = {
@@ -197,7 +202,15 @@ export const RESOURCES: readonly ResourceConfig[] = [
       'Your published stories and drafts will live here. Write your first article to start building the Impact Africa Alliance newsroom.',
     createSchema: articleInputSchema,
     renderPreview: (values) => <ArticlePreview values={values} />,
-    defaultValues: { status: 'draft', tags: [], title: '', slug: '', excerpt: '', body: '', autoPostToSocial: false },
+    defaultValues: {
+      status: 'draft',
+      tags: [],
+      title: '',
+      slug: '',
+      excerpt: '',
+      body: '',
+      autoPostToSocial: false,
+    },
     fields: [
       { name: 'title', label: 'Title', type: 'text', wide: true },
       { name: 'slug', label: 'Slug', type: 'slug' },
@@ -206,7 +219,12 @@ export const RESOURCES: readonly ResourceConfig[] = [
       { name: 'body', label: 'Body', type: 'richtext', wide: true },
       { name: 'tags', label: 'Tags (comma separated)', type: 'tags', wide: true },
       { name: 'coverImage', label: 'Cover image', type: 'image', wide: true },
-      { name: 'autoPostToSocial', label: 'Auto-post to social media on publish', type: 'switch', wide: true },
+      {
+        name: 'autoPostToSocial',
+        label: 'Auto-post to social media on publish',
+        type: 'switch',
+        wide: true,
+      },
     ],
     columns: [
       mediaColumn('coverImage'),
@@ -330,7 +348,14 @@ export const RESOURCES: readonly ResourceConfig[] = [
       { name: 'message', label: 'Message', type: 'textarea', wide: true },
       { name: 'ctaLabel', label: 'Button label (optional)', type: 'text' },
       { name: 'ctaUrl', label: 'Button URL (optional)', type: 'text', wide: true },
-      { name: 'imageUrl', label: 'Image URL (optional)', type: 'text', wide: true },
+      {
+        name: 'imageUrl',
+        label: 'Picture (optional)',
+        type: 'imageUrl',
+        wide: true,
+        helperText:
+          'Shown over the drawn illustration. Leave empty to show the illustration alone.',
+      },
       { name: 'delaySeconds', label: 'Seconds before showing', type: 'number' },
       { name: 'startsAt', label: 'Starts (optional)', type: 'datetime' },
       { name: 'endsAt', label: 'Ends (optional)', type: 'datetime' },
@@ -426,7 +451,7 @@ export const RESOURCES: readonly ResourceConfig[] = [
     key: 'site-images',
     label: 'Site Images',
     singular: 'Site image',
-    description: 'Banners and artwork the site uses in fixed places.',
+    description: 'Every banner and picture the site shows in a fixed place, page by page.',
     icon: <ImageIcon />,
     createSchema: siteImageInputSchema,
     defaultValues: { isActive: true },
@@ -603,9 +628,11 @@ export const RESOURCES: readonly ResourceConfig[] = [
     label: 'Page Settings',
     singular: 'Page setting',
     icon: <ImageIcon />,
-    description: 'Manage SEO, hero, introduction, call-to-action copy, and imagery for static pages.',
+    description:
+      'Manage SEO, hero, introduction, call-to-action copy, and imagery for static pages.',
     emptyTitle: 'No page settings yet',
-    emptyDescription: 'Add a page record to manage its public copy, search metadata, calls to action, and hero image.',
+    emptyDescription:
+      'Add a page record to manage its public copy, search metadata, calls to action, and hero image.',
     createSchema: pageSettingInputSchema,
     renderPreview: (values) => <PageSettingPreview values={values} />,
     defaultValues: { pageKey: PAGE_KEYS[0], status: 'draft' },
@@ -617,16 +644,41 @@ export const RESOURCES: readonly ResourceConfig[] = [
         options: PAGE_KEYS.map((key) => ({ value: key, label: key.replace(/-/g, ' ') })),
         wide: true,
       },
-      { name: 'seoTitle', label: 'SEO title', type: 'text', wide: true, helperText: 'Keep this under 60 characters where possible.' },
-      { name: 'seoDescription', label: 'SEO description', type: 'textarea', wide: true, helperText: 'Aim for 150–160 characters.' },
+      {
+        name: 'seoTitle',
+        label: 'SEO title',
+        type: 'text',
+        wide: true,
+        helperText: 'Keep this under 60 characters where possible.',
+      },
+      {
+        name: 'seoDescription',
+        label: 'SEO description',
+        type: 'textarea',
+        wide: true,
+        helperText: 'Aim for 150–160 characters.',
+      },
       { name: 'heroEyebrow', label: 'Hero eyebrow', type: 'text' },
       { name: 'heroTitle', label: 'Hero title', type: 'text', wide: true },
       { name: 'heroSubtitle', label: 'Hero subtitle', type: 'textarea', wide: true },
-      { name: 'heroImage', label: 'Hero image', type: 'image', wide: true },
+      {
+        name: 'heroImage',
+        label: 'Hero image',
+        type: 'image',
+        wide: true,
+        helperText: HERO_IMAGE_HELP,
+      },
       { name: 'introEyebrow', label: 'Introduction eyebrow', type: 'text' },
       { name: 'introTitle', label: 'Introduction title', type: 'text', wide: true },
       { name: 'introBody', label: 'Introduction body', type: 'richtext', wide: true },
-      { name: 'bodyContent', label: 'Page body', type: 'richtext', wide: true, helperText: 'Markdown. On Privacy Policy, Cookie Policy, and Terms of Use this replaces the entire default page body when set.' },
+      {
+        name: 'bodyContent',
+        label: 'Page body',
+        type: 'richtext',
+        wide: true,
+        helperText:
+          'Markdown. On Privacy Policy, Cookie Policy, and Terms of Use this replaces the entire default page body when set.',
+      },
       { name: 'ctaTitle', label: 'Call to action title', type: 'text', wide: true },
       { name: 'ctaBody', label: 'Call to action body', type: 'textarea', wide: true },
       { name: 'ctaLabel', label: 'Call to action button', type: 'text' },

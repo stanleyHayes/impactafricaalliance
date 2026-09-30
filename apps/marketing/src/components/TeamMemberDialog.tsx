@@ -14,8 +14,10 @@ import Stack from '@mui/material/Stack';
 import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
+import { useState } from 'react';
 
-import { useSiteImage } from '../lib/site-images';
+import { cssUrl } from '../lib/image-fallback';
+import { useSlotBackground } from '../lib/site-images';
 
 export interface MemberSocial {
   field: string;
@@ -44,7 +46,11 @@ export const TeamMemberDialog = ({
   onClose,
 }: TeamMemberDialogProps): JSX.Element => {
   const reduceMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
-  const artwork = useSiteImage('team-artwork');
+  // The panel is at most about 500 pixels wide, so the artwork is asked for at 1080.
+  const artwork = useSlotBackground('team-artwork', { width: 1080 });
+  // A portrait that will not load gives way to the artwork, not a broken-image icon.
+  const [failedPhoto, setFailedPhoto] = useState<string>();
+  const photo = member.photo?.url !== failedPhoto ? member.photo?.url : undefined;
   const role = member.role.toLowerCase();
   const marks: [RegExp, SvgIconComponent][] = [
     [/president|founder|chief/, ExploreRoundedIcon],
@@ -113,20 +119,21 @@ export const TeamMemberDialog = ({
               width: { xs: '100%', sm: '40%' },
               height: { xs: 240, sm: '100%' },
               bgcolor: brandColors.deepForest,
-              ...(member.photo?.url
+              ...(photo
                 ? {}
                 : {
-                    backgroundImage: `url(${artwork})`,
+                    backgroundImage: cssUrl(artwork),
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                   }),
             }}
           >
-            {member.photo?.url ? (
+            {photo ? (
               <Box
                 component="img"
-                src={member.photo.url}
+                src={photo}
                 alt={member.name}
+                onError={() => setFailedPhoto(photo)}
                 sx={{
                   width: '100%',
                   height: '100%',

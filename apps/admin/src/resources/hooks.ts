@@ -14,10 +14,18 @@ import type { ResourceRow } from './types';
 
 const adminPath = (key: string): string => `/admin/${key}`;
 
-export const useResourceList = (key: string): UseQueryResult<Paginated<ResourceRow>> =>
+/**
+ * Every row of a resource. `enabled: false` skips the request, for a page
+ * that only reads a second resource when the person may see it.
+ */
+export const useResourceList = (
+  key: string,
+  { enabled = true }: { enabled?: boolean } = {},
+): UseQueryResult<Paginated<ResourceRow>> =>
   useQuery({
     queryKey: ['resource', key],
     queryFn: () => fetchAllPages<ResourceRow>(`${adminPath(key)}?pageSize=100`),
+    enabled,
   });
 
 export const useResourceDetail = (

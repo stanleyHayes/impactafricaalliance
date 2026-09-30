@@ -15,6 +15,12 @@ export type FieldType =
   | 'tags'
   | 'datetime'
   | 'image'
+  /**
+   * A picture stored as its address rather than as a media record, for
+   * fields older than the media library (a popup's image). Uploads and the
+   * library both work; only the address is saved.
+   */
+  | 'imageUrl'
   | 'file'
   | 'questions';
 

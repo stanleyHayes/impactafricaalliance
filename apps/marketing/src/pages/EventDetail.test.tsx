@@ -8,7 +8,11 @@ import { renderWithProviders } from '../test/test-utils';
 
 import EventDetail from './EventDetail';
 
-vi.mock('../lib/content-hooks', () => ({ useEvent: vi.fn() }));
+vi.mock('../lib/content-hooks', () => ({
+  useEvent: vi.fn(),
+  // No uploads: every banner and the link preview use the images shipped with the build.
+  useSiteImages: () => ({ data: undefined }),
+}));
 // The page's own layout is under test here, not the sections it hosts.
 vi.mock('../components/events/EventArtwork', () => ({
   EventArtwork: ({ src }: { src?: string }) => <img alt="" src={src} />,

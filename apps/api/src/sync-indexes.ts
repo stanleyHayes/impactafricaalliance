@@ -6,6 +6,7 @@ import mongoose from 'mongoose';
 import { CounterModel } from './common/counter.model.js';
 import { loadConfig } from './config/env.js';
 import { AuditEventModel } from './modules/audit/audit.model.js';
+import { SiteImageModel } from './modules/content/models/site-image.model.js';
 import { FormSubmissionModel } from './modules/forms/form-submission.model.js';
 import { FormVersionModel } from './modules/forms/form-version.model.js';
 import { FormModel } from './modules/forms/form.model.js';
@@ -49,6 +50,10 @@ const MODELS: readonly IndexedModel[] = [
   ImpactStoryModel,
   AuditEventModel,
   CounterModel,
+  // One record per site image slot. The collection is older than this
+  // script, and without the unique key a second upload for a slot could be
+  // saved beside the first rather than refused.
+  SiteImageModel,
 ];
 
 const args = process.argv.slice(2);

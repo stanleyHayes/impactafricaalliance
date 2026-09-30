@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { clearableDate } from './common.js';
 import { partialForUpdate } from './update.js';
+import { httpsUrlSchema } from './work.js';
 
 /**
  * Banners and popups as collections rather than one of each.
@@ -17,6 +18,20 @@ const optionalUrl = z
   .union([z.literal(''), z.string().url().max(500)])
   .optional()
   .transform((value) => (value === '' ? undefined : value));
+
+/**
+ * A popup's picture: an https address, or empty to show the drawn
+ * illustration alone.
+ *
+ * Emptied, it becomes null rather than undefined. JSON drops an undefined
+ * key, so removing the picture from a saved popup used to send nothing at
+ * all and the old picture stayed. https only, because it is drawn in an
+ * `<img>` on every page the popup opens over.
+ */
+const clearableImageUrl = z
+  .union([z.literal(''), z.null(), httpsUrlSchema.pipe(z.string().max(500))])
+  .optional()
+  .transform((value) => (value === '' ? null : value));
 
 const optionalShortText = z
   .string()
@@ -92,7 +107,7 @@ export const sitePopupInputSchema = z.object({
   message: z.string().max(600).trim(),
   ctaLabel: optionalShortText,
   ctaUrl: optionalUrl,
-  imageUrl: optionalUrl,
+  imageUrl: clearableImageUrl,
   /** Seconds to wait before showing, so it never lands mid-page-load. */
   delaySeconds: z.number().int().min(0).max(60).default(3),
 });
@@ -125,7 +140,8 @@ export interface SitePopup extends Scheduled {
   message: string;
   ctaLabel?: string;
   ctaUrl?: string;
-  imageUrl?: string;
+  /** Null once an editor removes the picture. */
+  imageUrl?: string | null;
   delaySeconds: number;
   createdAt: string;
 }
@@ -154,5 +170,6 @@ export const currentCampaign = <T extends Scheduled>(
     .filter((item) => isLive(item, now))
     .sort(
       (a, b) =>
-        b.priority - a.priority || new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+        b.priority - a.priority ||
+        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
     )[0];

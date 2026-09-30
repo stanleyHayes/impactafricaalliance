@@ -37,7 +37,8 @@ import { SectionReveal } from '../components/SectionReveal';
 import { Seo } from '../components/Seo';
 import { Watermark } from '../components/Watermark';
 import { usePageCopy, useReports } from '../lib/content-hooks';
-import { useSiteImage } from '../lib/site-images';
+import { cssUrl } from '../lib/image-fallback';
+import { useSlotBackground } from '../lib/site-images';
 
 /** Official UN SDG brand colours, used to make the goal grid recognisable. */
 const SDG_COLORS: Record<number, string> = {
@@ -575,52 +576,52 @@ const AgendaSection = (): JSX.Element => (
 );
 
 export const VoicesBand = (): JSX.Element => {
-  const banner = useSiteImage('impact-voices-band');
+  const banner = useSlotBackground('impact-voices-band');
   return (
-  <Box sx={{ position: 'relative', overflow: 'hidden', color: 'common.white' }}>
-    <Box
-      sx={{
-        position: 'absolute',
-        inset: 0,
-        backgroundImage: `url(${banner})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-      }}
-    />
-    <Box sx={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(13,40,26,0.78)' }} />
-    <Container sx={{ position: 'relative', py: { xs: 8, md: 12 }, textAlign: 'center' }}>
-      <Typography
-        variant="overline"
-        sx={{ color: 'secondary.light', fontWeight: 700, letterSpacing: 2 }}
-      >
-        Voices of Change
-      </Typography>
-      <Typography
-        variant="h3"
+    <Box sx={{ position: 'relative', overflow: 'hidden', color: 'common.white' }}>
+      <Box
         sx={{
-          mt: 1,
-          maxWidth: 760,
-          mx: 'auto',
-          fontWeight: 800,
-          fontSize: { xs: '1.7rem', md: '2.6rem' },
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: cssUrl(banner),
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
         }}
-      >
-        Behind every statistic is a person whose life has changed.
-      </Typography>
-      <Button
-        component={RouterLink}
-        to="/impact/stories"
-        variant="contained"
-        color="secondary"
-        size="large"
-        endIcon={<EastIcon />}
-        sx={{ mt: 4, fontWeight: 700 }}
-      >
-        Read their stories
-      </Button>
-    </Container>
-  </Box>
-);
+      />
+      <Box sx={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(13,40,26,0.78)' }} />
+      <Container sx={{ position: 'relative', py: { xs: 8, md: 12 }, textAlign: 'center' }}>
+        <Typography
+          variant="overline"
+          sx={{ color: 'secondary.light', fontWeight: 700, letterSpacing: 2 }}
+        >
+          Voices of Change
+        </Typography>
+        <Typography
+          variant="h3"
+          sx={{
+            mt: 1,
+            maxWidth: 760,
+            mx: 'auto',
+            fontWeight: 800,
+            fontSize: { xs: '1.7rem', md: '2.6rem' },
+          }}
+        >
+          Behind every statistic is a person whose life has changed.
+        </Typography>
+        <Button
+          component={RouterLink}
+          to="/impact/stories"
+          variant="contained"
+          color="secondary"
+          size="large"
+          endIcon={<EastIcon />}
+          sx={{ mt: 4, fontWeight: 700 }}
+        >
+          Read their stories
+        </Button>
+      </Container>
+    </Box>
+  );
 };
 
 const REPORT_PROMISES = [
@@ -967,7 +968,6 @@ export const ReportsSection = (): JSX.Element => {
 };
 
 const Impact = (): JSX.Element => {
-  const impactBanner = useSiteImage('impact-banner');
   const copy = usePageCopy('impact', {
     seoTitle: 'Our Impact — Transforming Lives Across West Africa',
     seoDescription:
@@ -983,7 +983,8 @@ const Impact = (): JSX.Element => {
         eyebrow={copy.heroEyebrow}
         title={copy.heroTitle}
         subtitle={copy.heroSubtitle}
-        image={copy.heroImageUrl ?? impactBanner}
+        image={copy.heroImageUrl}
+        slot="impact-banner"
       />
       <ImpactNumbersSection />
       <ProgrammeGallery />

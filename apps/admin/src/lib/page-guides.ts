@@ -169,6 +169,16 @@ export const pageGuides: Record<string, PageGuide> = {
       'Move it on with a status change when the decision is made.',
     ],
   },
+  'site-images': {
+    title: 'Site images',
+    steps: [
+      'Every banner and picture the site shows in a fixed place is listed here, page by page. Default means the site still shows the picture it shipped with.',
+      'Replace uploads a picture or reuses one from the media library. The preview shows it in the shape the site crops it to, and the card gives the best size.',
+      'Edit alt text changes what a screen reader hears. Banners behind text are decorative and need none.',
+      'Reset to default brings the original back. Your upload stays in the media library.',
+      'Shared upload means a banner still shows the Default page banner until it has its own. A published Page Settings hero image is shown instead of that page’s banner.',
+    ],
+  },
   'impact-stories': {
     title: 'Impact stories',
     steps: [

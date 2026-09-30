@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { resourceErrorStep, resourceFormSteps, usesResourceFormPage } from './form-steps';
+import { findResource } from './registry';
 import type { FieldConfig } from './types';
 
 const fields = (names: string[]): FieldConfig[] =>
@@ -48,5 +49,20 @@ describe('resource form steps', () => {
     });
     expect(resourceErrorStep(steps, ['coverImage', 'body'])).toBe(1);
     expect(resourceErrorStep(steps, ['unknown'])).toBe(0);
+  });
+});
+
+describe('popup steps', () => {
+  it('names each step for what it holds, with the picture beside its timing', () => {
+    const popups = findResource('popups');
+    if (!popups) throw new Error('No popups resource');
+    const steps = resourceFormSteps(popups);
+    expect(steps.map((step) => step.label)).toEqual([
+      'Message',
+      'Picture and timing',
+      'Publishing',
+      'Review',
+    ]);
+    expect(steps[1]?.fields.map((field) => field.name)).toContain('imageUrl');
   });
 });

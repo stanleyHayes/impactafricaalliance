@@ -23,6 +23,7 @@ import type {
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 
 import { apiGet } from './api-client';
+import { cacheSiteImages, readCachedSiteImages } from './site-image-cache';
 
 const page = <T>(resource: string, params = ''): Promise<Paginated<T>> =>
   apiGet<Paginated<T>>(`/${resource}${params}`);
@@ -109,10 +110,25 @@ export const usePublicReach = (days = 30): UseQueryResult<PublicReachSummary> =>
     staleTime: 5 * 60_000,
   });
 
+/**
+ * Every published site image, in one request shared by the whole page.
+ * The API's page limit is 100, well above the number of slots, so one page
+ * always holds all of them.
+ *
+ * Starts from the list this browser saw last time, so a replaced banner is
+ * drawn straight away instead of after the shipped one. That start counts as
+ * already stale, so the list is fetched at once and any change since wins.
+ */
 export const useSiteImages = (): UseQueryResult<Paginated<SiteImage>> =>
   useQuery({
     queryKey: ['site-images'],
-    queryFn: () => page<SiteImage>('site-images', '?pageSize=50'),
+    queryFn: async () => {
+      const images = await page<SiteImage>('site-images', '?pageSize=100');
+      cacheSiteImages(images);
+      return images;
+    },
+    initialData: readCachedSiteImages,
+    initialDataUpdatedAt: 0,
     staleTime: 5 * 60 * 1000,
   });
 

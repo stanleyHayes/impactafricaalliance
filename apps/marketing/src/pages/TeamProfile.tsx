@@ -9,7 +9,6 @@ import PublicRoundedIcon from '@mui/icons-material/PublicRounded';
 import { Box, Button, Container, Divider, Typography } from '@mui/material';
 import Stack from '@mui/material/Stack';
 import { alpha } from '@mui/material/styles';
-import { useState } from 'react';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 
 import { LinkifiedText } from '../components/LinkifiedText';
@@ -17,8 +16,10 @@ import { SectionReveal } from '../components/SectionReveal';
 import { Seo } from '../components/Seo';
 import { PageSkeleton } from '../components/skeletons';
 import { ApiError } from '../lib/api-client';
-import { useTeamMember , useSiteSettings } from '../lib/content-hooks';
-import { useSiteImage } from '../lib/site-images';
+import { responsiveImage } from '../lib/cloudinary-image';
+import { useTeamMember, useSiteSettings } from '../lib/content-hooks';
+import { useImageFallback } from '../lib/image-fallback';
+import { shippedSiteImage, useSiteImage } from '../lib/site-images';
 import { memberInitials, memberSocials } from '../lib/team-profile';
 
 const ROLE_MARKS = [
@@ -29,19 +30,24 @@ const ROLE_MARKS = [
 ];
 
 const Portrait = ({ member }: { member: TeamMember }): JSX.Element => {
-  const [failedUrl, setFailedUrl] = useState<string>();
   const artwork = useSiteImage('team-artwork');
   const photo = member.photo?.url;
-  const showPhoto = Boolean(photo && failedUrl !== photo);
+  // The portrait, then the dashboard's artwork, then the shipped artwork:
+  // whichever loads first, so neither a lost portrait nor a lost upload
+  // shows as a broken image.
+  const picture = useImageFallback([photo, artwork, shippedSiteImage('team-artwork').src]);
+  const showPhoto = Boolean(photo) && picture.src === photo;
   return (
     <Box sx={{ position: 'relative', overflow: 'hidden', borderRadius: 4, bgcolor: '#183E33' }}>
       <Box
         component="img"
-        src={showPhoto ? photo : artwork}
+        {...responsiveImage(picture.src, {
+          xs: '100vw',
+          md: '40vw',
+          lg: '460px',
+        })}
         alt={showPhoto ? member.name : ''}
-        onError={() => {
-          if (showPhoto) setFailedUrl(photo);
-        }}
+        onError={picture.onError}
         sx={{
           display: 'block',
           width: '100%',

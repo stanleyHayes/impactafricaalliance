@@ -24,6 +24,7 @@ import {
   getArticleDate,
 } from '../lib/article-utils';
 import { usePillarImages } from '../lib/content-hooks';
+import { cssUrl } from '../lib/image-fallback';
 
 export const PillarCard = ({ pillar }: { pillar: PillarDefinition }): JSX.Element => {
   const Icon = programIcon(pillar.key);
@@ -78,7 +79,7 @@ export const PillarCard = ({ pillar }: { pillar: PillarDefinition }): JSX.Elemen
             sx={{
               position: 'absolute',
               inset: 0,
-              backgroundImage: `url(${pillarImageUrl})`,
+              backgroundImage: cssUrl(pillarImageUrl),
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               transition: 'transform .4s ease',
@@ -167,13 +168,20 @@ export const StoryCard = ({
         left: 0,
         right: 0,
         height: 3,
-        background: (theme) => `linear-gradient(90deg, ${theme.palette.secondary.main}, ${theme.palette.primary.main})`,
+        background: (theme) =>
+          `linear-gradient(90deg, ${theme.palette.secondary.main}, ${theme.palette.primary.main})`,
       },
     }}
   >
     <CardContent sx={{ p: 3.5, display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
       <FormatQuoteRoundedIcon
-        sx={{ fontSize: 44, color: 'secondary.light', opacity: 0.35, transform: 'scaleX(-1)', mb: -1 }}
+        sx={{
+          fontSize: 44,
+          color: 'secondary.light',
+          opacity: 0.35,
+          transform: 'scaleX(-1)',
+          mb: -1,
+        }}
       />
       <Typography
         sx={{
@@ -191,7 +199,13 @@ export const StoryCard = ({
       <Stack direction="row" spacing={2} alignItems="center">
         <Avatar
           src={photoUrl}
-          sx={{ width: 52, height: 52, bgcolor: 'primary.main', color: 'primary.contrastText', fontWeight: 700 }}
+          sx={{
+            width: 52,
+            height: 52,
+            bgcolor: 'primary.main',
+            color: 'primary.contrastText',
+            fontWeight: 700,
+          }}
         >
           {name.charAt(0)}
         </Avatar>
@@ -256,8 +270,7 @@ const ARTICLE_CARD_STYLES = {
 } as const;
 
 type ArticleCardStyle =
-  | (typeof ARTICLE_CARD_STYLES)['featured']
-  | (typeof ARTICLE_CARD_STYLES)['standard'];
+  (typeof ARTICLE_CARD_STYLES)['featured'] | (typeof ARTICLE_CARD_STYLES)['standard'];
 
 const ArticleArtwork = ({
   article,
@@ -477,7 +490,8 @@ export const ArticleCard = ({ article, featured = false }: ArticleCardProps): JS
         bgcolor: 'background.paper',
         transition: 'transform 240ms ease, border-color 240ms ease, box-shadow 240ms ease',
         '&:hover': {
-          borderColor: (theme) => (theme.palette.mode === 'light' ? 'rgba(0,0,0,0.22)' : 'rgba(255,255,255,0.22)'),
+          borderColor: (theme) =>
+            theme.palette.mode === 'light' ? 'rgba(0,0,0,0.22)' : 'rgba(255,255,255,0.22)',
           boxShadow: '0 22px 48px -34px rgba(0,0,0,0.18)',
           transform: 'translateY(-5px)',
         },

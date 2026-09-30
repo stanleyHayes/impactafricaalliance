@@ -12,6 +12,7 @@ import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
 import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
+import { preload } from 'react-dom';
 import { Link as RouterLink } from 'react-router-dom';
 
 import { PageCta } from '../components/PageCta';
@@ -20,7 +21,8 @@ import { Section } from '../components/Section';
 import { SectionReveal } from '../components/SectionReveal';
 import { Seo } from '../components/Seo';
 import { usePageCopy } from '../lib/content-hooks';
-import { useSiteImage } from '../lib/site-images';
+import { cssUrl } from '../lib/image-fallback';
+import { useSlotBackground } from '../lib/site-images';
 
 const RESOURCE_CARDS = [
   {
@@ -152,94 +154,100 @@ const ResourceCard = ({
 
 /** Resources hub: blog, reports, media kit, newsletters, and events. */
 const Resources = (): JSX.Element => {
-  const banner = useSiteImage('resources-banner');
+  // Only the Site images slot sets this banner. A Page Settings hero image
+  // for Resources has never been shown here, and honouring one now could
+  // change the live page without anyone touching it.
+  const banner = useSlotBackground('resources-banner');
+  preload(banner, { as: 'image', fetchPriority: 'high' });
   const copy = usePageCopy('resources', {
     seoTitle: 'Resources',
-    seoDescription: 'Explore IAA resources: blog articles, research and reports, media kit, newsletters, and upcoming events.',
+    seoDescription:
+      'Explore IAA resources: blog articles, research and reports, media kit, newsletters, and upcoming events.',
     heroEyebrow: 'Resources',
     heroTitle: 'Knowledge, stories, and tools for impact.',
-    heroSubtitle: 'Explore our latest thinking, download reports, access media assets, and stay up to date with events across the Alliance.',
+    heroSubtitle:
+      'Explore our latest thinking, download reports, access media assets, and stay up to date with events across the Alliance.',
   });
 
   return (
-  <>
-    <Seo title={copy.seoTitle} description={copy.seoDescription} />
-    <Box
-      component="header"
-      sx={{
-        position: 'relative',
-        overflow: 'hidden',
-        color: 'common.white',
-        py: { xs: 8, md: 12 },
-        backgroundImage: `linear-gradient(120deg, rgba(10,15,13,0.94) 8%, rgba(11,61,46,0.82) 52%, rgba(10,15,13,0.72) 100%), url(${banner})`,
-        backgroundPosition: 'center',
-        backgroundSize: 'cover',
-      }}
-    >
+    <>
+      <Seo title={copy.seoTitle} description={copy.seoDescription} />
       <Box
-        aria-hidden
+        component="header"
         sx={{
-          position: 'absolute',
-          right: { xs: -120, md: -60 },
-          bottom: { xs: -160, md: -120 },
-          width: { xs: 300, md: 420 },
-          height: { xs: 300, md: 420 },
-          border: `1px solid ${alpha(brandColors.mint, 0.15)}`,
-          borderRadius: '50%',
+          position: 'relative',
+          overflow: 'hidden',
+          color: 'common.white',
+          py: { xs: 8, md: 12 },
+          backgroundImage: `linear-gradient(120deg, rgba(10,15,13,0.94) 8%, rgba(11,61,46,0.82) 52%, rgba(10,15,13,0.72) 100%), ${cssUrl(banner)}`,
+          backgroundPosition: 'center',
+          backgroundSize: 'cover',
         }}
-      />
-      <Container sx={{ position: 'relative', zIndex: 1 }}>
-        <Stack direction="row" spacing={1.25} alignItems="center" sx={{ mb: 2.5 }}>
-          <Box sx={{ width: 38, height: 2, bgcolor: 'primary.main' }} />
+      >
+        <Box
+          aria-hidden
+          sx={{
+            position: 'absolute',
+            right: { xs: -120, md: -60 },
+            bottom: { xs: -160, md: -120 },
+            width: { xs: 300, md: 420 },
+            height: { xs: 300, md: 420 },
+            border: `1px solid ${alpha(brandColors.mint, 0.15)}`,
+            borderRadius: '50%',
+          }}
+        />
+        <Container sx={{ position: 'relative', zIndex: 1 }}>
+          <Stack direction="row" spacing={1.25} alignItems="center" sx={{ mb: 2.5 }}>
+            <Box sx={{ width: 38, height: 2, bgcolor: 'primary.main' }} />
+            <Typography
+              variant="overline"
+              sx={{ color: 'primary.main', fontWeight: 750, letterSpacing: 2 }}
+            >
+              {copy.heroEyebrow}
+            </Typography>
+          </Stack>
           <Typography
-            variant="overline"
-            sx={{ color: 'primary.main', fontWeight: 750, letterSpacing: 2 }}
+            variant="h1"
+            sx={{
+              maxWidth: 760,
+              fontSize: { xs: '2.6rem', sm: '3.25rem', md: '4rem' },
+              lineHeight: 1.05,
+            }}
           >
-            {copy.heroEyebrow}
+            {copy.heroTitle}
           </Typography>
-        </Stack>
-        <Typography
-          variant="h1"
-          sx={{
-            maxWidth: 760,
-            fontSize: { xs: '2.6rem', sm: '3.25rem', md: '4rem' },
-            lineHeight: 1.05,
-          }}
-        >
-          {copy.heroTitle}
-        </Typography>
-        <Typography
-          sx={{
-            maxWidth: 650,
-            mt: 3,
-            color: 'rgba(255,255,255,0.76)',
-            fontSize: { xs: '1rem', md: '1.14rem' },
-            lineHeight: 1.75,
-          }}
-        >
-          {copy.heroSubtitle}
-        </Typography>
-      </Container>
-    </Box>
+          <Typography
+            sx={{
+              maxWidth: 650,
+              mt: 3,
+              color: 'rgba(255,255,255,0.76)',
+              fontSize: { xs: '1rem', md: '1.14rem' },
+              lineHeight: 1.75,
+            }}
+          >
+            {copy.heroSubtitle}
+          </Typography>
+        </Container>
+      </Box>
 
-    <Section watermark="contours" watermarkPosition="top-left">
-      <Grid container spacing={3}>
-        {RESOURCE_CARDS.map((card, index) => (
-          <Grid key={card.title} size={{ xs: 12, sm: 6, md: 4 }} sx={{ display: 'flex' }}>
-            <SectionReveal fillHeight>
-              <ResourceCard card={card} accent={CARD_ACCENTS[index % CARD_ACCENTS.length]!} />
-            </SectionReveal>
-          </Grid>
-        ))}
-      </Grid>
-    </Section>
-    {/*
+      <Section watermark="contours" watermarkPosition="top-left">
+        <Grid container spacing={3}>
+          {RESOURCE_CARDS.map((card, index) => (
+            <Grid key={card.title} size={{ xs: 12, sm: 6, md: 4 }} sx={{ display: 'flex' }}>
+              <SectionReveal fillHeight>
+                <ResourceCard card={card} accent={CARD_ACCENTS[index % CARD_ACCENTS.length]!} />
+              </SectionReveal>
+            </Grid>
+          ))}
+        </Grid>
+      </Section>
+      {/*
       Reach sits with the resources because it is one: the thing a partner or
       funder asks for when they ask what the work adds up to.
     */}
-    <ReachSection />
-    <PageCta copy={copy} />
-  </>
+      <ReachSection />
+      <PageCta copy={copy} />
+    </>
   );
 };
 

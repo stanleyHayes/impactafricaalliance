@@ -19,6 +19,7 @@ import { SectionReveal } from '../components/SectionReveal';
 import { Seo } from '../components/Seo';
 import { programIcon } from '../content/icons';
 import { PROGRAMS, findProgram } from '../content/programs';
+import { cssUrl } from '../lib/image-fallback';
 import { usePillarImage } from '../lib/site-images';
 
 const OtherInitiatives = ({ currentSlug }: { currentSlug: string }): JSX.Element => {
@@ -55,7 +56,7 @@ const OtherInitiatives = ({ currentSlug }: { currentSlug: string }): JSX.Element
                       sx={{
                         position: 'absolute',
                         inset: 0,
-                        backgroundImage: `url(${pillarImage(program.slug)})`,
+                        backgroundImage: cssUrl(pillarImage(program.slug)),
                         backgroundSize: 'cover',
                         backgroundPosition: 'center',
                         transition: 'transform .4s ease',

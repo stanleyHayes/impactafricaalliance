@@ -81,7 +81,8 @@ const Reviews = (): JSX.Element => {
         eyebrow={copy.heroEyebrow}
         title={copy.heroTitle}
         subtitle={copy.heroSubtitle}
-        {...(copy.heroImageUrl ? { image: copy.heroImageUrl } : {})}
+        image={copy.heroImageUrl}
+        slot="reviews-hero"
       />
       <Section bgcolor="background.default">
         {preview && (

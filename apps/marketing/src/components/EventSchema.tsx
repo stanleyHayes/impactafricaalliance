@@ -1,7 +1,7 @@
 import { ORG, type Event } from '@iaa/shared';
 import { useEffect } from 'react';
 
-import { IMAGES } from '../content/images';
+import { absoluteSiteImageUrl, useSiteImage } from '../lib/site-images';
 
 const SCRIPT_ID = 'iaa-event-schema';
 
@@ -18,10 +18,12 @@ const SCRIPT_ID = 'iaa-event-schema';
  * a physical `location` on an online event as an error.
  */
 export const EventSchema = ({ event }: { event: Event }): null => {
+  // The home hero stands in for an event without artwork, as a full address.
+  const fallbackImage = absoluteSiteImageUrl(useSiteImage('home-hero'));
   useEffect(() => {
     const isOnline = /online|virtual|webinar|zoom/i.test(event.location);
     const url = `${ORG.website}/events/${event.id}`;
-    const image = event.image?.url ?? `${ORG.website}${IMAGES.hero}`;
+    const image = event.image?.url ?? fallbackImage;
 
     const schema: Record<string, unknown> = {
       '@context': 'https://schema.org',
@@ -40,7 +42,11 @@ export const EventSchema = ({ event }: { event: Event }): null => {
       image: [image],
       url,
       performer: event.host
-        ? { '@type': 'Person', name: event.host, ...(event.hostTitle ? { jobTitle: event.hostTitle } : {}) }
+        ? {
+            '@type': 'Person',
+            name: event.host,
+            ...(event.hostTitle ? { jobTitle: event.hostTitle } : {}),
+          }
         : { '@type': 'Organization', name: ORG.name, url: ORG.website },
       organizer: { '@type': 'Organization', name: ORG.name, url: ORG.website },
       isAccessibleForFree: /free/i.test(event.admission ?? ''),
@@ -67,7 +73,7 @@ export const EventSchema = ({ event }: { event: Event }): null => {
     return () => {
       document.getElementById(SCRIPT_ID)?.remove();
     };
-  }, [event]);
+  }, [event, fallbackImage]);
 
   return null;
 };

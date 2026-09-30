@@ -407,6 +407,7 @@ const ImpactStories = (): JSX.Element => {
         eyebrow="Our impact"
         title="Impact stories"
         subtitle="The people behind the numbers, and what the work changed for them."
+        slot="impact-stories-hero"
       />
       <Box component="section" aria-labelledby="latest-stories-title" sx={{ py: { xs: 5, md: 8 } }}>
         <Container>

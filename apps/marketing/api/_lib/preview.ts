@@ -16,7 +16,15 @@ export const API_URL = (
 ).replace(/\/$/, '');
 
 export const SITE_URL = 'https://www.impactafricaalliance.org';
+/** The brand card shipped with the site: the preview when nothing better is known. */
 export const FALLBACK_IMAGE = `${SITE_URL}/brand/og-image.png`;
+
+/**
+ * The site image slot holding the default link preview, as named in the
+ * shared catalogue (`SITE_IMAGE_SLOTS` in `@iaa/shared`). Written out rather
+ * than imported so these functions stay free of workspace packages.
+ */
+export const SHARE_IMAGE_SLOT = 'social-share-default';
 
 /**
  * How long a crawler waits for the API or the shell. The API sleeps when idle
@@ -118,6 +126,39 @@ export const fetchRecord = async <T>(path: string): Promise<T | null> => {
   } catch {
     return null;
   }
+};
+
+/** A Cloudinary upload at share-card size rather than the full original. */
+export const shareImage = (url: string | undefined): string => {
+  if (!url?.startsWith('https://')) return FALLBACK_IMAGE;
+  return url.replace(
+    /^(https:\/\/res\.cloudinary\.com\/[^/]+\/image\/upload\/)(?!s--)/,
+    '$1f_auto,q_auto,c_limit,w_1200/',
+  );
+};
+
+interface SiteImagePreview {
+  key?: string;
+  isActive?: boolean;
+  image?: { url?: string };
+}
+
+/**
+ * The default link preview set in the dashboard, or the brand card.
+ *
+ * Asked for only when a record has no picture of its own. The API has just
+ * answered for the record, so it is awake and this is one quick request; when
+ * it fails anyway, or nothing has been uploaded, the brand card is used, as it
+ * was before the slot existed.
+ */
+export const fetchDefaultShareImage = async (): Promise<string> => {
+  const list = await fetchRecord<{ items?: unknown }>('/site-images?pageSize=100');
+  const published = list?.items;
+  const items: SiteImagePreview[] = Array.isArray(published) ? published : [];
+  const upload = items.find(
+    (item) => item.key === SHARE_IMAGE_SLOT && item.isActive !== false && item.image?.url,
+  );
+  return shareImage(upload?.image?.url);
 };
 
 /** One sentence-ish summary; crawlers truncate well past this anyway. */

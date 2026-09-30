@@ -24,7 +24,6 @@ import { ParallaxShowcase } from '../components/ParallaxShowcase';
 import { Section } from '../components/Section';
 import { Seo } from '../components/Seo';
 import { CardGridSkeleton } from '../components/skeletons';
-import { IMAGES } from '../content/images';
 import { DonateForm } from '../features/donate/DonateForm';
 import { PartnerForm } from '../features/forms/PartnerForm';
 import { VolunteerForm } from '../features/forms/VolunteerForm';
@@ -265,7 +264,8 @@ const GetInvolved = (): JSX.Element => {
         eyebrow={copy.heroEyebrow}
         title={copy.heroTitle}
         subtitle={copy.heroSubtitle}
-        image={copy.heroImageUrl ?? IMAGES.programs['youth-inclusion']}
+        image={copy.heroImageUrl}
+        slot="get-involved-hero"
         watermark="africa"
       />
 
@@ -275,26 +275,17 @@ const GetInvolved = (): JSX.Element => {
         subtitle="Partner with us and a programme reaches a new city. Mentor and a young person gets the guidance no course provides. Give, and a place on a cohort is paid for."
         panels={[
           {
-            ...showcaseImage(
-              'get-involved-partner',
-              'AI-generated illustration of colleagues planning an education partnership',
-            ),
+            ...showcaseImage('get-involved-partner'),
             caption: 'Partner',
             drift: 0.2,
           },
           {
-            ...showcaseImage(
-              'get-involved-mentor',
-              'AI-generated illustration of a mentor guiding an adult learner at a laptop',
-            ),
+            ...showcaseImage('get-involved-mentor'),
             caption: 'Mentor',
             drift: 0.34,
           },
           {
-            ...showcaseImage(
-              'get-involved-give',
-              'AI-generated illustration of a learner receiving a laptop from an education coordinator',
-            ),
+            ...showcaseImage('get-involved-give'),
             caption: 'Give',
             drift: 0.26,
           },

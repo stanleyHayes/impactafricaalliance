@@ -1,12 +1,13 @@
 /**
- * Marketing photography catalogue. Web-optimised assets in /public/images,
- * generated as documentary-style imagery aligned with the brand brief
- * (authentic African youth, women, and communities). Swap for owned/Cloudinary
- * assets in production via this one module.
+ * The programme photographs shipped with the build: what Pillar Images falls
+ * back to until a photograph is uploaded for a programme.
+ *
+ * Every other fixed picture on the site — banners, the home hero, the
+ * placeholder artwork — is a slot in the shared catalogue (`SITE_IMAGE_SLOTS`
+ * in `@iaa/shared`), read through `lib/site-images` and replaced from the
+ * dashboard's Site images page. Add new fixed pictures there, not here.
  */
 export const IMAGES = {
-  teamArtwork: '/images/team-alliance-artwork.webp',
-  hero: '/images/hero.webp',
   community: '/images/community.webp',
   programs: {
     'digital-skills': '/images/program-digital-skills.webp',

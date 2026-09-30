@@ -1,13 +1,15 @@
-import type { TeamMember } from '@iaa/shared';
+import { siteImageSlot, type TeamMember } from '@iaa/shared';
 import { fireEvent, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { IMAGES } from '../content/images';
 import { ApiError } from '../lib/api-client';
 import { useTeamMember } from '../lib/content-hooks';
 import { renderWithProviders } from '../test/test-utils';
 
 import TeamProfile from './TeamProfile';
+
+/** The placeholder shipped with the build, shown while the dashboard has none. */
+const TEAM_ARTWORK = siteImageSlot('team-artwork')?.fallback;
 
 vi.mock('../lib/content-hooks', () => ({
   useTeamMember: vi.fn(),
@@ -65,13 +67,13 @@ describe('TeamProfile', () => {
     );
     const portrait = screen.getByRole('img', { name: member.name });
     fireEvent.error(portrait);
-    expect(portrait).toHaveAttribute('src', IMAGES.teamArtwork);
+    expect(portrait).toHaveAttribute('src', TEAM_ARTWORK);
   });
 
   it('uses the existing artwork and a clear message when no portrait or bio is provided', () => {
     query({ data: { ...member, photo: undefined, bio: undefined } });
     const { container } = renderWithProviders(<TeamProfile />);
-    expect(container.querySelector('img')).toHaveAttribute('src', IMAGES.teamArtwork);
+    expect(container.querySelector('img')).toHaveAttribute('src', TEAM_ARTWORK);
     expect(screen.getByText(/Their full biography will be shared here soon/)).toBeInTheDocument();
   });
 

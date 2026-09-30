@@ -1,7 +1,8 @@
 import { ORG, type PublicImpactStory } from '@iaa/shared';
 import { useEffect } from 'react';
 
-import { absoluteImageUrl, storySeo, storyUrl } from '../features/impact-stories/story-utils';
+import { storySeo, storyUrl } from '../features/impact-stories/story-utils';
+import { useDefaultShareImage } from '../lib/site-images';
 
 const SCRIPT_ID = 'iaa-story-schema';
 
@@ -16,6 +17,7 @@ const SCRIPT_ID = 'iaa-story-schema';
  * organisation rather than for the member of staff who wrote them.
  */
 export const StorySchema = ({ story }: { story: PublicImpactStory }): null => {
+  const shareDefault = useDefaultShareImage().url;
   useEffect(() => {
     const seo = storySeo(story);
     const url = storyUrl(story.slug);
@@ -30,7 +32,7 @@ export const StorySchema = ({ story }: { story: PublicImpactStory }): null => {
       '@type': 'Article',
       headline: story.title.slice(0, 110),
       description: seo.description,
-      image: [seo.image ?? absoluteImageUrl('/brand/og-image.png')],
+      image: [seo.image ?? shareDefault],
       datePublished: story.publishedAt,
       dateModified: story.updatedAt,
       author: organisation,
@@ -53,7 +55,7 @@ export const StorySchema = ({ story }: { story: PublicImpactStory }): null => {
     return () => {
       document.getElementById(SCRIPT_ID)?.remove();
     };
-  }, [story]);
+  }, [story, shareDefault]);
 
   return null;
 };

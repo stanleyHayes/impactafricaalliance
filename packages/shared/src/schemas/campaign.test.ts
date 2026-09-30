@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { announcementInputSchema, currentCampaign, isLive } from './campaign.js';
+import {
+  announcementInputSchema,
+  currentCampaign,
+  isLive,
+  sitePopupInputSchema,
+  sitePopupUpdateSchema,
+} from './campaign.js';
 
 const at = (iso: string): Date => new Date(iso);
 const now = at('2026-09-08T12:00:00Z');
@@ -95,5 +101,27 @@ describe('what a banner will accept', () => {
     });
 
     expect(result.success).toBe(false);
+  });
+});
+
+describe('a popup’s picture', () => {
+  const popup = { name: 'Launch', title: 'We are live', message: 'Come and see.' };
+  const picture = 'https://res.cloudinary.com/demo/image/upload/v1/popup.jpg';
+
+  it('keeps an https picture', () => {
+    expect(sitePopupInputSchema.parse({ ...popup, imageUrl: picture }).imageUrl).toBe(picture);
+  });
+
+  it('is removed by emptying it, rather than silently kept', () => {
+    // JSON drops an undefined key, so only null reaches the database as "no picture".
+    expect(sitePopupUpdateSchema.parse({ imageUrl: '' })).toEqual({ imageUrl: null });
+    expect(sitePopupUpdateSchema.parse({ imageUrl: null })).toEqual({ imageUrl: null });
+    expect(sitePopupUpdateSchema.parse({})).toEqual({});
+  });
+
+  it('refuses an address that is not https', () => {
+    for (const imageUrl of ['http://example.org/a.jpg', 'javascript:alert(1)', '/images/a.webp']) {
+      expect(sitePopupInputSchema.safeParse({ ...popup, imageUrl }).success, imageUrl).toBe(false);
+    }
   });
 });

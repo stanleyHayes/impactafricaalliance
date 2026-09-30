@@ -13,12 +13,17 @@ import { Section } from '../components/Section';
 import { SectionReveal } from '../components/SectionReveal';
 import { Seo } from '../components/Seo';
 import { programIcon } from '../content/icons';
-import { IMAGES } from '../content/images';
 import { PROGRAMS, type ProgramContent } from '../content/programs';
 import { usePageCopy } from '../lib/content-hooks';
 import { usePillarImage } from '../lib/site-images';
 
-const ProgramFeature = ({ program, index }: { program: ProgramContent; index: number }): JSX.Element => {
+const ProgramFeature = ({
+  program,
+  index,
+}: {
+  program: ProgramContent;
+  index: number;
+}): JSX.Element => {
   const Icon = programIcon(program.slug);
   // Every other place that draws a programme reads its photograph from the
   // dashboard; this page was still on the picture compiled into the build, so
@@ -27,22 +32,53 @@ const ProgramFeature = ({ program, index }: { program: ProgramContent; index: nu
   const reversed = index % 2 === 1;
   return (
     <SectionReveal>
-      <Grid container spacing={{ xs: 3, md: 6 }} sx={{ alignItems: 'center', flexDirection: { xs: 'column', md: reversed ? 'row-reverse' : 'row' } }}>
+      <Grid
+        container
+        spacing={{ xs: 3, md: 6 }}
+        sx={{
+          alignItems: 'center',
+          flexDirection: { xs: 'column', md: reversed ? 'row-reverse' : 'row' },
+        }}
+      >
         <Grid size={{ xs: 12, md: 6 }}>
-          <Box sx={{ position: 'relative', borderRadius: 4, overflow: 'hidden', boxShadow: '0 24px 50px -24px rgba(16,40,30,0.5)' }}>
+          <Box
+            sx={{
+              position: 'relative',
+              borderRadius: 4,
+              overflow: 'hidden',
+              boxShadow: '0 24px 50px -24px rgba(16,40,30,0.5)',
+            }}
+          >
             <Box
               component="img"
               src={pillarImage(program.slug)}
               alt={program.title}
               sx={{ width: '100%', display: 'block', aspectRatio: '16 / 10', objectFit: 'cover' }}
             />
-            <Box sx={{ position: 'absolute', top: 18, left: 18, width: 52, height: 52, borderRadius: 2, bgcolor: 'secondary.main', display: 'grid', placeItems: 'center', boxShadow: 3 }}>
+            <Box
+              sx={{
+                position: 'absolute',
+                top: 18,
+                left: 18,
+                width: 52,
+                height: 52,
+                borderRadius: 2,
+                bgcolor: 'secondary.main',
+                display: 'grid',
+                placeItems: 'center',
+                boxShadow: 3,
+              }}
+            >
               <Icon sx={{ color: 'common.white', fontSize: 28 }} />
             </Box>
           </Box>
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
-          <Typography variant="overline" color="success.main" sx={{ fontWeight: 700, letterSpacing: 1.5 }}>
+          <Typography
+            variant="overline"
+            color="success.main"
+            sx={{ fontWeight: 700, letterSpacing: 1.5 }}
+          >
             {program.initiative}
           </Typography>
           <Typography variant="h4" sx={{ mt: 0.5, fontWeight: 800 }}>
@@ -77,11 +113,13 @@ const ProgramFeature = ({ program, index }: { program: ProgramContent; index: nu
 const OurWork = (): JSX.Element => {
   const copy = usePageCopy('our-work', {
     seoTitle: 'Our Programs — Digital Skills, STEM, Climate, Women Empowerment',
-    seoDescription: 'Four flagship initiatives forming an integrated ecosystem of change across Africa.',
+    seoDescription:
+      'Four flagship initiatives forming an integrated ecosystem of change across Africa.',
     heroEyebrow: 'What We Do',
     heroTitle: 'Our Work',
     heroSubtitle: 'Four flagship initiatives. One transformative mission.',
-    introBody: "IAA's work is organized around four interconnected pillars, each addressing a critical gap in Africa's development landscape. Together, they form an integrated ecosystem of change.",
+    introBody:
+      "IAA's work is organized around four interconnected pillars, each addressing a critical gap in Africa's development landscape. Together, they form an integrated ecosystem of change.",
   });
   return (
     <>
@@ -90,23 +128,24 @@ const OurWork = (): JSX.Element => {
         eyebrow={copy.heroEyebrow}
         title={copy.heroTitle}
         subtitle={copy.heroSubtitle}
-        image={copy.heroImageUrl ?? IMAGES.programs['digital-skills']}
+        image={copy.heroImageUrl}
+        slot="our-work-hero"
       />
-    <Section
-      eyebrow={copy.introEyebrow}
-      title={copy.introTitle}
-      subtitle={copy.introBody}
-      watermark="africa"
-      watermarkPosition="center"
-    >
-      <Stack spacing={{ xs: 8, md: 12 }}>
-        {PROGRAMS.map((program, index) => (
-          <ProgramFeature key={program.slug} program={program} index={index} />
-        ))}
-      </Stack>
-    </Section>
-    <PageCta copy={copy} />
-  </>
+      <Section
+        eyebrow={copy.introEyebrow}
+        title={copy.introTitle}
+        subtitle={copy.introBody}
+        watermark="africa"
+        watermarkPosition="center"
+      >
+        <Stack spacing={{ xs: 8, md: 12 }}>
+          {PROGRAMS.map((program, index) => (
+            <ProgramFeature key={program.slug} program={program} index={index} />
+          ))}
+        </Stack>
+      </Section>
+      <PageCta copy={copy} />
+    </>
   );
 };
 

@@ -107,7 +107,15 @@ interface CardModel {
   tags: string[];
 }
 
-const META_SKIP_TYPES = new Set(['select', 'switch', 'image', 'richtext', 'tags', 'textarea']);
+const META_SKIP_TYPES = new Set([
+  'select',
+  'switch',
+  'image',
+  'imageUrl',
+  'richtext',
+  'tags',
+  'textarea',
+]);
 
 const stringValue = (value: unknown): string | undefined =>
   typeof value === 'string' && value.trim() ? value.trim() : undefined;
@@ -161,9 +169,16 @@ const collectMeta = (
 
 /** Derives everything the card needs from the resource config + row. */
 const deriveCardModel = (resource: ResourceConfig, row: ResourceRow): CardModel => {
-  const imageField = resource.fields.find((field) => field.type === 'image');
+  // A media record, or a bare address for fields that store only that (a popup's picture).
+  const imageField = resource.fields.find(
+    (field) => field.type === 'image' || field.type === 'imageUrl',
+  );
   const titleField = resource.fields.find((field) => field.type === 'text');
-  const imageUrl = imageField ? (row[imageField.name] as MediaAsset | undefined)?.url : undefined;
+  const imageValue = imageField ? row[imageField.name] : undefined;
+  const imageUrl =
+    typeof imageValue === 'string'
+      ? imageValue || undefined
+      : (imageValue as MediaAsset | undefined)?.url;
   const title = (titleField && stringValue(row[titleField.name])) || resource.singular;
 
   const status = stringValue(row.status);

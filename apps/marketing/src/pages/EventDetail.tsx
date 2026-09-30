@@ -20,7 +20,6 @@ import { EventArtwork } from '../components/events/EventArtwork';
 import { EventSchema } from '../components/EventSchema';
 import { Seo } from '../components/Seo';
 import { PageSkeleton } from '../components/skeletons';
-import { IMAGES } from '../content/images';
 import { EventActions } from '../features/events/EventActions';
 import { EventRegistrationDialog } from '../features/events/EventRegistrationDialog';
 import { EventUnavailable } from '../features/events/EventUnavailable';
@@ -123,7 +122,11 @@ const EventBody = ({ event }: { event: Event }): JSX.Element => {
       <Seo
         title={event.title}
         description={event.description.slice(0, 180)}
-        image={event.image?.url ?? IMAGES.teamArtwork}
+        // Without artwork of its own, the event shares the site's default
+        // link preview, as its server-rendered preview (api/event-meta) does.
+        // The placeholder artwork was a site-relative path, which crawlers
+        // and chat apps cannot load.
+        image={event.image?.url}
         type="article"
       />
       <EventSchema event={event} />

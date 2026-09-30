@@ -5,12 +5,17 @@ import Typography from '@mui/material/Typography';
 import { m, useReducedMotion, useScroll, useTransform, type MotionValue } from 'framer-motion';
 import { useId, useRef } from 'react';
 
+import { responsiveImage } from '../lib/cloudinary-image';
+import { useImageFallback } from '../lib/image-fallback';
+
 import { AllianceSculpture } from './AllianceSculpture';
 import { Watermark } from './Watermark';
 
 interface ShowcasePanel {
   src: string;
   alt: string;
+  /** Drawn instead when `src` will not load, so a lost upload never shows as a broken image. */
+  fallback?: { src: string; alt: string };
   caption: string;
   /** How far this panel drifts relative to the scroll, in viewport-height units. */
   drift: number;
@@ -34,6 +39,8 @@ const ShowcaseImage = ({ panel, progress, reduceMotion, index }: PanelProps): JS
   // Keep image movement inside the crop so the frame never exposes empty space.
   const y = useTransform(progress, [0, 1], ['4%', `${-Math.min(panel.drift, 0.08) * 100}%`]);
   const scale = useTransform(progress, [0, 0.5, 1], [1.08, 1, 1.08]);
+  const picture = useImageFallback([panel.src, panel.fallback?.src]);
+  const alt = picture.src === panel.src ? panel.alt : (panel.fallback?.alt ?? panel.alt);
 
   return (
     <Box
@@ -56,8 +63,15 @@ const ShowcaseImage = ({ panel, progress, reduceMotion, index }: PanelProps): JS
       >
         <Box
           component="img"
-          src={panel.src}
-          alt={panel.alt}
+          // The lead panel spans the row on a tablet and most of it on a laptop.
+          {...responsiveImage(
+            picture.src,
+            index === 0
+              ? { xs: '100vw', md: '58vw', lg: '700px' }
+              : { xs: '100vw', sm: '50vw', md: '42vw', lg: '500px' },
+          )}
+          alt={alt}
+          onError={picture.onError}
           loading="lazy"
           sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />

@@ -30,6 +30,7 @@ import ResetPassword from '../pages/ResetPassword';
 import ResourceFormPage from '../pages/ResourceFormPage';
 import ResourcePage from '../pages/ResourcePage';
 import Reviews from '../pages/Reviews';
+import SiteImages from '../pages/SiteImages';
 import SiteSettings from '../pages/SiteSettings';
 import SocialConnections from '../pages/SocialConnections';
 import SubmissionDetail from '../pages/SubmissionDetail';
@@ -141,6 +142,9 @@ export const App = (): JSX.Element => (
     >
       <Route index element={<Dashboard />} />
       <Route path="analytics" element={<Analytics />} />
+      {/* A board of every slot rather than a list of uploads. A fixed segment
+          outranks :resource, so the sidebar link and old bookmarks land here. */}
+      <Route path="content/site-images" element={guarded('site-images', 'read', <SiteImages />)} />
       <Route path="content/:resource" element={<ResourcePage />} />
       <Route
         path="content/:resource/new"

@@ -14,6 +14,7 @@ import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import { m, useReducedMotion } from 'framer-motion';
 import { useEffect, useState } from 'react';
+import { preload } from 'react-dom';
 import { Link as RouterLink } from 'react-router-dom';
 
 import { ArticleCard, PillarCard } from '../components/cards';
@@ -30,11 +31,14 @@ import { CardGridSkeleton } from '../components/skeletons';
 import { StaggerGrid, StaggerItem } from '../components/StaggerGrid';
 import { Watermark } from '../components/Watermark';
 import { useArticles, usePageCopy, useStories, type PageCopyDefaults } from '../lib/content-hooks';
+import { cssUrl } from '../lib/image-fallback';
 import {
+  bannerImageUrl,
+  shippedSiteImage,
   usePillarImage,
-  useSiteImage,
-  useSiteImageMap,
+  useSiteImageDetails,
   useShowcaseImageMap,
+  useSlotBackground,
 } from '../lib/site-images';
 
 /**
@@ -49,7 +53,20 @@ const HERO_STORY = [
   { key: 'women-empowerment', label: 'Women leading economic change' },
 ] as const;
 
-const Hero = ({ copy, heroImage }: { copy: PageCopyDefaults; heroImage: string }): JSX.Element => {
+interface HeroSlideImage {
+  /** Ready to draw: sized for a banner, and already past any upload that would not load. */
+  src: string;
+  /** Read out for the slide while it is showing; the slide is a background, not an `<img>`. */
+  label: string;
+}
+
+const Hero = ({
+  copy,
+  heroImage,
+}: {
+  copy: PageCopyDefaults;
+  heroImage: HeroSlideImage;
+}): JSX.Element => {
   const pillarImage = usePillarImage();
   const [activeSlide, setActiveSlide] = useState(0);
   const reduceMotion = useReducedMotion();
@@ -63,10 +80,14 @@ const Hero = ({ copy, heroImage }: { copy: PageCopyDefaults; heroImage: string }
     return () => window.clearInterval(timer);
   }, []);
 
+  const firstSlide = heroImage.src;
+  // The first slide is the largest thing on the page, so it is asked for
+  // straight away rather than when the stylesheet reaches it.
+  preload(firstSlide, { as: 'image', fetchPriority: 'high' });
   const story = [
-    { image: heroImage, position: 'center', label: 'Youth building practical digital skills' },
+    { image: firstSlide, position: 'center', label: heroImage.label },
     ...HERO_STORY.map((slide) => ({
-      image: pillarImage(slide.key),
+      image: bannerImageUrl(pillarImage(slide.key)),
       position: 'center',
       label: slide.label,
     })),
@@ -85,14 +106,15 @@ const Hero = ({ copy, heroImage }: { copy: PageCopyDefaults; heroImage: string }
     >
       {story.map((slide, index) => (
         <Box
-          key={slide.image}
+          // By position: the same photograph can fill two slides, and keys must differ.
+          key={`${index}-${slide.image}`}
           role="img"
           aria-label={index === activeSlide ? slide.label : undefined}
           aria-hidden={index !== activeSlide}
           sx={{
             position: 'absolute',
             inset: 0,
-            backgroundImage: `url(${slide.image})`,
+            backgroundImage: cssUrl(slide.image),
             backgroundPosition: slide.position,
             backgroundSize: 'cover',
             opacity: index === activeSlide ? 1 : 0,
@@ -590,69 +612,75 @@ const NewsSection = (): JSX.Element => {
 };
 
 const VisionQuote = (): JSX.Element => {
-  const image = useSiteImageMap();
+  const image = useSlotBackground('home-vision-band');
   return (
-  <Box
-    sx={{ position: 'relative', overflow: 'hidden', color: 'common.white', py: { xs: 8, md: 12 } }}
-  >
     <Box
       sx={{
-        position: 'absolute',
-        inset: 0,
-        backgroundImage: `url(${image('home-vision-band')})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
+        position: 'relative',
+        overflow: 'hidden',
+        color: 'common.white',
+        py: { xs: 8, md: 12 },
       }}
-    />
-    <Box sx={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(13,40,26,0.82)' }} />
-    <Watermark
-      variant="contours"
-      position="bottom-left"
-      size={{ xs: 260, md: 420 }}
-      opacity={0.06}
-      sx={{ color: 'secondary.main' }}
-    />
-    <Container sx={{ position: 'relative', zIndex: 1 }}>
-      <SectionReveal>
-        <Typography
-          variant="h4"
-          sx={{
-            fontFamily: brandFonts.body,
-            fontStyle: 'italic',
-            maxWidth: 880,
-            mx: 'auto',
-            textAlign: 'center',
-            lineHeight: 1.5,
-          }}
-        >
-          “Africa’s greatest resource is its people. When we invest in their potential, we change
-          individual lives and the trajectory of an entire continent.”
-        </Typography>
-        <Typography sx={{ textAlign: 'center', mt: 3, color: 'primary.main', fontWeight: 700 }}>
-          Emmanuel Mbansi, President, {ORG.name}
-        </Typography>
-        <Typography
-          sx={{
-            textAlign: 'center',
-            maxWidth: 720,
-            mt: 3,
-            mx: 'auto',
-            color: 'rgba(255,255,255,0.78)',
-            lineHeight: 1.75,
-          }}
-        >
-          Impact Africa Alliance was founded by a generation of young African leaders who refused to
-          wait for change and decided to be it.
-        </Typography>
-      </SectionReveal>
-    </Container>
-  </Box>
-);
+    >
+      <Box
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: cssUrl(image),
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      />
+      <Box sx={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(13,40,26,0.82)' }} />
+      <Watermark
+        variant="contours"
+        position="bottom-left"
+        size={{ xs: 260, md: 420 }}
+        opacity={0.06}
+        sx={{ color: 'secondary.main' }}
+      />
+      <Container sx={{ position: 'relative', zIndex: 1 }}>
+        <SectionReveal>
+          <Typography
+            variant="h4"
+            sx={{
+              fontFamily: brandFonts.body,
+              fontStyle: 'italic',
+              maxWidth: 880,
+              mx: 'auto',
+              textAlign: 'center',
+              lineHeight: 1.5,
+            }}
+          >
+            “Africa’s greatest resource is its people. When we invest in their potential, we change
+            individual lives and the trajectory of an entire continent.”
+          </Typography>
+          <Typography sx={{ textAlign: 'center', mt: 3, color: 'primary.main', fontWeight: 700 }}>
+            Emmanuel Mbansi, President, {ORG.name}
+          </Typography>
+          <Typography
+            sx={{
+              textAlign: 'center',
+              maxWidth: 720,
+              mt: 3,
+              mx: 'auto',
+              color: 'rgba(255,255,255,0.78)',
+              lineHeight: 1.75,
+            }}
+          >
+            Impact Africa Alliance was founded by a generation of young African leaders who refused
+            to wait for change and decided to be it.
+          </Typography>
+        </SectionReveal>
+      </Container>
+    </Box>
+  );
 };
 
 const Home = (): JSX.Element => {
   const showcaseImage = useShowcaseImageMap();
-  const homeHero = useSiteImage('home-hero');
+  const homeHero = useSiteImageDetails('home-hero');
+  const shippedHero = shippedSiteImage('home-hero');
   const copy = usePageCopy('home', {
     seoTitle: 'Empowering Youth, Women & Communities Across Africa',
     seoDescription:
@@ -665,11 +693,20 @@ const Home = (): JSX.Element => {
     introTitle: 'Four Transformative Initiatives',
     introBody: 'One mission: a prosperous, inclusive Africa.',
   });
+  const heroSrc = useSlotBackground('home-hero', { override: copy.heroImageUrl });
 
   return (
     <>
       <Seo title={copy.seoTitle} description={copy.seoDescription} />
-      <Hero copy={copy} heroImage={copy.heroImageUrl ?? homeHero} />
+      <Hero
+        copy={copy}
+        heroImage={{
+          src: heroSrc,
+          // A Page Settings photograph describes nothing of its own, so it keeps
+          // the slot's words; the shipped photograph keeps its own.
+          label: heroSrc === shippedHero.src ? shippedHero.alt : homeHero.alt,
+        }}
+      />
       <MissionStatement />
       <HomeImpactSection />
       <Section
@@ -697,26 +734,17 @@ const Home = (): JSX.Element => {
         subtitle="Not slide decks or pilot schemes. Classrooms, workshops, market stalls and offices across Ghana, Nigeria and Sierra Leone, where the skills we teach turn into work people are paid for."
         panels={[
           {
-            ...showcaseImage(
-              'home-showcase-lead',
-              'AI-generated illustration of young adults collaborating on digital skills at a laptop',
-            ),
+            ...showcaseImage('home-showcase-lead'),
             caption: 'Digital skills',
             drift: 0.18,
           },
           {
-            ...showcaseImage(
-              'home-showcase-women',
-              'AI-generated illustration of women entrepreneurs reviewing textiles and business plans',
-            ),
+            ...showcaseImage('home-showcase-women'),
             caption: 'Women leading',
             drift: 0.32,
           },
           {
-            ...showcaseImage(
-              'home-showcase-work',
-              'AI-generated illustration of young professionals working with a workplace coach',
-            ),
+            ...showcaseImage('home-showcase-work'),
             caption: 'Career Launchpad',
             drift: 0.24,
           },

@@ -367,6 +367,7 @@ const JobApplication = (): JSX.Element => {
         eyebrow="Careers"
         title={job.title}
         subtitle={`${job.location} · ${formatJobType(job.type)}`}
+        slot="careers-apply-hero"
         watermark="africa"
       />
 

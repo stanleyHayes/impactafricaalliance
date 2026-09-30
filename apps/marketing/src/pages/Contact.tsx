@@ -19,6 +19,7 @@ import Stack from '@mui/material/Stack';
 import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
+import { preload } from 'react-dom';
 import { Link as RouterLink } from 'react-router-dom';
 
 import { ContactOfficeDirectory, officeDirectoryTones } from '../components/ContactOfficeDirectory';
@@ -26,7 +27,6 @@ import { MintSurface } from '../components/MintSurface';
 import { PageCta } from '../components/PageCta';
 import { Seo } from '../components/Seo';
 import { SocialLinks } from '../components/SocialLinks';
-import { IMAGES } from '../content/images';
 import { ContactForm } from '../features/forms/ContactForm';
 import {
   useOffices,
@@ -34,6 +34,8 @@ import {
   useSiteSettings,
   type PageCopyDefaults,
 } from '../lib/content-hooks';
+import { cssUrl } from '../lib/image-fallback';
+import { useSlotBackground } from '../lib/site-images';
 
 /** Used only until Site Settings loads, or if a field has not been filled in yet. */
 const FALLBACK_REGIONS = ['Nigeria', 'Sierra Leone'] as const;
@@ -76,13 +78,20 @@ const ContactDetail = ({ icon: Icon, label, children }: ContactDetailProps): JSX
   </Stack>
 );
 
+/**
+ * The banner: a Page Settings hero image when one is published, otherwise
+ * the Contact banner from Site images. Taller than other page banners, so it
+ * has a slot of its own rather than sharing the default.
+ */
 const ContactHero = ({
   copy,
   heroImage,
 }: {
   copy: PageCopyDefaults;
-  heroImage: string;
+  heroImage?: string;
 }): JSX.Element => {
+  const source = useSlotBackground('contact-hero', { override: heroImage });
+  preload(source, { as: 'image', fetchPriority: 'high' });
   return (
     <Box
       component="header"
@@ -98,7 +107,7 @@ const ContactHero = ({
         sx={{
           position: 'absolute',
           inset: 0,
-          backgroundImage: `url(${heroImage})`,
+          backgroundImage: cssUrl(source),
           backgroundPosition: 'center',
           backgroundSize: 'cover',
         }}
@@ -499,7 +508,7 @@ const Contact = (): JSX.Element => {
   return (
     <>
       <Seo title={copy.seoTitle} description={copy.seoDescription} />
-      <ContactHero copy={copy} heroImage={copy.heroImageUrl ?? IMAGES.programs['stem-learning']} />
+      <ContactHero copy={copy} heroImage={copy.heroImageUrl} />
 
       <Box
         component="section"

@@ -2,6 +2,8 @@ import { ORG } from '@iaa/shared';
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
+import { useDefaultShareImage } from '../lib/site-images';
+
 export interface SeoProps {
   title: string;
   description?: string;
@@ -38,19 +40,28 @@ const removeRobots = (): void => {
   }
 };
 
-/** Per-route SEO: title, description, canonical, Open Graph and Twitter Cards. */
+/**
+ * Per-route SEO: title, description, canonical, Open Graph and Twitter Cards.
+ *
+ * A page with no picture of its own shares the dashboard's default link
+ * preview, which is the brand card until one is uploaded. The card in
+ * `index.html` stays as it is: crawlers that never run the site's script read
+ * that one, and the link-preview functions read the dashboard themselves.
+ */
 export const Seo = ({
   title,
   description = ORG.description,
   image,
-  imageAlt = `${ORG.name} — ${ORG.tagline}`,
+  imageAlt,
   type = 'website',
   noindex = false,
 }: SeoProps): null => {
   const { pathname } = useLocation();
+  const shareDefault = useDefaultShareImage();
   const origin = ORG.website;
   const canonicalUrl = `${origin}${pathname === '/' ? '' : pathname}`;
-  const resolvedImage = image ?? `${origin}/brand/og-image.png`;
+  const resolvedImage = image ?? shareDefault.url;
+  const resolvedAlt = imageAlt ?? (image ? `${ORG.name} — ${ORG.tagline}` : shareDefault.alt);
   const fullTitle = `${title} | ${ORG.name}`;
 
   useEffect(() => {
@@ -66,7 +77,7 @@ export const Seo = ({
     upsertMeta('og:type', 'property', type);
     upsertMeta('og:url', 'property', canonicalUrl);
     upsertMeta('og:image', 'property', resolvedImage);
-    upsertMeta('og:image:alt', 'property', imageAlt);
+    upsertMeta('og:image:alt', 'property', resolvedAlt);
     upsertMeta('og:locale', 'property', 'en_GH');
 
     // Twitter Cards
@@ -74,7 +85,7 @@ export const Seo = ({
     upsertMeta('twitter:title', 'name', fullTitle);
     upsertMeta('twitter:description', 'name', description);
     upsertMeta('twitter:image', 'name', resolvedImage);
-    upsertMeta('twitter:image:alt', 'name', imageAlt);
+    upsertMeta('twitter:image:alt', 'name', resolvedAlt);
 
     if (noindex) {
       upsertMeta('robots', 'name', 'noindex, nofollow');
@@ -86,7 +97,7 @@ export const Seo = ({
       // Keep the tags in place; they will be overwritten by the next route.
       // This avoids empty-head flashes during SPA navigation.
     };
-  }, [canonicalUrl, description, fullTitle, imageAlt, noindex, resolvedImage, title, type]);
+  }, [canonicalUrl, description, fullTitle, noindex, resolvedAlt, resolvedImage, title, type]);
 
   return null;
 };

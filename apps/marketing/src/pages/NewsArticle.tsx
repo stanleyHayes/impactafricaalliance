@@ -18,12 +18,12 @@ import Link from '@mui/material/Link';
 import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
+import { preload } from 'react-dom';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 
 import { ArticleBody } from '../components/ArticleBody';
 import { MintSurface } from '../components/MintSurface';
 import { Seo } from '../components/Seo';
-import { IMAGES } from '../content/images';
 import {
   estimateReadingTime,
   formatArticleDate,
@@ -31,6 +31,8 @@ import {
   getArticleDate,
 } from '../lib/article-utils';
 import { useArticle } from '../lib/content-hooks';
+import { cssUrl } from '../lib/image-fallback';
+import { useSlotBackground } from '../lib/site-images';
 
 const ArticleLoading = (): JSX.Element => (
   <>
@@ -88,7 +90,10 @@ const ArticleHero = ({ article }: { article: Article }): JSX.Element => {
   const category = formatArticleTag(article.tags[0] ?? 'News');
   const date = formatArticleDate(getArticleDate(article));
   const readingTime = estimateReadingTime(article.body);
-  const image = article.coverImage?.url ?? IMAGES.community;
+  // An article's own cover always wins; the dashboard's banner stands in
+  // without one, or when the cover will not load.
+  const image = useSlotBackground('news-article-fallback', { override: article.coverImage?.url });
+  preload(image, { as: 'image', fetchPriority: 'high' });
 
   return (
     <Box
@@ -104,7 +109,7 @@ const ArticleHero = ({ article }: { article: Article }): JSX.Element => {
         sx={{
           position: 'absolute',
           inset: 0,
-          backgroundImage: `url(${image})`,
+          backgroundImage: cssUrl(image),
           backgroundPosition: 'center',
           backgroundSize: 'cover',
           transform: 'scale(1.015)',

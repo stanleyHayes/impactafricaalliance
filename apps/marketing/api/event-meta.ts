@@ -3,9 +3,9 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 // `.js` because Vercel runs these functions as Node ES modules, which need the
 // extension; TypeScript maps it to the `.ts` file.
 import {
+  fetchDefaultShareImage,
   fetchRecord,
   fetchShell,
-  FALLBACK_IMAGE,
   sendHtml,
   sendUnavailable,
   SITE_URL,
@@ -68,7 +68,7 @@ export default async function handler(
         title: `${event.title ?? 'Event'} | Impact Africa Alliance`,
         description: describe(event),
         canonical: `${SITE_URL}/events/${id}`,
-        image: event.image?.url ?? FALLBACK_IMAGE,
+        image: event.image?.url ?? (await fetchDefaultShareImage()),
         imageAlt: event.image?.alt ?? event.title ?? 'Impact Africa Alliance',
       })
     : shell;

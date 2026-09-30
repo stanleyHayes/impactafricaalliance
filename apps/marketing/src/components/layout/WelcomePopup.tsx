@@ -43,7 +43,8 @@ interface PopupBodyProps {
   onClose: () => void;
 }
 
-const PopupArtwork = ({ src }: { src?: string }): JSX.Element => {
+// Null once an editor has removed the picture: the illustration alone is drawn.
+const PopupArtwork = ({ src }: { src?: string | null }): JSX.Element => {
   const [failed, setFailed] = useState<string>();
   return (
     <Box

@@ -196,7 +196,8 @@ const NewsEmptyState = (): JSX.Element => (
 const News = (): JSX.Element => {
   const copy = usePageCopy('news', {
     seoTitle: 'News & Stories',
-    seoDescription: "Updates, stories, and insights from Impact Africa Alliance's work across the continent.",
+    seoDescription:
+      "Updates, stories, and insights from Impact Africa Alliance's work across the continent.",
     heroEyebrow: 'News & Insights',
     heroTitle: 'From the Frontlines',
     heroSubtitle: 'Updates, stories, and insights from our work across the continent.',
@@ -274,8 +275,11 @@ const News = (): JSX.Element => {
         title={copy.heroTitle}
         subtitle={copy.heroSubtitle}
         image={copy.heroImageUrl}
+        slot="news-hero"
       />
-      <Section watermark="radar" watermarkPosition="bottom-right">{renderArticles()}</Section>
+      <Section watermark="radar" watermarkPosition="bottom-right">
+        {renderArticles()}
+      </Section>
     </>
   );
 };

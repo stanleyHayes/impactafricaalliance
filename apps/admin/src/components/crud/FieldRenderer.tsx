@@ -102,6 +102,12 @@ const datetimeRenderer: Renderer = (field, rhf, error) => (
   />
 );
 
+/** An error when there is one, otherwise the field's own guidance. */
+const MediaHelp = ({ field, error }: { field: FieldConfig; error?: string }): JSX.Element | null =>
+  error || field.helperText ? (
+    <FormHelperText error={Boolean(error)}>{error ?? field.helperText}</FormHelperText>
+  ) : null;
+
 const mediaRenderer =
   (accept: string, preview: boolean): Renderer =>
   (field, rhf, error, onUploadingChange) => (
@@ -114,9 +120,31 @@ const mediaRenderer =
         onChange={rhf.onChange}
         onUploadingChange={(uploading) => onUploadingChange?.(field.name, uploading)}
       />
-      {error && <FormHelperText error>{error}</FormHelperText>}
+      <MediaHelp field={field} error={error} />
     </Box>
   );
+
+/**
+ * The upload control for a field that stores only an address. The address
+ * doubles as the asset's id, which is all the control needs to show it; an
+ * emptied field saves an empty string, which the API reads as "no picture".
+ */
+const imageUrlRenderer: Renderer = (field, rhf, error, onUploadingChange) => {
+  const url = typeof rhf.value === 'string' && rhf.value ? rhf.value : undefined;
+  return (
+    <Box>
+      <MediaUploadField
+        label={field.label}
+        accept="image/*"
+        preview
+        value={url ? { url, publicId: url } : undefined}
+        onChange={(asset) => rhf.onChange(asset?.url ?? '')}
+        onUploadingChange={(uploading) => onUploadingChange?.(field.name, uploading)}
+      />
+      <MediaHelp field={field} error={error} />
+    </Box>
+  );
+};
 
 const textRenderer =
   (minRows?: number, ai = false): Renderer =>
@@ -181,6 +209,7 @@ const RENDERERS: Record<FieldType, Renderer> = {
   tags: tagsRenderer,
   datetime: datetimeRenderer,
   image: mediaRenderer('image/*', true),
+  imageUrl: imageUrlRenderer,
   file: mediaRenderer('application/pdf', false),
   text: textRenderer(undefined, true),
   slug: textRenderer(),

@@ -21,6 +21,8 @@ vi.mock('react-router-dom', async (importOriginal) => ({
 vi.mock('../lib/api-client', () => ({ apiPost: vi.fn() }));
 vi.mock('../lib/content-hooks', () => ({
   usePageCopy: (_key: string, defaults: unknown) => defaults,
+  // No uploads: every banner and the link preview use the images shipped with the build.
+  useSiteImages: () => ({ data: undefined }),
 }));
 
 describe('PrivacyRequest', () => {

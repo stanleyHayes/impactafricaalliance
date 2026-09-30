@@ -46,9 +46,10 @@ import { SectionReveal } from '../components/SectionReveal';
 import { Seo } from '../components/Seo';
 import { CardGridSkeleton, PartnerLogosSkeleton } from '../components/skeletons';
 import { Watermark } from '../components/Watermark';
-import { IMAGES } from '../content/images';
+import { responsiveImage } from '../lib/cloudinary-image';
 import { usePageCopy, usePartners, useTeam } from '../lib/content-hooks';
-import { useSiteImage } from '../lib/site-images';
+import { useImageFallback } from '../lib/image-fallback';
+import { shippedSiteImage, useSiteImage, useSiteImageWithFallback } from '../lib/site-images';
 
 const DISCIPLINES: ReadonlyArray<{ label: string; icon: SvgIconComponent }> = [
   { label: 'Technology', icon: CodeRoundedIcon },
@@ -157,7 +158,7 @@ const STRUCTURE_LEVELS = [
 ] as const;
 
 export const AboutIntro = (): JSX.Element => {
-  const introImage = useSiteImage('about-intro');
+  const introImage = useSiteImageWithFallback('about-intro');
   return (
     <Section bgcolor="background.default">
       <Grid container spacing={{ xs: 4, md: 6 }} sx={{ alignItems: 'stretch' }}>
@@ -219,8 +220,9 @@ export const AboutIntro = (): JSX.Element => {
             >
               <Box
                 component="img"
-                src={introImage}
-                alt="Impact Africa Alliance community gathering"
+                {...responsiveImage(introImage.src, { xs: '100vw', md: '42vw', lg: '500px' })}
+                alt={introImage.alt}
+                onError={introImage.onError}
                 sx={{ width: '100%', height: '100%', minHeight: 'inherit', objectFit: 'cover' }}
               />
               <Box
@@ -773,6 +775,14 @@ const TeamEmptyState = (): JSX.Element => (
 
 const TeamMemberCard = ({ member }: { member: TeamMember }): JSX.Element => {
   const artwork = useSiteImage('team-artwork');
+  // The portrait, then the dashboard's artwork, then the shipped artwork:
+  // whichever loads first, so a lost upload never shows as a broken image.
+  const picture = useImageFallback([
+    member.photo?.url,
+    artwork,
+    shippedSiteImage('team-artwork').src,
+  ]);
+  const showPhoto = Boolean(member.photo?.url) && picture.src === member.photo?.url;
   return (
     <Card
       component="article"
@@ -810,8 +820,14 @@ const TeamMemberCard = ({ member }: { member: TeamMember }): JSX.Element => {
       <Box
         className="team-artwork"
         component="img"
-        src={member.photo?.url ?? artwork}
-        alt={member.photo?.url ? (member.photo.alt ?? member.name) : ''}
+        {...responsiveImage(picture.src, {
+          xs: '100vw',
+          sm: '50vw',
+          md: '25vw',
+          lg: '300px',
+        })}
+        alt={showPhoto ? (member.photo?.alt ?? member.name) : ''}
+        onError={picture.onError}
         loading="lazy"
         sx={{
           position: 'absolute',
@@ -821,7 +837,7 @@ const TeamMemberCard = ({ member }: { member: TeamMember }): JSX.Element => {
           // Portraits are framed 4:5 with the face high, so bias the crop
           // upward rather than centring it in this 3:4 card.
           objectFit: 'cover',
-          objectPosition: member.photo?.url ? 'center 22%' : 'center',
+          objectPosition: showPhoto ? 'center 22%' : 'center',
           transition: 'transform 500ms cubic-bezier(0.22, 1, 0.36, 1)',
         }}
       />
@@ -1180,7 +1196,8 @@ const About = (): JSX.Element => {
         eyebrow={copy.heroEyebrow}
         title={copy.heroTitle}
         subtitle={copy.heroSubtitle}
-        image={copy.heroImageUrl ?? IMAGES.community}
+        image={copy.heroImageUrl}
+        slot="about-hero"
       />
       <AboutIntro />
       <VisionMission />

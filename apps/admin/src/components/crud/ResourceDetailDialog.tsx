@@ -28,7 +28,8 @@ const Empty = (): JSX.Element => (
 type ValueRenderer = (field: FieldConfig, value: unknown) => JSX.Element;
 
 const renderImage: ValueRenderer = (field, value) => {
-  const url = (value as MediaAsset | undefined)?.url;
+  // A media record, or a bare address for fields that store only that.
+  const url = typeof value === 'string' ? value : (value as MediaAsset | undefined)?.url;
   return url ? (
     <Box
       component="img"
@@ -127,6 +128,7 @@ const renderText: ValueRenderer = (_field, value) =>
 
 const VALUE_RENDERERS: Partial<Record<FieldConfig['type'], ValueRenderer>> = {
   image: renderImage,
+  imageUrl: renderImage,
   file: renderFile,
   richtext: renderRichText,
   switch: renderSwitch,

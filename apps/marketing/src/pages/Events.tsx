@@ -25,7 +25,6 @@ import { PageHero } from '../components/PageHero';
 import { Section } from '../components/Section';
 import { Seo } from '../components/Seo';
 import { EventListSkeleton, CalendarSkeleton } from '../components/skeletons';
-import { IMAGES } from '../content/images';
 import { useEvents, usePageCopy } from '../lib/content-hooks';
 import { filterEvents, type EventPeriod } from '../lib/event-discovery';
 import { formatEventType } from '../lib/event-utils';
@@ -86,7 +85,8 @@ const Events = (): JSX.Element => {
         title={copy.heroTitle}
         subtitle={copy.heroSubtitle}
         watermark="network"
-        image={copy.heroImageUrl ?? IMAGES.teamArtwork}
+        image={copy.heroImageUrl}
+        slot="events-hero"
       />
       <Section>
         <Stack spacing={3} sx={{ mb: isEmpty ? 2 : 4 }}>

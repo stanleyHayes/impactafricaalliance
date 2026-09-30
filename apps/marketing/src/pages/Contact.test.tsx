@@ -2,8 +2,8 @@ import { ORG, type Office, type SiteSetting } from '@iaa/shared';
 import { screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useOffices, useSiteSettings } from '../lib/content-hooks';
-import { renderWithProviders } from '../test/test-utils';
+import { useOffices, useSiteImages, useSiteSettings } from '../lib/content-hooks';
+import { findBackground, renderWithProviders } from '../test/test-utils';
 
 import Contact from './Contact';
 
@@ -18,7 +18,12 @@ vi.mock('../lib/mutations', () => ({
 
 vi.mock('../lib/content-hooks', async (importOriginal) => {
   const actual = await importOriginal<Record<string, unknown>>();
-  return { ...actual, useSiteSettings: vi.fn(), useOffices: vi.fn() };
+  return {
+    ...actual,
+    useSiteSettings: vi.fn(),
+    useOffices: vi.fn(),
+    useSiteImages: vi.fn(() => ({ data: undefined })),
+  };
 });
 
 const mockSiteSettings = (data: SiteSetting | undefined): void => {
@@ -172,5 +177,30 @@ describe('Contact page offices', () => {
 
     expect(screen.getByText('Head office')).toBeInTheDocument();
     expect(screen.getByText(/Atlantic Tower Airport City/)).toBeInTheDocument();
+  });
+
+  it('draws the Contact banner from Site images, and the shipped photograph without one', () => {
+    mockSiteSettings(undefined);
+    mockOffices([]);
+    const shipped = renderWithProviders(<Contact />);
+    expect(findBackground(shipped.container, '/images/program-stem-learning.webp')).toBeDefined();
+    shipped.unmount();
+
+    vi.mocked(useSiteImages).mockReturnValue({
+      data: {
+        items: [
+          {
+            id: 'contact',
+            key: 'contact-hero',
+            image: { url: 'https://res.cloudinary.com/demo/image/upload/v1/c.jpg', publicId: 'c' },
+            isActive: true,
+            createdAt: '2026-09-01T00:00:00.000Z',
+            updatedAt: '2026-09-01T00:00:00.000Z',
+          },
+        ],
+      },
+    } as ReturnType<typeof useSiteImages>);
+    const replaced = renderWithProviders(<Contact />);
+    expect(findBackground(replaced.container, 'w_1920/v1/c.jpg')).toBeDefined();
   });
 });

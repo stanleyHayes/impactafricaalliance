@@ -9,6 +9,7 @@ import {
   useImpactStoryFacets,
   type ImpactStoryFilters,
 } from '../features/impact-stories/api';
+import { useSlotBackground } from '../lib/site-images';
 import { renderWithProviders } from '../test/test-utils';
 import { theme } from '../theme/theme';
 
@@ -19,7 +20,15 @@ vi.mock('../features/impact-stories/api', () => ({
   useImpactStories: vi.fn(),
   useImpactStoryFacets: vi.fn(),
 }));
-vi.mock('../lib/site-images', () => ({ useSiteImage: () => '/images/hero.jpg' }));
+vi.mock('../lib/site-images', () => ({
+  bannerImageUrl: (src: string) => src,
+  useSiteImage: vi.fn(() => '/images/hero.jpg'),
+  useSlotBackground: vi.fn(() => '/images/hero.jpg'),
+  useDefaultShareImage: () => ({
+    url: 'https://www.impactafricaalliance.org/brand/og-image.png',
+    alt: '',
+  }),
+}));
 
 const story = (
   index: number,
@@ -76,6 +85,13 @@ describe('ImpactStories', () => {
     expect(screen.getByText(/Stories appear here once they are published/)).toBeInTheDocument();
     // No stories, no filters to offer.
     expect(screen.queryByRole('group', { name: 'Programme' })).not.toBeInTheDocument();
+  });
+
+  it('takes its banner from its own Site images slot', () => {
+    mockFacets([]);
+    mockPages({ 1: pageOf([], 1, 0) });
+    renderWithProviders(<ImpactStories />);
+    expect(useSlotBackground).toHaveBeenCalledWith('impact-stories-hero', expect.anything());
   });
 
   it('offers only the filters the published stories carry', () => {

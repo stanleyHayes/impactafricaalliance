@@ -11,6 +11,11 @@ import { theme } from '../theme/theme';
 import ImpactStory from './ImpactStory';
 
 vi.mock('../features/impact-stories/api', () => ({ useImpactStory: vi.fn() }));
+vi.mock('../lib/content-hooks', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  // No uploads: every banner and the link preview use the images shipped with the build.
+  useSiteImages: () => ({ data: undefined }),
+}));
 vi.mock('react-intersection-observer', () => ({
   useInView: () => ({ ref: vi.fn(), inView: true }),
 }));

@@ -183,3 +183,24 @@ export const responsiveSizes = (layout: ImageSizesLayout): string => {
   });
   return [...conditions, layout.xs ?? '100vw'].join(', ');
 };
+
+export interface ResponsiveImageAttributes {
+  src: string;
+  srcSet?: string;
+  sizes?: string;
+}
+
+/**
+ * The `src`, `srcSet` and `sizes` of an `<img>` whose picture may come from
+ * the dashboard: a Cloudinary upload is offered at every width, and a file
+ * shipped with the build comes back as just its `src`, exactly as before.
+ */
+export const responsiveImage = (
+  url: string,
+  layout: ImageSizesLayout,
+): ResponsiveImageAttributes => {
+  const srcSet = responsiveSrcSet(url);
+  return srcSet
+    ? { src: cloudinaryUrl(url, { width: 1080 }), srcSet, sizes: responsiveSizes(layout) }
+    : { src: url };
+};

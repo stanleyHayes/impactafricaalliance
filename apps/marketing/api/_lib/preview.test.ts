@@ -1,11 +1,12 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 
+import { isSiteImageKey } from '@iaa/shared';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import eventMeta from '../event-meta';
 import storyMeta from '../story-meta';
 
-import { withMeta } from './preview';
+import { SHARE_IMAGE_SLOT, withMeta } from './preview';
 
 const SHELL = `<!doctype html><html><head>
     <title>Impact Africa Alliance</title>
@@ -162,5 +163,49 @@ describe('event-meta', () => {
     expect(result.body).toContain(
       'content="https://www.impactafricaalliance.org/brand/og-image.png"',
     );
+  });
+});
+
+describe('the default link preview', () => {
+  const upload = 'https://res.cloudinary.com/iaa/image/upload/v1/site/share.jpg';
+  /** The shell, the record, and the dashboard's published site images. */
+  const mockApi = (record: unknown, siteImages: unknown): void => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string) => {
+        if (url.endsWith('/index.html')) return Promise.resolve(new Response(SHELL));
+        if (url.includes('/site-images')) return Promise.resolve(Response.json(siteImages));
+        return Promise.resolve(Response.json(record));
+      }),
+    );
+  };
+
+  it('names a slot the shared catalogue has', () => {
+    expect(isSiteImageKey(SHARE_IMAGE_SLOT)).toBe(true);
+  });
+
+  it('is the dashboard’s picture, at card size, for an event without artwork', async () => {
+    mockApi(
+      { title: 'Coding day', description: 'A day of code.' },
+      { items: [{ key: SHARE_IMAGE_SLOT, isActive: true, image: { url: upload } }] },
+    );
+    const result = await call(eventMeta, { id: 'event-1' });
+    expect(result.body).toContain(
+      'content="https://res.cloudinary.com/iaa/image/upload/f_auto,q_auto,c_limit,w_1200/v1/site/share.jpg"',
+    );
+  });
+
+  it('stays the brand card when nothing is uploaded, it is switched off, or the list fails', async () => {
+    for (const siteImages of [
+      { items: [] },
+      { items: [{ key: SHARE_IMAGE_SLOT, isActive: false, image: { url: upload } }] },
+      { error: 'unexpected' },
+    ]) {
+      mockApi({ title: 'Girls in code', excerpt: 'Forty girls.' }, siteImages);
+      const result = await call(storyMeta, { slug: 'girls-in-code' });
+      expect(result.body).toContain(
+        'content="https://www.impactafricaalliance.org/brand/og-image.png"',
+      );
+    }
   });
 });

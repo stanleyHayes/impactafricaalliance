@@ -6,7 +6,8 @@ import { baseSchemaOptions, mediaSubSchema } from '../../../common/model-helpers
 export interface SiteImageDocument {
   key: string;
   image: MediaAsset;
-  alt?: string;
+  /** Null once an editor clears it, so the picture's own description is used again. */
+  alt?: string | null;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -15,6 +16,7 @@ export interface SiteImageDocument {
 const siteImageSchema = new Schema<SiteImageDocument>(
   {
     // One image per slot; uploading again replaces rather than accumulates.
+    // The key is checked against the shared slot catalogue on the way in.
     key: { type: String, required: true, unique: true, trim: true, index: true },
     image: { type: mediaSubSchema, required: true },
     alt: { type: String },

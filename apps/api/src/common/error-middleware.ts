@@ -1,6 +1,5 @@
 import type { ApiErrorBody } from '@iaa/shared';
 import type { ErrorRequestHandler, RequestHandler } from 'express';
-import { MongoServerError } from 'mongodb';
 import { Error as MongooseError } from 'mongoose';
 
 import type { AppLogger } from '../config/logger.js';
@@ -9,8 +8,25 @@ import { AppError, ConflictError, NotFoundError, ValidationError } from './error
 
 const DUPLICATE_KEY_CODE = 11000;
 
+/**
+ * A unique index refused the write.
+ *
+ * Matched on the driver's error code and name rather than with
+ * `instanceof MongoServerError`: Mongoose ships its own copy of the MongoDB
+ * driver, so the error it throws comes from a different class than the one
+ * this file would import, `instanceof` is false, and every duplicate became a
+ * 500 instead of a 409.
+ */
+const isDuplicateKeyError = (error: unknown): boolean =>
+  typeof error === 'object' &&
+  error !== null &&
+  (error as { code?: unknown }).code === DUPLICATE_KEY_CODE &&
+  String((error as { name?: unknown }).name).startsWith('Mongo');
+
 const isMalformedBodyError = (error: unknown): error is SyntaxError =>
-  error instanceof SyntaxError && 'body' in error && typeof (error as { body?: unknown }).body === 'string';
+  error instanceof SyntaxError &&
+  'body' in error &&
+  typeof (error as { body?: unknown }).body === 'string';
 
 /** Map known third-party/database errors onto our typed AppError hierarchy. */
 const normalise = (error: unknown): AppError | null => {
@@ -26,7 +42,7 @@ const normalise = (error: unknown): AppError | null => {
   if (error instanceof MongooseError.CastError) {
     return new ValidationError(`Invalid value for "${error.path}"`);
   }
-  if (error instanceof MongoServerError && error.code === DUPLICATE_KEY_CODE) {
+  if (isDuplicateKeyError(error)) {
     return new ConflictError('A record with these details already exists');
   }
   return null;

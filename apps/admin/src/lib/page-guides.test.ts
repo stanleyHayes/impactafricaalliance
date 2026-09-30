@@ -40,3 +40,19 @@ describe('page guides', () => {
     expect(text).not.toMatch(/\bshareable\b/);
   });
 });
+
+describe('the site images guide', () => {
+  it('names the actions and badges the slot cards show', () => {
+    // SiteImageSlotCard's buttons and status chips.
+    const text = guideText('site-images');
+    for (const word of [
+      'Replace',
+      'Edit alt text',
+      'Reset to default',
+      'Default',
+      'Shared upload',
+    ]) {
+      expect(text).toContain(word);
+    }
+  });
+});

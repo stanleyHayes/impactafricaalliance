@@ -51,6 +51,11 @@ const STEP_DEFINITIONS: Record<string, readonly StepDefinition[]> = {
     { label: 'Figure', fields: ['key', 'label', 'value', 'suffix'] },
     { label: 'Visibility', fields: ['order', 'isActive'] },
   ],
+  popups: [
+    { label: 'Message', fields: ['name', 'title', 'message', 'ctaLabel', 'ctaUrl'] },
+    { label: 'Picture and timing', fields: ['imageUrl', 'delaySeconds', 'startsAt', 'endsAt'] },
+    { label: 'Publishing', fields: ['priority', 'isActive'] },
+  ],
   'page-settings': [
     { label: 'Search', fields: ['pageKey', 'seoTitle', 'seoDescription'] },
     { label: 'Hero', fields: ['heroEyebrow', 'heroTitle', 'heroSubtitle', 'heroImage'] },
