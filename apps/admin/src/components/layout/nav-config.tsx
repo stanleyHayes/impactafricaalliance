@@ -32,6 +32,7 @@ import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
 import WallpaperIcon from '@mui/icons-material/Wallpaper';
 import WorkOutlineIcon from '@mui/icons-material/WorkOutlineOutlined';
 
+import { mayOpenPath } from '../../auth/may-open';
 import { RESOURCES } from '../../resources/registry';
 
 export interface NavItem {
@@ -187,17 +188,7 @@ export const buildNavGroups = (user: PublicUser | null, counts: NavCounts = {}):
       ],
     },
   ];
-  // The first path segment is the permission key (`/impact-stories` needs
-  // `impact-stories:read`), apart from the few mapped below.
-  const mayRead = (item: NavItem): boolean => {
-    const path = item.to.split('/').filter(Boolean);
-    let resource = path[0];
-    if (resource === 'content') resource = path[1];
-    if (resource === 'donations' && user?.role !== UserRole.Admin) return false;
-    if (resource === 'media') resource = 'media-library';
-    if (!resource || ['account', 'analytics', 'social-connections'].includes(resource)) return true;
-    return Boolean(user?.permissions.some((permission) => permission === `${resource}:read`));
-  };
+  const mayRead = (item: NavItem): boolean => mayOpenPath(user, item.to);
   return groups
     .map((group) => ({ ...group, items: group.items.filter(mayRead) }))
     .filter((group) => group.items.length > 0);

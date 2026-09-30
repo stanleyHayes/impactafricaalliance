@@ -14,6 +14,7 @@ import Typography from '@mui/material/Typography';
 import { useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
+import { useCan } from '../../auth/useCan';
 import {
   aspectLabel,
   publicSiteUrl,
@@ -104,19 +105,31 @@ const BrokenNote = ({ broken }: { broken: boolean }): JSX.Element | null =>
     </Alert>
   ) : null;
 
-/** Says so when a Page Settings hero image is what visitors actually see. */
-const PageSettingNote = ({ view }: { view: SlotView }): JSX.Element | null =>
-  view.pageSettingOverride ? (
+/**
+ * Says so when a Page Settings hero image is what visitors actually see. The
+ * way there is offered only to someone who may change Page Settings.
+ */
+const PageSettingNote = ({ view }: { view: SlotView }): JSX.Element | null => {
+  const can = useCan();
+  const mayEdit = can('read', 'page-settings') && can('update', 'page-settings');
+  if (!view.pageSettingOverride) return null;
+  return (
     <Alert severity="warning" role="note" sx={{ borderRadius: 2, py: 0 }}>
-      Page Settings has a hero image for this page, and the site shows that instead.{' '}
-      <Link
-        component={RouterLink}
-        to={`/content/page-settings/${view.pageSettingOverride.id}/edit`}
-      >
-        Open Page Settings
-      </Link>
+      Page Settings has a hero image for this page, and the site shows that instead.
+      {mayEdit && (
+        <>
+          {' '}
+          <Link
+            component={RouterLink}
+            to={`/content/page-settings/${view.pageSettingOverride.id}/edit`}
+          >
+            Open Page Settings
+          </Link>
+        </>
+      )}
     </Alert>
-  ) : null;
+  );
+};
 
 /**
  * One place on the site that shows a picture: the picture it shows now, in

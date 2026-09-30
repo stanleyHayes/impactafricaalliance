@@ -9,6 +9,7 @@ import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import { useId } from 'react';
 
+import { useHasPermission } from '../../auth/useCan';
 import { VISUALLY_HIDDEN } from '../../lib/visually-hidden';
 import { skinned, tokenVar } from '../../theme/surfaces';
 
@@ -16,6 +17,7 @@ import { PersonAvatars } from './PersonAvatars';
 import { dueState, taskPriorityLabel, taskStatusLabel } from './task-display';
 import { TaskDueChip } from './TaskDueChip';
 import { TaskPriorityChip } from './TaskPriorityChip';
+import { TaskProjectName } from './TaskProjectName';
 import { TaskStatusChip } from './TaskStatusChip';
 
 /** "3/5" beside a checklist icon, or nothing for a task without one. */
@@ -42,13 +44,14 @@ const plural = (count: number, one: string, many: string): string =>
  * What a row shows besides its key and title, in words, for screen readers:
  * a button's content is not read out, so the chips and counts would otherwise
  * be heard by nobody. The status is always said, even in a list grouped by it.
+ * The project is said only to someone who may read projects, as it is shown.
  */
-export const taskRowSummary = (task: TaskListItem): string =>
+export const taskRowSummary = (task: TaskListItem, showProject: boolean): string =>
   [
     taskStatusLabel(task.status),
     `${taskPriorityLabel(task.priority)} priority`,
     dueState(task.dueDate, task.status).label,
-    task.project?.title,
+    showProject ? task.project?.title : null,
     task.checklistTotal > 0
       ? `${task.checklistDone} of ${task.checklistTotal} checklist items done`
       : null,
@@ -95,6 +98,7 @@ export const TaskRow = ({
 }): JSX.Element => {
   const id = useId();
   const done = task.status === 'done';
+  const canReadProjects = useHasPermission('read', 'projects');
   return (
     <Box component="li" sx={{ listStyle: 'none' }}>
       <ButtonBase
@@ -152,11 +156,7 @@ export const TaskRow = ({
             {showStatus && <TaskStatusChip status={task.status} />}
             <TaskPriorityChip priority={task.priority} />
             <TaskDueChip dueDate={task.dueDate} status={task.status} />
-            {task.project && (
-              <Typography variant="caption" color="text.secondary" noWrap sx={{ maxWidth: 220 }}>
-                {task.project.title}
-              </Typography>
-            )}
+            <TaskProjectName project={task.project} sx={{ maxWidth: 220 }} />
           </Stack>
         </Box>
         <Stack
@@ -178,7 +178,7 @@ export const TaskRow = ({
         <PersonAvatars people={task.assignees} />
         {/* Absolutely placed, so it takes no cell in the row's grid. */}
         <Box component="span" id={`${id}-summary`} sx={VISUALLY_HIDDEN}>
-          {taskRowSummary(task)}
+          {taskRowSummary(task, canReadProjects)}
         </Box>
       </ButtonBase>
     </Box>

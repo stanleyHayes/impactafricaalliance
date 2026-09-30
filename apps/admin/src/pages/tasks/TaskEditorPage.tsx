@@ -11,6 +11,7 @@ import Typography from '@mui/material/Typography';
 import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { Link as RouterLink, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
+import { useHasPermission } from '../../auth/useCan';
 import { DateField } from '../../components/fields/DateField';
 import { OptionSelect, type SelectChoice } from '../../components/fields/OptionSelect';
 import { TagsField } from '../../components/fields/TagsField';
@@ -93,7 +94,9 @@ const BasicsStep = ({ form, set, errors, disabled }: StepProps): JSX.Element => 
 );
 
 const AssignmentStep = ({ form, set, errors, disabled, taskId }: StepProps): JSX.Element => {
-  const project = useTaskProject(form.projectId);
+  // Milestones come from the project, so they follow projects access too.
+  const canReadProjects = useHasPermission('read', 'projects');
+  const project = useTaskProject(canReadProjects ? form.projectId : null);
   const milestones: SelectChoice[] = [
     {
       value: '',
@@ -131,16 +134,18 @@ const AssignmentStep = ({ form, set, errors, disabled, taskId }: StepProps): JSX
         error={errors.projectId}
         helperText="Optional. Leave empty for work outside any project."
       />
-      <OptionSelect
-        label="Milestone"
-        options={milestones}
-        value={form.milestoneId ?? ''}
-        onChange={(value) => set('milestoneId', value || null)}
-        disabled={disabled || !form.projectId}
-        placeholder={form.projectId ? 'No milestone' : 'Choose a project first'}
-        error={errors.milestoneId}
-        helperText={project.isError ? 'The milestones could not be loaded.' : undefined}
-      />
+      {canReadProjects && (
+        <OptionSelect
+          label="Milestone"
+          options={milestones}
+          value={form.milestoneId ?? ''}
+          onChange={(value) => set('milestoneId', value || null)}
+          disabled={disabled || !form.projectId}
+          placeholder={form.projectId ? 'No milestone' : 'Choose a project first'}
+          error={errors.milestoneId}
+          helperText={project.isError ? 'The milestones could not be loaded.' : undefined}
+        />
+      )}
       <TaskPicker
         label="Parent task"
         value={form.parent}
@@ -260,7 +265,8 @@ const ReviewStep = ({
   onEdit: (step: number) => void;
   disabled: boolean;
 }): JSX.Element => {
-  const project = useTaskProject(form.projectId);
+  const canReadProjects = useHasPermission('read', 'projects');
+  const project = useTaskProject(canReadProjects ? form.projectId : null);
   const people = usePeople(form.assigneeIds);
   const projectName = form.project?.title ?? project.data?.title;
   const milestone = project.data?.milestones.find((item) => item.id === form.milestoneId);
@@ -282,8 +288,13 @@ const ReviewStep = ({
           step: 1,
           items: [
             { label: 'Assignees', value: assigneeSummary(form.assigneeIds, people.data) },
-            { label: 'Project', value: form.projectId ? (projectName ?? 'Loading…') : '' },
-            { label: 'Milestone', value: milestone?.title },
+            // The project and milestone are the projects module's: not listed without it.
+            ...(canReadProjects
+              ? [
+                  { label: 'Project', value: form.projectId ? (projectName ?? 'Loading…') : '' },
+                  { label: 'Milestone', value: milestone?.title },
+                ]
+              : []),
             {
               label: 'Parent task',
               value: form.parent ? `${form.parent.key}: ${form.parent.title}` : '',

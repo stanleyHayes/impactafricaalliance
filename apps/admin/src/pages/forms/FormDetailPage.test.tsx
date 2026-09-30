@@ -91,10 +91,9 @@ describe('FormDetailPage', () => {
     ).toBeInTheDocument();
     expect(screen.getByText(/Only an administrator can publish/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Publish' })).not.toBeInTheDocument();
-    // Editors without applications:read are told who can grant it.
-    expect(
-      screen.getByText(/An administrator can give you access under Users/),
-    ).toBeInTheDocument();
+    // Without applications:read the recent applications are not there at all.
+    expect(screen.queryByText('Recent applications')).not.toBeInTheDocument();
+    expect(screen.queryByText(/An administrator can give you access/)).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Edit/ })).toHaveAttribute(
       'href',
       '/forms/form-1/edit',

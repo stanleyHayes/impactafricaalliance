@@ -13,7 +13,7 @@ vi.mock('../../auth/AuthContext', () => ({
     user: {
       id: 'a'.repeat(24),
       role: 'editor',
-      permissions: ['tasks:read', 'tasks:create', 'tasks:update'],
+      permissions: ['tasks:read', 'tasks:create', 'tasks:update', 'projects:read'],
     },
   }),
 }));

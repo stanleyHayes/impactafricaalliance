@@ -109,9 +109,10 @@ describe('ProjectStoriesPanel', () => {
     expect(create.className).not.toContain('MuiButton-contained');
   });
 
-  it('says who can grant access when stories cannot be read', () => {
+  it('is not there at all when stories cannot be read', () => {
     mount(['projects:read']);
-    expect(screen.getByText(/An administrator can grant it under Users/)).toBeInTheDocument();
+    expect(screen.queryByText(/impact stor/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/An administrator can grant/)).not.toBeInTheDocument();
     expect(api.get).not.toHaveBeenCalled();
     expect(screen.queryByRole('button', { name: 'Create impact story' })).not.toBeInTheDocument();
   });

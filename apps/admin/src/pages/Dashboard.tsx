@@ -40,10 +40,11 @@ import { alpha } from '@mui/material/styles';
 import Switch from '@mui/material/Switch';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import { useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
 import { useAuth } from '../auth/AuthContext';
+import { useMayOpen } from '../auth/may-open';
 import { RequirePermission } from '../auth/RequirePermission';
 import { BarChart } from '../components/charts/BarChart';
 import { DonationChartEmpty } from '../components/charts/DonationChartEmpty';
@@ -1147,12 +1148,21 @@ const SubmissionsBreakdownPanel = ({
 
 // ── Content inventory ───────────────────────────────────────────────────────
 
+/** Where a counted collection is managed: events have their own pages. */
+const contentPath = (key: string): string => (key === 'events' ? '/events' : `/content/${key}`);
+
 const ContentInventoryPanel = ({
   content,
   loading,
+  manageTo,
+  rows,
 }: {
   content?: DashboardSummary['content'];
   loading: boolean;
+  /** The first collection this person may open. */
+  manageTo: string;
+  /** How many collections this person may open, for the loading shape. */
+  rows: number;
 }): JSX.Element => (
   <Panel
     title="Content inventory"
@@ -1160,7 +1170,7 @@ const ContentInventoryPanel = ({
     action={
       <Button
         component={RouterLink}
-        to={`/content/${RESOURCES[0]?.key ?? 'articles'}`}
+        to={manageTo}
         size="small"
         endIcon={<ChevronRightIcon />}
         sx={{ fontWeight: 600 }}
@@ -1170,10 +1180,7 @@ const ContentInventoryPanel = ({
     }
   >
     <Grid container spacing={1.5} sx={{ p: 2.5 }}>
-      {(loading || !content
-        ? Array.from({ length: DASHBOARD_CONTENT_COLLECTIONS.length })
-        : content
-      ).map((entry, index) => (
+      {(loading || !content ? Array.from({ length: rows }) : content).map((entry, index) => (
         <Grid
           key={entry ? (entry as DashboardSummary['content'][number]).key : index}
           size={{ xs: 12, sm: 6 }}
@@ -1223,7 +1230,7 @@ const ContentInventoryRow = ({
   return (
     <CardActionArea
       component={RouterLink}
-      to={`/content/${entry.key}`}
+      to={contentPath(entry.key)}
       sx={[
         {
           display: 'block',
@@ -1317,13 +1324,29 @@ const SystemRow = ({
  * rows as will appear: it used to draw three where four arrive, each of them
  * twice the height of the real thing.
  */
-const SYSTEM_ROWS: ReadonlyArray<{
+interface SystemRowSpec {
   icon: SvgIconComponent;
   label: string;
   to: string;
   accent: string;
   value: (summary: DashboardSummary) => string;
-}> = [
+}
+
+/** Only the rows for pages this person may open; the content row counts only theirs. */
+const systemRowsFor = (mayOpen: (to: string) => boolean, content: ContentAccess): SystemRowSpec[] =>
+  [
+    ...SYSTEM_ROWS,
+    {
+      icon: AutoStoriesIcon,
+      label: 'Content collections live',
+      to: content.manageTo ?? '',
+      accent: brandColors.deepForest,
+      value: (summary: DashboardSummary) =>
+        `${content.readable(summary.content).reduce((sum, entry) => sum + entry.published, 0)} items`,
+    },
+  ].filter((row) => row.to !== '' && mayOpen(row.to));
+
+const SYSTEM_ROWS: SystemRowSpec[] = [
   {
     icon: CalendarMonthIcon,
     label: 'Upcoming events',
@@ -1345,13 +1368,6 @@ const SYSTEM_ROWS: ReadonlyArray<{
     accent: brandColors.mint,
     value: (summary) => String(summary.socialConnections),
   },
-  {
-    icon: AutoStoriesIcon,
-    label: 'Content collections live',
-    to: `/content/${RESOURCES[0]?.key ?? 'articles'}`,
-    accent: brandColors.deepForest,
-    value: (summary) => `${summary.content.reduce((sum, entry) => sum + entry.published, 0)} items`,
-  },
 ];
 
 /** The loading shape of a SystemRow, from that row's own padding and avatar. */
@@ -1368,15 +1384,17 @@ const SystemRowSkeleton = (): JSX.Element => (
 const SystemPanel = ({
   summary,
   loading,
+  rows,
 }: {
   summary?: DashboardSummary;
   loading: boolean;
+  rows: SystemRowSpec[];
 }): JSX.Element => (
   <Panel title="Operations snapshot" subtitle="Across the whole console">
     <Stack sx={{ p: 1 }}>
       {loading || !summary
-        ? SYSTEM_ROWS.map((row) => <SystemRowSkeleton key={row.label} />)
-        : SYSTEM_ROWS.map((row) => (
+        ? rows.map((row) => <SystemRowSkeleton key={row.label} />)
+        : rows.map((row) => (
             <SystemRow
               key={row.label}
               icon={row.icon}
@@ -1397,7 +1415,11 @@ const sortRecent = (items: Submission[] | undefined): Submission[] =>
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, RECENT_SUBMISSION_LIMIT);
 
-const buildSubtitle = (newCount: number): string => {
+/** `newCount` is null for someone who cannot read submissions: the inbox is not theirs. */
+const buildSubtitle = (newCount: number | null): string => {
+  if (newCount === null) {
+    return 'Keep the Impact Africa Alliance site fresh and current.';
+  }
   if (newCount > 0) {
     return `You have ${newCount} new submission${newCount === 1 ? '' : 's'} waiting for review.`;
   }
@@ -1408,7 +1430,8 @@ const buildRoleStat = (
   isAdmin: boolean,
   data: DashboardSummary | undefined,
   loading: boolean,
-): StatCardProps => {
+  content: ContentAccess,
+): StatCardProps | null => {
   if (isAdmin) {
     return {
       label: 'Team members',
@@ -1420,22 +1443,30 @@ const buildRoleStat = (
       loading,
     };
   }
+  if (!content.manageTo) return null;
   return {
     label: 'Content types',
-    value: String(RESOURCES.length),
+    value: String(content.resources.length),
     caption: 'Collections to manage',
     icon: PersonOutlineIcon,
-    to: `/content/${RESOURCES[0]?.key ?? ''}`,
+    to: content.manageTo,
     accent: brandColors.deepForest,
     loading: false,
   };
 };
 
+/** The stat cards for the pages this person may open, and no others. */
 const buildStats = (
   isAdmin: boolean,
   data: DashboardSummary | undefined,
   loading: boolean,
-): StatCardProps[] => [
+  access: DashboardAccess,
+): StatCardProps[] =>
+  [...allStats(data, loading), buildRoleStat(isAdmin, data, loading, access.content)].filter(
+    (stat): stat is StatCardProps => stat !== null && access.mayOpen(stat.to),
+  );
+
+const allStats = (data: DashboardSummary | undefined, loading: boolean): StatCardProps[] => [
   {
     label: 'New submissions',
     value: String(data?.submissions.newCount ?? 0),
@@ -1463,45 +1494,57 @@ const buildStats = (
     accent: brandColors.gold,
     loading,
   },
-  buildRoleStat(isAdmin, data, loading),
 ];
 
-const HeaderActions = (): JSX.Element => (
-  <Stack
-    direction={{ xs: 'column', sm: 'row' }}
-    spacing={1.5}
-    sx={{ width: { xs: '100%', sm: 'auto' }, flexWrap: 'wrap' }}
-  >
-    <Button
-      component={RouterLink}
-      to="/submissions"
-      variant="contained"
-      endIcon={<ArrowForwardIcon />}
-      sx={{
-        borderRadius: tokenVar('buttonRadius'),
-        px: 2.5,
-        fontWeight: 600,
-        width: { xs: '100%', sm: 'auto' },
-      }}
+const HeaderActions = ({ mayOpen }: { mayOpen: (to: string) => boolean }): JSX.Element | null => {
+  const submissions = mayOpen('/submissions');
+  const subscribers = mayOpen('/subscribers');
+  if (!submissions && !subscribers) return null;
+  return (
+    <Stack
+      direction={{ xs: 'column', sm: 'row' }}
+      spacing={1.5}
+      sx={{ width: { xs: '100%', sm: 'auto' }, flexWrap: 'wrap' }}
     >
-      Review submissions
-    </Button>
-    <Button
-      component={RouterLink}
-      to="/subscribers"
-      variant="outlined"
-      startIcon={<MailOutlineIcon />}
-      sx={{ borderRadius: tokenVar('buttonRadius'), px: 2.5, width: { xs: '100%', sm: 'auto' } }}
-    >
-      Newsletter
-    </Button>
-  </Stack>
-);
+      {submissions && (
+        <Button
+          component={RouterLink}
+          to="/submissions"
+          variant="contained"
+          endIcon={<ArrowForwardIcon />}
+          sx={{
+            borderRadius: tokenVar('buttonRadius'),
+            px: 2.5,
+            fontWeight: 600,
+            width: { xs: '100%', sm: 'auto' },
+          }}
+        >
+          Review submissions
+        </Button>
+      )}
+      {subscribers && (
+        <Button
+          component={RouterLink}
+          to="/subscribers"
+          variant="outlined"
+          startIcon={<MailOutlineIcon />}
+          sx={{
+            borderRadius: tokenVar('buttonRadius'),
+            px: 2.5,
+            width: { xs: '100%', sm: 'auto' },
+          }}
+        >
+          Newsletter
+        </Button>
+      )}
+    </Stack>
+  );
+};
 
-const ManageContentPanel = (): JSX.Element => (
+const ManageContentPanel = ({ resources }: { resources: typeof RESOURCES }): JSX.Element => (
   <Panel title="Manage content" subtitle="Jump into a collection">
     <Grid container spacing={1.5} sx={{ p: 2.5 }}>
-      {RESOURCES.map((resource) => (
+      {resources.map((resource) => (
         // Four across on a wide screen now the panel has the full width;
         // two would leave half the row empty.
         <Grid key={resource.key} size={{ xs: 12, sm: 6, lg: 3 }}>
@@ -1516,6 +1559,63 @@ const ManageContentPanel = (): JSX.Element => (
   </Panel>
 );
 
+/** What of the content this person may open. */
+interface ContentAccess {
+  /** The CMS collections they may read, in sidebar order. */
+  resources: typeof RESOURCES;
+  /** The first of them, or null when there is none. */
+  manageTo: string | null;
+  /** The first counted collection they may open (events included), or null. */
+  inventoryTo: string | null;
+  /** How many counted collections they may open. */
+  countedRows: number;
+  /** The counted collections among the summary's. */
+  readable: (content: DashboardSummary['content']) => DashboardSummary['content'];
+}
+
+interface DashboardAccess {
+  mayOpen: (to: string) => boolean;
+  content: ContentAccess;
+}
+
+const contentAccessFor = (mayOpen: (to: string) => boolean): ContentAccess => {
+  const resources = RESOURCES.filter((resource) => mayOpen(`/content/${resource.key}`));
+  const counted = DASHBOARD_CONTENT_COLLECTIONS.filter((entry) => mayOpen(contentPath(entry.key)));
+  return {
+    resources,
+    manageTo: resources[0] ? `/content/${resources[0].key}` : null,
+    inventoryTo: counted[0] ? contentPath(counted[0].key) : null,
+    countedRows: counted.length,
+    readable: (content) => content.filter((entry) => mayOpen(contentPath(entry.key))),
+  };
+};
+
+/** Four across when all four stats show; fewer share the row between them. */
+const statColumns = (count: number): number => (count >= 4 ? 3 : 12 / Math.max(count, 2));
+
+/**
+ * Two panels side by side. One alone takes the whole row, so a panel hidden
+ * for want of a permission leaves no hole, and with neither there is no row.
+ */
+const PanelPair = ({
+  first,
+  second,
+  firstColumns,
+}: {
+  first: ReactNode;
+  second: ReactNode;
+  firstColumns: number;
+}): JSX.Element | null => {
+  if (!first && !second) return null;
+  const both = Boolean(first && second);
+  return (
+    <Grid container spacing={2.5} sx={{ alignItems: 'stretch' }}>
+      {first && <Grid size={{ xs: 12, md: both ? firstColumns : 12 }}>{first}</Grid>}
+      {second && <Grid size={{ xs: 12, md: both ? 12 - firstColumns : 12 }}>{second}</Grid>}
+    </Grid>
+  );
+};
+
 interface DashboardBodyProps {
   data: DashboardSummary | undefined;
   loading: boolean;
@@ -1523,8 +1623,14 @@ interface DashboardBodyProps {
   recent: Submission[];
   recentLoading: boolean;
   onFeedback: (message: string, severity: 'success' | 'error') => void;
+  access: DashboardAccess;
 }
 
+/**
+ * Everything below the header. Each card, panel and link shows only when this
+ * person may open the page it is about: a module they cannot read appears
+ * nowhere, here as in the sidebar.
+ */
 const DashboardBody = ({
   data,
   loading,
@@ -1532,54 +1638,77 @@ const DashboardBody = ({
   recent,
   recentLoading,
   onFeedback,
-}: DashboardBodyProps): JSX.Element => (
-  <Stack spacing={3.5}>
-    {/* The person's own tasks and the work waiting on them first: it is what
-        they act on today. Renders nothing without any of its permissions. */}
-    <YourWorkPanel />
+  access,
+}: DashboardBodyProps): JSX.Element => {
+  const { mayOpen, content } = access;
+  const stats = buildStats(isAdmin, data, loading, access);
+  const donations = mayOpen('/donations');
+  const submissions = mayOpen('/submissions');
+  const systemRows = systemRowsFor(mayOpen, content);
+  return (
+    <Stack spacing={3.5}>
+      {/* The person's own tasks and the work waiting on them first: it is what
+          they act on today. Renders nothing without any of its permissions. */}
+      <YourWorkPanel />
 
-    {/* KPI stat cards */}
-    <Grid id="admin-dashboard-stats" container spacing={2.5}>
-      {buildStats(isAdmin, data, loading).map((stat) => (
-        <Grid key={stat.label} size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard {...stat} />
+      {/* KPI stat cards */}
+      {stats.length > 0 && (
+        <Grid id="admin-dashboard-stats" container spacing={2.5}>
+          {stats.map((stat) => (
+            <Grid key={stat.label} size={{ xs: 12, sm: 6, md: statColumns(stats.length) }}>
+              <StatCard {...stat} />
+            </Grid>
+          ))}
         </Grid>
-      ))}
-    </Grid>
+      )}
 
-    {/* Donations — full width */}
-    <DonationsPanel donations={data?.donations} loading={loading} />
+      {/* Donations — full width */}
+      {donations && <DonationsPanel donations={data?.donations} loading={loading} />}
 
-    {/* Payment providers + operations snapshot, side by side */}
-    <Grid container spacing={2.5} sx={{ alignItems: 'stretch' }}>
-      <Grid size={{ xs: 12, md: 6 }}>
-        <PaymentProvidersPanel
-          payments={data?.payments}
-          isAdmin={isAdmin}
-          loading={loading}
-          onFeedback={onFeedback}
-        />
-      </Grid>
-      <Grid size={{ xs: 12, md: 6 }}>
-        <SystemPanel summary={data} loading={loading} />
-      </Grid>
-    </Grid>
+      {/* Payment providers + operations snapshot, side by side */}
+      <PanelPair
+        firstColumns={6}
+        first={
+          donations ? (
+            <PaymentProvidersPanel
+              payments={data?.payments}
+              isAdmin={isAdmin}
+              loading={loading}
+              onFeedback={onFeedback}
+            />
+          ) : null
+        }
+        second={
+          systemRows.length > 0 ? (
+            <SystemPanel summary={data} loading={loading} rows={systemRows} />
+          ) : null
+        }
+      />
 
-    {/* Submissions breakdown + content inventory */}
-    <Grid container spacing={2.5} sx={{ alignItems: 'stretch' }}>
-      <Grid size={{ xs: 12, md: 5 }}>
-        <SubmissionsBreakdownPanel submissions={data?.submissions} loading={loading} />
-      </Grid>
-      <Grid size={{ xs: 12, md: 7 }}>
-        <ContentInventoryPanel content={data?.content} loading={loading} />
-      </Grid>
-    </Grid>
+      {/* Submissions breakdown + content inventory */}
+      <PanelPair
+        firstColumns={5}
+        first={
+          submissions ? (
+            <SubmissionsBreakdownPanel submissions={data?.submissions} loading={loading} />
+          ) : null
+        }
+        second={
+          content.inventoryTo ? (
+            <ContentInventoryPanel
+              content={data?.content ? content.readable(data.content) : undefined}
+              loading={loading}
+              manageTo={content.inventoryTo}
+              rows={content.countedRows}
+            />
+          ) : null
+        }
+      />
 
-    {/* Recent activity, then the content shortcuts beneath it. Full width
-        each: side by side, the submissions list was squeezed narrow enough to
-        wrap every entry, and the shortcut grid was cramped into two columns. */}
-    <Grid container spacing={2.5}>
-      <Grid size={12}>
+      {/* Recent activity, then the content shortcuts beneath it. Full width
+          each: side by side, the submissions list was squeezed narrow enough to
+          wrap every entry, and the shortcut grid was cramped into two columns. */}
+      {submissions && (
         <Panel
           title="Recent submissions"
           subtitle="Latest inbound activity"
@@ -1597,18 +1726,22 @@ const DashboardBody = ({
         >
           <RecentSubmissions loading={recentLoading} items={recent} />
         </Panel>
-      </Grid>
-      <Grid size={12}>
-        <ManageContentPanel />
-      </Grid>
-    </Grid>
-  </Stack>
-);
+      )}
+      {content.resources.length > 0 && <ManageContentPanel resources={content.resources} />}
+    </Stack>
+  );
+};
 
 const Dashboard = (): JSX.Element => {
   const { user } = useAuth();
+  const mayOpen = useMayOpen();
+  const access = useMemo<DashboardAccess>(
+    () => ({ mayOpen, content: contentAccessFor(mayOpen) }),
+    [mayOpen],
+  );
+  const canReadSubmissions = mayOpen('/submissions');
   const summary = useDashboardSummary();
-  const recentSubmissions = useSubmissions({});
+  const recentSubmissions = useSubmissions({}, canReadSubmissions);
   const [snackbar, setSnackbar] = useState<{
     message: string;
     severity: 'success' | 'error';
@@ -1621,9 +1754,11 @@ const Dashboard = (): JSX.Element => {
       <PageHeader
         icon={<DashboardIcon />}
         title="Dashboard"
-        description={`Welcome back, ${firstName}. ${buildSubtitle(summary.data?.submissions.newCount ?? 0)}`}
+        description={`Welcome back, ${firstName}. ${buildSubtitle(
+          canReadSubmissions ? (summary.data?.submissions.newCount ?? 0) : null,
+        )}`}
         help={pageGuides.Dashboard}
-        action={<HeaderActions />}
+        action={<HeaderActions mayOpen={mayOpen} />}
       />
 
       <RequirePermission resource="submissions" action="read">
@@ -1643,6 +1778,7 @@ const Dashboard = (): JSX.Element => {
         recent={sortRecent(recentSubmissions.data?.items)}
         recentLoading={recentSubmissions.isLoading}
         onFeedback={(message, severity) => setSnackbar({ message, severity })}
+        access={access}
       />
 
       <Snackbar

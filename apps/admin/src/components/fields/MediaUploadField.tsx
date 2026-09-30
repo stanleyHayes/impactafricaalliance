@@ -20,7 +20,11 @@ import { useRef, useState } from 'react';
 import { uploadToCloudinary } from '../../lib/cloudinary';
 import { downscaleImage } from '../../lib/downscale-image';
 import { dropZoneActiveSx, dropZoneSx, skinned, surfaceSx } from '../../theme/surfaces';
-import { UPLOAD_PERMISSION_NOTE, useCanUploadFiles } from '../files/upload-permission';
+import {
+  UPLOAD_PERMISSION_NOTE,
+  useCanReadMediaLibrary,
+  useCanUploadFiles,
+} from '../files/upload-permission';
 import { MediaPickerDialog } from '../media/MediaPickerDialog';
 
 interface MediaUploadFieldProps {
@@ -180,6 +184,8 @@ export const MediaUploadField = ({
   // someone without it can still choose a picture the site already has.
   const mayUpload = useCanUploadFiles();
   const locked = uploading || !mayUpload;
+  const canReadLibrary = useCanReadMediaLibrary();
+  const canPick = isImage && canReadLibrary;
 
   const handleFile = async (chosen: File | undefined): Promise<void> => {
     if (!chosen || uploadLock.current || !mayUpload) {
@@ -328,7 +334,7 @@ export const MediaUploadField = ({
       <Stack direction="row" spacing={1} sx={{ alignSelf: 'flex-start' }}>
         {/* Reuse comes first: uploading a second copy of a picture the site
             already has is the mistake this is here to prevent. */}
-        {isImage && (
+        {canPick && (
           <Button
             size="small"
             variant="text"
@@ -355,7 +361,7 @@ export const MediaUploadField = ({
         )}
       </Stack>
 
-      {isImage && (
+      {canPick && (
         <MediaPickerDialog
           open={picking}
           folder={folder}

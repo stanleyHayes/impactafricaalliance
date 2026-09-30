@@ -52,7 +52,9 @@ const PanelSkeleton = (): JSX.Element => (
  * already exists before starting a second. Starting one copies the project
  * into a new draft; completing the project publishes nothing by itself.
  */
-export const ProjectStoriesPanel = ({ projectId }: ProjectStoriesPanelProps): JSX.Element => {
+export const ProjectStoriesPanel = ({
+  projectId,
+}: ProjectStoriesPanelProps): JSX.Element | null => {
   const navigate = useNavigate();
   const canRead = useHasPermission('read', 'impact-stories');
   const canUpdate = useHasPermission('update', 'impact-stories');
@@ -67,14 +69,6 @@ export const ProjectStoriesPanel = ({ projectId }: ProjectStoriesPanelProps): JS
   const items = stories.data?.items ?? [];
 
   const body = (): JSX.Element => {
-    if (!canRead) {
-      return (
-        <Alert severity="info">
-          You need access to impact stories to see the stories written from this project. An
-          administrator can grant it under Users.
-        </Alert>
-      );
-    }
     if (stories.isPending) return <PanelSkeleton />;
     if (stories.isError) {
       return (
@@ -145,6 +139,9 @@ export const ProjectStoriesPanel = ({ projectId }: ProjectStoriesPanelProps): JS
       </Stack>
     );
   };
+
+  // Stories someone cannot read are not shown at all: no section, no notice.
+  if (!canRead) return null;
 
   return (
     // The same card section as Impact numbers and Risks above it on the tab.

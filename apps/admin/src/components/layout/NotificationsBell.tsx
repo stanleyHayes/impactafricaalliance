@@ -106,7 +106,14 @@ const relativeTime = (iso: string): string => {
  * opens a rich popover with the latest few, type-tagged, with inline "mark read"
  * and a "View all" footer.
  */
-export const NotificationsBell = (): JSX.Element => {
+/**
+ * The top bar's bell. Notifications are new submissions, so someone who
+ * cannot read submissions has no bell at all.
+ */
+export const NotificationsBell = (): JSX.Element | null =>
+  useHasPermission('read', 'submissions') ? <SubmissionsBell /> : null;
+
+const SubmissionsBell = (): JSX.Element => {
   const navigate = useNavigate();
   const { prefs } = usePreferences();
   // One live query drives the bell, the sidebar badges and the dashboard

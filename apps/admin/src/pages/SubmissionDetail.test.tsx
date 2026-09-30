@@ -40,6 +40,7 @@ const mount = (edit = false) =>
         <Routes>
           <Route path="/submissions/records/:id" element={<SubmissionDetail />} />
           <Route path="/submissions/records/:id/edit" element={<SubmissionDetail edit />} />
+          <Route path="/" element={<p>Dashboard</p>} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -59,10 +60,17 @@ describe('submission details and editor', () => {
     expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
   });
-  it('blocks a direct edit URL before fetching for a reader', () => {
+  it('opens the record, not the editor, for a reader who follows an edit URL', async () => {
     auth.permissions = ['submissions:read'];
     mount(true);
-    expect(screen.getByRole('alert')).toHaveTextContent('permission');
+    expect(await screen.findByText(item.payload.message)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Continue' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+  it('sends someone who cannot read submissions to the dashboard before fetching', () => {
+    auth.permissions = [];
+    mount();
+    expect(screen.getByText('Dashboard')).toBeInTheDocument();
     expect(api.get).not.toHaveBeenCalled();
   });
   it('validates each step, retains fields, clears optional hours, and only saves from review', async () => {

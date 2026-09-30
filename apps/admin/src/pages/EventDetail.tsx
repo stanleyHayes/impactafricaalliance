@@ -415,24 +415,8 @@ const EventOverview = ({ event, canManage }: { event: Event; canManage: boolean 
       <RequirePermission resource="events" action="create">
         <EventMessages event={event} />
       </RequirePermission>
-      {/*
-        Says so when the account cannot see reviews. Rendering nothing made a
-        missing permission look like a broken feature — which is how it was
-        reported.
-      */}
-      <RequirePermission
-        resource="reviews"
-        action="read"
-        fallback={
-          <Section title="Reviews & ratings">
-            <EmptyState
-              icon={<RateReviewRoundedIcon />}
-              title="You do not have access to reviews"
-              description="Attendee ratings and the moderation queue are restricted. An administrator can grant your account the reviews permission under Users."
-            />
-          </Section>
-        }
-      >
+      {/* Without reviews:read the section is not there at all. */}
+      <RequirePermission resource="reviews" action="read">
         <Box id="reviews" sx={{ scrollMarginTop: 100 }}>
           <Stack spacing={3}>
             <EventRatings eventId={event.id} />

@@ -18,6 +18,7 @@ vi.mock('../components/layout/AppShell', async () => {
   const { Outlet } = await vi.importActual<typeof Router>('react-router-dom');
   return { AppShell: () => <Outlet /> };
 });
+vi.mock('../pages/Dashboard', () => named('Dashboard'));
 vi.mock('../pages/projects/ProjectsPage', () => named('ProjectsPage'));
 vi.mock('../pages/projects/ProjectEditorPage', () => named('ProjectEditorPage'));
 vi.mock('../pages/projects/ProjectDetailLayout', async () => {
@@ -74,8 +75,6 @@ const visit = (path: string, permissions: string[] = ALL_WORK_PERMISSIONS): void
 afterEach(() => {
   cleanup();
 });
-
-const NO_PERMISSION = 'You do not have permission to view this page.';
 
 describe('work module routes', () => {
   it.each([
@@ -135,20 +134,28 @@ describe('work module routes', () => {
     expect(await screen.findByText('AllTasksPage')).toBeInTheDocument();
   });
 
-  it('says so when the read permission is missing', () => {
+  it('sends someone without the read permission to the dashboard, saying nothing', () => {
     visit('/applications', ['tasks:read']);
-    expect(screen.getByRole('alert')).toHaveTextContent(NO_PERMISSION);
+    expect(screen.getByText('Dashboard')).toBeInTheDocument();
     expect(screen.queryByText('ApplicationsPage')).not.toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
   it('needs the create permission for a new record, not just read', () => {
     visit('/tasks/new', ['tasks:read']);
-    expect(screen.getByRole('alert')).toHaveTextContent(NO_PERMISSION);
+    expect(screen.getByText('Dashboard')).toBeInTheDocument();
+    expect(screen.queryByText('TaskEditorPage')).not.toBeInTheDocument();
   });
 
   it('needs to read the project to start a story from it', () => {
     visit('/impact-stories/from-project/p1', ['impact-stories:read', 'impact-stories:create']);
-    expect(screen.getByRole('alert')).toHaveTextContent(NO_PERMISSION);
+    expect(screen.getByText('Dashboard')).toBeInTheDocument();
     expect(screen.queryByText('StoryFromProjectPage')).not.toBeInTheDocument();
+  });
+
+  it('opens the project overview for someone who cannot read tasks', async () => {
+    visit('/projects/p1/tasks', ['projects:read']);
+    expect(await screen.findByText(/ProjectOverviewTab/)).toBeInTheDocument();
+    expect(screen.queryByText(/ProjectTasksTab/)).not.toBeInTheDocument();
   });
 });

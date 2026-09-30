@@ -44,6 +44,7 @@ import { hasTaskDraft, useTaskDraft } from './task-drafts';
 import { TaskChecklist } from './TaskChecklist';
 import { TaskComments } from './TaskComments';
 import { TaskFields } from './TaskFields';
+import { TaskProjectName } from './TaskProjectName';
 import { TaskStatusChip } from './TaskStatusChip';
 import { useInlineSave, type InlineSaveState } from './use-inline-save';
 
@@ -457,17 +458,7 @@ const TaskDetailBody = ({
           <Chip size="small" label={task.key} sx={{ fontWeight: 750 }} />
           <TaskStatusChip status={inline.current.status} />
           {task.archivedAt && <Chip size="small" variant="outlined" label="Archived" />}
-          {task.project && (
-            <Link
-              component={RouterLink}
-              to={`/projects/${task.project.id}`}
-              variant="body2"
-              noWrap
-              sx={{ maxWidth: '100%' }}
-            >
-              {task.project.title}
-            </Link>
-          )}
+          <TaskProjectName project={task.project} link />
         </Stack>
         {onClose && (
           <Tooltip title="Close">

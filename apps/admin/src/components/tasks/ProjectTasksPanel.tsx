@@ -100,7 +100,7 @@ const StatusGroup = ({
  * create with this project already chosen, and the board link shows the same
  * tasks as cards.
  */
-export const ProjectTasksPanel = ({ projectId }: ProjectTasksPanelProps): JSX.Element => {
+export const ProjectTasksPanel = ({ projectId }: ProjectTasksPanelProps): JSX.Element | null => {
   const canRead = useHasPermission('read', 'tasks');
   const canCreate = useHasPermission('create', 'tasks');
   const board = useTaskBoard({ projectId }, canRead);
@@ -108,13 +108,8 @@ export const ProjectTasksPanel = ({ projectId }: ProjectTasksPanelProps): JSX.El
   const [creating, setCreating] = useState(false);
   const [created, setCreated] = useState<Task | null>(null);
 
-  if (!canRead) {
-    return (
-      <Alert severity="info">
-        You cannot see tasks. An administrator can grant you access to tasks under Users.
-      </Alert>
-    );
-  }
+  // Tasks someone cannot read are not shown at all, not as a notice.
+  if (!canRead) return null;
 
   const columns = board.data?.columns ?? [];
   const total = columns.reduce((sum, column) => sum + column.total, 0);

@@ -6,6 +6,7 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useMemo, useState } from 'react';
 
+import { useHasPermission } from '../../auth/useCan';
 import { useProjectOptions, useTaskProject } from '../../lib/tasks';
 import { useDebouncedValue } from '../../lib/use-debounced-value';
 
@@ -61,16 +62,17 @@ export const ProjectPicker = ({
   disabled = false,
   size,
   placeholder = 'Search projects',
-}: ProjectPickerProps): JSX.Element => {
+}: ProjectPickerProps): JSX.Element | null => {
+  const canReadProjects = useHasPermission('read', 'projects');
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
   // The box shows the chosen project's name until the reader types; only
   // typed text is a search.
   const [typing, setTyping] = useState(false);
   const term = useDebouncedValue(typing ? input : '', SEARCH_DELAY_MS);
-  const search = useProjectOptions(term, open && !disabled);
+  const search = useProjectOptions(term, canReadProjects && open && !disabled);
   const needsName = Boolean(value) && value !== NO_PROJECT && known?.id !== value;
-  const lookup = useTaskProject(needsName ? value : null);
+  const lookup = useTaskProject(needsName && canReadProjects ? value : null);
 
   const selected = useMemo<ProjectOption | null>(() => {
     if (!value) return null;
@@ -89,6 +91,8 @@ export const ProjectPicker = ({
     return allowNone && !term.trim() ? [NONE_OPTION, ...found] : found;
   }, [search.data, allowNone, term]);
 
+  // Projects someone cannot read are not offered at all, not as a failing search.
+  if (!canReadProjects) return null;
   return (
     <Autocomplete<ProjectOption, false, false, false>
       open={open}

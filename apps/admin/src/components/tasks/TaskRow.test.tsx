@@ -7,6 +7,12 @@ import { theme } from '../../theme/theme';
 import { listItem, person } from './task-test-fixtures';
 import { TaskRow } from './TaskRow';
 
+const permissions = vi.hoisted(() => ({ current: ['tasks:read', 'projects:read'] }));
+
+vi.mock('../../auth/AuthContext', () => ({
+  useAuth: () => ({ user: { role: 'editor', permissions: permissions.current } }),
+}));
+
 afterEach(cleanup);
 
 const project = { id: 'e'.repeat(24), title: 'Girls in STEM', slug: 'girls-in-stem' };
@@ -44,6 +50,16 @@ describe('TaskRow', () => {
     expect(row).toHaveAccessibleDescription(
       /^To do\. High priority\. Overdue · 24 Sept? 2020\. Girls in STEM\. 2 of 5 checklist items done\. 1 comment\. Assigned to Ama Mensah$/,
     );
+  });
+
+  it('leaves the project out for someone who cannot read projects', () => {
+    permissions.current = ['tasks:read'];
+    renderRow({ number: 3, title: 'Print the flyers', project, projectId: project.id });
+    permissions.current = ['tasks:read', 'projects:read'];
+    expect(screen.queryByText('Girls in STEM')).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'IAA-3 Print the flyers' }),
+    ).not.toHaveAccessibleDescription(/Girls in STEM/);
   });
 
   it('says when nobody has the task', () => {

@@ -32,12 +32,13 @@ const triggerSx = skinned(
  * "New task" in the top bar, so a task can be written down from any page the
  * moment it comes up.
  *
- * Shown only to people who can create tasks. Opens the five-field quick
+ * Shown only to people who can read and create tasks. Opens the five-field quick
  * create; once saved, "Open" shows the task in the drawer on a task page, or
  * on its own page anywhere else.
  */
 export const QuickCreateTaskButton = (): JSX.Element | null => {
-  const canCreate = useHasPermission('create', 'tasks');
+  const canRead = useHasPermission('read', 'tasks');
+  const canCreate = useHasPermission('create', 'tasks') && canRead;
   const openTask = useOpenTask();
   const [open, setOpen] = useState(false);
   const [created, setCreated] = useState<Task | null>(null);

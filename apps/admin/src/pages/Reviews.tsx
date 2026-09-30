@@ -27,6 +27,7 @@ import { useState } from 'react';
 import { Link as RouterLink, useSearchParams } from 'react-router-dom';
 
 import { RequirePermission } from '../auth/RequirePermission';
+import { useHasPermission } from '../auth/useCan';
 import { ActionIcon } from '../components/data/ActionIcon';
 import { RecordActions } from '../components/data/RecordActions';
 import { EmptyState } from '../components/EmptyState';
@@ -65,6 +66,24 @@ const quoteSx = [
   },
   skinned({}, { ...surfaceSx.inset, borderLeft: 3, borderLeftColor: 'primary.main' }),
 ];
+
+/** Where a review's chip leads: its event, for those who may read events. */
+const subjectLink = (review: AdminReview, canReadEvents: boolean): string | null => {
+  if (!review.eventId) return '/reviews';
+  return canReadEvents ? `/events/${review.eventId}#reviews` : null;
+};
+
+/** What the review is about. Plain text when its event is a page this person cannot open. */
+const ReviewSubjectChip = ({ review }: { review: AdminReview }): JSX.Element => {
+  const to = subjectLink(review, useHasPermission('read', 'events'));
+  const chip = {
+    size: 'small' as const,
+    icon: review.subject === 'event' ? <EventRoundedIcon /> : <RateReviewRoundedIcon />,
+    label: review.subject === 'event' ? (review.eventTitle ?? 'Event') : 'Organisation',
+    sx: { maxWidth: 260 },
+  };
+  return to ? <Chip component={RouterLink} to={to} clickable {...chip} /> : <Chip {...chip} />;
+};
 
 const ReviewCard = ({
   review,
@@ -105,15 +124,7 @@ const ReviewCard = ({
         sx={{ minWidth: 0, flexWrap: 'wrap', rowGap: 1 }}
       >
         <Stars rating={review.rating} />
-        <Chip
-          component={RouterLink}
-          to={review.eventId ? `/events/${review.eventId}#reviews` : '/reviews'}
-          clickable
-          size="small"
-          icon={review.subject === 'event' ? <EventRoundedIcon /> : <RateReviewRoundedIcon />}
-          label={review.subject === 'event' ? (review.eventTitle ?? 'Event') : 'Organisation'}
-          sx={{ maxWidth: 260 }}
-        />
+        <ReviewSubjectChip review={review} />
         {review.attended && (
           <Chip size="small" color="success" variant="outlined" label="Attended" />
         )}
@@ -376,13 +387,16 @@ export const ReviewQueue = ({ eventId }: { eventId?: string }): JSX.Element => {
 const Reviews = (): JSX.Element => {
   const [params] = useSearchParams();
   const eventId = params.get('eventId') ?? undefined;
+  const canReadEvents = useHasPermission('read', 'events');
   return (
     <>
       {eventId && (
         <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
-          <Button component={RouterLink} to={`/events/${eventId}`} sx={backLinkSx}>
-            Back to event
-          </Button>
+          {canReadEvents && (
+            <Button component={RouterLink} to={`/events/${eventId}`} sx={backLinkSx}>
+              Back to event
+            </Button>
+          )}
           <Button component={RouterLink} to="/reviews">
             All reviews
           </Button>

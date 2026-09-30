@@ -2,7 +2,7 @@ import { submissionSchema, type Submission, type SubmissionStatus } from '@iaa/s
 import { Alert, Button, Paper, Skeleton, Stack, TextField } from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
+import { Link as RouterLink, Navigate, useNavigate, useParams } from 'react-router-dom';
 
 import { useCan } from '../auth/useCan';
 import { RecordActions, RecordFields, fieldLabel } from '../components/data/RecordActions';
@@ -161,12 +161,10 @@ const SubmissionDetail = ({ edit = false }: { edit?: boolean }): JSX.Element => 
     queryFn: () => api.get<Submission>(`/admin/submissions/${id}`),
     enabled: allowed && Boolean(id),
   });
-  if (!allowed)
-    return (
-      <Alert severity="warning">
-        You do not have permission to {edit ? 'edit' : 'view'} submissions.
-      </Alert>
-    );
+  // Without access the record does not exist for this person: back to the
+  // dashboard, or to the record itself when only editing is out of reach.
+  if (!can('read', 'submissions')) return <Navigate to="/" replace />;
+  if (!allowed) return <Navigate to={`/submissions/records/${id ?? ''}`} replace />;
   return (
     <Stack spacing={2}>
       <Button

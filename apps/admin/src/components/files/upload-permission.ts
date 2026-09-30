@@ -9,6 +9,21 @@ export const UPLOAD_PERMISSION_NOTE =
   'Uploading files needs Media library access. An administrator can grant it under Users.';
 
 /**
+ * Whether the signed-in person holds a permission. Where there is no
+ * signed-in console around the control, nothing is known and nothing is held
+ * back; the API still has the last word.
+ */
+const useSignedInPermission = (permission: string): boolean => {
+  let permissions: readonly string[] | undefined;
+  try {
+    permissions = useAuth().user?.permissions;
+  } catch {
+    return true;
+  }
+  return permissions === undefined || permissions.includes(permission);
+};
+
+/**
  * Whether this person may upload a file.
  *
  * Every upload is signed by the API first (`POST /admin/media/sign` and
@@ -16,17 +31,12 @@ export const UPLOAD_PERMISSION_NOTE =
  * does not imply it: a custom grant from the permission matrix can give one
  * without the other, and the upload then failed with a bare "Missing required
  * permission". Controls ask here and say why instead.
- *
- * Where there is no signed-in console around the control (a component
- * rendered on its own), nothing is known and nothing is held back; the API
- * still has the last word.
  */
-export const useCanUploadFiles = (): boolean => {
-  let permissions: readonly string[] | undefined;
-  try {
-    permissions = useAuth().user?.permissions;
-  } catch {
-    return true;
-  }
-  return permissions === undefined || permissions.includes('media:create');
-};
+export const useCanUploadFiles = (): boolean => useSignedInPermission('media:create');
+
+/**
+ * Whether this person may browse the media library, which "Choose from
+ * library" lists. Without it the button is not offered at all, as with any
+ * module someone cannot read.
+ */
+export const useCanReadMediaLibrary = (): boolean => useSignedInPermission('media-library:read');

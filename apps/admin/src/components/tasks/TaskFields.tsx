@@ -6,6 +6,7 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useState, type KeyboardEvent } from 'react';
 
+import { useHasPermission } from '../../auth/useCan';
 import { TASK_STATUS_OPTIONS, WORK_PRIORITY_OPTIONS } from '../../lib/select-options';
 import { useTaskProject } from '../../lib/tasks';
 import { DateField } from '../fields/DateField';
@@ -116,6 +117,56 @@ const dateProblem = (start: string | null | undefined, due: string | null | unde
   start && due && due < start ? 'The due date cannot be before the start date.' : undefined;
 
 /**
+ * The task's project and milestone. Both come from the projects module, so
+ * someone who cannot read projects does not see them at all (and nothing is
+ * fetched on their behalf); the task keeps whatever project it has.
+ */
+const TaskProjectFields = ({
+  task,
+  inline,
+  disabled,
+}: {
+  task: Task;
+  inline: InlineSave;
+  disabled: boolean;
+}): JSX.Element | null => {
+  const { current, save } = inline;
+  const canReadProjects = useHasPermission('read', 'projects');
+  const project = useTaskProject(canReadProjects ? current.projectId : null);
+  if (!canReadProjects) return null;
+  const milestoneOptions: SelectChoice[] = [
+    NO_MILESTONE,
+    ...(project.data?.milestones ?? []).map((milestone) => ({
+      value: milestone.id,
+      label: milestone.title,
+    })),
+  ];
+  return (
+    <>
+      <Box sx={{ gridColumn: '1 / -1' }}>
+        <ProjectPicker
+          label="Project"
+          value={current.projectId ?? null}
+          known={task.project}
+          onChange={(value) => save({ projectId: value }, 'Project')}
+          disabled={disabled}
+          helperText="Moving the task to another project clears its milestone."
+        />
+      </Box>
+      <OptionSelect
+        label="Milestone"
+        options={milestoneOptions}
+        value={current.milestoneId ?? ''}
+        onChange={(value) => save({ milestoneId: value || null }, 'Milestone')}
+        disabled={disabled || !current.projectId}
+        placeholder={current.projectId ? 'No milestone' : 'Choose a project first'}
+        helperText={project.isError ? 'The milestones could not be loaded.' : undefined}
+      />
+    </>
+  );
+};
+
+/**
  * The task's properties, each saved the moment it changes: status, priority,
  * people, dates, labels, project, milestone, estimate, parent and
  * dependencies. Read-only without `tasks:update`.
@@ -142,15 +193,7 @@ export const TaskFields = ({
 }): JSX.Element => {
   const { current, save } = inline;
   const disabled = !canEdit;
-  const project = useTaskProject(current.projectId);
   const [dateError, setDateError] = useState<string | undefined>();
-  const milestoneOptions: SelectChoice[] = [
-    NO_MILESTONE,
-    ...(project.data?.milestones ?? []).map((milestone) => ({
-      value: milestone.id,
-      label: milestone.title,
-    })),
-  ];
 
   const dateCellSx = dateCellSxFor(narrow);
 
@@ -213,25 +256,7 @@ export const TaskFields = ({
           disabled={disabled}
         />
       </Box>
-      <Box sx={{ gridColumn: '1 / -1' }}>
-        <ProjectPicker
-          label="Project"
-          value={current.projectId ?? null}
-          known={task.project}
-          onChange={(value) => save({ projectId: value }, 'Project')}
-          disabled={disabled}
-          helperText="Moving the task to another project clears its milestone."
-        />
-      </Box>
-      <OptionSelect
-        label="Milestone"
-        options={milestoneOptions}
-        value={current.milestoneId ?? ''}
-        onChange={(value) => save({ milestoneId: value || null }, 'Milestone')}
-        disabled={disabled || !current.projectId}
-        placeholder={current.projectId ? 'No milestone' : 'Choose a project first'}
-        helperText={project.isError ? 'The milestones could not be loaded.' : undefined}
-      />
+      <TaskProjectFields task={task} inline={inline} disabled={disabled} />
       <EstimateField
         value={current.estimateHours}
         disabled={disabled}

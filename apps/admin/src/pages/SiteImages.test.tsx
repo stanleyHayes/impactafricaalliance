@@ -29,6 +29,7 @@ const EDITOR_OF_IMAGES = [
   'site-images:create',
   'site-images:update',
   'media:create',
+  'media-library:read',
   'pillar-images:read',
   'page-settings:read',
 ];

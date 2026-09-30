@@ -13,6 +13,7 @@ import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
+import { useHasPermission } from '../../auth/useCan';
 import { AccountPanel, AccountSectionHeader } from '../../components/account/AccountSurface';
 import { usePreferences } from '../../lib/preferences';
 import { skinned, surfaceSx } from '../../theme/surfaces';
@@ -105,6 +106,8 @@ const AccountShortcut = ({
 
 const Settings = (): JSX.Element => {
   const { prefs, setPreference } = usePreferences();
+  // The badge counts unread submissions; without them there is no badge to show.
+  const canReadSubmissions = useHasPermission('read', 'submissions');
 
   return (
     <>
@@ -134,20 +137,22 @@ const Settings = (): JSX.Element => {
                   />
                 }
               />
-              <PreferenceRow
-                icon={<NotificationsRoundedIcon />}
-                title="Show notification badge"
-                description="Display unread submission counts in the top bar."
-                control={
-                  <Switch
-                    checked={prefs.showNotificationBadge}
-                    onChange={(event) =>
-                      setPreference('showNotificationBadge', event.target.checked)
-                    }
-                    slotProps={{ input: { 'aria-label': 'Show notification badge' } }}
-                  />
-                }
-              />
+              {canReadSubmissions && (
+                <PreferenceRow
+                  icon={<NotificationsRoundedIcon />}
+                  title="Show notification badge"
+                  description="Display unread submission counts in the top bar."
+                  control={
+                    <Switch
+                      checked={prefs.showNotificationBadge}
+                      onChange={(event) =>
+                        setPreference('showNotificationBadge', event.target.checked)
+                      }
+                      slotProps={{ input: { 'aria-label': 'Show notification badge' } }}
+                    />
+                  }
+                />
+              )}
             </Stack>
           </AccountPanel>
         </Grid>

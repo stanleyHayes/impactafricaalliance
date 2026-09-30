@@ -15,6 +15,7 @@ import Typography from '@mui/material/Typography';
 import { NavLink, Outlet } from 'react-router-dom';
 
 import { useAuth } from '../../auth/AuthContext';
+import { useMayOpen } from '../../auth/may-open';
 import { navSx, skinned, surfaceSx, tokenVar } from '../../theme/surfaces';
 
 const ACCOUNT_LINKS = [
@@ -67,6 +68,7 @@ const accountLinkSx = skinned(
 /** Shared identity banner and local navigation for every account page. */
 const AccountLayout = (): JSX.Element => {
   const { user } = useAuth();
+  const mayOpen = useMayOpen();
 
   return (
     <Box>
@@ -189,7 +191,7 @@ const AccountLayout = (): JSX.Element => {
             '&::-webkit-scrollbar': { display: 'none' },
           }}
         >
-          {ACCOUNT_LINKS.map((link) => (
+          {ACCOUNT_LINKS.filter((link) => mayOpen(link.to)).map((link) => (
             <Box
               key={link.to}
               component={NavLink}

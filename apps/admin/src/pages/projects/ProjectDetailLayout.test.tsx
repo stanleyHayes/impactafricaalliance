@@ -63,6 +63,7 @@ afterEach(() => {
 
 describe('ProjectDetailLayout', () => {
   it('shows the project at a glance, its tabs, and hands the project to the tab', async () => {
+    permissions.current = ['projects:read', 'tasks:read'];
     setup();
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Digital Skills Hub, Tamale' }),
@@ -86,6 +87,13 @@ describe('ProjectDetailLayout', () => {
     }
     fireEvent.click(tabs.getByRole('link', { name: 'Milestones & activities' }));
     expect(await screen.findByText('Milestones tab')).toBeInTheDocument();
+  });
+
+  it('leaves the Tasks tab out for someone who cannot read tasks', async () => {
+    setup();
+    const tabs = within(await screen.findByRole('navigation', { name: 'Project sections' }));
+    expect(tabs.getByRole('link', { name: 'Overview' })).toBeInTheDocument();
+    expect(tabs.queryByRole('link', { name: 'Tasks' })).not.toBeInTheDocument();
   });
 
   it('keeps the project on screen when a refresh fails, and offers Retry', async () => {
@@ -138,6 +146,7 @@ describe('ProjectDetailLayout', () => {
       'projects:read',
       'projects:update',
       'projects:delete',
+      'impact-stories:read',
       'impact-stories:create',
     ];
     patch.mockResolvedValue(projectFixture({ status: 'on-hold' }));

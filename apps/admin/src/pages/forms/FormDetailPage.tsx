@@ -358,18 +358,12 @@ const statusLabel = (status: string): string =>
   APPLICATION_STATUS_OPTIONS.find((option) => option.value === status)?.label ?? status;
 
 /** The latest applications, for those who may read them. */
-const RecentApplications = ({ formId }: { formId: string }): JSX.Element => {
+const RecentApplications = ({ formId }: { formId: string }): JSX.Element | null => {
   const can = useCan();
   const allowed = can('read', 'applications');
   const query = useApplications({ formId, page: 1, pageSize: 5 }, allowed);
+  if (!allowed) return null;
   const body = (): ReactNode => {
-    if (!allowed) {
-      return (
-        <Alert severity="info">
-          You cannot see applications. An administrator can give you access under Users.
-        </Alert>
-      );
-    }
     if (query.isPending) {
       return (
         <Stack spacing={1}>
@@ -414,11 +408,9 @@ const RecentApplications = ({ formId }: { formId: string }): JSX.Element => {
       title="Recent applications"
       icon={<AssignmentIndOutlinedIcon />}
       action={
-        allowed ? (
-          <Button component={RouterLink} to={`/applications?formId=${formId}`} size="small">
-            See all
-          </Button>
-        ) : undefined
+        <Button component={RouterLink} to={`/applications?formId=${formId}`} size="small">
+          See all
+        </Button>
       }
     >
       {body()}

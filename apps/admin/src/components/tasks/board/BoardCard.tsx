@@ -24,6 +24,7 @@ import { handleSx, skinned, surfaceSx, tokenVar } from '../../../theme/surfaces'
 import { PersonAvatars } from '../PersonAvatars';
 import { TaskDueChip } from '../TaskDueChip';
 import { TaskPriorityChip } from '../TaskPriorityChip';
+import { TaskProjectName } from '../TaskProjectName';
 import { ChecklistCount } from '../TaskRow';
 
 /** What a card can ask the board to do: open it, or move it by menu. */
@@ -49,11 +50,7 @@ export const CardFace = ({ task }: { task: TaskListItem }): JSX.Element => (
     <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
       <Stack direction="row" spacing={1.25} alignItems="center" sx={{ minWidth: 0 }}>
         <ChecklistCount task={task} />
-        {task.project && (
-          <Typography variant="caption" color="text.secondary" noWrap sx={{ minWidth: 0 }}>
-            {task.project.title}
-          </Typography>
-        )}
+        <TaskProjectName project={task.project} sx={{ minWidth: 0 }} />
       </Stack>
       <PersonAvatars people={task.assignees} size={24} />
     </Stack>

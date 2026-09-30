@@ -23,8 +23,8 @@ const LINK_HELP = 'Optional. Links the story to the project it tells; nothing is
  * Which project a story tells. Searches the projects list as you type.
  *
  * Choosing a project only links the two, so the story can be found from the
- * project; nothing is copied. Someone who cannot read projects sees the link
- * but cannot change it, and is told who can grant access.
+ * project; nothing is copied. Someone who cannot read projects does not see
+ * the field; the story keeps whatever project it was linked to.
  */
 export const ProjectPicker = ({
   value,
@@ -33,7 +33,7 @@ export const ProjectPicker = ({
   error,
   size,
   helperText = LINK_HELP,
-}: ProjectPickerProps): JSX.Element => {
+}: ProjectPickerProps): JSX.Element | null => {
   const canReadProjects = useHasPermission('read', 'projects');
   const [input, setInput] = useState('');
   const [open, setOpen] = useState(false);
@@ -45,18 +45,9 @@ export const ProjectPicker = ({
     return value && !found.some((project) => project.id === value.id) ? [value, ...found] : found;
   }, [search.data, value]);
 
-  if (!canReadProjects) {
-    return (
-      <TextField
-        label="Project"
-        value={value?.title ?? 'No project linked'}
-        disabled
-        fullWidth
-        size={size}
-        helperText="You need access to projects to change this. An administrator can grant it under Users."
-      />
-    );
-  }
+  // Projects someone cannot read are not offered at all; a link already on
+  // the story is kept as it is.
+  if (!canReadProjects) return null;
 
   return (
     <Autocomplete<ProjectRef, false, false, false>

@@ -34,6 +34,7 @@ import { TaskDrawerHost } from '../../components/tasks/TaskDrawer';
 import { TaskDueChip } from '../../components/tasks/TaskDueChip';
 import { TaskFilters } from '../../components/tasks/TaskFilters';
 import { TaskPriorityChip } from '../../components/tasks/TaskPriorityChip';
+import { TaskProjectName } from '../../components/tasks/TaskProjectName';
 import { ChecklistCount, TaskRow, TaskRowsSkeleton } from '../../components/tasks/TaskRow';
 import { TaskStatusChip } from '../../components/tasks/TaskStatusChip';
 import { TaskViewTabs } from '../../components/tasks/TaskViewTabs';
@@ -176,11 +177,7 @@ const TaskTable = ({
                 </Typography>
               </Link>
               <Stack direction="row" spacing={1.25} alignItems="center" sx={{ mt: 0.5 }}>
-                {task.project && (
-                  <Typography variant="caption" color="text.secondary" noWrap>
-                    {task.project.title}
-                  </Typography>
-                )}
+                <TaskProjectName project={task.project} />
                 <ChecklistCount task={task} />
               </Stack>
             </TableCell>

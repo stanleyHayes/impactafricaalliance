@@ -7,7 +7,7 @@ import { ProjectTasksPanel } from './ProjectTasksPanel';
 import { boardOf, listItem, paged, renderTaskUi } from './task-test-fixtures';
 
 const mocks = vi.hoisted(() => ({
-  permissions: ['tasks:read', 'tasks:create', 'tasks:update'] as string[],
+  permissions: ['tasks:read', 'tasks:create', 'tasks:update', 'projects:read'] as string[],
 }));
 
 vi.mock('../../auth/AuthContext', () => ({
@@ -27,7 +27,7 @@ const kit = listItem({ title: 'Buy the laptops', status: 'todo', project, projec
 const launch = listItem({ title: 'Hold the launch', status: 'done', project, projectId });
 
 beforeEach(() => {
-  mocks.permissions = ['tasks:read', 'tasks:create', 'tasks:update'];
+  mocks.permissions = ['tasks:read', 'tasks:create', 'tasks:update', 'projects:read'];
   vi.mocked(api.get).mockImplementation(async (path: string) => {
     if (path.startsWith('/admin/tasks/board')) return boardOf([survey, kit, launch]);
     if (path === `/admin/projects/${projectId}`) return { ...project, milestones: [] };
@@ -97,12 +97,11 @@ describe('ProjectTasksPanel', () => {
     expect(await screen.findByText('No tasks on this project yet')).toBeInTheDocument();
   });
 
-  it('says who can grant access when tasks are hidden from you', () => {
-    mocks.permissions = [];
+  it('is not there at all when tasks are hidden from you', () => {
+    mocks.permissions = ['projects:read'];
     renderPanel();
-    expect(
-      screen.getByText(/An administrator can grant you access to tasks under Users/),
-    ).toBeVisible();
+    expect(screen.queryByRole('heading')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Add task' })).not.toBeInTheDocument();
     expect(api.get).not.toHaveBeenCalled();
   });
 });

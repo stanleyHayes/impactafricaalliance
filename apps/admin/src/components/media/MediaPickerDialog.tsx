@@ -82,7 +82,9 @@ export const MediaPickerDialog = ({
       onClose={onClose}
       fullWidth
       maxWidth="md"
-      slotProps={{ paper: { sx: dialogPaperSx } }}
+      // Named on the paper, as the console's other dialogs are: the shared
+      // header's title carries no id for aria-labelledby to point at.
+      slotProps={{ paper: { sx: dialogPaperSx, 'aria-label': 'Media library' } }}
     >
       <DialogHeader
         icon={<CollectionsOutlinedIcon />}

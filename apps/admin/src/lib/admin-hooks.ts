@@ -187,10 +187,13 @@ export const useNewSubmissionCounts = (enabled = true): UseQueryResult<NewSubmis
     staleTime: 30_000,
   });
 
-export const useSubmissions = (params: {
-  type?: string;
-  status?: string;
-}): UseQueryResult<Paginated<Submission>> => {
+export const useSubmissions = (
+  params: {
+    type?: string;
+    status?: string;
+  },
+  enabled = true,
+): UseQueryResult<Paginated<Submission>> => {
   const query = new URLSearchParams({ pageSize: '100' });
   if (params.type) {
     query.set('type', params.type);
@@ -201,6 +204,7 @@ export const useSubmissions = (params: {
   return useQuery({
     queryKey: ['submissions', params],
     queryFn: () => fetchAllPages<Submission>(`/admin/submissions?${query.toString()}`),
+    enabled,
   });
 };
 

@@ -1,5 +1,4 @@
 import type { AdminResource, PermissionAction } from '@iaa/shared';
-import Alert from '@mui/material/Alert';
 import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 
@@ -80,13 +79,13 @@ const ImpactStoriesPage = lazy(() => import('../pages/impact-stories/ImpactStori
 const ImpactStoryEditorPage = lazy(() => import('../pages/impact-stories/ImpactStoryEditorPage'));
 const StoryFromProjectPage = lazy(() => import('../pages/impact-stories/StoryFromProjectPage'));
 
-// Says who can fix it, so a missing permission reads as a next step rather
-// than a dead end.
-const NO_PERMISSION = (
-  <Alert severity="warning">
-    You do not have permission to view this page. An administrator can grant access under Users.
-  </Alert>
-);
+/**
+ * Where someone lands on a page they cannot read: the dashboard, as though the
+ * page did not exist. A module someone has no access to never shows at all,
+ * not as an empty page and not as a notice (the owner's rule). `replace`, so
+ * Back does not return them to the address that bounced.
+ */
+const NO_PERMISSION = <Navigate to="/" replace />;
 
 /**
  * A page whose code loads on first visit, with its shape on screen meanwhile.
@@ -103,8 +102,8 @@ const deferred = (
 const tab = (page: JSX.Element): JSX.Element => deferred(page, 'section');
 
 /**
- * A page behind one permission. Says so when the permission is missing
- * rather than rendering nothing, which reads as a broken page.
+ * A page behind one permission. Without it the address opens the dashboard,
+ * as though the module did not exist: it appears nowhere else either.
  */
 const guarded = (
   resource: AdminResource,
@@ -165,13 +164,7 @@ export const App = (): JSX.Element => (
       <Route
         path="media"
         element={
-          <RequirePermission
-            resource="media-library"
-            action="read"
-            fallback={
-              <Alert severity="warning">You do not have permission to view this page.</Alert>
-            }
-          >
+          <RequirePermission resource="media-library" action="read" fallback={NO_PERMISSION}>
             <MediaLibrary />
           </RequirePermission>
         }
@@ -187,13 +180,7 @@ export const App = (): JSX.Element => (
       <Route
         path="submissions"
         element={
-          <RequirePermission
-            resource="submissions"
-            action="read"
-            fallback={
-              <Alert severity="warning">You do not have permission to view this page.</Alert>
-            }
-          >
+          <RequirePermission resource="submissions" action="read" fallback={NO_PERMISSION}>
             <Submissions />
           </RequirePermission>
         }
@@ -203,13 +190,7 @@ export const App = (): JSX.Element => (
       <Route
         path="submissions/:inbox"
         element={
-          <RequirePermission
-            resource="submissions"
-            action="read"
-            fallback={
-              <Alert severity="warning">You do not have permission to view this page.</Alert>
-            }
-          >
+          <RequirePermission resource="submissions" action="read" fallback={NO_PERMISSION}>
             <Submissions />
           </RequirePermission>
         }
@@ -217,13 +198,7 @@ export const App = (): JSX.Element => (
       <Route
         path="subscribers"
         element={
-          <RequirePermission
-            resource="subscribers"
-            action="read"
-            fallback={
-              <Alert severity="warning">You do not have permission to view this page.</Alert>
-            }
-          >
+          <RequirePermission resource="subscribers" action="read" fallback={NO_PERMISSION}>
             <Subscribers />
           </RequirePermission>
         }
@@ -232,13 +207,7 @@ export const App = (): JSX.Element => (
         path="donations"
         element={
           <RequireRole roles={['admin']}>
-            <RequirePermission
-              resource="donations"
-              action="read"
-              fallback={
-                <Alert severity="warning">You do not have permission to view this page.</Alert>
-              }
-            >
+            <RequirePermission resource="donations" action="read" fallback={NO_PERMISSION}>
               <Donations />
             </RequirePermission>
           </RequireRole>
@@ -247,13 +216,7 @@ export const App = (): JSX.Element => (
       <Route
         path="privacy-requests"
         element={
-          <RequirePermission
-            resource="privacy-requests"
-            action="read"
-            fallback={
-              <Alert severity="warning">You do not have permission to view this page.</Alert>
-            }
-          >
+          <RequirePermission resource="privacy-requests" action="read" fallback={NO_PERMISSION}>
             <PrivacyRequests />
           </RequirePermission>
         }
@@ -261,13 +224,7 @@ export const App = (): JSX.Element => (
       <Route
         path="site-settings"
         element={
-          <RequirePermission
-            resource="site-settings"
-            action="read"
-            fallback={
-              <Alert severity="warning">You do not have permission to view this page.</Alert>
-            }
-          >
+          <RequirePermission resource="site-settings" action="read" fallback={NO_PERMISSION}>
             <SiteSettings />
           </RequirePermission>
         }
@@ -283,13 +240,7 @@ export const App = (): JSX.Element => (
       <Route
         path="events"
         element={
-          <RequirePermission
-            resource="events"
-            action="read"
-            fallback={
-              <Alert severity="warning">You do not have permission to view this page.</Alert>
-            }
-          >
+          <RequirePermission resource="events" action="read" fallback={NO_PERMISSION}>
             <Events />
           </RequirePermission>
         }
@@ -297,13 +248,7 @@ export const App = (): JSX.Element => (
       <Route
         path="events/:eventId"
         element={
-          <RequirePermission
-            resource="events"
-            action="read"
-            fallback={
-              <Alert severity="warning">You do not have permission to view this page.</Alert>
-            }
-          >
+          <RequirePermission resource="events" action="read" fallback={NO_PERMISSION}>
             <EventDetail />
           </RequirePermission>
         }
@@ -371,7 +316,19 @@ export const App = (): JSX.Element => (
         element={guarded('projects', 'read', deferred(<ProjectDetailLayout />))}
       >
         <Route index element={tab(<ProjectOverviewTab />)} />
-        <Route path="tasks" element={tab(<ProjectTasksTab />)} />
+        <Route
+          path="tasks"
+          element={
+            // Without tasks access the tab is not offered; its address opens the overview.
+            <RequirePermission
+              resource="tasks"
+              action="read"
+              fallback={<Navigate to=".." relative="path" replace />}
+            >
+              {tab(<ProjectTasksTab />)}
+            </RequirePermission>
+          }
+        />
         <Route path="milestones" element={tab(<ProjectMilestonesTab />)} />
         <Route path="media" element={tab(<ProjectMediaTab />)} />
         <Route path="impact" element={tab(<ProjectImpactTab />)} />
@@ -449,15 +406,7 @@ export const App = (): JSX.Element => (
         <Route
           path="notifications"
           element={
-            <RequirePermission
-              resource="submissions"
-              action="read"
-              fallback={
-                <Alert severity="info">
-                  You do not have permission to view submission notifications.
-                </Alert>
-              }
-            >
+            <RequirePermission resource="submissions" action="read" fallback={NO_PERMISSION}>
               <Notifications />
             </RequirePermission>
           }

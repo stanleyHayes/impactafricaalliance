@@ -9,7 +9,7 @@ import { QuickCreateTaskDialog } from './QuickCreateTaskDialog';
 import { fullTask, paged, renderTaskUi } from './task-test-fixtures';
 
 const mocks = vi.hoisted(() => ({
-  permissions: ['tasks:read', 'tasks:create'] as string[],
+  permissions: ['tasks:read', 'tasks:create', 'projects:read'] as string[],
 }));
 
 vi.mock('../../auth/AuthContext', () => ({
@@ -26,7 +26,7 @@ const projectId = 'e'.repeat(24);
 const created: Task = fullTask({ id: 'f'.repeat(24), key: 'IAA-9', title: 'Order the banners' });
 
 beforeEach(() => {
-  mocks.permissions = ['tasks:read', 'tasks:create'];
+  mocks.permissions = ['tasks:read', 'tasks:create', 'projects:read'];
   vi.mocked(api.get).mockResolvedValue(paged([]));
   vi.mocked(api.post).mockResolvedValue(created);
 });
@@ -130,6 +130,12 @@ describe('QuickCreateTaskDialog', () => {
 describe('QuickCreateTaskButton', () => {
   it('is hidden from people who cannot create tasks', () => {
     mocks.permissions = ['tasks:read'];
+    renderTaskUi(<QuickCreateTaskButton />);
+    expect(screen.queryByRole('button', { name: 'New task' })).not.toBeInTheDocument();
+  });
+
+  it('is hidden from people who can create tasks but not see them', () => {
+    mocks.permissions = ['tasks:create'];
     renderTaskUi(<QuickCreateTaskButton />);
     expect(screen.queryByRole('button', { name: 'New task' })).not.toBeInTheDocument();
   });

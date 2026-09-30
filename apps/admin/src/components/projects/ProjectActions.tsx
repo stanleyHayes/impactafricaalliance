@@ -104,7 +104,8 @@ const useActionRights = (): ActionRights => {
     canEdit: canUpdate && staff,
     canUpdate,
     canDelete: can('delete', 'projects'),
-    canStartStory: can('create', 'impact-stories') && can('read', 'projects'),
+    canStartStory:
+      can('read', 'impact-stories') && can('create', 'impact-stories') && can('read', 'projects'),
   };
 };
 

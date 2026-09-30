@@ -20,6 +20,7 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { Link as RouterLink, Outlet, useParams } from 'react-router-dom';
 
+import { useHasPermission } from '../../auth/useCan';
 import { DetailTabs, type DetailTab } from '../../components/detail/DetailTabs';
 import { InformationItem } from '../../components/InformationItem';
 import { PageHeader } from '../../components/PageHeader';
@@ -152,6 +153,7 @@ const ProjectLayoutSkeleton = (): JSX.Element => (
 const ProjectDetailLayout = (): JSX.Element => {
   const { projectId } = useParams();
   const query = useProject(projectId);
+  const canReadTasks = useHasPermission('read', 'tasks');
 
   if (query.isPending) {
     return (
@@ -197,6 +199,10 @@ const ProjectDetailLayout = (): JSX.Element => {
 
   const project = query.data;
   const context: ProjectOutletContext = { project };
+  // A module someone cannot read has no tab here, not an empty one.
+  const visibleTabs = canReadTasks
+    ? PROJECT_TABS
+    : PROJECT_TABS.filter((tab) => tab.to !== 'tasks');
   return (
     <>
       <PageHeader
@@ -220,7 +226,7 @@ const ProjectDetailLayout = (): JSX.Element => {
         </Alert>
       )}
       <ProjectHeaderCard project={project} />
-      <DetailTabs tabs={PROJECT_TABS} ariaLabel="Project sections" />
+      <DetailTabs tabs={visibleTabs} ariaLabel="Project sections" />
       <Outlet context={context} />
     </>
   );
