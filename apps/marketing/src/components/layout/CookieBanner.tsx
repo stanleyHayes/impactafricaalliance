@@ -97,6 +97,13 @@ export const CookieBanner = (): JSX.Element | null => {
         bottom: { xs: 16, md: 24 },
         left: { xs: 16, md: 'auto' },
         zIndex: (theme) => theme.zIndex.snackbar,
+        // While any dialog, drawer or popup is open, sit just beneath it
+        // rather than over its buttons: on a phone the banner used to cover
+        // event registration's Continue. It comes back when the dialog closes,
+        // and nothing loads until the visitor chooses.
+        'body:has(.MuiModal-root:not(.MuiModal-hidden)) &': {
+          zIndex: (theme) => theme.zIndex.modal - 1,
+        },
         maxWidth: 420,
         p: { xs: 2.5, md: 3 },
         border: '1px solid rgba(0,214,139,0.25)',

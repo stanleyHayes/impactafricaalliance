@@ -16,8 +16,16 @@ const url = z.string().url().trim();
 
 export const CONSENT_VERSION = '2026-07-11';
 
+/**
+ * The privacy tick-box on the contact, partner, volunteer, job and newsletter
+ * forms. The message is worded as an instruction, like the site's other
+ * tick-box messages ("Tick the box to agree."), because it is shown under the
+ * box to someone who has not ticked it yet.
+ */
 export const consentSchema = z.object({
-  consent: z.boolean().refine((value) => value === true, 'You must agree to the privacy policy'),
+  consent: z
+    .boolean()
+    .refine((value) => value === true, 'Tick the box to agree to the privacy policy.'),
   consentVersion: z.string().optional(),
 });
 

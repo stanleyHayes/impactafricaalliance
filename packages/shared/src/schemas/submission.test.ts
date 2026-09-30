@@ -39,13 +39,44 @@ describe('submissionSchema', () => {
     const result = submissionSchema.safeParse({ type: 'spam', email: 'x@y.com' });
     expect(result.success).toBe(false);
   });
+
+  it('asks for the privacy tick-box in a full sentence, like the other tick-box messages', () => {
+    const result = submissionSchema.safeParse({
+      type: SubmissionType.Contact,
+      name: 'Ama Asante',
+      email: 'ama@example.com',
+      subject: 'Hello',
+      message: 'I would love to learn more about your programs.',
+      consent: false,
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues).toEqual([
+      expect.objectContaining({
+        path: ['consent'],
+        message: 'Tick the box to agree to the privacy policy.',
+      }),
+    ]);
+  });
 });
 
 describe('subscribeSchema', () => {
   it('requires a valid email', () => {
     expect(subscribeSchema.safeParse({ email: 'not-an-email' }).success).toBe(false);
     expect(
-      subscribeSchema.safeParse({ email: 'reader@iaa.org', consent: true, consentVersion: '2026-07' }).success,
+      subscribeSchema.safeParse({
+        email: 'reader@iaa.org',
+        consent: true,
+        consentVersion: '2026-07',
+      }).success,
     ).toBe(true);
+  });
+
+  it('gives the newsletter the same privacy message as the other forms', () => {
+    const result = subscribeSchema.safeParse({ email: 'reader@iaa.org', consent: false });
+
+    expect(result.error?.issues.map((issue) => issue.message)).toEqual([
+      'Tick the box to agree to the privacy policy.',
+    ]);
   });
 });
