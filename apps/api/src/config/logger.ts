@@ -85,9 +85,15 @@ export const withoutRequestDetails = (error: Error, depth = 0): Error => {
     }
   }
   if (Array.isArray(source.errors)) {
-    copy.errors = source.errors.map((inner: unknown) =>
-      inner instanceof Error ? withoutRequestDetails(inner, depth + 1) : inner,
-    );
+    // Not enumerable, as on an AggregateError itself: the serializer logs them once,
+    // as `aggregateErrors`, and would otherwise print the list a second time.
+    Object.defineProperty(copy, 'errors', {
+      value: source.errors.map((inner: unknown) =>
+        inner instanceof Error ? withoutRequestDetails(inner, depth + 1) : inner,
+      ),
+      writable: true,
+      configurable: true,
+    });
   }
   const http = describeRequest(source);
   if (http) {

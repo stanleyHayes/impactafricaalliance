@@ -136,6 +136,35 @@ describe('logging a failed call to an outside API', () => {
     expect(error.response?.status).toBe(400);
   });
 
+  it('cleans every failure in an AggregateError, and lists them once', async () => {
+    const aggregate = new AggregateError(
+      [await failedCall(providerUrl), await failedCall(providerUrl)],
+      'Every attempt failed',
+    );
+    const { lines, stream } = capture();
+    createLogger('production', stream).error({ err: aggregate }, 'Retry gave up');
+
+    const output = lines.join('');
+    expectNoSecrets(output);
+    const logged = JSON.parse(output) as {
+      err: { aggregateErrors: Record<string, unknown>[]; errors?: unknown };
+    };
+    expect(logged.err.aggregateErrors).toHaveLength(2);
+    expect(logged.err.aggregateErrors[0]).toMatchObject({ type: 'AxiosError', status: 400 });
+    expect(logged.err.errors).toBeUndefined();
+  });
+
+  it('logs an ordinary error and a non-error as before', () => {
+    const { lines, stream } = capture();
+    const logger = createLogger('production', stream);
+    logger.error({ err: Object.assign(new Error('Boom'), { reference: 'abc' }) }, 'failed');
+    logger.warn({ err: 'just a string' }, 'odd');
+
+    const [first, second] = lines.map((line) => JSON.parse(line) as { err: unknown });
+    expect(first?.err).toMatchObject({ type: 'Error', message: 'Boom', reference: 'abc' });
+    expect(second?.err).toBe('just a string');
+  });
+
   it('passes other errors through untouched', () => {
     const plain = new Error('nothing to hide');
     expect(withoutRequestDetails(plain)).toBe(plain);
