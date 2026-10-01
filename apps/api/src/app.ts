@@ -2,13 +2,13 @@ import compression from 'compression';
 import cors from 'cors';
 import express, { type Application } from 'express';
 import helmet from 'helmet';
-import { pinoHttp } from 'pino-http';
 import type { DependencyContainer } from 'tsyringe';
 
 import { buildCorsOptions } from './common/cors.js';
 import { errorMiddleware, notFoundHandler } from './common/error-middleware.js';
 import type { AppConfig } from './config/env.js';
 import type { AppLogger } from './config/logger.js';
+import { requestLogger } from './config/request-log.js';
 import { globalRateLimit, webhookRateLimit } from './middleware/rate-limit.js';
 import { sanitizeBody } from './middleware/sanitize.js';
 import { createAiRouter } from './modules/ai/ai.routes.js';
@@ -50,7 +50,7 @@ export const createApp = (
   app.use(helmet());
   app.use(cors(buildCorsOptions(config)));
   app.use(compression());
-  app.use(pinoHttp({ logger }));
+  app.use(requestLogger(logger));
 
   // Payment webhooks need the raw body for signature verification — mount the
   // raw-body router BEFORE the JSON parser so the bytes are preserved.
