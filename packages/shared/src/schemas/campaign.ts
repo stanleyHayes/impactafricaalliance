@@ -140,7 +140,7 @@ export interface SitePopup extends Scheduled {
   message: string;
   ctaLabel?: string;
   ctaUrl?: string;
-  /** Null once an editor removes the picture. */
+  /** Absent once an editor removes the picture; older records may hold null. */
   imageUrl?: string | null;
   delaySeconds: number;
   createdAt: string;

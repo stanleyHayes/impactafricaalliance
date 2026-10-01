@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { resourceErrorStep, resourceFormSteps, usesResourceFormPage } from './form-steps';
-import { findResource } from './registry';
+import { findResource, RESOURCES } from './registry';
 import type { FieldConfig } from './types';
 
 const fields = (names: string[]): FieldConfig[] =>
@@ -49,6 +49,56 @@ describe('resource form steps', () => {
     });
     expect(resourceErrorStep(steps, ['coverImage', 'body'])).toBe(1);
     expect(resourceErrorStep(steps, ['unknown'])).toBe(0);
+  });
+});
+
+describe('every CMS resource on a dedicated page', () => {
+  const paged = RESOURCES.filter(usesResourceFormPage).map(
+    (resource) => [resource.key, resource] as const,
+  );
+
+  it('covers the resources that have more than five fields', () => {
+    expect(paged.map(([key]) => key)).toEqual(expect.arrayContaining(['team', 'announcements']));
+  });
+
+  // A field missing from the step groups lands in an auto-generated "More
+  // details" step, which tells the person nothing about what is in it.
+  it.each(paged)('%s puts every field in a named step of at most five', (_key, resource) => {
+    const steps = resourceFormSteps(resource).slice(0, -1);
+    expect(steps.map((step) => step.label).filter((label) => /more details/i.test(label))).toEqual(
+      [],
+    );
+    expect(steps.every((step) => step.fields.length > 0 && step.fields.length <= 5)).toBe(true);
+    expect(steps.flatMap((step) => step.fields.map((field) => field.name)).sort()).toEqual(
+      resource.fields.map((field) => field.name).sort(),
+    );
+  });
+});
+
+describe('team steps', () => {
+  it('splits the profile links from social media, with every link named', () => {
+    const team = findResource('team');
+    if (!team) throw new Error('No team resource');
+    const steps = resourceFormSteps(team);
+    expect(steps.map((step) => step.label)).toEqual([
+      'Profile',
+      'About',
+      'Profile links',
+      'Social media',
+      'Visibility',
+      'Review',
+    ]);
+    expect(steps[2]?.fields.map((field) => field.name)).toEqual([
+      'websiteUrl',
+      'linkedInUrl',
+      'githubUrl',
+    ]);
+    expect(steps[3]?.fields.map((field) => field.name)).toEqual([
+      'xUrl',
+      'instagramUrl',
+      'facebookUrl',
+      'tiktokUrl',
+    ]);
   });
 });
 

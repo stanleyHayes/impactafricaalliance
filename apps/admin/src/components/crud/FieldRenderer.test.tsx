@@ -86,3 +86,51 @@ describe('a picture stored as its address', () => {
     );
   });
 });
+
+/** A form whose defaults are a stored record, as on an edit page. */
+const EditHarness = ({
+  field: config,
+  stored,
+  onValue,
+}: {
+  field: FieldConfig;
+  stored: unknown;
+  onValue: (value: unknown) => void;
+}): JSX.Element => {
+  const { control, watch } = useForm<Record<string, unknown>>({
+    defaultValues: { [config.name]: stored },
+  });
+  onValue(watch(config.name));
+  return <FieldRenderer field={config} control={control} />;
+};
+
+const renderEdit = (config: FieldConfig, stored: unknown): ReturnType<typeof vi.fn> => {
+  const onValue = vi.fn();
+  render(
+    <ThemeProvider theme={theme}>
+      <EditHarness field={config} stored={stored} onValue={onValue} />
+    </ThemeProvider>,
+  );
+  return onValue;
+};
+
+// react-hook-form shows a field's default in place of undefined, and on an
+// edit page the default is the stored value: an emptied field is null.
+describe('emptying a field on an edit page', () => {
+  it('removes a stored picture from view and holds null', () => {
+    const photo = { url: 'https://example.org/ama.jpg', publicId: 'ama' };
+    const onValue = renderEdit({ name: 'photo', label: 'Photo', type: 'image' }, photo);
+    expect(screen.getByRole('img', { name: 'Photo' })).toHaveAttribute('src', photo.url);
+    fireEvent.click(screen.getByRole('button', { name: 'Remove file' }));
+    expect(screen.queryByRole('img', { name: 'Photo' })).not.toBeInTheDocument();
+    expect(onValue).toHaveBeenLastCalledWith(null);
+  });
+
+  it('keeps an emptied number empty and holds null', () => {
+    const onValue = renderEdit({ name: 'order', label: 'Order', type: 'number' }, 4);
+    const input = screen.getByRole('spinbutton', { name: 'Order' });
+    fireEvent.change(input, { target: { value: '' } });
+    expect(input).toHaveValue(null);
+    expect(onValue).toHaveBeenLastCalledWith(null);
+  });
+});

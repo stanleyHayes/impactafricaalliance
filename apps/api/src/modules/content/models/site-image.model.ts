@@ -6,7 +6,10 @@ import { baseSchemaOptions, mediaSubSchema } from '../../../common/model-helpers
 export interface SiteImageDocument {
   key: string;
   image: MediaAsset;
-  /** Null once an editor clears it, so the picture's own description is used again. */
+  /**
+   * Absent once an editor clears it (older records may hold null), so the
+   * picture's own description is used again.
+   */
   alt?: string | null;
   isActive: boolean;
   createdAt: Date;

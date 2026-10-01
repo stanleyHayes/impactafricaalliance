@@ -6,13 +6,25 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 
 import { api } from '../lib/api-client';
+import type * as Registry from '../resources/registry';
 import type { ResourceConfig } from '../resources/types';
 
 import ResourceFormPage from './ResourceFormPage';
 
 vi.mock('../auth/AuthContext', () => ({
   useAuth: () => ({
-    user: { role: 'admin', permissions: ['widgets:read', 'widgets:create', 'widgets:update'] },
+    user: {
+      role: 'admin',
+      permissions: [
+        'widgets:read',
+        'widgets:create',
+        'widgets:update',
+        'gadgets:read',
+        'gadgets:update',
+        'jobs:read',
+        'jobs:update',
+      ],
+    },
   }),
 }));
 vi.mock('../lib/api-client', () => ({
@@ -42,9 +54,43 @@ const resource: ResourceConfig = {
     image: z.object({ url: z.string() }),
   }),
 };
-vi.mock('../resources/registry', () => ({
-  findResource: (key: string) => (key === 'widgets' ? resource : undefined),
-}));
+/** Optional like the CMS's own: an emptied value becomes undefined, which JSON drops. */
+const blankAsUndefined = (schema: z.ZodString) =>
+  z
+    .union([z.literal(''), schema])
+    .optional()
+    .transform((value) => (value === '' ? undefined : value));
+
+const gadgets: ResourceConfig = {
+  key: 'gadgets',
+  label: 'Gadgets',
+  singular: 'Gadget',
+  columns: [],
+  defaultValues: {},
+  fields: ['name', 'link', 'country', 'note', 'blurb', 'image'].map((name) => ({
+    name,
+    label: name,
+    type: name === 'image' ? 'image' : 'text',
+  })),
+  createSchema: z.object({
+    name: z.string().min(1),
+    link: blankAsUndefined(z.string().url()),
+    country: blankAsUndefined(z.string().length(2)),
+    note: blankAsUndefined(z.string()),
+    blurb: blankAsUndefined(z.string()),
+    image: z.object({ url: z.string() }).optional(),
+  }),
+};
+
+// Careers is the real resource: its own schema, fields and steps.
+vi.mock('../resources/registry', async (importOriginal) => {
+  const { findResource } = await importOriginal<typeof Registry>();
+  const jobs = findResource('jobs');
+  return {
+    findResource: (key: string) =>
+      (({ widgets: resource, gadgets, jobs }) as Record<string, ResourceConfig | undefined>)[key],
+  };
+});
 
 vi.mock('../components/crud/FieldRenderer', () => ({
   FieldRenderer: ({
@@ -73,6 +119,10 @@ vi.mock('../components/crud/FieldRenderer', () => ({
               }}
             >
               Finish upload
+            </button>
+            {/* As the real field does: removed is null, not undefined. */}
+            <button type="button" onClick={() => input.onChange(null)}>
+              Remove image
             </button>
             {fieldState.error && <span>{fieldState.error.message}</span>}
           </div>
@@ -109,6 +159,8 @@ const setup = (path: string) => {
           <Route path="/content/:resource/new" element={<ResourceFormPage />} />
           <Route path="/content/:resource/:id/edit" element={<ResourceFormPage />} />
           <Route path="/content/widgets" element={<p>Widget list</p>} />
+          <Route path="/content/gadgets" element={<p>Gadget list</p>} />
+          <Route path="/content/jobs" element={<p>Job list</p>} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -230,6 +282,76 @@ describe('resource form page', () => {
       role: data.role,
       note: 'Updated',
       image: data.image,
+    });
+    client.clear();
+  });
+
+  it('sends null for what an edit emptied, and nothing for blanks it left alone', async () => {
+    vi.mocked(api.get).mockResolvedValueOnce({
+      id: 'gizmo',
+      name: 'Gizmo',
+      link: 'https://example.com/gizmo',
+      country: 'GH',
+      blurb: '',
+      image: { url: 'https://example.com/gizmo.jpg' },
+    });
+    vi.mocked(api.patch).mockResolvedValueOnce({ id: 'gizmo', name: 'Gizmo' });
+    const client = setup('/content/gadgets/gizmo/edit');
+    fireEvent.change(await screen.findByLabelText('link'), { target: { value: '' } });
+    fireEvent.change(screen.getByLabelText('country'), { target: { value: '' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Remove image' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Review' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Save' }));
+    expect(await screen.findByText('Gadget list')).toBeInTheDocument();
+
+    const [path, body] = vi.mocked(api.patch).mock.calls[0] as [string, unknown];
+    expect(path).toBe('/admin/gadgets/gizmo');
+    // What goes over the wire: the untouched note and blurb are not mentioned.
+    expect(JSON.parse(JSON.stringify(body))).toEqual({
+      name: 'Gizmo',
+      link: null,
+      country: null,
+      image: null,
+    });
+    client.clear();
+  });
+
+  // The job schema used to refuse an emptied link as an invalid URL, which
+  // blocked Continue before the removal could be sent.
+  it('lets an edit empty a job’s apply link, and sends it as null', async () => {
+    const job = {
+      id: 'manager',
+      title: 'Programme Manager',
+      slug: 'programme-manager',
+      location: 'Accra, Ghana',
+      type: 'full-time',
+      description: 'Lead the delivery of our flagship programme.',
+      applyUrl: 'https://example.org/apply',
+      status: 'published',
+    };
+    vi.mocked(api.get).mockResolvedValueOnce(job);
+    vi.mocked(api.patch).mockResolvedValueOnce(job);
+    const client = setup('/content/jobs/manager/edit');
+    fireEvent.click(await screen.findByRole('button', { name: 'Continue' }));
+    // The link is on the Application step, which shows once the first step passes.
+    const applyUrl = await screen.findByRole('textbox', { name: 'applyUrl' });
+    fireEvent.change(applyUrl, { target: { value: '' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Review' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Save' }));
+    expect(await screen.findByText('Job list')).toBeInTheDocument();
+
+    const [path, body] = vi.mocked(api.patch).mock.calls[0] as [string, unknown];
+    expect(path).toBe('/admin/jobs/manager');
+    expect(JSON.parse(JSON.stringify(body))).toEqual({
+      title: job.title,
+      slug: job.slug,
+      location: job.location,
+      type: job.type,
+      description: job.description,
+      applyUrl: null,
+      status: job.status,
     });
     client.clear();
   });

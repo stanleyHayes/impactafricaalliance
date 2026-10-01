@@ -57,9 +57,8 @@ export interface InstantFieldProps {
  * A moment in time, such as when a form opens: the themed 12-hour MUI X
  * picker, shown in the reader's time zone and stored as a UTC instant.
  *
- * Built like the foundation's `DateField` rather than on `IsoDateTimeField`,
- * which reports a half-typed date as null and so clears the saved one. Here a
- * null only counts as clearing when every part of the field is empty; a date
+ * Built like the foundation's `DateField` (and `IsoDateTimeField`): a null
+ * only counts as clearing when every part of the field is empty; a date
  * still being typed keeps the saved value and asks for the rest (AGENTS.md:
  * an invalid date is never an intentional removal).
  */

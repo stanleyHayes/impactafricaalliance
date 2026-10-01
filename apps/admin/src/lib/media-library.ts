@@ -1,4 +1,4 @@
-import type { MediaItem, MediaItemInput, Paginated } from '@iaa/shared';
+import type { MediaFolder, MediaItem, MediaItemInput, Paginated } from '@iaa/shared';
 import {
   useMutation,
   useQuery,
@@ -27,10 +27,32 @@ export const useMediaLibrary = (enabled = true): UseQueryResult<Paginated<MediaI
     enabled,
   });
 
+/** What the details dialog saves. */
+export interface MediaItemChanges {
+  /** Null removes the description; undefined would be dropped by JSON and keep it. */
+  altText?: string | null;
+  folder: MediaFolder;
+  tags: string[];
+}
+
+/**
+ * The details dialog's changes. An emptied description goes as null, the
+ * API's "remove it": sent as '', it was read as no change and the old
+ * description stayed after a save that reported success.
+ */
+export const mediaDetailsChanges = (
+  item: Pick<MediaItem, 'altText'>,
+  { altText, folder, tags }: { altText: string; folder: MediaFolder; tags: string[] },
+): MediaItemChanges => {
+  const description = altText.trim();
+  if (description) return { altText: description, folder, tags };
+  return item.altText ? { altText: null, folder, tags } : { folder, tags };
+};
+
 export const useSaveMediaItem = (): UseMutationResult<
   MediaItem,
   Error,
-  { id: string; body: Partial<MediaItemInput> }
+  { id: string; body: MediaItemChanges }
 > => {
   const queryClient = useQueryClient();
   return useMutation({

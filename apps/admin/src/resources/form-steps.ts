@@ -24,11 +24,15 @@ const STEP_DEFINITIONS: Record<string, readonly StepDefinition[]> = {
   team: [
     { label: 'Profile', fields: ['name', 'role', 'tier', 'country'] },
     { label: 'About', fields: ['bio', 'photo'] },
-    {
-      label: 'Profile links',
-      fields: ['linkedInUrl', 'xUrl', 'instagramUrl', 'facebookUrl', 'tiktokUrl'],
-    },
+    // In the order the website shows the icons: work links, then social media.
+    { label: 'Profile links', fields: ['websiteUrl', 'linkedInUrl', 'githubUrl'] },
+    { label: 'Social media', fields: ['xUrl', 'instagramUrl', 'facebookUrl', 'tiktokUrl'] },
     { label: 'Visibility', fields: ['order', 'isActive'] },
+  ],
+  announcements: [
+    { label: 'Message', fields: ['name', 'message', 'linkUrl', 'linkLabel'] },
+    { label: 'Colour and timing', fields: ['tone', 'startsAt', 'endsAt'] },
+    { label: 'Publishing', fields: ['priority', 'isActive'] },
   ],
   offices: [
     { label: 'Address', fields: ['label', 'addressLine1', 'addressLine2', 'city', 'country'] },

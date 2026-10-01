@@ -17,8 +17,25 @@ standing interface rule, requested on 5 September 2026. Short forms can remain c
 | Impact stories | `/impact-stories/new`, `/impact-stories/:storyId/edit` | Basics, Classification, Blocks, Search & sharing, Review |
 
 The CMS threshold is calculated from field definitions, so adding a sixth field automatically moves
-that resource into the dedicated editor. Explicit step groups retain every field, with a five-field
-fallback for future additions. Partners, pillar images and direct user creation remain short dialogs.
+that resource into the dedicated editor. Give every field a named step group in
+`resources/form-steps.ts`: a field without one falls into an auto-named "More details" step, which
+`form-steps.test.ts` refuses. Partners, pillar images and direct user creation remain short dialogs.
+
+Emptying an optional field on a CMS edit (page or dialog) sends it as null if it had a value;
+untouched blanks are not sent. Emptying a number that has a default (an order, a priority, a popup's
+delay) saves that default, and Review shows it as such, for example "0 (default)". The content API
+removes a null field that the create schema marks optional with no default, and still refuses null
+for a required field or one with a default. A control that empties (a removed picture or file, a
+cleared number) holds null, never undefined: react-hook-form shows a field's default in place of
+undefined, which on an edit page is the stored value. `resources/resolver.ts` reads those nulls as
+"no value" before the create schema validates. A required picture or file left empty, on create or
+after Remove, asks for one in plain words ("Choose a picture.", "Choose a PDF.") rather than the
+schema's own message.
+
+The sticky Cancel / Back / Continue bar is opaque in every skin. While the editor is open the page
+keeps the bar's height (and a small gap) as scroll padding, so whatever is focused, scrolled to or
+typed in stops above the bar, including the line being typed at the foot of a growing text box; the
+bar's own buttons cancel the padding, so focusing them never scrolls the page.
 
 The work modules keep a few short forms as dialogs, each at five fields or fewer: quick task
 creation (top bar and a project's Tasks tab), a project milestone, metric, risk, progress figure or
@@ -34,9 +51,10 @@ rules. Review/save errors must keep the user's work. Show skeletons when loading
 
 Every Review step draws its summary with `ReviewSummary` (`components/forms/ReviewSummary.tsx`): one
 connected summary with an `Edit <section>` control per step (held while saving or uploading) and a
-responsive grid of labelled values, with "Not set" for anything left empty. CMS resources reach it
-through `ResourceReview`; the project, task, form and story editors use it directly and put their own
-panels (readiness checks, status cards) below it. Keep short values together; reserve full rows for
+responsive grid of labelled values, with "Not set" for anything left empty (a CMS field with a
+default shows the default it will be saved as). CMS resources reach it through `ResourceReview`; the
+project, task, form and story editors use it directly and put their own panels (readiness checks,
+status cards) below it. Keep short values together; reserve full rows for
 descriptions, rich text, and long content. Summary widths follow the content rather than the input's
 editor width. Images, uploaded file links, custom previews, and all configured fields remain
 available for review.
@@ -49,7 +67,8 @@ Calendar dates without a time (project and task dates, milestones) use `DateFiel
 12:00 UTC of the chosen day, so every staff time zone reads the same day.
 End times must follow the start; registration can close at or before the start. Empty optional dates
 are distinct from invalid dates, and clearing existing values sends the API's explicit null update.
-`DateField` and `InstantField` never pass a half-typed or impossible date on; they report it through
+`DateField`, `InstantField` and the CMS forms' `IsoDateTimeField` never pass a half-typed or
+impossible date on (deleting only the year keeps the saved date); they report it through
 `onProblemChange`, and the step or dialog holding them refuses Continue, Enter and Save while it is set.
 
 ## Verification
@@ -60,6 +79,8 @@ are distinct from invalid dates, and clearing existing values sends the API's ex
 - Pending uploads block step changes/save; failed saves preserve the full form for retry.
 - Optional removal and unchanged timestamp round trips preserve the API contract.
 - Keyboard controls and narrow layouts remain usable; check the desktop and touch date pickers.
+- Tabbing to a control near the bottom of a step, or typing at the end of a long text box, keeps it
+  above the sticky action bar.
 
 Submission edits use `/submissions/records/:id/edit`: type-specific Contact, Partnership,
 Volunteering or Application steps followed by Status & review. The read route is

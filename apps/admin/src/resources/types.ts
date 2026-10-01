@@ -42,6 +42,11 @@ export interface FieldConfig {
   type: FieldType;
   options?: SelectOption[];
   helperText?: string;
+  /**
+   * What the field asks for when it must be filled and is left empty, where
+   * the wording for its type ("Choose one of the options.") says too little.
+   */
+  missing?: string;
   /** Span both columns of the form grid. */
   wide?: boolean;
 }

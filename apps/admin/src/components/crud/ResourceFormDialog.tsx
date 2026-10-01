@@ -1,4 +1,3 @@
-import { zodResolver } from '@hookform/resolvers/zod';
 import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
 import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
@@ -9,10 +8,18 @@ import Dialog from '@mui/material/Dialog';
 import DialogContent from '@mui/material/DialogContent';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
-import { useEffect, useState } from 'react';
-import { useForm, type Resolver } from 'react-hook-form';
+import { useEffect, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
 
+import { fieldCellProps, firstNamedField, focusField } from '../../resources/field-focus';
+import {
+  useFieldProblems,
+  useHasFieldProblems,
+  type FieldProblemsStore,
+} from '../../resources/field-problems';
 import { useSaveResource } from '../../resources/hooks';
+import { withRemovals } from '../../resources/removals';
+import { resourceResolver } from '../../resources/resolver';
 import type { ResourceConfig, ResourceRow } from '../../resources/types';
 import { skinned, surfaceSx } from '../../theme/surfaces';
 import { DialogFooter, DialogHeader, dialogBodySx, dialogPaperSx } from '../dialogs/DialogShell';
@@ -42,6 +49,17 @@ interface ResourceFormDialogProps {
   onClose: () => void;
 }
 
+/**
+ * Save met a half-typed date: said until every date is whole or cleared.
+ * Only this re-renders as the dates report, never the fields themselves.
+ */
+const HeldBackNotice = ({ problems }: { problems: FieldProblemsStore }): JSX.Element | null =>
+  useHasFieldProblems(problems) ? (
+    <Alert severity="error" sx={{ mt: 2 }}>
+      Please complete the highlighted fields before saving.
+    </Alert>
+  ) : null;
+
 /** Create/edit dialog generated from a resource's field configuration, with an optional live preview. */
 export const ResourceFormDialog = ({
   resource,
@@ -51,13 +69,21 @@ export const ResourceFormDialog = ({
 }: ResourceFormDialogProps): JSX.Element => {
   const save = useSaveResource(resource.key);
   const { control, handleSubmit, reset, watch } = useForm<Record<string, unknown>>({
-    // The generic resource schema's input type is `unknown`; bypass the resolver's
-    // FieldValues constraint and re-assert the form's value type explicitly.
-    resolver: zodResolver(resource.createSchema as never) as Resolver<Record<string, unknown>>,
+    resolver: resourceResolver(resource.createSchema),
     defaultValues: resource.defaultValues,
   });
   const [tab, setTab] = useState<'edit' | 'preview'>('edit');
+  const dateProblems = useFieldProblems();
+  // Save met a half-typed date.
+  const [heldBack, setHeldBack] = useState(false);
+  // The field that held Save back, to put the cursor in once the form shows.
+  const [reveal, setReveal] = useState<{ name: string } | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   const canPreview = Boolean(resource.renderPreview);
+
+  useEffect(() => {
+    if (reveal) focusField(formRef.current, reveal.name);
+  }, [reveal]);
 
   // `save` is a fresh object every render (React Query); depend on the stable
   // `reset` fns only, or the effect re-fires on each preview re-render and snaps
@@ -68,12 +94,33 @@ export const ResourceFormDialog = ({
       reset(initial ?? resource.defaultValues);
       resetSave();
       setTab('edit');
+      setHeldBack(false);
     }
   }, [open, initial, resource, reset, resetSave]);
 
-  const onSubmit = handleSubmit((values) => {
-    save.mutate({ id: initial?.id, body: values }, { onSuccess: () => onClose() });
-  });
+  // The fields that need attention are on the Edit tab, even when Save was
+  // pressed while previewing; the cursor goes to the first of them.
+  const showProblems = (names: readonly string[]): void => {
+    setTab('edit');
+    const field = firstNamedField(resource.fields, names);
+    if (field) setReveal({ name: field.name });
+  };
+  const onSubmit = handleSubmit(
+    (values) => {
+      // A half-typed date keeps the field's old value, which would pass, so
+      // nothing is saved until it is whole or cleared. The field says what
+      // is missing.
+      const problems = Object.keys(dateProblems.current());
+      if (problems.length) {
+        setHeldBack(true);
+        showProblems(problems);
+        return;
+      }
+      const body = initial ? withRemovals(resource.fields, initial, values) : values;
+      save.mutate({ id: initial?.id, body }, { onSuccess: () => onClose() });
+    },
+    (invalid) => showProblems([...Object.keys(dateProblems.current()), ...Object.keys(invalid)]),
+  );
 
   const values = watch();
 
@@ -117,6 +164,7 @@ export const ResourceFormDialog = ({
         {/* Form stays mounted (hidden while previewing) so RHF state + submit persist. */}
         <Box sx={{ display: tab === 'edit' ? 'block' : 'none' }}>
           <Box
+            ref={formRef}
             component="form"
             id="resource-form"
             onSubmit={onSubmit}
@@ -133,11 +181,20 @@ export const ResourceFormDialog = ({
             }}
           >
             {resource.fields.map((field) => (
-              <Box key={field.name} sx={{ gridColumn: field.wide ? '1 / -1' : 'auto' }}>
-                <FieldRenderer field={field} control={control} />
+              <Box
+                key={field.name}
+                {...fieldCellProps(field.name)}
+                sx={{ gridColumn: field.wide ? '1 / -1' : 'auto' }}
+              >
+                <FieldRenderer
+                  field={field}
+                  control={control}
+                  onProblemChange={dateProblems.report}
+                />
               </Box>
             ))}
           </Box>
+          {heldBack && <HeldBackNotice problems={dateProblems} />}
           {save.isError && (
             <Alert severity="error" sx={{ mt: 2 }}>
               {/* The server's own words when it has any: telling someone to

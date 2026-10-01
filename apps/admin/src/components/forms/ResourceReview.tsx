@@ -7,6 +7,7 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
 import type { ResourceFormStep } from '../../resources/form-steps';
+import { schemaDefault } from '../../resources/resolver';
 import type { FieldConfig, ResourceConfig } from '../../resources/types';
 import { surfaceSx } from '../../theme/surfaces';
 import { Markdown } from '../markdown/Markdown';
@@ -23,13 +24,38 @@ const reviewText = (field: FieldConfig, value: unknown): string => {
   return Array.isArray(value) ? value.join(', ') : String(value);
 };
 
-const ReviewValue = ({ field, value }: { field: FieldConfig; value: unknown }): JSX.Element => {
+/** An empty field: the default it will be saved as (an emptied order is 0), or "Not set". */
+const EmptyValue = ({
+  field,
+  fallback,
+}: {
+  field: FieldConfig;
+  fallback: unknown;
+}): JSX.Element => {
+  const saved = fallback === undefined ? '' : reviewText(field, fallback);
+  return saved ? (
+    <Typography variant="body2" sx={{ fontWeight: 500, fontVariantNumeric: 'tabular-nums' }}>
+      {saved} (default)
+    </Typography>
+  ) : (
+    <Typography variant="body2" color="text.secondary">
+      Not set
+    </Typography>
+  );
+};
+
+const ReviewValue = ({
+  field,
+  value,
+  fallback,
+}: {
+  field: FieldConfig;
+  value: unknown;
+  /** What the resource saves for this field when it is left empty. */
+  fallback: unknown;
+}): JSX.Element => {
   if (value === undefined || value === null || value === '') {
-    return (
-      <Typography variant="body2" color="text.secondary">
-        Not set
-      </Typography>
-    );
+    return <EmptyValue field={field} fallback={fallback} />;
   }
   if (field.type === 'switch') {
     return (
@@ -128,7 +154,13 @@ export const ResourceReview = ({
         step: index,
         items: step.fields.map((field) => ({
           label: field.label,
-          value: <ReviewValue field={field} value={values[field.name]} />,
+          value: (
+            <ReviewValue
+              field={field}
+              value={values[field.name]}
+              fallback={schemaDefault(resource.createSchema, field.name)}
+            />
+          ),
           fullRow: needsFullRow(field, values[field.name]),
         })),
       }))}

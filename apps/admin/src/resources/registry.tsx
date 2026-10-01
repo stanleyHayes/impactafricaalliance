@@ -432,6 +432,7 @@ export const RESOURCES: readonly ResourceConfig[] = [
         label: 'Pillar',
         type: 'select',
         options: PILLARS.map((pillar) => ({ value: pillar.key, label: pillar.title })),
+        missing: 'Choose a pillar.',
       },
       { name: 'image', label: 'Image', type: 'image', wide: true },
       {
@@ -480,6 +481,7 @@ export const RESOURCES: readonly ResourceConfig[] = [
         label: 'Where it appears',
         type: 'select',
         options: SITE_IMAGE_SLOTS.map((slot) => ({ value: slot.key, label: slot.label })),
+        missing: 'Choose where it appears.',
       },
       { name: 'image', label: 'Image', type: 'image', wide: true },
       {

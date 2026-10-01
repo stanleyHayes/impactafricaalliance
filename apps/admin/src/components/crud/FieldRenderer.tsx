@@ -11,6 +11,7 @@ import {
   Controller,
   type Control,
   type ControllerRenderProps,
+  type FieldError,
   type FieldValues,
 } from 'react-hook-form';
 
@@ -24,11 +25,20 @@ import { QuestionBuilder } from '../fields/QuestionBuilder';
 import { TagsField } from '../fields/TagsField';
 import { MarkdownEditor } from '../markdown/MarkdownEditor';
 
-interface FieldRendererProps {
+/** What a field tells its form beyond its value. */
+interface FieldReports {
+  onUploadingChange?: (fieldName: string, uploading: boolean) => void;
+  /**
+   * What a date field objects to while it holds a half-typed date, or null
+   * once it holds a whole one. The form must not continue or save meanwhile.
+   */
+  onProblemChange?: (fieldName: string, problem: string | null) => void;
+}
+
+interface FieldRendererProps extends FieldReports {
   field: FieldConfig;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   control: Control<any>;
-  onUploadingChange?: (fieldName: string, uploading: boolean) => void;
 }
 
 type Rhf = ControllerRenderProps<FieldValues, string>;
@@ -36,7 +46,7 @@ type Renderer = (
   field: FieldConfig,
   rhf: Rhf,
   error: string | undefined,
-  onUploadingChange?: FieldRendererProps['onUploadingChange'],
+  reports: FieldReports,
 ) => JSX.Element;
 
 const switchRenderer: Renderer = (field, rhf) => (
@@ -70,13 +80,19 @@ const choiceRenderer: Renderer = (field, rhf, error) => (
   />
 );
 
+/**
+ * An emptied number is null, never undefined: react-hook-form shows a
+ * field's default in place of undefined, which on an edit page is the stored
+ * value, so the field snapped back to it. resourceResolver reads the null as
+ * "no value".
+ */
 const numberRenderer: Renderer = (field, rhf, error) => (
   <TextField
     type="number"
     fullWidth
     label={field.label}
     value={rhf.value ?? ''}
-    onChange={(e) => rhf.onChange(e.target.value === '' ? undefined : Number(e.target.value))}
+    onChange={(e) => rhf.onChange(e.target.value === '' ? null : Number(e.target.value))}
     error={Boolean(error)}
     helperText={error}
   />
@@ -92,11 +108,12 @@ const tagsRenderer: Renderer = (field, rhf, error) => (
   />
 );
 
-const datetimeRenderer: Renderer = (field, rhf, error) => (
+const datetimeRenderer: Renderer = (field, rhf, error, { onProblemChange }) => (
   <IsoDateTimeField
     label={field.label}
     value={typeof rhf.value === 'string' ? rhf.value : null}
     onChange={rhf.onChange}
+    onProblemChange={(problem) => onProblemChange?.(field.name, problem)}
     error={error}
     helperText={field.helperText}
   />
@@ -108,16 +125,17 @@ const MediaHelp = ({ field, error }: { field: FieldConfig; error?: string }): JS
     <FormHelperText error={Boolean(error)}>{error ?? field.helperText}</FormHelperText>
   ) : null;
 
+/** A removed file is null, like an emptied number, so the stored one does not come back. */
 const mediaRenderer =
   (accept: string, preview: boolean): Renderer =>
-  (field, rhf, error, onUploadingChange) => (
+  (field, rhf, error, { onUploadingChange }) => (
     <Box>
       <MediaUploadField
         label={field.label}
         accept={accept}
         preview={preview}
-        value={rhf.value as MediaAsset | undefined}
-        onChange={rhf.onChange}
+        value={(rhf.value as MediaAsset | null | undefined) ?? undefined}
+        onChange={(asset) => rhf.onChange(asset ?? null)}
         onUploadingChange={(uploading) => onUploadingChange?.(field.name, uploading)}
       />
       <MediaHelp field={field} error={error} />
@@ -129,7 +147,7 @@ const mediaRenderer =
  * doubles as the asset's id, which is all the control needs to show it; an
  * emptied field saves an empty string, which the API reads as "no picture".
  */
-const imageUrlRenderer: Renderer = (field, rhf, error, onUploadingChange) => {
+const imageUrlRenderer: Renderer = (field, rhf, error, { onUploadingChange }) => {
   const url = typeof rhf.value === 'string' && rhf.value ? rhf.value : undefined;
   return (
     <Box>
@@ -218,17 +236,62 @@ const RENDERERS: Record<FieldType, Renderer> = {
   questions: questionsRenderer,
 };
 
+/** Nothing given: no value, empty text or an empty list. */
+const isEmptyValue = (value: unknown): boolean =>
+  value === undefined ||
+  value === null ||
+  value === '' ||
+  (Array.isArray(value) && value.length === 0);
+
+/**
+ * What a field left empty asks for, when it must not be. "Choose" covers
+ * uploading and the media library alike, whichever this person may use.
+ */
+const MISSING: Partial<Record<FieldType, string>> = {
+  select: 'Choose one of the options.',
+  choice: 'Choose one of the options.',
+  number: 'Enter a number.',
+  datetime: 'Choose a date and time.',
+  tags: 'Add at least one tag.',
+  image: 'Choose a picture.',
+  imageUrl: 'Choose a picture.',
+  file: 'Choose a PDF.',
+};
+
+/** "Name (for this list only)" as "name"; "SEO title" keeps its capitals. */
+const nounOf = (label: string): string => {
+  const noun = label.replace(/\s*\(.*\)\s*$/, '');
+  return /^[A-Z]{2}/.test(noun) ? noun : noun.charAt(0).toLowerCase() + noun.slice(1);
+};
+
+/**
+ * A field that must be filled and was left empty says what to do ("Choose a
+ * pillar.", "Enter the title.") rather than the schema's words for it
+ * ("Invalid input: expected string, received undefined", "Too small:
+ * expected string to have >=3 characters"). A resource's own rule keeps its
+ * message, as does a value that is there but wrong.
+ */
+const plainError = (field: FieldConfig, value: unknown, error?: FieldError): string | undefined => {
+  if (!error) return undefined;
+  if (error.type === 'custom' || !isEmptyValue(value)) return error.message;
+  return field.missing ?? MISSING[field.type] ?? `Enter the ${nounOf(field.label)}.`;
+};
+
 /** Renders a single configured field bound to react-hook-form. */
 export const FieldRenderer = ({
   field,
   control,
   onUploadingChange,
+  onProblemChange,
 }: FieldRendererProps): JSX.Element => (
   <Controller
     name={field.name}
     control={control}
     render={({ field: rhf, fieldState }) =>
-      RENDERERS[field.type](field, rhf, fieldState.error?.message, onUploadingChange)
+      RENDERERS[field.type](field, rhf, plainError(field, rhf.value, fieldState.error), {
+        onUploadingChange,
+        onProblemChange,
+      })
     }
   />
 );

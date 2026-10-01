@@ -281,6 +281,7 @@ const ReviewStep = ({
   onWhen,
   scheduledFor,
   onScheduledFor,
+  onScheduleProblem,
   timezone,
 }: {
   selected: SocialDestination[];
@@ -290,6 +291,8 @@ const ReviewStep = ({
   onWhen: (value: 'now' | 'schedule') => void;
   scheduledFor: string;
   onScheduledFor: (value: string) => void;
+  /** A half-typed time, which keeps the last whole one: Schedule waits for it. */
+  onScheduleProblem: (problem: string | null) => void;
   timezone: string;
 }): JSX.Element => (
   <Stack spacing={2}>
@@ -339,6 +342,7 @@ const ReviewStep = ({
         label="When"
         value={scheduledFor}
         onChange={(value: string | null) => onScheduledFor(value ?? '')}
+        onProblemChange={onScheduleProblem}
         // Stored in UTC; shown in the timezone the administrator is working in.
         helperText={`Times are in ${timezone}.`}
       />
@@ -373,6 +377,7 @@ export const SocialPublishDialog = ({
   const [reviewing, setReviewing] = useState(false);
   const [when, setWhen] = useState<'now' | 'schedule'>('now');
   const [scheduledFor, setScheduledFor] = useState('');
+  const [scheduleProblem, setScheduleProblem] = useState<string | null>(null);
 
   const connected = accounts ?? [];
   const timezone = useMemo(() => Intl.DateTimeFormat().resolvedOptions().timeZone, []);
@@ -476,6 +481,7 @@ export const SocialPublishDialog = ({
               onWhen={setWhen}
               scheduledFor={scheduledFor}
               onScheduledFor={setScheduledFor}
+              onScheduleProblem={setScheduleProblem}
               timezone={timezone}
             />
           )}
@@ -498,7 +504,7 @@ export const SocialPublishDialog = ({
           reviewing={reviewing}
           submitted={submitted}
           busy={busy}
-          blocked={blockers.length > 0}
+          blocked={blockers.length > 0 || (when === 'schedule' && scheduleProblem !== null)}
           when={when}
           scheduledFor={scheduledFor}
           selectedCount={selected.length}

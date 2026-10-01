@@ -9,6 +9,24 @@ import type { ContentRepository } from './content-repository.js';
 
 const OBJECT_ID = /^[a-f\d]{24}$/i;
 
+/**
+ * Nulls in a plain change object become `$unset`, so a removed field is
+ * absent, like one never set, rather than a stored null. An update already
+ * written with operators ($set, $unset…) is passed on untouched.
+ */
+const unsetNulls = <TDoc>(changes: UpdateQuery<TDoc>): UpdateQuery<TDoc> => {
+  const keys = Object.keys(changes);
+  const removed = keys.filter((key) => changes[key] === null);
+  if (!removed.length || keys.some((key) => key.startsWith('$'))) {
+    return changes;
+  }
+  const set = Object.fromEntries(Object.entries(changes).filter(([, value]) => value !== null));
+  return {
+    ...(Object.keys(set).length ? { $set: set } : {}),
+    $unset: Object.fromEntries(removed.map((key) => [key, 1])),
+  } as UpdateQuery<TDoc>;
+};
+
 export interface ContentServiceOptions<TDoc> {
   /** Human-readable name used in 404 messages, e.g. "Article". */
   resource: string;
@@ -64,7 +82,7 @@ export class ContentService<TDoc> {
   }
 
   async update(id: string, changes: UpdateQuery<TDoc>): Promise<HydratedDocument<TDoc>> {
-    return this.ensure(await this.repo.update(id, changes));
+    return this.ensure(await this.repo.update(id, unsetNulls(changes)));
   }
 
   async remove(id: string): Promise<void> {

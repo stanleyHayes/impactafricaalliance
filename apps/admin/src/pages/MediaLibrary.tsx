@@ -32,7 +32,12 @@ import { MediaUploadField } from '../components/fields/MediaUploadField';
 import { OptionSelect } from '../components/fields/OptionSelect';
 import { PageHeader } from '../components/PageHeader';
 import { MediaLibrarySkeleton } from '../components/PageSkeleton';
-import { useDeleteMediaItem, useMediaLibrary, useSaveMediaItem } from '../lib/media-library';
+import {
+  mediaDetailsChanges,
+  useDeleteMediaItem,
+  useMediaLibrary,
+  useSaveMediaItem,
+} from '../lib/media-library';
 import { MEDIA_FOLDER_OPTIONS } from '../lib/select-options';
 import { skinned, surfaceSx, tokenVar } from '../theme/surfaces';
 
@@ -194,7 +199,7 @@ const DetailsDialog = ({
               save.mutate(
                 {
                   id: item.id,
-                  body: { altText: altText.trim(), folder, tags: splitTags(tags) },
+                  body: mediaDetailsChanges(item, { altText, folder, tags: splitTags(tags) }),
                 },
                 {
                   onSuccess: () => {
