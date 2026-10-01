@@ -684,13 +684,34 @@ const tableColumns: GridColDef[] = [
   },
 ];
 
-const SubmissionsEmpty = ({
-  hasFilters,
-  onClear,
-}: {
+interface SubmissionsEmptyProps {
   hasFilters: boolean;
   onClear: () => void;
-}): JSX.Element => (
+}
+
+/**
+ * The empty state alone. In the table view the table's own empty panel holds
+ * it; a panel here as well was a card floating inside that card.
+ */
+const SubmissionsEmpty = ({ hasFilters, onClear }: SubmissionsEmptyProps): JSX.Element => (
+  <EmptyState
+    icon={<InboxOutlinedIcon />}
+    title={hasFilters ? 'No matching submissions' : 'No submissions yet'}
+    description={
+      hasFilters
+        ? 'No submissions match the current filters. Try clearing them to see everything.'
+        : 'Contact, partnership, volunteer, and job enquiries from the website will land here.'
+    }
+    primaryAction={
+      hasFilters
+        ? { label: 'Clear filters', onClick: onClear, icon: <FilterAltOffIcon /> }
+        : undefined
+    }
+  />
+);
+
+/** The card view has no table around it, so there the empty state gets its own panel. */
+const SubmissionsEmptyPanel = (props: SubmissionsEmptyProps): JSX.Element => (
   <Box
     sx={[
       { borderRadius: 3, display: 'flex', justifyContent: 'center' },
@@ -698,20 +719,7 @@ const SubmissionsEmpty = ({
       skinned({ bgcolor: 'background.paper' }, surfaceSx.card),
     ]}
   >
-    <EmptyState
-      icon={<InboxOutlinedIcon />}
-      title={hasFilters ? 'No matching submissions' : 'No submissions yet'}
-      description={
-        hasFilters
-          ? 'No submissions match the current filters. Try clearing them to see everything.'
-          : 'Contact, partnership, volunteer, and job enquiries from the website will land here.'
-      }
-      primaryAction={
-        hasFilters
-          ? { label: 'Clear filters', onClick: onClear, icon: <FilterAltOffIcon /> }
-          : undefined
-      }
-    />
+    <SubmissionsEmpty {...props} />
   </Box>
 );
 
@@ -762,7 +770,7 @@ const SubmissionsList = ({
     );
   }
   if (filtered.length === 0) {
-    return <SubmissionsEmpty hasFilters={hasFilters} onClear={onClearFilters} />;
+    return <SubmissionsEmptyPanel hasFilters={hasFilters} onClear={onClearFilters} />;
   }
   return (
     <Stack spacing={2}>

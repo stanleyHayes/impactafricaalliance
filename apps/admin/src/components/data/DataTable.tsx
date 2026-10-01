@@ -49,7 +49,10 @@ interface DataTableProps {
   rows: GridRowsProp;
   columns: GridColDef[];
   loading?: boolean;
-  /** Rendered (centered) when not loading and there are no rows. */
+  /**
+   * Rendered across the table's panel, centred vertically, when not loading
+   * and there are no rows. The panel is the card: this should not draw its own.
+   */
   empty?: ReactNode;
   /** Maximum height of the table card; the table shrinks to fit its rows (default 640). */
   height?: number;
@@ -448,12 +451,14 @@ export const DataTable = (props: DataTableProps): JSX.Element => {
   } as const;
 
   if (!loading && rows.length === 0 && empty) {
+    // A column that stretches its child across the panel: centred in a row,
+    // anything narrower than the panel shrank to its text and floated in it.
     return (
       <Box
         sx={{
           ...containerSx,
           display: 'flex',
-          alignItems: 'center',
+          flexDirection: 'column',
           justifyContent: 'center',
           minHeight: 420,
         }}

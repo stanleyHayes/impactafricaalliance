@@ -317,7 +317,9 @@ const AnalyticsBody = ({ data }: { data: AnalyticsSummary }): JSX.Element => {
               <Typography variant="caption" color="text.secondary">
                 How your audience reads · share of recorded devices
               </Typography>
-              <Box sx={{ mt: 3, maxWidth: 620, mx: 'auto' }}>
+              {/* Only the chart is held to a readable width; the empty state
+                  spans the card, as in the other breakdowns. */}
+              <Box sx={data.byDevice.length ? { mt: 3, maxWidth: 620, mx: 'auto' } : { mt: 3 }}>
                 {data.byDevice.length ? (
                   <DonutChart
                     showPercentages
