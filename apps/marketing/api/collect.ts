@@ -22,6 +22,23 @@ const API_URL = (
 
 const INGEST_KEY = process.env.ANALYTICS_INGEST_SECRET ?? '';
 
+/**
+ * Without the key the API still counts each view but ignores its location, so
+ * a deployment missing the variable silently records no countries at all. Say
+ * so in the function's log, once per cold start rather than once per view.
+ */
+let missingKeyReported = false;
+
+const reportMissingKey = (): void => {
+  if (INGEST_KEY.trim() !== '' || missingKeyReported) return;
+  missingKeyReported = true;
+  console.warn(
+    '[api/collect] ANALYTICS_INGEST_SECRET is not set, so the API cannot trust the location ' +
+      'forwarded with each page view and records every visit without a country. Views are ' +
+      "still forwarded. Set it to the API's ANALYTICS_INGEST_SECRET and redeploy.",
+  );
+};
+
 const readBody = async (req: IncomingMessage): Promise<string> => {
   const chunks: Buffer[] = [];
   for await (const chunk of req) {
@@ -46,6 +63,8 @@ export default async function handler(
     res.end();
     return;
   }
+
+  reportMissingKey();
 
   // Answer before forwarding: the page has nothing to do with the result, and
   // a beacon that waits on a sleeping API would hold the tab's unload open.
