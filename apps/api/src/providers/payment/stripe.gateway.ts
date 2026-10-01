@@ -1,3 +1,4 @@
+import { STRIPE_CURRENCY, type DonationCurrency } from '@iaa/shared';
 import type Stripe from 'stripe';
 import { inject, injectable } from 'tsyringe';
 
@@ -15,6 +16,9 @@ export interface StripeIntent {
 export class StripeGateway {
   private client?: Stripe;
 
+  /** Stripe donations are always in dollars. */
+  readonly currency: DonationCurrency = STRIPE_CURRENCY;
+
   constructor(@inject(TOKENS.Config) private readonly config: AppConfig) {}
 
   isConfigured(): boolean {
@@ -29,7 +33,7 @@ export class StripeGateway {
     const client = await this.getClient();
     const intent = await client.paymentIntents.create({
       amount: amountUsdCents,
-      currency: 'usd',
+      currency: this.currency.toLowerCase(),
       receipt_email: donorEmail,
       metadata: { donationId },
       automatic_payment_methods: { enabled: true },

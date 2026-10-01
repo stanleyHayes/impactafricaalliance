@@ -1,4 +1,5 @@
 import type { PaymentSettingsStatus } from './payment-settings.js';
+import type { MoneyAmount } from './payment.js';
 
 export interface DashboardCountEntry {
   key: string;
@@ -8,8 +9,17 @@ export interface DashboardCountEntry {
 export interface DashboardDonationMonth {
   /** `YYYY-MM` bucket label. */
   month: string;
-  amountUsd: number;
+  /** Completed gifts that month, in any currency. */
   count: number;
+  /** Raised that month, one entry per currency that had gifts; empty for a quiet month. */
+  raised: MoneyAmount[];
+}
+
+/** Completed gifts through one provider. */
+export interface DashboardProviderDonations {
+  count: number;
+  /** One entry per currency, cedis before dollars. */
+  raised: MoneyAmount[];
 }
 
 /**
@@ -56,12 +66,16 @@ export interface DashboardSummary {
     newLast30Days: number;
   };
   donations: {
-    totalRaisedUsd: number;
+    /**
+     * Raised from succeeded gifts, one entry per currency (cedis before dollars),
+     * never summed across currencies; empty until a gift succeeds.
+     */
+    raised: MoneyAmount[];
     succeededCount: number;
     pendingCount: number;
     failedCount: number;
-    /** Amount raised (USD, succeeded only) per provider. */
-    byProvider: { stripe: number; paystack: number };
+    /** Succeeded gifts per provider. */
+    byProvider: { stripe: DashboardProviderDonations; paystack: DashboardProviderDonations };
     /** Succeeded donations bucketed by month, oldest first (last 6 months). */
     monthly: DashboardDonationMonth[];
   };

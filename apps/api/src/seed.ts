@@ -5,6 +5,7 @@ import crypto from 'crypto';
 
 import {
   ContentStatus,
+  DonationCurrency,
   DonationFrequency,
   DonationStatus,
   JobType,
@@ -809,18 +810,18 @@ const SUBMISSIONS = [
 ];
 
 const DONATIONS = [
-  { provider: PaymentProvider.Stripe, reference: 'seed_don_0001', amountUsd: 250, frequency: DonationFrequency.OneTime, status: DonationStatus.Succeeded, donorName: 'Helen Carter', donorEmail: 'helen.carter@example.com' },
-  { provider: PaymentProvider.Paystack, reference: 'seed_don_0002', amountUsd: 50, frequency: DonationFrequency.Monthly, status: DonationStatus.Succeeded, donorName: 'Yusuf Abubakar', donorEmail: 'yusuf.abubakar@example.com' },
-  { provider: PaymentProvider.Stripe, reference: 'seed_don_0003', amountUsd: 1000, frequency: DonationFrequency.OneTime, status: DonationStatus.Succeeded, donorName: 'The Adeyemi Family', donorEmail: 'giving@adeyemi.example.com' },
-  { provider: PaymentProvider.Stripe, reference: 'seed_don_0004', amountUsd: 25, frequency: DonationFrequency.Monthly, status: DonationStatus.Succeeded, donorName: 'Linda Park', donorEmail: 'linda.park@example.com' },
-  { provider: PaymentProvider.Paystack, reference: 'seed_don_0005', amountUsd: 500, frequency: DonationFrequency.OneTime, status: DonationStatus.Succeeded, donorName: 'Chukwu Okonkwo', donorEmail: 'chukwu.okonkwo@example.com' },
-  { provider: PaymentProvider.Stripe, reference: 'seed_don_0006', amountUsd: 75, frequency: DonationFrequency.OneTime, status: DonationStatus.Pending, donorName: 'Anonymous', donorEmail: 'anon1@example.com' },
-  { provider: PaymentProvider.Paystack, reference: 'seed_don_0007', amountUsd: 120, frequency: DonationFrequency.Monthly, status: DonationStatus.Pending, donorName: 'Marcus Reid', donorEmail: 'marcus.reid@example.com' },
-  { provider: PaymentProvider.Stripe, reference: 'seed_don_0008', amountUsd: 40, frequency: DonationFrequency.OneTime, status: DonationStatus.Failed, donorName: 'Test Donor', donorEmail: 'failed@example.com' },
-  { provider: PaymentProvider.Stripe, reference: 'seed_don_0009', amountUsd: 300, frequency: DonationFrequency.OneTime, status: DonationStatus.Succeeded, donorName: 'Beatrice Mwale', donorEmail: 'beatrice.mwale@example.com' },
-  { provider: PaymentProvider.Paystack, reference: 'seed_don_0010', amountUsd: 10, frequency: DonationFrequency.Monthly, status: DonationStatus.Succeeded, donorName: 'Kelvin Osei', donorEmail: 'kelvin.osei@example.com' },
-  { provider: PaymentProvider.Stripe, reference: 'seed_don_0011', amountUsd: 2000, frequency: DonationFrequency.OneTime, status: DonationStatus.Succeeded, donorName: 'Foundation X', donorEmail: 'grants@foundationx.example.com' },
-  { provider: PaymentProvider.Paystack, reference: 'seed_don_0012', amountUsd: 60, frequency: DonationFrequency.OneTime, status: DonationStatus.Failed, donorName: 'Retry Later', donorEmail: 'retry@example.com' },
+  { provider: PaymentProvider.Stripe, reference: 'seed_don_0001', amount: 250, currency: DonationCurrency.USD, frequency: DonationFrequency.OneTime, status: DonationStatus.Succeeded, donorName: 'Helen Carter', donorEmail: 'helen.carter@example.com' },
+  { provider: PaymentProvider.Paystack, reference: 'seed_don_0002', amount: 50, currency: DonationCurrency.GHS, frequency: DonationFrequency.Monthly, status: DonationStatus.Succeeded, donorName: 'Yusuf Abubakar', donorEmail: 'yusuf.abubakar@example.com' },
+  { provider: PaymentProvider.Stripe, reference: 'seed_don_0003', amount: 1000, currency: DonationCurrency.USD, frequency: DonationFrequency.OneTime, status: DonationStatus.Succeeded, donorName: 'The Adeyemi Family', donorEmail: 'giving@adeyemi.example.com' },
+  { provider: PaymentProvider.Stripe, reference: 'seed_don_0004', amount: 25, currency: DonationCurrency.USD, frequency: DonationFrequency.Monthly, status: DonationStatus.Succeeded, donorName: 'Linda Park', donorEmail: 'linda.park@example.com' },
+  { provider: PaymentProvider.Paystack, reference: 'seed_don_0005', amount: 500, currency: DonationCurrency.GHS, frequency: DonationFrequency.OneTime, status: DonationStatus.Succeeded, donorName: 'Chukwu Okonkwo', donorEmail: 'chukwu.okonkwo@example.com' },
+  { provider: PaymentProvider.Stripe, reference: 'seed_don_0006', amount: 75, currency: DonationCurrency.USD, frequency: DonationFrequency.OneTime, status: DonationStatus.Pending, donorName: 'Anonymous', donorEmail: 'anon1@example.com' },
+  { provider: PaymentProvider.Paystack, reference: 'seed_don_0007', amount: 120, currency: DonationCurrency.GHS, frequency: DonationFrequency.Monthly, status: DonationStatus.Pending, donorName: 'Marcus Reid', donorEmail: 'marcus.reid@example.com' },
+  { provider: PaymentProvider.Stripe, reference: 'seed_don_0008', amount: 40, currency: DonationCurrency.USD, frequency: DonationFrequency.OneTime, status: DonationStatus.Failed, donorName: 'Test Donor', donorEmail: 'failed@example.com' },
+  { provider: PaymentProvider.Stripe, reference: 'seed_don_0009', amount: 300, currency: DonationCurrency.USD, frequency: DonationFrequency.OneTime, status: DonationStatus.Succeeded, donorName: 'Beatrice Mwale', donorEmail: 'beatrice.mwale@example.com' },
+  { provider: PaymentProvider.Paystack, reference: 'seed_don_0010', amount: 10, currency: DonationCurrency.GHS, frequency: DonationFrequency.Monthly, status: DonationStatus.Succeeded, donorName: 'Kelvin Osei', donorEmail: 'kelvin.osei@example.com' },
+  { provider: PaymentProvider.Stripe, reference: 'seed_don_0011', amount: 2000, currency: DonationCurrency.USD, frequency: DonationFrequency.OneTime, status: DonationStatus.Succeeded, donorName: 'Foundation X', donorEmail: 'grants@foundationx.example.com' },
+  { provider: PaymentProvider.Paystack, reference: 'seed_don_0012', amount: 60, currency: DonationCurrency.GHS, frequency: DonationFrequency.OneTime, status: DonationStatus.Failed, donorName: 'Retry Later', donorEmail: 'retry@example.com' },
 ];
 
 

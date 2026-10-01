@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import type { DonationCurrency } from '../enums.js';
+
 /**
  * Runtime status of a payment provider, combining environment configuration
  * (API keys present) with the admin-controlled enable/disable toggle.
@@ -7,12 +9,17 @@ import { z } from 'zod';
 export interface PaymentProviderStatus {
   /** Secret API key is present in the API environment. */
   configured: boolean;
-  /** Webhook signing secret is present in the API environment. */
+  /**
+   * Webhooks can be verified. Stripe needs its own signing secret; Paystack
+   * signs with the secret key, so for Paystack this matches `configured`.
+   */
   webhookConfigured: boolean;
   /** Admin toggle — the provider can only be switched on when configured. */
   enabled: boolean;
   /** Effective state: donations can actually be initiated (configured && enabled). */
   accepting: boolean;
+  /** The currency the provider charges in. */
+  currency: DonationCurrency;
 }
 
 export interface PaymentSettingsStatus {
@@ -34,4 +41,6 @@ export type UpdatePaymentSettingsInput = z.infer<typeof updatePaymentSettingsSch
 export interface PaymentProvidersPublic {
   stripe: boolean;
   paystack: boolean;
+  /** What each provider charges in, so the form offers amounts in the right currency. */
+  currencies: { stripe: DonationCurrency; paystack: DonationCurrency };
 }

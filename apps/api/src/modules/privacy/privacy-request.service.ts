@@ -1,5 +1,6 @@
 import type {
   AnswerValue,
+  DonationCurrency,
   FileAnswer,
   FormStep,
   Paginated,
@@ -19,7 +20,7 @@ import { folderOf } from '../forms/draft-files.js';
 import { FormSubmissionModel } from '../forms/form-submission.model.js';
 import { FormVersionModel } from '../forms/form-version.model.js';
 import { FormModel } from '../forms/form.model.js';
-import { DonationModel } from '../payments/donation.model.js';
+import { DonationModel, donationAmountOf, donationCurrencyOf } from '../payments/donation.model.js';
 import { SubmissionModel, SubscriberModel } from '../submissions/submission.model.js';
 
 import { PrivacyRequestModel } from './privacy-request.model.js';
@@ -43,7 +44,13 @@ interface PersonalDataExport {
     consentedAt?: string;
     unsubscribedAt?: string;
   }>;
-  donations: Array<{ reference: string; amountUsd: number; status: string; createdAt: string }>;
+  donations: Array<{
+    reference: string;
+    amount: number;
+    currency: DonationCurrency;
+    status: string;
+    createdAt: string;
+  }>;
   /**
    * Applications made through the form builder, finished or still in draft.
    * Empty when the caller may not read applications (see `applicationsWithheld`).
@@ -252,7 +259,8 @@ export class PrivacyRequestService {
       })),
       donations: donations.map((doc) => ({
         reference: doc.reference,
-        amountUsd: doc.amountUsd,
+        amount: donationAmountOf(doc),
+        currency: donationCurrencyOf(doc),
         status: doc.status,
         createdAt: doc.createdAt.toISOString(),
       })),

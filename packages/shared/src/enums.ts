@@ -175,6 +175,17 @@ export const DonationFrequency = {
 export type DonationFrequency = (typeof DonationFrequency)[keyof typeof DonationFrequency];
 export const DONATION_FREQUENCIES = Object.values(DonationFrequency);
 
+/**
+ * The currencies a gift can be made in. Stripe charges in US dollars and Paystack in its
+ * account's currency (Ghana cedis for IAA). Cedis first: they are the Alliance's own.
+ */
+export const DonationCurrency = {
+  GHS: 'GHS',
+  USD: 'USD',
+} as const;
+export type DonationCurrency = (typeof DonationCurrency)[keyof typeof DonationCurrency];
+export const DONATION_CURRENCIES = Object.values(DonationCurrency);
+
 export const EventType = {
   Webinar: 'webinar',
   CohortLaunch: 'cohort-launch',

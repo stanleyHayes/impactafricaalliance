@@ -1,3 +1,4 @@
+import { DONATION_CURRENCIES, DonationCurrency } from '@iaa/shared';
 import { z } from 'zod';
 
 /**
@@ -30,6 +31,10 @@ const deriveJwtSecrets = (raw: RawEnv): AppConfig['jwt'] => {
     refreshTtlSeconds: raw.JWT_REFRESH_TTL,
   };
 };
+
+/** An empty variable (KEY= in a .env file, a blank Render field) means "use the default". */
+const blankAsUnset = (value: unknown): unknown =>
+  typeof value === 'string' && value.trim() === '' ? undefined : value;
 
 const parseTrustProxy = (value: string): boolean | number | string => {
   if (value === 'true') return true;
@@ -90,8 +95,20 @@ const envSchema = z.object({
 
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  // Paystack signs its webhooks with this same secret key; there is no separate webhook secret.
   PAYSTACK_SECRET_KEY: z.string().optional(),
-  PAYSTACK_WEBHOOK_SECRET: z.string().optional(),
+  // What Paystack charges in: the account's own currency (GHS for a Ghana account).
+  PAYSTACK_CURRENCY: z.preprocess(
+    blankAsUnset,
+    z
+      .string()
+      .trim()
+      .toUpperCase()
+      .pipe(z.enum(DONATION_CURRENCIES as [DonationCurrency, ...DonationCurrency[]]))
+      .default(DonationCurrency.GHS),
+  ),
+  // Only ever changed to point a local stand-in at the gateway; production keeps Paystack's.
+  PAYSTACK_API_URL: z.preprocess(blankAsUnset, z.string().url().default('https://api.paystack.co')),
 
   ANTHROPIC_API_KEY: z.string().optional(),
 
@@ -160,7 +177,7 @@ export interface AppConfig {
     folder: string;
   };
   readonly stripe: { secretKey?: string; webhookSecret?: string };
-  readonly paystack: { secretKey?: string; webhookSecret?: string };
+  readonly paystack: { secretKey?: string; currency: DonationCurrency; apiUrl: string };
   readonly anthropic: { apiKey?: string };
   readonly mfa: {
     encryptionKey: Buffer;
@@ -205,7 +222,9 @@ const deriveSocialConfig = (raw: RawEnv): AppConfig['social'] => {
   } else if (raw.MFA_ENCRYPTION_KEY) {
     tokenEncryptionKey = Buffer.from(raw.MFA_ENCRYPTION_KEY, 'base64');
   } else if (raw.NODE_ENV === 'production') {
-    throw new Error('SOCIAL_TOKEN_ENCRYPTION_KEY (or MFA_ENCRYPTION_KEY fallback) is required in production');
+    throw new Error(
+      'SOCIAL_TOKEN_ENCRYPTION_KEY (or MFA_ENCRYPTION_KEY fallback) is required in production',
+    );
   } else {
     // Deterministic fallback for local/test only. Not secure for production use.
     tokenEncryptionKey = Buffer.alloc(32, 0xab);
@@ -297,7 +316,11 @@ const buildConfig = (raw: RawEnv): AppConfig => ({
     folder: raw.CLOUDINARY_UPLOAD_FOLDER,
   },
   stripe: { secretKey: raw.STRIPE_SECRET_KEY, webhookSecret: raw.STRIPE_WEBHOOK_SECRET },
-  paystack: { secretKey: raw.PAYSTACK_SECRET_KEY, webhookSecret: raw.PAYSTACK_WEBHOOK_SECRET },
+  paystack: {
+    secretKey: raw.PAYSTACK_SECRET_KEY,
+    currency: raw.PAYSTACK_CURRENCY,
+    apiUrl: raw.PAYSTACK_API_URL,
+  },
   anthropic: { apiKey: raw.ANTHROPIC_API_KEY },
   mfa: deriveMfaConfig(raw),
   retention: {
@@ -319,7 +342,15 @@ export const loadConfig = (source: NodeJS.ProcessEnv = process.env): AppConfig =
   }
   const config = buildConfig(parsed.data);
   if (config.isProduction && config.corsOrigins.length === 0) {
-    throw new Error('Invalid environment configuration:\n  - CORS_ORIGINS is required in production');
+    throw new Error(
+      'Invalid environment configuration:\n  - CORS_ORIGINS is required in production',
+    );
+  }
+  // The secret key travels in every request's Authorization header.
+  if (config.isProduction && !config.paystack.apiUrl.startsWith('https://')) {
+    throw new Error(
+      'Invalid environment configuration:\n  - PAYSTACK_API_URL must use https in production',
+    );
   }
   return config;
 };

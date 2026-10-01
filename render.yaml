@@ -1,6 +1,10 @@
 # Render Blueprint — deploys the IAA API as a free web service.
 # Docs: https://render.com/docs/blueprint-spec
-# Env keys are kept in sync with apps/api/.env.production.
+# Every variable the API reads is declared below (apps/api/src/config/env.ts,
+# plus LOG_LEVEL, read by the logger), except JWT_SECRET, a local-only fallback.
+# `sync: false` marks a secret you fill in yourself in the Render dashboard
+# (Environment); `value:` is a safe default.
+# Marked REQUIRED: the API refuses to start in production without it.
 # `--include=dev` is required: the build runs tsc and needs @types/* devDependencies.
 services:
   - type: web
@@ -20,7 +24,10 @@ services:
       - key: PORT
         value: 10000
       - key: TRUST_PROXY
-        value: "1"
+        value: '1'
+      # fatal, error, warn, info, debug or trace.
+      - key: LOG_LEVEL
+        value: info
 
       # ── Public URLs ───────────────────────────────────────────────────
       - key: PUBLIC_SITE_URL
@@ -30,18 +37,26 @@ services:
       - key: CORS_ORIGINS
         value: https://impactafricaalliance.org,https://www.impactafricaalliance.org,https://admin.impactafricaalliance.org,https://impactafricaalliance-admin.vercel.app,https://impactafricaalliance.vercel.app
 
-      # ── Database & JWT (secrets — set in the Render dashboard) ────────
+      # ── Database & JWT ────────────────────────────────────────────────
+      # REQUIRED. The MongoDB Atlas connection string (mongodb+srv://…).
       - key: MONGODB_URI
         sync: false
+      # Render generates these two; they must differ. (JWT_SECRET, the old
+      # single-secret fallback, is for local use only and left out on purpose.)
       - key: JWT_ACCESS_SECRET
         generateValue: true
       - key: JWT_REFRESH_SECRET
         generateValue: true
+      - key: JWT_ACCESS_TTL
+        value: '900'
+      - key: JWT_REFRESH_TTL
+        value: '2592000'
+
+      # ── Shared secrets ────────────────────────────────────────────────
       # Shared with the marketing site's /api/collect proxy. Set the same value
       # in the Vercel project, or visits are counted without a country.
       - key: ANALYTICS_INGEST_SECRET
         generateValue: true
-
       # Lets the scheduled GitHub Action run the due automation (review
       # invitations, event reminders, thank-yous). The free plan sleeps, and a
       # sleeping process runs no timers, so something awake has to knock.
@@ -50,32 +65,30 @@ services:
       - key: AUTOMATION_RUN_SECRET
         sync: false
 
-      - key: JWT_ACCESS_TTL
-        value: "900"
-      - key: JWT_REFRESH_TTL
-        value: "2592000"
-
       # ── Seed accounts ─────────────────────────────────────────────────
       - key: SEED_ADMIN_EMAIL
         value: admin@impactafricaalliance.org
       - key: SEED_ADMIN_NAME
         value: IAA Administrator
+      # REQUIRED, at least 10 characters: the first admin's password for `npm run seed`.
       - key: SEED_ADMIN_PASSWORD
         sync: false
+      # Optional. Left empty, the seed generates one and prints it.
       - key: SEED_EDITOR_PASSWORD
         sync: false
 
-      # ── Email ─────────────────────────────────────────────────────────
+      # ── Email (Resend) ────────────────────────────────────────────────
       - key: RESEND_API_KEY
         sync: false
       - key: EMAIL_FROM
         value: Impact Africa Alliance <no-reply@impactafricaalliance.org>
       - key: EMAIL_NOTIFY_TO
         value: info@impactafricaalliance.org
+      # Not read by the API today; kept as the data-protection contact on record.
       - key: DPO_EMAIL
         value: info@impactafricaalliance.org
 
-      # ── Cloudinary ────────────────────────────────────────────────────
+      # ── Cloudinary (media) ────────────────────────────────────────────
       - key: CLOUDINARY_CLOUD_NAME
         sync: false
       - key: CLOUDINARY_API_KEY
@@ -85,14 +98,32 @@ services:
       - key: CLOUDINARY_UPLOAD_FOLDER
         value: iaa
 
-      # ── Payments ──────────────────────────────────────────────────────
-      - key: STRIPE_SECRET_KEY
-        sync: false
-      - key: STRIPE_WEBHOOK_SECRET
-        sync: false
+      # ── Payments: Paystack (Ghana cedis) ──────────────────────────────
+      # No public key is needed: the site sends donors to Paystack's hosted
+      # checkout, and only this API talks to Paystack, with the secret key.
+      # Paystack also signs its webhooks with that same secret key, so there
+      # is no separate webhook secret. Webhook URL to paste in Paystack:
+      #   https://iaa-api.onrender.com/api/payments/webhooks/paystack
+      # Checklist: docs/deploy/donations.md
+      # Paystack Dashboard → Settings → API Keys & Webhooks.
+      # sk_test_… while testing, sk_live_… when live.
       - key: PAYSTACK_SECRET_KEY
         sync: false
-      - key: PAYSTACK_WEBHOOK_SECRET
+      # What Paystack charges in: GHS, Ghana cedis. (USD also works, from
+      # $2 a gift, if Paystack has enabled dollars on the account.)
+      - key: PAYSTACK_CURRENCY
+        value: GHS
+      # Leave as it is; only a local test points this at a stand-in.
+      - key: PAYSTACK_API_URL
+        value: https://api.paystack.co
+
+      # ── Payments: Stripe (US dollars) ─────────────────────────────────
+      # Stripe Dashboard → Developers → API keys (sk_test_… / sk_live_…).
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      # The signing secret (whsec_…) of the webhook endpoint
+      #   https://iaa-api.onrender.com/api/payments/webhooks/stripe
+      - key: STRIPE_WEBHOOK_SECRET
         sync: false
 
       # ── AI ────────────────────────────────────────────────────────────
@@ -100,14 +131,16 @@ services:
         sync: false
 
       # ── MFA ───────────────────────────────────────────────────────────
-      # 32-byte base64 key: node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+      # REQUIRED. 32-byte base64 key:
+      #   node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
       - key: MFA_ENCRYPTION_KEY
         sync: false
       - key: MFA_REQUIRED_FOR_ROLES
         value: admin
 
-      # ── Social OAuth (secrets — set in the Render dashboard) ──────────
-      # 32-byte base64 key; falls back to MFA_ENCRYPTION_KEY in development only.
+      # ── Social OAuth ──────────────────────────────────────────────────
+      # 32-byte base64 key for stored account tokens. Left empty, the API uses
+      # MFA_ENCRYPTION_KEY instead; a key of its own can be rotated separately.
       - key: SOCIAL_TOKEN_ENCRYPTION_KEY
         sync: false
       # Public base URL of this API service — confirm the actual onrender.com URL.
@@ -176,12 +209,12 @@ services:
       # does not need a second pair of eyes on every post. Administrators
       # publish directly either way — self-approval is not a review.
       - key: SOCIAL_REQUIRE_APPROVAL
-        value: "false"
+        value: 'false'
 
-      # ── Data retention (days) ─────────────────────────────────────────
+      # ── Data retention (days; 0 turns the purge off) ──────────────────
       - key: SUBMISSION_RETENTION_DAYS
-        value: "1095"
+        value: '1095'
       - key: UNSUBSCRIBED_RETENTION_DAYS
-        value: "90"
+        value: '90'
       - key: FAILED_DONATION_RETENTION_DAYS
-        value: "30"
+        value: '30'

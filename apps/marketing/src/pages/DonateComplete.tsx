@@ -1,3 +1,4 @@
+import { formatMoney, type DonationConfirmation, type DonationCurrency } from '@iaa/shared';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import HourglassTopRoundedIcon from '@mui/icons-material/HourglassTopRounded';
@@ -13,24 +14,26 @@ import { Link as RouterLink, useSearchParams } from 'react-router-dom';
 import { Seo } from '../components/Seo';
 import { apiGet } from '../lib/api-client';
 
-interface PaystackVerifyResponse {
-  status: 'pending' | 'succeeded' | 'failed';
-  amountUsd?: number;
-}
-
 const ReferenceLine = ({ reference }: { reference: string }): JSX.Element => (
   <Typography variant="body2" color="text.secondary">
     Reference: {reference}
   </Typography>
 );
 
-const SucceededView = ({ amountUsd }: { amountUsd?: number }): JSX.Element => (
+/** The gift in the currency it was made in: GH₵100 through Paystack, $100 by card. */
+const SucceededView = ({
+  amount,
+  currency,
+}: {
+  amount?: number;
+  currency?: DonationCurrency;
+}): JSX.Element => (
   <>
     <CheckCircleRoundedIcon sx={{ fontSize: 56, color: 'success.main' }} />
     <Typography variant="h5">Your donation was successful</Typography>
     <Typography color="text.secondary" sx={{ lineHeight: 1.75 }}>
-      {amountUsd
-        ? `We have received your donation of $${amountUsd.toLocaleString()}. `
+      {amount && currency
+        ? `We have received your donation of ${formatMoney(amount, currency)}. `
         : 'We have received your donation. '}
       Your support helps us equip youth, women, and communities across Africa. A receipt will be
       sent to your email address.
@@ -88,7 +91,7 @@ const DonateComplete = (): JSX.Element => {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['paystack-verify', reference],
     queryFn: () =>
-      apiGet<PaystackVerifyResponse>(`/payments/paystack/verify/${encodeURIComponent(reference)}`),
+      apiGet<DonationConfirmation>(`/payments/paystack/verify/${encodeURIComponent(reference)}`),
     enabled: Boolean(reference),
     retry: 1,
   });
@@ -110,7 +113,7 @@ const DonateComplete = (): JSX.Element => {
       return <FailedView reference={reference} missing={false} />;
     }
     if (data?.status === 'succeeded') {
-      return <SucceededView amountUsd={data.amountUsd} />;
+      return <SucceededView amount={data.amount} currency={data.currency} />;
     }
     return <PendingView reference={reference} />;
   };

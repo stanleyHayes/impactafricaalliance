@@ -1,4 +1,11 @@
-import { DONATION_FREQUENCIES, DONATION_STATUSES, PAYMENT_PROVIDERS } from '@iaa/shared';
+import {
+  DONATION_CURRENCIES,
+  DONATION_FREQUENCIES,
+  DONATION_STATUSES,
+  formatMoney,
+  PAYMENT_PROVIDERS,
+  sumByCurrency,
+} from '@iaa/shared';
 import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -7,16 +14,19 @@ import Stack from '@mui/material/Stack';
 import { alpha, useTheme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import type { GridColDef, GridRowModel } from '@mui/x-data-grid';
+import { useMemo } from 'react';
 
 import { DataTable, type DataTableFilter } from '../components/data/DataTable';
 import { RecordActions } from '../components/data/RecordActions';
 import { useViewMode } from '../components/data/useViewMode';
 import { ViewToggle } from '../components/data/ViewToggle';
+import { DotList } from '../components/DotList';
 import { EmptyState } from '../components/EmptyState';
 import { InformationItem } from '../components/InformationItem';
 import { PageHeader } from '../components/PageHeader';
 import { useDonations } from '../lib/admin-hooks';
 import { formatUtcDate } from '../lib/date';
+import { readDonationRow } from '../lib/donations';
 import { pageGuides } from '../lib/page-guides';
 import { skinned, surfaceSx, tokenVar } from '../theme/surfaces';
 
@@ -28,6 +38,12 @@ const filters: DataTableFilter[] = [
   { field: 'provider', label: 'Provider', options: toOptions(PAYMENT_PROVIDERS) },
   { field: 'frequency', label: 'Frequency', options: toOptions(DONATION_FREQUENCIES) },
 ];
+
+/** A row's amount in its own currency: GH₵100, $250. Rows are read by `readDonationRow`. */
+const rowAmount = (row: GridRowModel): string => {
+  const gift = readDonationRow(row);
+  return formatMoney(gift.amount, gift.currency);
+};
 
 const statusColor = (status: unknown): 'success' | 'warning' | 'error' | 'default' => {
   if (status === 'succeeded') {
@@ -56,10 +72,10 @@ const columns: GridColDef[] = [
       }),
   },
   {
-    field: 'amountUsd',
+    field: 'amount',
     headerName: 'Amount',
     width: 120,
-    renderCell: (params) => `$${Number(params.value).toLocaleString()}`,
+    renderCell: (params) => rowAmount(params.row),
   },
   { field: 'provider', headerName: 'Provider', width: 120 },
   { field: 'frequency', headerName: 'Frequency', width: 120 },
@@ -98,7 +114,14 @@ const recordCardHoverSx = skinned(
   },
 );
 
-const SummaryCard = ({ label, value }: { label: string; value: string }): JSX.Element => {
+const SummaryCard = ({
+  label,
+  value,
+}: {
+  label: string;
+  /** One figure, or several (one per currency) set on a line that wraps between them. */
+  value: string | readonly string[];
+}): JSX.Element => {
   const theme = useTheme();
   return (
     <Box
@@ -135,7 +158,7 @@ const SummaryCard = ({ label, value }: { label: string; value: string }): JSX.El
         {label}
       </Typography>
       <Typography variant="h5" sx={{ fontWeight: 700, mt: 0.5 }}>
-        {value}
+        {typeof value === 'string' ? value : <DotList parts={value} />}
       </Typography>
     </Box>
   );
@@ -143,7 +166,6 @@ const SummaryCard = ({ label, value }: { label: string; value: string }): JSX.El
 
 const DonationCard = ({ row }: { row: GridRowModel }): JSX.Element => {
   const theme = useTheme();
-  const amount = Number(row.amountUsd ?? 0);
 
   return (
     <Card
@@ -162,7 +184,7 @@ const DonationCard = ({ row }: { row: GridRowModel }): JSX.Element => {
       <Box sx={{ p: 2 }}>
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
           <Typography variant="h5" sx={{ fontWeight: 800, color: tokenVar('accentText') }}>
-            ${amount.toLocaleString()}
+            {rowAmount(row)}
           </Typography>
           <Chip
             size="small"
@@ -209,11 +231,20 @@ const DonationCard = ({ row }: { row: GridRowModel }): JSX.Element => {
 
 const Donations = (): JSX.Element => {
   const { data, isLoading } = useDonations();
-  const items = data?.items ?? [];
+  // Read every row in today's shape: an API from before currencies lists dollars only.
+  const items = useMemo(() => (data?.items ?? []).map(readDonationRow), [data?.items]);
   const [view, setView] = useViewMode('donations');
 
   const succeeded = items.filter((donation) => donation.status === 'succeeded');
-  const raised = succeeded.reduce((sum, donation) => sum + Number(donation.amountUsd ?? 0), 0);
+  // One total per currency: cedis and dollars are never added together. Before any gift
+  // succeeds, a zero in the currencies of the gifts listed ("GH₵0"), not a bare count-like 0.
+  const raised = sumByCurrency(succeeded);
+  const total =
+    raised.length > 0
+      ? raised.map((entry) => formatMoney(entry.amount, entry.currency))
+      : DONATION_CURRENCIES.filter((currency) =>
+          items.some((donation) => donation.currency === currency),
+        ).map((currency) => formatMoney(0, currency));
 
   return (
     <>
@@ -227,7 +258,7 @@ const Donations = (): JSX.Element => {
 
       {!isLoading && items.length > 0 && (
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 3 }}>
-          <SummaryCard label="Total raised (succeeded)" value={`$${raised.toLocaleString()}`} />
+          <SummaryCard label="Total raised (succeeded)" value={total} />
           <SummaryCard label="Successful gifts" value={String(succeeded.length)} />
           <SummaryCard label="All records" value={String(data?.total ?? items.length)} />
         </Stack>

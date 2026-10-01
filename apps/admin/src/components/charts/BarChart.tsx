@@ -1,6 +1,7 @@
 import Box from '@mui/material/Box';
 import { alpha, useTheme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
+import { useCallback, useState } from 'react';
 
 import { skinned, tokenVar } from '../../theme/surfaces';
 
@@ -21,12 +22,44 @@ interface BarChartProps {
   emptyMessage?: string;
   /** Limit axis labels for dense reporting windows. */
   maxLabels?: number;
+  /**
+   * Draw at the width the chart is given instead of scaling a 600-wide drawing
+   * to fit, so a narrow chart keeps its height and readable labels rather than
+   * shrinking into a band of empty space.
+   */
+  fluid?: boolean;
 }
 
 const VIEWBOX_WIDTH = 600;
 const PADDING_X = 8;
 const PADDING_TOP = 26;
 const PADDING_BOTTOM = 24;
+
+/** The rendered width of a fluid chart, kept current as it resizes; 0 until measured. */
+const useMeasuredWidth = (fluid: boolean) => {
+  const [width, setWidth] = useState(0);
+  // A ref callback rather than an effect: the chart only draws its SVG once
+  // there is data, and this attaches whenever that happens. It measures during
+  // the commit, so the first frame is already drawn at the right width.
+  const ref = useCallback(
+    (svg: SVGSVGElement | null) => {
+      if (!fluid || !svg) {
+        return undefined;
+      }
+      setWidth(Math.round(svg.getBoundingClientRect().width));
+      if (typeof ResizeObserver === 'undefined') {
+        return undefined;
+      }
+      const observer = new ResizeObserver(([entry]) => {
+        if (entry) setWidth(Math.round(entry.contentRect.width));
+      });
+      observer.observe(svg);
+      return () => observer.disconnect();
+    },
+    [fluid],
+  );
+  return { ref, width };
+};
 
 /**
  * Lightweight dependency-free vertical bar chart (SVG). Scales to its
@@ -40,8 +73,10 @@ export const BarChart = ({
   formatValue = (value) => String(value),
   emptyMessage = 'No data yet',
   maxLabels = Number.POSITIVE_INFINITY,
+  fluid = false,
 }: BarChartProps): JSX.Element => {
   const theme = useTheme();
+  const measured = useMeasuredWidth(fluid);
   const labelColor = theme.palette.text.secondary;
   const hasData = data.some((datum) => datum.value > 0);
 
@@ -70,16 +105,18 @@ export const BarChart = ({
     );
   }
 
+  const viewBoxWidth = fluid && measured.width > 0 ? measured.width : VIEWBOX_WIDTH;
   const chartHeight = height - PADDING_TOP - PADDING_BOTTOM;
   const baselineY = PADDING_TOP + chartHeight;
-  const slotWidth = (VIEWBOX_WIDTH - PADDING_X * 2) / data.length;
+  const slotWidth = (viewBoxWidth - PADDING_X * 2) / data.length;
   const barWidth = Math.min(64, slotWidth * 0.58);
   const maxValue = Math.max(...data.map((datum) => datum.value), 1);
 
   return (
     <Box
       component="svg"
-      viewBox={`0 0 ${VIEWBOX_WIDTH} ${height}`}
+      ref={measured.ref}
+      viewBox={`0 0 ${viewBoxWidth} ${height}`}
       role="img"
       aria-label="Bar chart"
       sx={{ width: '100%', height, display: 'block' }}
@@ -89,7 +126,7 @@ export const BarChart = ({
         <line
           key={ratio}
           x1={PADDING_X}
-          x2={VIEWBOX_WIDTH - PADDING_X}
+          x2={viewBoxWidth - PADDING_X}
           y1={baselineY - chartHeight * ratio}
           y2={baselineY - chartHeight * ratio}
           stroke={alpha(labelColor, 0.16)}
@@ -99,7 +136,7 @@ export const BarChart = ({
       ))}
       <line
         x1={PADDING_X}
-        x2={VIEWBOX_WIDTH - PADDING_X}
+        x2={viewBoxWidth - PADDING_X}
         y1={baselineY}
         y2={baselineY}
         stroke={alpha(labelColor, 0.35)}

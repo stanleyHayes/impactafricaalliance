@@ -5,3 +5,4 @@ export * from './social-content.js';
 export * from './social-links.js';
 export * from './social-media-variants.js';
 export * from './event-order.js';
+export * from './money.js';

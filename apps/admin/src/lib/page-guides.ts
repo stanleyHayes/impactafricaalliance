@@ -30,7 +30,7 @@ export const pageGuides: Record<string, PageGuide> = {
     steps: [
       'Track every initiated, succeeded, or failed donation.',
       'Check the gateway provider and donor email for reconciliation.',
-      'The total raised card shows confirmed successful donations only.',
+      'The total raised card shows confirmed successful donations only, one figure per currency: Paystack gifts in Ghana cedis and Stripe gifts in US dollars are never added together.',
     ],
   },
   Users: {

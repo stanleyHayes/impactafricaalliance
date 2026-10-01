@@ -106,7 +106,7 @@ Create **two** Vercel projects from this repo:
 
 | Project | Root Directory | Env |
 | --- | --- | --- |
-| iaa-marketing | `apps/marketing` | `VITE_API_URL`, `VITE_STRIPE_PUBLISHABLE_KEY`, `VITE_PAYSTACK_PUBLIC_KEY`, `VITE_GA4_MEASUREMENT_ID` |
+| iaa-marketing | `apps/marketing` | `VITE_API_URL`, `VITE_STRIPE_PUBLISHABLE_KEY`, `VITE_GA4_MEASUREMENT_ID` (no Paystack key: donors use Paystack's hosted checkout) |
 | iaa-admin | `apps/admin` | `VITE_API_URL`, `VITE_SITE_URL` (public site origin for links shown in the admin, such as a form's share link; defaults to the production site) |
 
 Each app's [`vercel.json`](apps/marketing/vercel.json) builds the shared package first and rewrites
@@ -168,7 +168,12 @@ authenticated delivery; check one upload and download against a non-production c
 
 After deploying, register webhooks pointing at the API:
 - **Stripe** → `POST /api/payments/webhooks/stripe` (set `STRIPE_WEBHOOK_SECRET`).
-- **Paystack** → `POST /api/payments/webhooks/paystack`.
+- **Paystack** → `POST /api/payments/webhooks/paystack`. Paystack signs with the secret key, so
+  `PAYSTACK_SECRET_KEY` is all it needs.
+
+Paystack charges in Ghana cedis (`PAYSTACK_CURRENCY`, default `GHS`) and Stripe in US dollars;
+each donation keeps its own currency and the admin never adds the two together. The owner's
+step-by-step checklist is [`docs/deploy/donations.md`](docs/deploy/donations.md).
 
 ## Brand assets
 

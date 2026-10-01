@@ -1,9 +1,17 @@
-import { DASHBOARD_CONTENT_COLLECTIONS } from '@iaa/shared';
+import {
+  DASHBOARD_CONTENT_COLLECTIONS,
+  DonationStatus,
+  PaymentProvider,
+  sumByCurrency,
+} from '@iaa/shared';
 import type {
   DashboardContentEntry,
   DashboardContentKey,
   DashboardDonationMonth,
+  DashboardProviderDonations,
   DashboardSummary,
+  DonationCurrency,
+  MoneyAmount,
 } from '@iaa/shared';
 import type { Model } from 'mongoose';
 import { inject, injectable } from 'tsyringe';
@@ -16,7 +24,11 @@ import { ReportModel } from '../content/models/report.model.js';
 import { ImpactStatModel } from '../content/models/stat.model.js';
 import { StoryModel } from '../content/models/story.model.js';
 import { TeamMemberModel } from '../content/models/team.model.js';
-import { DonationModel } from '../payments/donation.model.js';
+import {
+  DONATION_AMOUNT_EXPR,
+  DONATION_CURRENCY_EXPR,
+  DonationModel,
+} from '../payments/donation.model.js';
 import { PaymentSettingsService } from '../payments/payment-settings.service.js';
 import { PrivacyRequestModel } from '../privacy/privacy-request.model.js';
 import { SocialAccountModel } from '../social/social-account.model.js';
@@ -56,6 +68,32 @@ const monthBucketStart = (now: Date): Date =>
 
 const monthKey = (date: Date): string =>
   `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
+
+/** Succeeded gifts grouped by something and by currency, summed in pesewas or cents. */
+interface DonationGroup<K> {
+  _id: K & { currency: DonationCurrency };
+  minor: number;
+  count: number;
+}
+
+const SUM_MINOR_UNITS = { $sum: { $round: [{ $multiply: [DONATION_AMOUNT_EXPR, 100] }, 0] } };
+
+const toMoney = (group: DonationGroup<object>): MoneyAmount => ({
+  currency: group._id.currency,
+  amount: group.minor / 100,
+});
+
+/** One provider's gifts: the count across currencies, and a total per currency. */
+const providerDonations = (
+  groups: DonationGroup<{ provider: PaymentProvider }>[],
+  provider: PaymentProvider,
+): DashboardProviderDonations => {
+  const mine = groups.filter((group) => group._id.provider === provider);
+  return {
+    count: mine.reduce((sum, group) => sum + group.count, 0),
+    raised: sumByCurrency(mine.map(toMoney)),
+  };
+};
 
 /** Builds the `YYYY-MM` labels for the lookback window, oldest first. */
 const buildMonthLabels = (now: Date): string[] =>
@@ -128,49 +166,68 @@ export class DashboardService {
     const activeFilter = { unsubscribedAt: null };
     const [total, newLast30Days] = await Promise.all([
       SubscriberModel.countDocuments(activeFilter).exec(),
-      SubscriberModel.countDocuments({ ...activeFilter, createdAt: { $gte: thirtyDaysAgo } }).exec(),
+      SubscriberModel.countDocuments({
+        ...activeFilter,
+        createdAt: { $gte: thirtyDaysAgo },
+      }).exec(),
     ]);
     return { total, newLast30Days };
   }
 
+  /**
+   * Cedis and dollars are summed apart and never together: there is no rate to
+   * convert at, and a total that silently mixed them would be wrong in both.
+   */
   private async donationStats(now: Date): Promise<DashboardSummary['donations']> {
-    const [totals, byProvider, monthly] = await Promise.all([
-      DonationModel.aggregate<{ _id: string; amount: number; count: number }>([
-        { $group: { _id: '$status', amount: { $sum: '$amountUsd' }, count: { $sum: 1 } } },
+    const succeeded = { status: DonationStatus.Succeeded };
+    const [statuses, byProvider, monthly] = await Promise.all([
+      DonationModel.aggregate<{ _id: string; count: number }>([
+        { $group: { _id: '$status', count: { $sum: 1 } } },
       ]).exec(),
-      DonationModel.aggregate<{ _id: string; amount: number }>([
-        { $match: { status: 'succeeded' } },
-        { $group: { _id: '$provider', amount: { $sum: '$amountUsd' } } },
-      ]).exec(),
-      DonationModel.aggregate<{ _id: string; amount: number; count: number }>([
-        { $match: { status: 'succeeded', createdAt: { $gte: monthBucketStart(now) } } },
+      DonationModel.aggregate<DonationGroup<{ provider: PaymentProvider }>>([
+        { $match: succeeded },
         {
           $group: {
-            _id: { $dateToString: { format: '%Y-%m', date: '$createdAt' } },
-            amount: { $sum: '$amountUsd' },
+            _id: { provider: '$provider', currency: DONATION_CURRENCY_EXPR },
+            minor: SUM_MINOR_UNITS,
+            count: { $sum: 1 },
+          },
+        },
+      ]).exec(),
+      DonationModel.aggregate<DonationGroup<{ month: string }>>([
+        { $match: { ...succeeded, createdAt: { $gte: monthBucketStart(now) } } },
+        {
+          $group: {
+            _id: {
+              month: { $dateToString: { format: '%Y-%m', date: '$createdAt' } },
+              currency: DONATION_CURRENCY_EXPR,
+            },
+            minor: SUM_MINOR_UNITS,
             count: { $sum: 1 },
           },
         },
       ]).exec(),
     ]);
 
-    const statusOf = (status: string) => totals.find((entry) => entry._id === status);
-    const providerAmount = (provider: string) =>
-      byProvider.find((entry) => entry._id === provider)?.amount ?? 0;
-
-    const monthlyMap = new Map(monthly.map((entry) => [entry._id, entry]));
-    const monthlyBuckets: DashboardDonationMonth[] = buildMonthLabels(now).map((label) => ({
-      month: label,
-      amountUsd: monthlyMap.get(label)?.amount ?? 0,
-      count: monthlyMap.get(label)?.count ?? 0,
-    }));
+    const countOf = (status: string) => statuses.find((entry) => entry._id === status)?.count ?? 0;
+    const monthlyBuckets: DashboardDonationMonth[] = buildMonthLabels(now).map((label) => {
+      const groups = monthly.filter((entry) => entry._id.month === label);
+      return {
+        month: label,
+        count: groups.reduce((sum, group) => sum + group.count, 0),
+        raised: sumByCurrency(groups.map(toMoney)),
+      };
+    });
 
     return {
-      totalRaisedUsd: statusOf('succeeded')?.amount ?? 0,
-      succeededCount: statusOf('succeeded')?.count ?? 0,
-      pendingCount: statusOf('pending')?.count ?? 0,
-      failedCount: statusOf('failed')?.count ?? 0,
-      byProvider: { stripe: providerAmount('stripe'), paystack: providerAmount('paystack') },
+      raised: sumByCurrency(byProvider.map(toMoney)),
+      succeededCount: countOf(DonationStatus.Succeeded),
+      pendingCount: countOf(DonationStatus.Pending),
+      failedCount: countOf(DonationStatus.Failed),
+      byProvider: {
+        stripe: providerDonations(byProvider, PaymentProvider.Stripe),
+        paystack: providerDonations(byProvider, PaymentProvider.Paystack),
+      },
       monthly: monthlyBuckets,
     };
   }

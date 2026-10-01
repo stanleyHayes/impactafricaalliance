@@ -1,14 +1,21 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   ORG,
-  DONATION_PRESET_AMOUNTS_USD,
+  DEFAULT_PAYSTACK_CURRENCY,
+  DONATION_CURRENCY_RULES,
+  DonationCurrency,
   PaymentProvider,
+  STRIPE_CURRENCY,
   createDonationSchema,
+  donationMinimum,
+  formatMoney,
   type CreateDonationInput,
   type DonationInitResponse,
+  type PaymentProvidersPublic,
 } from '@iaa/shared';
 import CreditCardRoundedIcon from '@mui/icons-material/CreditCardRounded';
 import FavoriteBorderRoundedIcon from '@mui/icons-material/FavoriteBorderRounded';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import MailOutlineRoundedIcon from '@mui/icons-material/MailOutlineRounded';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
@@ -41,8 +48,18 @@ interface ProviderAvailability {
   paystack: boolean;
 }
 
-/** Stripe additionally needs the publishable key on the client; Paystack only the server secret. */
+/** Until the API says otherwise: Stripe in dollars, Paystack in cedis. */
+const DEFAULT_CURRENCIES: PaymentProvidersPublic['currencies'] = {
+  stripe: STRIPE_CURRENCY,
+  paystack: DEFAULT_PAYSTACK_CURRENCY,
+};
+
+/**
+ * Stripe additionally needs the publishable key on the client; Paystack only the server
+ * secret, since the site hands donors to Paystack's hosted checkout.
+ */
 const useProviderAvailability = (): ProviderAvailability & {
+  currencies: PaymentProvidersPublic['currencies'];
   loaded: boolean;
   noneAvailable: boolean;
   failed: boolean;
@@ -56,6 +73,7 @@ const useProviderAvailability = (): ProviderAvailability & {
   return {
     stripe,
     paystack,
+    currencies: providers.data?.currencies ?? DEFAULT_CURRENCIES,
     failed: providers.isError && !providers.data,
     loading: !providers.data && !providers.isError,
     canPay: stripe || paystack,
@@ -87,6 +105,7 @@ const donationButtonLabel = ({
   failed,
   noneAvailable,
   amount,
+  currency,
   provider,
 }: {
   pending: boolean;
@@ -94,6 +113,7 @@ const donationButtonLabel = ({
   failed: boolean;
   noneAvailable: boolean;
   amount: number;
+  currency: DonationCurrency;
   provider: CreateDonationInput['provider'];
 }): string => {
   if (noneAvailable) return 'Online giving unavailable';
@@ -102,19 +122,64 @@ const donationButtonLabel = ({
   if (pending) return 'Preparing…';
   const value = Number.isFinite(amount) ? amount : 0;
   const method = provider === PaymentProvider.Stripe ? 'by card' : 'via Paystack';
-  return `Donate $${value} ${method}`;
+  return `Donate ${formatMoney(value, currency)} ${method}`;
+};
+
+const providerCurrency = (
+  provider: CreateDonationInput['provider'],
+  currencies: PaymentProvidersPublic['currencies'],
+): DonationCurrency =>
+  provider === PaymentProvider.Stripe ? currencies.stripe : currencies.paystack;
+
+/** Paystack's line under the payment methods: which currency, and whose checkout. */
+const PaystackCheckoutNote = ({
+  shown,
+  currency,
+}: {
+  shown: boolean;
+  currency: DonationCurrency;
+}): JSX.Element | null => {
+  if (!shown) {
+    return null;
+  }
+  const rules = DONATION_CURRENCY_RULES[currency];
+  return (
+    <Typography
+      variant="body2"
+      color="text.secondary"
+      sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}
+    >
+      <LockOutlinedIcon aria-hidden sx={{ fontSize: 16 }} />
+      You’ll pay in {rules.name} ({rules.symbol}) on Paystack’s secure checkout.
+    </Typography>
+  );
+};
+
+/** Where the form starts: Stripe when the site can take cards, otherwise Paystack. */
+const initialValues = (): Partial<CreateDonationInput> => {
+  const provider = isStripeEnabled() ? PaymentProvider.Stripe : PaymentProvider.Paystack;
+  const currency = providerCurrency(provider, DEFAULT_CURRENCIES);
+  return {
+    provider,
+    currency,
+    amount: DONATION_CURRENCY_RULES[currency].defaultAmount,
+    frequency: 'one-time',
+    marketingConsent: false,
+  };
 };
 
 /** Donation form: amount + provider selection, then Stripe Elements or Paystack redirect. */
 export const DonateForm = (): JSX.Element => {
   const createDonation = useCreateDonation();
-  const { loaded, stripe, paystack, noneAvailable, failed, loading, canPay, retry } =
+  const { loaded, stripe, paystack, currencies, noneAvailable, failed, loading, canPay, retry } =
     useProviderAvailability();
   const [init, setInit] = useState<DonationInitResponse | null>(null);
   const {
     register,
     handleSubmit,
     setValue,
+    getValues,
+    clearErrors,
     watch,
     control,
     formState: { errors },
@@ -122,16 +187,14 @@ export const DonateForm = (): JSX.Element => {
     resolver: zodResolver(createDonationSchema, {
       error: friendlyFormErrors,
     }) as Resolver<CreateDonationInput>,
-    defaultValues: {
-      provider: isStripeEnabled() ? PaymentProvider.Stripe : PaymentProvider.Paystack,
-      amountUsd: 100,
-      frequency: 'one-time',
-      marketingConsent: false,
-    },
+    defaultValues: initialValues(),
   });
 
-  const amount = watch('amountUsd');
+  const amount = watch('amount');
   const provider = watch('provider');
+  const currency = watch('currency');
+  const rules = DONATION_CURRENCY_RULES[currency];
+  const chargedIn = providerCurrency(provider, currencies);
 
   useEffect(() => {
     if (!loaded) {
@@ -142,6 +205,17 @@ export const DonateForm = (): JSX.Element => {
       setValue('provider', next);
     }
   }, [loaded, provider, stripe, paystack, setValue]);
+
+  // Paystack charges in cedis and Stripe in dollars. On a change of currency the
+  // amount starts again from that currency's default: GH₵100 is not $100.
+  useEffect(() => {
+    if (getValues('currency') === chargedIn) {
+      return;
+    }
+    setValue('currency', chargedIn);
+    setValue('amount', DONATION_CURRENCY_RULES[chargedIn].defaultAmount);
+    clearErrors('amount');
+  }, [chargedIn, getValues, setValue, clearErrors]);
 
   const onSubmit = handleSubmit((values) => {
     if (!loaded || noneAvailable || failed) return;
@@ -169,7 +243,8 @@ export const DonateForm = (): JSX.Element => {
       <Grid size={{ xs: 12, md: 6 }}>
         <DonationImpacts
           amount={amount}
-          onSelect={(value) => setValue('amountUsd', value, { shouldValidate: true })}
+          currency={currency}
+          onSelect={(value) => setValue('amount', value, { shouldValidate: true })}
         />
       </Grid>
 
@@ -209,12 +284,23 @@ export const DonateForm = (): JSX.Element => {
               </Typography>
             </Box>
           </Box>
-          <Box>
+          {/* Measured by its own width, not the screen's: the form is half the page on a desktop. */}
+          <Box sx={{ containerType: 'inline-size' }}>
             <Typography variant="subtitle2" gutterBottom>
-              Choose an amount (USD)
+              Choose an amount ({currency})
             </Typography>
-            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 1 }}>
-              {DONATION_PRESET_AMOUNTS_USD.map((preset) => (
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+                gap: 1,
+                // Four cedi amounts ("GH₵500") need about 320px across: on a phone, two by two.
+                '@container (max-width: 335.95px)': {
+                  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                },
+              }}
+            >
+              {rules.presets.map((preset) => (
                 <Button
                   key={preset}
                   variant="outlined"
@@ -229,24 +315,30 @@ export const DonateForm = (): JSX.Element => {
                     bgcolor: (t) =>
                       alpha(t.palette.text.secondary, amount === preset ? 0.14 : 0.025),
                   }}
-                  onClick={() => setValue('amountUsd', preset, { shouldValidate: true })}
+                  onClick={() => setValue('amount', preset, { shouldValidate: true })}
                 >
-                  ${preset}
+                  {formatMoney(preset, currency)}
                 </Button>
               ))}
             </Box>
           </Box>
 
           <TextField
-            label="Custom amount (USD)"
+            label={`Custom amount (${currency})`}
             type="number"
             slotProps={{
-              input: { startAdornment: <InputAdornment position="start">$</InputAdornment> },
-              htmlInput: { min: 1, step: 1 },
+              input: {
+                startAdornment: <InputAdornment position="start">{rules.symbol}</InputAdornment>,
+              },
+              // Cedi gifts can carry pesewas, down to GH₵0.10; dollar gifts keep whole steps.
+              htmlInput: {
+                min: donationMinimum(provider, currency),
+                step: currency === DonationCurrency.USD ? 1 : 'any',
+              },
             }}
-            error={Boolean(errors.amountUsd)}
-            helperText={errors.amountUsd?.message}
-            {...register('amountUsd', { valueAsNumber: true })}
+            error={Boolean(errors.amount)}
+            helperText={errors.amount?.message}
+            {...register('amount', { valueAsNumber: true })}
           />
 
           <Controller
@@ -316,6 +408,10 @@ export const DonateForm = (): JSX.Element => {
               )}
             />
           )}
+          <PaystackCheckoutNote
+            shown={canPay && provider === PaymentProvider.Paystack}
+            currency={currency}
+          />
           {loading && (
             <Skeleton variant="rounded" height={48} aria-label="Loading payment methods" />
           )}
@@ -390,6 +486,7 @@ export const DonateForm = (): JSX.Element => {
               failed,
               noneAvailable,
               amount,
+              currency,
               provider,
             })}
           </Button>

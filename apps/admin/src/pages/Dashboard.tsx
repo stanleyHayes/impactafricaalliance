@@ -1,8 +1,15 @@
 import {
   brandColors,
   DASHBOARD_CONTENT_COLLECTIONS,
+  DONATION_CURRENCIES,
+  DONATION_CURRENCY_RULES,
+  formatMoney,
   SubmissionType,
+  type DashboardDonationMonth,
+  type DashboardProviderDonations,
   type DashboardSummary,
+  type DonationCurrency,
+  type MoneyAmount,
   type PaymentProviderStatus,
   type Submission,
 } from '@iaa/shared';
@@ -50,27 +57,33 @@ import { BarChart } from '../components/charts/BarChart';
 import { DonationChartEmpty } from '../components/charts/DonationChartEmpty';
 import { DonutChart } from '../components/charts/DonutChart';
 import { YourWorkPanel } from '../components/dashboard/YourWorkPanel';
+import { DotList } from '../components/DotList';
 import { NewSubmissionsBanner } from '../components/NewSubmissionsBanner';
 import { PageHeader } from '../components/PageHeader';
 import { useDashboardSummary, useSubmissions, useUpdatePaymentSettings } from '../lib/admin-hooks';
 import { formatUtcShort } from '../lib/date';
+import { fittedFontSize, readDonationsSummary, zeroCurrencies } from '../lib/donations';
 import { pageGuides } from '../lib/page-guides';
 import { RESOURCES } from '../resources/registry';
 import { skinned, surfaceSx, tokenVar } from '../theme/surfaces';
 
-/** USD formatter — Donation.amountUsd is whole dollars (see payment.ts), not minor units. */
-const usd = new Intl.NumberFormat('en-US', {
-  style: 'currency',
-  currency: 'USD',
-  maximumFractionDigits: 0,
-});
+/**
+ * What has been raised, one figure per currency ("GH₵4,250", "$1,200"): there is
+ * no rate to add cedis to dollars at, so they are never summed. Before the first
+ * gift, a zero in each currency gifts are taken in ("GH₵0"), so it reads as money.
+ */
+const raisedFigures = (
+  raised: readonly MoneyAmount[],
+  zero: readonly DonationCurrency[],
+  options: { whole?: boolean } = {},
+): string[] =>
+  raised.length > 0
+    ? raised.map((entry) => formatMoney(entry.amount, entry.currency, options))
+    : zero.map((currency) => formatMoney(0, currency));
 
-const usdCompact = new Intl.NumberFormat('en-US', {
-  style: 'currency',
-  currency: 'USD',
-  notation: 'compact',
-  maximumFractionDigits: 1,
-});
+/** The amount in one currency from a per-currency list; 0 when it has none. */
+const amountIn = (raised: readonly MoneyAmount[], currency: DonationCurrency): number =>
+  raised.find((entry) => entry.currency === currency)?.amount ?? 0;
 
 /** `2026-07` → `Jul` for chart axis labels. */
 const monthShortLabel = (bucket: string): string => {
@@ -367,13 +380,54 @@ const RecentSubmissions = ({
 
 interface StatCardProps {
   label: string;
-  value: string;
+  /** One figure, or several (one per currency) that the tile stacks. */
+  value: string | readonly string[];
   caption: string;
   icon: SvgIconComponent;
   to: string;
   accent: string;
   loading: boolean;
 }
+
+/**
+ * A stat tile's figure. Several figures (cedis and dollars) stack at half the
+ * size, two lines in the height of one, so the tile stays level with its row.
+ *
+ * Either way the size gives way to the tile's width: "GH₵250,251" at the full
+ * size is wider than a tile on a laptop. Counts and short totals keep it.
+ */
+const StatValue = ({ value, loading }: Pick<StatCardProps, 'value' | 'loading'>): JSX.Element => {
+  const figures = typeof value === 'string' ? [value] : value;
+  const stacked = !loading && figures.length > 1;
+  let content: ReactNode = loading ? '—' : figures[0];
+  if (stacked) {
+    content = figures.map((figure) => (
+      <Box key={figure} component="span" sx={{ display: 'block' }}>
+        {figure}
+      </Box>
+    ));
+  }
+  return (
+    // The tile's width, for the figure's size to be measured against.
+    <Box sx={{ containerType: 'inline-size' }}>
+      <Typography
+        variant="h3"
+        sx={{
+          mt: 2.25,
+          fontWeight: 800,
+          lineHeight: 1.05,
+          letterSpacing: '-0.02em',
+          fontVariantNumeric: 'tabular-nums',
+          whiteSpace: 'nowrap',
+          color: loading ? 'text.disabled' : 'text.primary',
+          fontSize: fittedFontSize(loading ? ['—'] : figures, stacked ? '1.5rem' : '3rem'),
+        }}
+      >
+        {content}
+      </Typography>
+    </Box>
+  );
+};
 
 const StatCard = ({
   label,
@@ -507,19 +561,7 @@ const StatCard = ({
             <ArrowOutwardIcon sx={{ fontSize: 17 }} />
           </Box>
         </Stack>
-        <Typography
-          variant="h3"
-          sx={{
-            mt: 2.25,
-            fontWeight: 800,
-            lineHeight: 1.05,
-            letterSpacing: '-0.02em',
-            fontVariantNumeric: 'tabular-nums',
-            color: loading ? 'text.disabled' : 'text.primary',
-          }}
-        >
-          {loading ? '—' : value}
-        </Typography>
+        <StatValue value={value} loading={loading} />
         <Typography
           variant="overline"
           sx={{
@@ -722,9 +764,20 @@ const providerSwitchTooltip = (
   return '';
 };
 
-const providerHelperText = (status: PaymentProviderStatus, envHint: string): string => {
+const providerHelperText = (
+  providerKey: ProviderKey,
+  status: PaymentProviderStatus,
+  envHint: string,
+): string => {
   if (!status.configured) {
     return `Add ${envHint} to the API environment`;
+  }
+  // Paystack signs its webhooks with the secret key: there is no second secret to miss.
+  // (An API from before currencies does not say what it charges in.)
+  if (providerKey === 'paystack') {
+    return status.currency
+      ? `Secret key configured · charges in ${status.currency}`
+      : 'Secret key configured';
   }
   if (status.webhookConfigured) {
     return 'API key and webhook secret configured';
@@ -792,7 +845,7 @@ const ProviderRow = ({
           {providerStatusChip(status)}
         </Stack>
         <Typography variant="caption" color="text.secondary" noWrap>
-          {providerHelperText(status, meta.envHint)}
+          {providerHelperText(providerKey, status, meta.envHint)}
         </Typography>
       </Box>
       <Tooltip title={providerSwitchTooltip(status, isAdmin, meta.envHint)} placement="top" arrow>
@@ -886,6 +939,9 @@ const PaymentProvidersPanel = ({
 /** Height of the donations bar chart, shared with its loading placeholder. */
 const DONATION_CHART_HEIGHT = 200;
 
+/** Height of the line naming a chart's currency, taken out of the chart's own height. */
+const CURRENCY_CAPTION_HEIGHT = 22;
+
 /** The loading shape of a ProviderSplitBar: a label line above its track. */
 const ProviderSplitBarSkeleton = (): JSX.Element => (
   <Box>
@@ -897,27 +953,72 @@ const ProviderSplitBarSkeleton = (): JSX.Element => (
   </Box>
 );
 
+/**
+ * One provider's line under the chart: its figures per currency and its gifts,
+ * and how full its bar is. With one currency across all completed gifts the bar
+ * is the provider's share of the money, as it always was. With cedis and dollars
+ * both in, there is no total to take a share of, so the bar is the provider's
+ * share of the gifts, and the line says so: "4 of 9 gifts".
+ */
+const providerSplit = (
+  totals: DashboardProviderDonations,
+  donations: DashboardSummary['donations'],
+): { parts: string[]; share: number; shareOf: string } => {
+  const [only, ...others] = donations.raised;
+  const mixed = others.length > 0;
+  const gifts = mixed
+    ? `${totals.count} of ${donations.succeededCount} gifts`
+    : `${totals.count} ${totals.count === 1 ? 'gift' : 'gifts'}`;
+  const parts = [
+    ...totals.raised.map((entry) => formatMoney(entry.amount, entry.currency)),
+    ...(totals.count > 0 ? [gifts] : []),
+  ];
+  let share = 0;
+  if (mixed && donations.succeededCount > 0) {
+    share = totals.count / donations.succeededCount;
+  } else if (!mixed && only && only.amount > 0) {
+    share = amountIn(totals.raised, only.currency) / only.amount;
+  }
+  return {
+    parts: parts.length > 0 ? parts : ['No gifts yet'],
+    share,
+    shareOf: mixed ? 'completed gifts' : 'the money raised',
+  };
+};
+
 const ProviderSplitBar = ({
   label,
-  amount,
+  parts,
   share,
+  shareOf,
   color,
 }: {
   label: string;
-  amount: number;
+  parts: readonly string[];
   share: number;
+  /** What the bar is a share of, for the reader who cannot see it. */
+  shareOf: string;
   color: string;
 }): JSX.Element => (
   <Box>
-    <Stack direction="row" justifyContent="space-between" sx={{ mb: 0.5 }}>
+    <Stack direction="row" justifyContent="space-between" spacing={2} sx={{ mb: 0.5 }}>
       <Typography variant="caption" sx={{ fontWeight: 700 }}>
         {label}
       </Typography>
-      <Typography variant="caption" color="text.secondary">
-        {usd.format(amount)}
+      <Typography
+        variant="caption"
+        component="div"
+        color="text.secondary"
+        sx={{ minWidth: 0, textAlign: 'right' }}
+      >
+        <DotList parts={parts} align="end" />
       </Typography>
     </Stack>
-    <Box sx={[{ height: 6, borderRadius: 99, overflow: 'hidden' }, toneTrackSx(color)]}>
+    <Box
+      role="img"
+      aria-label={`${label}: ${Math.round(share * 100)}% of ${shareOf}`}
+      sx={[{ height: 6, borderRadius: 99, overflow: 'hidden' }, toneTrackSx(color)]}
+    >
       <Box
         sx={{
           height: '100%',
@@ -930,132 +1031,203 @@ const ProviderSplitBar = ({
   </Box>
 );
 
-const DonationsPanel = ({
+/** The currencies with gifts in the chart's months, cedis first. */
+const chartedCurrencies = (monthly: DashboardDonationMonth[]): DonationCurrency[] =>
+  DONATION_CURRENCIES.filter((currency) =>
+    monthly.some((bucket) => amountIn(bucket.raised, currency) > 0),
+  );
+
+/** One currency's months as bars, labelled in that currency. */
+const CurrencyChart = ({
+  monthly,
+  currency,
+  labelled,
+  fluid = false,
+}: {
+  monthly: DashboardDonationMonth[];
+  currency: DonationCurrency;
+  labelled: boolean;
+  /** Half width or narrower: draw at the real width rather than shrink. */
+  fluid?: boolean;
+}): JSX.Element => {
+  const chart = (
+    <BarChart
+      fluid={fluid}
+      height={DONATION_CHART_HEIGHT - (labelled ? CURRENCY_CAPTION_HEIGHT : 0)}
+      data={monthly.map((bucket) => {
+        const value = amountIn(bucket.raised, currency);
+        return {
+          label: bucket.month,
+          value,
+          displayValue: value > 0 ? formatMoney(value, currency, { compact: true }) : undefined,
+        };
+      })}
+      color={brandColors.gold}
+      formatLabel={monthShortLabel}
+      formatValue={(value) => formatMoney(value, currency, { compact: true })}
+    />
+  );
+  if (!labelled) {
+    return chart;
+  }
+  const rules = DONATION_CURRENCY_RULES[currency];
+  return (
+    <Box>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{ display: 'block', height: CURRENCY_CAPTION_HEIGHT, fontWeight: 700 }}
+      >
+        {rules.name} ({rules.symbol})
+      </Typography>
+      {chart}
+    </Box>
+  );
+};
+
+/**
+ * The last six months of completed gifts. Each currency gets its own chart on
+ * its own scale, side by side: bars in cedis next to bars in dollars on one
+ * axis would make a cedi gift look a dozen times larger than the same gift in
+ * dollars. With one currency there is one chart, as there always was.
+ */
+const DonationCharts = ({
   donations,
+}: {
+  donations: DashboardSummary['donations'];
+}): JSX.Element => {
+  const currencies = chartedCurrencies(donations.monthly);
+  // Name the currency whenever more than one is in play, even if only one has
+  // gifts in these months, so a lone chart is not read as the whole total.
+  const labelled = currencies.length > 1 || donations.raised.length > 1;
+  if (currencies.length === 0) {
+    return (
+      <DonationChartEmpty
+        hasHistory={donations.succeededCount > 0}
+        needsReview={donations.pendingCount > 0 || donations.failedCount > 0}
+      />
+    );
+  }
+  if (currencies.length === 1) {
+    return (
+      <CurrencyChart monthly={donations.monthly} currency={currencies[0]!} labelled={labelled} />
+    );
+  }
+  return (
+    <Grid container spacing={2.5}>
+      {currencies.map((currency) => (
+        <Grid key={currency} size={{ xs: 12, md: 6 }}>
+          <CurrencyChart monthly={donations.monthly} currency={currency} labelled fluid />
+        </Grid>
+      ))}
+    </Grid>
+  );
+};
+
+const DonationsPanel = ({
+  summary,
   loading,
 }: {
-  donations?: DashboardSummary['donations'];
+  summary?: DashboardSummary;
   loading: boolean;
-}): JSX.Element => (
-  <Panel
-    title="Donations"
-    subtitle="Completed gifts · last 6 months"
-    action={
-      <Button
-        component={RouterLink}
-        to="/donations"
-        size="small"
-        endIcon={<ChevronRightIcon />}
-        sx={{ fontWeight: 600 }}
-      >
-        View all
-      </Button>
-    }
-  >
-    {loading || !donations ? (
-      <Box sx={{ p: 2.5 }}>
-        {/*
+}): JSX.Element => {
+  const donations = summary?.donations;
+  // What "nothing raised yet" is written in: the currencies gifts are being taken in.
+  const zero = zeroCurrencies(summary?.payments);
+  return (
+    <Panel
+      title="Donations"
+      subtitle="Completed gifts · last 6 months"
+      action={
+        <Button
+          component={RouterLink}
+          to="/donations"
+          size="small"
+          endIcon={<ChevronRightIcon />}
+          sx={{ fontWeight: 600 }}
+        >
+          View all
+        </Button>
+      }
+    >
+      {loading || !donations ? (
+        <Box sx={{ p: 2.5 }}>
+          {/*
           The loaded panel is a total, a chart, a rule and two provider bars.
           Drawing only the first two left the card a third shorter than it ends
           up, so everything below it jumped when the figures arrived.
         */}
-        <Stack
-          direction={{ xs: 'column', sm: 'row' }}
-          spacing={1.5}
-          justifyContent="space-between"
-          alignItems={{ xs: 'flex-start', sm: 'center' }}
-          sx={{ mb: 2 }}
-        >
-          <Box sx={{ width: '100%' }}>
-            <Skeleton variant="text" width={160} sx={{ fontSize: '2.125rem' }} />
-            <Skeleton variant="text" width={190} sx={{ fontSize: '0.75rem' }} />
-          </Box>
-          <Stack direction="row" spacing={1}>
-            <Skeleton variant="rounded" width={86} height={24} sx={{ borderRadius: 10 }} />
-            <Skeleton variant="rounded" width={74} height={24} sx={{ borderRadius: 10 }} />
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={1.5}
+            justifyContent="space-between"
+            alignItems={{ xs: 'flex-start', sm: 'center' }}
+            sx={{ mb: 2 }}
+          >
+            <Box sx={{ width: '100%' }}>
+              <Skeleton variant="text" width={160} sx={{ fontSize: '2.125rem' }} />
+              <Skeleton variant="text" width={190} sx={{ fontSize: '0.75rem' }} />
+            </Box>
+            <Stack direction="row" spacing={1}>
+              <Skeleton variant="rounded" width={86} height={24} sx={{ borderRadius: 10 }} />
+              <Skeleton variant="rounded" width={74} height={24} sx={{ borderRadius: 10 }} />
+            </Stack>
           </Stack>
-        </Stack>
-        <Skeleton variant="rounded" height={DONATION_CHART_HEIGHT} />
-        <Divider sx={{ my: 2 }} />
-        <Stack spacing={1.25}>
-          <ProviderSplitBarSkeleton />
-          <ProviderSplitBarSkeleton />
-        </Stack>
-      </Box>
-    ) : (
-      <Box sx={{ p: 2.5 }}>
-        <Stack
-          direction={{ xs: 'column', sm: 'row' }}
-          spacing={1.5}
-          justifyContent="space-between"
-          alignItems={{ xs: 'flex-start', sm: 'center' }}
-          sx={{ mb: 2 }}
-        >
-          <Box>
-            <Typography variant="h4" sx={{ fontWeight: 800, letterSpacing: '-0.02em' }}>
-              {usd.format(donations.totalRaisedUsd)}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Total raised · {donations.succeededCount} completed
-            </Typography>
-          </Box>
-          <Stack direction="row" spacing={1}>
-            <Chip size="small" variant="outlined" label={`${donations.pendingCount} pending`} />
-            <Chip
-              size="small"
-              variant="outlined"
-              color={donations.failedCount > 0 ? 'error' : 'default'}
-              label={`${donations.failedCount} failed`}
+          <Skeleton variant="rounded" height={DONATION_CHART_HEIGHT} />
+          <Divider sx={{ my: 2 }} />
+          <Stack spacing={1.25}>
+            <ProviderSplitBarSkeleton />
+            <ProviderSplitBarSkeleton />
+          </Stack>
+        </Box>
+      ) : (
+        <Box sx={{ p: 2.5 }}>
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={1.5}
+            justifyContent="space-between"
+            alignItems={{ xs: 'flex-start', sm: 'center' }}
+            sx={{ mb: 2 }}
+          >
+            <Box>
+              <Typography variant="h4" sx={{ fontWeight: 800, letterSpacing: '-0.02em' }}>
+                <DotList parts={raisedFigures(donations.raised, zero)} />
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Total raised · {donations.succeededCount} completed
+              </Typography>
+            </Box>
+            <Stack direction="row" spacing={1}>
+              <Chip size="small" variant="outlined" label={`${donations.pendingCount} pending`} />
+              <Chip
+                size="small"
+                variant="outlined"
+                color={donations.failedCount > 0 ? 'error' : 'default'}
+                label={`${donations.failedCount} failed`}
+              />
+            </Stack>
+          </Stack>
+
+          <DonationCharts donations={donations} />
+
+          <Divider sx={{ my: 2 }} />
+          <Stack spacing={1.25}>
+            <ProviderSplitBar
+              label="Stripe"
+              {...providerSplit(donations.byProvider.stripe, donations)}
+              color={brandColors.forestGreen}
+            />
+            <ProviderSplitBar
+              label="Paystack"
+              {...providerSplit(donations.byProvider.paystack, donations)}
+              color={brandColors.mint}
             />
           </Stack>
-        </Stack>
-
-        {donations.monthly.some((bucket) => bucket.amountUsd > 0) ? (
-          <BarChart
-            height={DONATION_CHART_HEIGHT}
-            data={donations.monthly.map((bucket) => ({
-              label: bucket.month,
-              value: bucket.amountUsd,
-              displayValue: bucket.amountUsd > 0 ? usdCompact.format(bucket.amountUsd) : undefined,
-            }))}
-            color={brandColors.gold}
-            formatLabel={monthShortLabel}
-            formatValue={(value) => usdCompact.format(value)}
-          />
-        ) : (
-          <DonationChartEmpty
-            hasHistory={donations.succeededCount > 0}
-            needsReview={donations.pendingCount > 0 || donations.failedCount > 0}
-          />
-        )}
-
-        <Divider sx={{ my: 2 }} />
-        <Stack spacing={1.25}>
-          <ProviderSplitBar
-            label="Stripe"
-            amount={donations.byProvider.stripe}
-            share={
-              donations.totalRaisedUsd > 0
-                ? donations.byProvider.stripe / donations.totalRaisedUsd
-                : 0
-            }
-            color={brandColors.forestGreen}
-          />
-          <ProviderSplitBar
-            label="Paystack"
-            amount={donations.byProvider.paystack}
-            share={
-              donations.totalRaisedUsd > 0
-                ? donations.byProvider.paystack / donations.totalRaisedUsd
-                : 0
-            }
-            color={brandColors.mint}
-          />
-        </Stack>
-      </Box>
-    )}
-  </Panel>
-);
+        </Box>
+      )}
+    </Panel>
+  );
+};
 
 // ── Submissions breakdown ───────────────────────────────────────────────────
 
@@ -1485,16 +1657,21 @@ const allStats = (data: DashboardSummary | undefined, loading: boolean): StatCar
     accent: brandColors.mint,
     loading,
   },
-  {
-    label: 'Donations raised',
-    value: usd.format(data?.donations.totalRaisedUsd ?? 0),
-    caption: `${data?.donations.succeededCount ?? 0} succeeded gifts`,
-    icon: VolunteerActivismIcon,
-    to: '/donations',
-    accent: brandColors.gold,
-    loading,
-  },
+  donationsStat(data, loading),
 ];
+
+const donationsStat = (data: DashboardSummary | undefined, loading: boolean): StatCardProps => ({
+  label: 'Donations raised',
+  // Whole cedis and dollars: the tile is a glance, and the Donations page has the pesewas.
+  value: raisedFigures(data?.donations.raised ?? [], zeroCurrencies(data?.payments), {
+    whole: true,
+  }),
+  caption: `${data?.donations.succeededCount ?? 0} succeeded gifts`,
+  icon: VolunteerActivismIcon,
+  to: '/donations',
+  accent: brandColors.gold,
+  loading,
+});
 
 const HeaderActions = ({ mayOpen }: { mayOpen: (to: string) => boolean }): JSX.Element | null => {
   const submissions = mayOpen('/submissions');
@@ -1663,7 +1840,7 @@ const DashboardBody = ({
       )}
 
       {/* Donations — full width */}
-      {donations && <DonationsPanel donations={data?.donations} loading={loading} />}
+      {donations && <DonationsPanel summary={data} loading={loading} />}
 
       {/* Payment providers + operations snapshot, side by side */}
       <PanelPair
@@ -1741,6 +1918,15 @@ const Dashboard = (): JSX.Element => {
   );
   const canReadSubmissions = mayOpen('/submissions');
   const summary = useDashboardSummary();
+  // Read the donations whichever API answered: one from before currencies sends dollars.
+  const data = useMemo(
+    () =>
+      summary.data && {
+        ...summary.data,
+        donations: summary.data.donations && readDonationsSummary(summary.data.donations),
+      },
+    [summary.data],
+  );
   const recentSubmissions = useSubmissions({}, canReadSubmissions);
   const [snackbar, setSnackbar] = useState<{
     message: string;
@@ -1772,7 +1958,7 @@ const Dashboard = (): JSX.Element => {
       )}
 
       <DashboardBody
-        data={summary.data}
+        data={data}
         loading={summary.isLoading}
         isAdmin={user?.role === 'admin'}
         recent={sortRecent(recentSubmissions.data?.items)}

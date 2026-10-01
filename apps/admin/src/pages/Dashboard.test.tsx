@@ -1,6 +1,6 @@
 import type { DashboardSummary } from '@iaa/shared';
 import { ThemeProvider } from '@mui/material/styles';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -16,18 +16,28 @@ const auth = vi.hoisted(() => ({
 vi.mock('../auth/AuthContext', () => ({ useAuth: () => ({ user: auth.user }) }));
 vi.mock('../components/dashboard/YourWorkPanel', () => ({ YourWorkPanel: () => null }));
 vi.mock('../components/NewSubmissionsBanner', () => ({ NewSubmissionsBanner: () => null }));
-vi.mock('../components/charts/BarChart', () => ({ BarChart: () => null }));
+// The chart draws SVG; its bar labels are what a reader takes away, so render those.
+vi.mock('../components/charts/BarChart', () => ({
+  BarChart: ({ data }: { data: { label: string; displayValue?: string }[] }) => (
+    <div data-testid="bar-chart">
+      {data.flatMap((bar) => (bar.displayValue ? [bar.displayValue] : [])).join(' | ')}
+    </div>
+  ),
+}));
 vi.mock('../components/charts/DonutChart', () => ({ DonutChart: () => null }));
 
 const summary: DashboardSummary = {
   submissions: { total: 9, newCount: 4, byType: [], byStatus: [] },
   subscribers: { total: 120, newLast30Days: 6 },
   donations: {
-    totalRaisedUsd: 5000,
+    raised: [{ currency: 'USD', amount: 5000 }],
     succeededCount: 12,
     pendingCount: 0,
     failedCount: 0,
-    byProvider: { stripe: 5000, paystack: 0 },
+    byProvider: {
+      stripe: { count: 12, raised: [{ currency: 'USD', amount: 5000 }] },
+      paystack: { count: 0, raised: [] },
+    },
     monthly: [],
   },
   content: [
@@ -40,10 +50,24 @@ const summary: DashboardSummary = {
   privacyRequests: { total: 2, open: 1 },
   socialConnections: 1,
   payments: {
-    stripe: { configured: true, enabled: true },
-    paystack: { configured: false, enabled: false },
-  } as unknown as DashboardSummary['payments'],
+    stripe: {
+      configured: true,
+      webhookConfigured: true,
+      enabled: true,
+      accepting: true,
+      currency: 'USD',
+    },
+    paystack: {
+      configured: false,
+      webhookConfigured: false,
+      enabled: false,
+      accepting: false,
+      currency: 'GHS',
+    },
+  },
 };
+const dollarsOnly = summary.donations;
+const dollarsOnlyPayments = summary.payments;
 
 vi.mock('../lib/admin-hooks', () => ({
   useDashboardSummary: () => ({ data: summary, isLoading: false, isError: false }),
@@ -64,6 +88,8 @@ const visit = (role: 'admin' | 'editor', permissions: string[]): void => {
 
 beforeEach(() => {
   vi.mocked(useSubmissions).mockClear();
+  summary.donations = dollarsOnly;
+  summary.payments = dollarsOnlyPayments;
 });
 
 describe('the dashboard, for someone who can read only some modules', () => {
@@ -114,5 +140,203 @@ describe('the dashboard, for someone who can read only some modules', () => {
     visit('admin', ['donations:read']);
     expect(screen.getByText('Donations raised')).toBeInTheDocument();
     expect(screen.getByText('Payment providers')).toBeInTheDocument();
+  });
+});
+
+/** Six months ending this one, as the API buckets them. */
+const months = (raised: Record<string, DashboardSummary['donations']['raised']>) =>
+  ['2026-05', '2026-06', '2026-07', '2026-08', '2026-09', '2026-10'].map((month) => ({
+    month,
+    count: raised[month]?.length ?? 0,
+    raised: raised[month] ?? [],
+  }));
+
+/** The Donations panel: the card holding the "Total raised" line. */
+const donationsPanel = (): HTMLElement =>
+  screen.getByText(/^Total raised ·/).closest<HTMLElement>('.MuiCard-root')!;
+
+/** A provider's line under the chart: its name, its figures and its bar. */
+const providerLine = (name: 'Stripe' | 'Paystack'): HTMLElement =>
+  within(donationsPanel()).getByText(name).parentElement!.parentElement!;
+
+const statTile = (): HTMLElement => screen.getByText('Donations raised').closest('a')!;
+
+describe('donations in cedis and dollars', () => {
+  const cedisAndDollars: DashboardSummary['donations'] = {
+    raised: [
+      { currency: 'GHS', amount: 4250 },
+      { currency: 'USD', amount: 1200 },
+    ],
+    succeededCount: 12,
+    pendingCount: 1,
+    failedCount: 0,
+    byProvider: {
+      stripe: { count: 9, raised: [{ currency: 'USD', amount: 1200 }] },
+      paystack: { count: 3, raised: [{ currency: 'GHS', amount: 4250 }] },
+    },
+    monthly: months({
+      '2026-09': [{ currency: 'USD', amount: 1200 }],
+      '2026-10': [{ currency: 'GHS', amount: 4250 }],
+    }),
+  };
+
+  it('shows each currency on the stat tile and never a combined total', () => {
+    summary.donations = cedisAndDollars;
+    visit('admin', ['donations:read']);
+    expect(statTile()).toHaveTextContent('GH₵4,250');
+    expect(statTile()).toHaveTextContent('$1,200');
+    // 4,250 + 1,200 would be a sum of cedis and dollars, which means nothing.
+    expect(document.body).not.toHaveTextContent('5,450');
+  });
+
+  it('gives the panel a figure per currency and a chart per currency', () => {
+    summary.donations = cedisAndDollars;
+    visit('admin', ['donations:read']);
+    const total = within(donationsPanel()).getByRole('heading', { level: 4 });
+    expect(within(total).getByText('GH₵4,250')).toBeInTheDocument();
+    expect(within(total).getByText('$1,200')).toBeInTheDocument();
+    expect(screen.getByText('Ghana cedis (GH₵)')).toBeInTheDocument();
+    expect(screen.getByText('US dollars ($)')).toBeInTheDocument();
+    const charts = screen.getAllByTestId('bar-chart');
+    expect(charts.map((chart) => chart.textContent)).toEqual(['GH₵4.3K', '$1.2K']);
+  });
+
+  it('splits mixed gifts by provider as a share of the gifts, and says so', () => {
+    summary.donations = cedisAndDollars;
+    visit('admin', ['donations:read']);
+    expect(providerLine('Stripe')).toHaveTextContent('$1,200');
+    expect(providerLine('Stripe')).toHaveTextContent('9 of 12 gifts');
+    expect(providerLine('Paystack')).toHaveTextContent('GH₵4,250');
+    expect(providerLine('Paystack')).toHaveTextContent('3 of 12 gifts');
+    expect(screen.getByRole('img', { name: 'Stripe: 75% of completed gifts' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('img', { name: 'Paystack: 25% of completed gifts' }),
+    ).toBeInTheDocument();
+  });
+
+  it('keeps the share of the money when every gift is in one currency', () => {
+    summary.donations = {
+      ...dollarsOnly,
+      raised: [{ currency: 'USD', amount: 4135 }],
+      succeededCount: 8,
+      byProvider: {
+        stripe: { count: 5, raised: [{ currency: 'USD', amount: 3575 }] },
+        paystack: { count: 3, raised: [{ currency: 'USD', amount: 560 }] },
+      },
+    };
+    visit('admin', ['donations:read']);
+    expect(providerLine('Stripe')).toHaveTextContent('$3,575');
+    expect(providerLine('Stripe')).toHaveTextContent('5 gifts');
+    expect(providerLine('Stripe')).not.toHaveTextContent('of 8');
+    expect(
+      screen.getByRole('img', { name: 'Stripe: 86% of the money raised' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('img', { name: 'Paystack: 14% of the money raised' }),
+    ).toBeInTheDocument();
+  });
+
+  it('keeps the single dollar chart, unlabelled, when dollars are all there is', () => {
+    summary.donations = {
+      ...dollarsOnly,
+      monthly: months({ '2026-10': [{ currency: 'USD', amount: 5000 }] }),
+    };
+    visit('admin', ['donations:read']);
+    expect(screen.getAllByText('$5,000').length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId('bar-chart').map((chart) => chart.textContent)).toEqual(['$5K']);
+    expect(screen.queryByText('US dollars ($)')).not.toBeInTheDocument();
+  });
+
+  it('rounds the tile to whole cedis and keeps the pesewas in the panel', () => {
+    summary.donations = {
+      ...dollarsOnly,
+      raised: [{ currency: 'GHS', amount: 250_250.6 }],
+      byProvider: {
+        stripe: { count: 0, raised: [] },
+        paystack: { count: 3, raised: [{ currency: 'GHS', amount: 250_250.6 }] },
+      },
+    };
+    visit('admin', ['donations:read']);
+    expect(statTile()).toHaveTextContent('GH₵250,251');
+    const total = within(donationsPanel()).getByRole('heading', { level: 4 });
+    expect(total).toHaveTextContent('GH₵250,250.60');
+  });
+
+  it('writes nothing raised yet as money, in what the site charges, with no gifts yet', () => {
+    summary.donations = {
+      raised: [],
+      succeededCount: 0,
+      pendingCount: 0,
+      failedCount: 0,
+      byProvider: { stripe: { count: 0, raised: [] }, paystack: { count: 0, raised: [] } },
+      monthly: months({}),
+    };
+    summary.payments = {
+      stripe: { ...dollarsOnlyPayments.stripe, enabled: false, accepting: false },
+      paystack: {
+        ...dollarsOnlyPayments.paystack,
+        configured: true,
+        enabled: true,
+        accepting: true,
+      },
+    };
+    visit('admin', ['donations:read']);
+    expect(statTile()).toHaveTextContent(/^GH₵0DONATIONS RAISED/i);
+    const total = within(donationsPanel()).getByRole('heading', { level: 4 });
+    expect(total).toHaveTextContent('GH₵0');
+    expect(providerLine('Stripe')).toHaveTextContent('No gifts yet');
+    expect(providerLine('Paystack')).toHaveTextContent('No gifts yet');
+    expect(within(donationsPanel()).queryByText(/0 gifts/)).not.toBeInTheDocument();
+  });
+
+  it('says what Paystack charges in once its secret key is set', () => {
+    summary.payments = {
+      ...dollarsOnlyPayments,
+      paystack: {
+        configured: true,
+        webhookConfigured: true,
+        enabled: true,
+        accepting: true,
+        currency: 'GHS',
+      },
+    };
+    visit('admin', ['donations:read']);
+    expect(screen.getByText('Secret key configured · charges in GHS')).toBeInTheDocument();
+    expect(screen.queryByText(/webhook secret missing/)).not.toBeInTheDocument();
+  });
+});
+
+describe('against an API from before currencies', () => {
+  // What the API answered before this change: dollars, with no currencies anywhere.
+  const dollarsOnlyApi = {
+    totalRaisedUsd: 4135,
+    succeededCount: 8,
+    pendingCount: 2,
+    failedCount: 1,
+    byProvider: { stripe: 3575, paystack: 560 },
+    monthly: [
+      { month: '2026-09', amountUsd: 0, count: 0 },
+      { month: '2026-10', amountUsd: 4135, count: 8 },
+    ],
+  } as unknown as DashboardSummary['donations'];
+
+  it('reads its dollars instead of breaking the page', () => {
+    summary.donations = dollarsOnlyApi;
+    summary.payments = {
+      stripe: { configured: true, webhookConfigured: true, enabled: true, accepting: true },
+      paystack: { configured: true, webhookConfigured: false, enabled: true, accepting: true },
+    } as unknown as DashboardSummary['payments'];
+    visit('admin', ['donations:read']);
+
+    expect(statTile()).toHaveTextContent('$4,135');
+    const total = within(donationsPanel()).getByRole('heading', { level: 4 });
+    expect(total).toHaveTextContent('$4,135');
+    expect(providerLine('Stripe')).toHaveTextContent('$3,575');
+    expect(providerLine('Paystack')).toHaveTextContent('$560');
+    expect(
+      screen.getByRole('img', { name: 'Stripe: 86% of the money raised' }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByTestId('bar-chart').map((chart) => chart.textContent)).toEqual(['$4.1K']);
+    expect(screen.getByText('Secret key configured')).toBeInTheDocument();
   });
 });

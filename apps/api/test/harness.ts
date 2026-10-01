@@ -9,7 +9,7 @@ import { vi } from 'vitest';
 
 import { createApp } from '../src/app.js';
 import { loadConfig, type AppConfig } from '../src/config/env.js';
-import { createLogger } from '../src/config/logger.js';
+import { createLogger, type AppLogger } from '../src/config/logger.js';
 import { buildContainer } from '../src/container.js';
 import { connectDatabase } from '../src/db/mongoose.js';
 import { TOKENS } from '../src/tokens.js';
@@ -33,8 +33,13 @@ export interface TestContext {
  * Spin up the real Express app against an in-memory MongoDB, with external
  * providers (email) replaced by spies. Exercises the DI container exactly as
  * production does — the genuine test that runtime resolution is wired correctly.
+ *
+ * Silent by default; a test that checks what would be logged passes a logger
+ * of its own.
  */
-export const createTestContext = async (): Promise<TestContext> => {
+export const createTestContext = async (
+  options: { logger?: AppLogger } = {},
+): Promise<TestContext> => {
   // First-run binary start can exceed the 10s default on slower machines / CI.
   process.env.MONGOMS_STARTUP_TIMEOUT ??= '60000';
   const mongo = await MongoMemoryServer.create();
@@ -46,7 +51,7 @@ export const createTestContext = async (): Promise<TestContext> => {
   process.env.SEED_ADMIN_PASSWORD = 'TestSeedAdminPass2026!';
 
   const config = loadConfig();
-  const logger = createLogger('test');
+  const logger = options.logger ?? createLogger('test');
   await connectDatabase(config, logger);
 
   const container = buildContainer(config, logger);

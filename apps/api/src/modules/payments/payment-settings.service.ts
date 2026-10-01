@@ -1,5 +1,7 @@
 import {
   PaymentProvider,
+  STRIPE_CURRENCY,
+  type DonationCurrency,
   type PaymentProvidersPublic,
   type PaymentProviderStatus,
   type PaymentSettingsStatus,
@@ -27,13 +29,20 @@ const DEFAULTS: Pick<PaymentSettingDocument, 'stripeEnabled' | 'paystackEnabled'
 export class PaymentSettingsService {
   constructor(@inject(TOKENS.Config) private readonly config: AppConfig) {}
 
-  private async current(): Promise<Pick<PaymentSettingDocument, 'stripeEnabled' | 'paystackEnabled'>> {
+  private async current(): Promise<
+    Pick<PaymentSettingDocument, 'stripeEnabled' | 'paystackEnabled'>
+  > {
     const doc = await PaymentSettingModel.findOne({ key: 'payments' }).exec();
     return doc ?? DEFAULTS;
   }
 
-  private providerStatus(configured: boolean, webhookConfigured: boolean, enabled: boolean): PaymentProviderStatus {
-    return { configured, webhookConfigured, enabled, accepting: configured && enabled };
+  private providerStatus(
+    configured: boolean,
+    webhookConfigured: boolean,
+    enabled: boolean,
+    currency: DonationCurrency,
+  ): PaymentProviderStatus {
+    return { configured, webhookConfigured, enabled, accepting: configured && enabled, currency };
   }
 
   async getStatus(): Promise<PaymentSettingsStatus> {
@@ -45,11 +54,14 @@ export class PaymentSettingsService {
         stripeConfigured,
         Boolean(this.config.stripe.webhookSecret),
         settings.stripeEnabled && stripeConfigured,
+        STRIPE_CURRENCY,
       ),
+      // Paystack signs webhooks with the secret key itself, so having it covers both.
       paystack: this.providerStatus(
         paystackConfigured,
-        Boolean(this.config.paystack.webhookSecret),
+        paystackConfigured,
         settings.paystackEnabled && paystackConfigured,
+        this.config.paystack.currency,
       ),
     };
   }
@@ -57,12 +69,18 @@ export class PaymentSettingsService {
   /** Public, unauthenticated view of which providers can take a donation right now. */
   async getPublicProviders(): Promise<PaymentProvidersPublic> {
     const status = await this.getStatus();
-    return { stripe: status.stripe.accepting, paystack: status.paystack.accepting };
+    return {
+      stripe: status.stripe.accepting,
+      paystack: status.paystack.accepting,
+      currencies: { stripe: status.stripe.currency, paystack: status.paystack.currency },
+    };
   }
 
   async isAccepting(provider: PaymentProvider): Promise<boolean> {
     const status = await this.getStatus();
-    return provider === PaymentProvider.Stripe ? status.stripe.accepting : status.paystack.accepting;
+    return provider === PaymentProvider.Stripe
+      ? status.stripe.accepting
+      : status.paystack.accepting;
   }
 
   async update(input: UpdatePaymentSettingsInput): Promise<PaymentSettingsStatus> {
@@ -72,7 +90,9 @@ export class PaymentSettingsService {
       throw new ValidationError('Stripe cannot be enabled until STRIPE_SECRET_KEY is configured');
     }
     if (input.paystackEnabled && !this.config.paystack.secretKey) {
-      throw new ValidationError('Paystack cannot be enabled until PAYSTACK_SECRET_KEY is configured');
+      throw new ValidationError(
+        'Paystack cannot be enabled until PAYSTACK_SECRET_KEY is configured',
+      );
     }
 
     const updates: Partial<PaymentSettingDocument> = {};
