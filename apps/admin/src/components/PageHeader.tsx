@@ -58,7 +58,12 @@ export const PageHeader = ({
         isolation: 'isolate',
         borderRadius: 3,
         ...surfaceSx.hero,
-        '& > *': { position: 'relative', zIndex: 1 },
+        // Lift the content above the watermark, never the watermark itself.
+        // `& > *` tied with the watermark's own `position: absolute` on
+        // specificity, so whichever stylesheet was inserted last won: after a
+        // skin change the watermark joined the row and pushed the title to the
+        // far side.
+        '& > :not([aria-hidden])': { position: 'relative', zIndex: 1 },
         '&::after': {
           position: 'absolute',
           bottom: -1,
