@@ -7,7 +7,7 @@ import { useStoriesInReviewCount } from '../../lib/impact-stories';
 import { useActiveProjectCount } from '../../lib/projects';
 import { useTaskSummary } from '../../lib/tasks';
 
-import { YourWorkPanel } from './YourWorkPanel';
+import { tileColumns, YourWorkPanel } from './YourWorkPanel';
 
 const { auth } = vi.hoisted(() => ({
   auth: { user: { role: 'editor', permissions: [] as string[] } },
@@ -111,6 +111,48 @@ describe('YourWorkPanel', () => {
       // noWrap would add this class and an ellipsis ("New applicatio…").
       expect(title).not.toHaveClass('MuiTypography-noWrap');
       expect(title.closest('.MuiTypography-noWrap')).toBeNull();
+    }
+  });
+});
+
+describe('tile layout', () => {
+  const spans = (count: number, size: 'xs' | 'sm' | 'md'): number[] =>
+    tileColumns(count).map((column) => Number(column[size].replace('span ', '')));
+
+  // Three to a row on a laptop, and a short last row stretched across the
+  // panel: which tiles show depends on permissions, from one to six.
+  it.each([
+    [1, [6]],
+    [2, [3, 3]],
+    [3, [2, 2, 2]],
+    [4, [3, 3, 3, 3]],
+    [5, [2, 2, 2, 3, 3]],
+    [6, [2, 2, 2, 2, 2, 2]],
+  ])('lays out %i tiles on a laptop as %j of six tracks', (count, expected) => {
+    expect(spans(count, 'md')).toEqual(expected);
+  });
+
+  it('puts two to a row on a tablet, with a lone last tile across the row', () => {
+    expect(spans(3, 'sm')).toEqual([3, 3, 6]);
+    expect(spans(4, 'sm')).toEqual([3, 3, 3, 3]);
+    expect(spans(5, 'sm')).toEqual([3, 3, 3, 3, 6]);
+  });
+
+  it('puts one to a row on a phone', () => {
+    expect(spans(6, 'xs')).toEqual([6, 6, 6, 6, 6, 6]);
+  });
+
+  it('fills every row exactly, whatever the count', () => {
+    for (let count = 1; count <= 6; count += 1) {
+      for (const size of ['xs', 'sm', 'md'] as const) {
+        let row = 0;
+        for (const span of spans(count, size)) {
+          row += span;
+          expect(row).toBeLessThanOrEqual(6);
+          if (row === 6) row = 0;
+        }
+        expect(row).toBe(0);
+      }
     }
   });
 });

@@ -262,6 +262,38 @@ const useWorkTiles = (): WorkTile[] => {
   return tiles;
 };
 
+/** Tiles to a row: one on a phone, two on a tablet, three from a laptop up. */
+const PER_ROW = { xs: 1, sm: 2, md: 3 } as const;
+/** Grid tracks: six share out evenly among rows of one, two or three tiles. */
+const TRACKS = 6;
+
+/**
+ * How many tiles each row holds: as few rows as `perRow` allows, as even as
+ * they can be, so five tiles at three a row are 3 + 2 and four are 2 + 2
+ * rather than 3 + 1.
+ */
+const rowSizes = (count: number, perRow: number): number[] => {
+  const rows = Math.ceil(count / perRow);
+  const base = Math.floor(count / rows);
+  return Array.from({ length: rows }, (_, row) => base + (row < count % rows ? 1 : 0));
+};
+
+/**
+ * Each tile's `gridColumn`. Every row shares the six tracks out among its
+ * tiles, so a short last row stretches across the panel instead of leaving a
+ * gap: which tiles someone sees depends on their permissions (one to six).
+ */
+export const tileColumns = (count: number): Record<keyof typeof PER_ROW, string>[] => {
+  const spans = (perRow: number): number[] =>
+    rowSizes(count, perRow).flatMap((size) => Array<number>(size).fill(TRACKS / size));
+  const [xs, sm, md] = [spans(PER_ROW.xs), spans(PER_ROW.sm), spans(PER_ROW.md)];
+  return Array.from({ length: count }, (_, index) => ({
+    xs: `span ${xs[index]}`,
+    sm: `span ${sm[index]}`,
+    md: `span ${md[index]}`,
+  }));
+};
+
 /**
  * "Your work" on the dashboard (plan §4.4): the caller's own overdue, due
  * today and upcoming tasks, active projects, new applications and stories
@@ -276,6 +308,7 @@ export const YourWorkPanel = (): JSX.Element | null => {
   if (tiles.length === 0) {
     return null;
   }
+  const columns = tileColumns(tiles.length);
   return (
     <Card
       component="section"
@@ -306,12 +339,11 @@ export const YourWorkPanel = (): JSX.Element | null => {
           p: 2,
           display: 'grid',
           gap: 1.5,
-          // As many columns as fit: two on a phone, all six on a wide screen.
-          gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 150px), 1fr))',
+          gridTemplateColumns: `repeat(${TRACKS}, minmax(0, 1fr))`,
         }}
       >
-        {tiles.map((tile) => (
-          <Box component="li" key={tile.key} sx={{ minWidth: 0 }}>
+        {tiles.map((tile, index) => (
+          <Box component="li" key={tile.key} sx={{ minWidth: 0, gridColumn: columns[index] }}>
             <Tile tile={tile} />
           </Box>
         ))}
