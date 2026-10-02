@@ -57,6 +57,22 @@ describe('the page Paystack sends donors back to', () => {
     expect(apiGet).toHaveBeenCalledWith('/payments/paystack/verify/ref-123');
   });
 
+  it('celebrates a confirmed gift, and only a confirmed one', async () => {
+    returnFromPaystack({ status: 'succeeded', amount: 100, currency: 'GHS' });
+    await screen.findByText(/We have received your donation of GH₵100\./);
+    expect(screen.getByTestId('celebration')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'What happens next' })).toBeInTheDocument();
+  });
+
+  it('offers other ways to help after a cancelled checkout, without a celebration', () => {
+    visit('/donate/complete?reference=ref-123&cancelled=1');
+    expect(screen.queryByTestId('celebration')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Volunteer or mentor/ })).toHaveAttribute(
+      'href',
+      '/get-involved#volunteer',
+    );
+  });
+
   it('confirms an older dollar gift in dollars', async () => {
     returnFromPaystack({ status: 'succeeded', amount: 50, currency: 'USD' });
     expect(await screen.findByText(/We have received your donation of \$50\./)).toBeInTheDocument();
