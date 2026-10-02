@@ -173,6 +173,23 @@ describe('DonateForm', () => {
     expect(screen.getByRole('button', { name: 'Checking payment methods…' })).toBeDisabled();
   });
 
+  it('shows no amounts until it knows the currency they are in', () => {
+    stripeKey.present = true;
+    availability(undefined);
+    const { rerender } = renderWithProviders(<DonateForm />);
+    // Dollars drawn first, then cedis or nothing at all, read as a form that broke.
+    expect(screen.getByLabelText('Loading amounts')).toBeInTheDocument();
+    expect(presetLabels()).toEqual([]);
+    expect(screen.queryByText(/Choose an amount/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/Custom amount/)).not.toBeInTheDocument();
+
+    availability({ stripe: false, paystack: true });
+    rerender(<DonateForm />);
+    expect(screen.queryByLabelText('Loading amounts')).not.toBeInTheDocument();
+    expect(presetLabels()).toEqual(['GH₵50', 'GH₵100', 'GH₵200', 'GH₵500']);
+    expect(screen.getByText('Choose an amount (GHS)')).toBeInTheDocument();
+  });
+
   it('offers retry instead of a permanent loading state after provider lookup fails', async () => {
     availability(undefined, true);
     renderWithProviders(<DonateForm />);

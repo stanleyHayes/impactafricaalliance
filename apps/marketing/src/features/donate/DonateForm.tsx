@@ -33,7 +33,7 @@ import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Typography from '@mui/material/Typography';
 import { Elements } from '@stripe/react-stripe-js';
 import { useEffect, useState } from 'react';
-import { Controller, useForm, type Resolver } from 'react-hook-form';
+import { Controller, useForm, type Resolver, type UseFormRegisterReturn } from 'react-hook-form';
 
 import { Watermark } from '../../components/Watermark';
 import { friendlyFormErrors } from '../../lib/form-errors';
@@ -155,6 +155,114 @@ const PaystackCheckoutNote = ({
   );
 };
 
+/** Four amount buttons, the same grid as the real ones. */
+const PRESET_PLACEHOLDERS = [0, 1, 2, 3];
+
+/**
+ * Stands in for the amount choices until the payment methods are known, in the same space, so
+ * nothing jumps when they arrive.
+ */
+const AmountSkeleton = (): JSX.Element => (
+  <>
+    <Box sx={{ containerType: 'inline-size' }} aria-label="Loading amounts" role="status">
+      <Skeleton variant="text" width={150} sx={{ mb: 0.5 }} />
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+          gap: 1,
+          '@container (max-width: 335.95px)': {
+            gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+          },
+        }}
+      >
+        {PRESET_PLACEHOLDERS.map((index) => (
+          <Skeleton key={index} variant="rounded" height={46} sx={{ borderRadius: 2 }} />
+        ))}
+      </Box>
+    </Box>
+    <Skeleton variant="rounded" height={56} />
+  </>
+);
+
+/** The one-tap amounts and the custom amount, in the currency the chosen provider charges. */
+const AmountChoices = ({
+  amount,
+  currency,
+  provider,
+  error,
+  field,
+  onPick,
+}: {
+  amount: number;
+  currency: DonationCurrency;
+  provider: CreateDonationInput['provider'];
+  error?: string;
+  field: UseFormRegisterReturn<'amount'>;
+  onPick: (value: number) => void;
+}): JSX.Element => {
+  const rules = DONATION_CURRENCY_RULES[currency];
+  return (
+    <>
+      {/* Measured by its own width, not the screen's: the form is half the page on a desktop. */}
+      <Box sx={{ containerType: 'inline-size' }}>
+        <Typography variant="subtitle2" gutterBottom>
+          Choose an amount ({currency})
+        </Typography>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+            gap: 1,
+            // Four cedi amounts ("GH₵500") need about 320px across: on a phone, two by two.
+            '@container (max-width: 335.95px)': {
+              gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+            },
+          }}
+        >
+          {rules.presets.map((preset) => (
+            <Button
+              key={preset}
+              variant="outlined"
+              color="inherit"
+              aria-pressed={amount === preset}
+              sx={{
+                minWidth: 0,
+                px: 1,
+                borderRadius: 2,
+                color: 'text.primary',
+                borderColor: amount === preset ? 'text.secondary' : 'divider',
+                bgcolor: (t) => alpha(t.palette.text.secondary, amount === preset ? 0.14 : 0.025),
+              }}
+              onClick={() => onPick(preset)}
+            >
+              {formatMoney(preset, currency)}
+            </Button>
+          ))}
+        </Box>
+      </Box>
+
+      <TextField
+        label={`Custom amount (${currency})`}
+        type="number"
+        slotProps={{
+          input: {
+            startAdornment: <InputAdornment position="start">{rules.symbol}</InputAdornment>,
+          },
+          // Cedi gifts can carry pesewas, down to GH₵0.10; dollar gifts keep whole steps.
+          htmlInput: {
+            min: donationMinimum(provider, currency),
+            step: currency === DonationCurrency.USD ? 1 : 'any',
+          },
+        }}
+        error={Boolean(error)}
+        helperText={error}
+        {...field}
+      />
+    </>
+  );
+};
+
 /** Where the form starts: Stripe when the site can take cards, otherwise Paystack. */
 const initialValues = (): Partial<CreateDonationInput> => {
   const provider = isStripeEnabled() ? PaymentProvider.Stripe : PaymentProvider.Paystack;
@@ -193,7 +301,6 @@ export const DonateForm = (): JSX.Element => {
   const amount = watch('amount');
   const provider = watch('provider');
   const currency = watch('currency');
-  const rules = DONATION_CURRENCY_RULES[currency];
   const chargedIn = providerCurrency(provider, currencies);
 
   useEffect(() => {
@@ -287,62 +394,21 @@ export const DonateForm = (): JSX.Element => {
               </Typography>
             </Box>
           </Box>
-          {/* Measured by its own width, not the screen's: the form is half the page on a desktop. */}
-          <Box sx={{ containerType: 'inline-size' }}>
-            <Typography variant="subtitle2" gutterBottom>
-              Choose an amount ({currency})
-            </Typography>
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
-                gap: 1,
-                // Four cedi amounts ("GH₵500") need about 320px across: on a phone, two by two.
-                '@container (max-width: 335.95px)': {
-                  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-                },
-              }}
-            >
-              {rules.presets.map((preset) => (
-                <Button
-                  key={preset}
-                  variant="outlined"
-                  color="inherit"
-                  aria-pressed={amount === preset}
-                  sx={{
-                    minWidth: 0,
-                    px: 1,
-                    borderRadius: 2,
-                    color: 'text.primary',
-                    borderColor: amount === preset ? 'text.secondary' : 'divider',
-                    bgcolor: (t) =>
-                      alpha(t.palette.text.secondary, amount === preset ? 0.14 : 0.025),
-                  }}
-                  onClick={() => setValue('amount', preset, { shouldValidate: true })}
-                >
-                  {formatMoney(preset, currency)}
-                </Button>
-              ))}
-            </Box>
-          </Box>
-
-          <TextField
-            label={`Custom amount (${currency})`}
-            type="number"
-            slotProps={{
-              input: {
-                startAdornment: <InputAdornment position="start">{rules.symbol}</InputAdornment>,
-              },
-              // Cedi gifts can carry pesewas, down to GH₵0.10; dollar gifts keep whole steps.
-              htmlInput: {
-                min: donationMinimum(provider, currency),
-                step: currency === DonationCurrency.USD ? 1 : 'any',
-              },
-            }}
-            error={Boolean(errors.amount)}
-            helperText={errors.amount?.message}
-            {...register('amount', { valueAsNumber: true })}
-          />
+          {/* The amounts wait for the payment methods: their currency depends on which is
+              on, and amounts drawn in dollars that then turn to cedis, or vanish, read as
+              a form that broke. */}
+          {loading ? (
+            <AmountSkeleton />
+          ) : (
+            <AmountChoices
+              amount={amount}
+              currency={currency}
+              provider={provider}
+              error={errors.amount?.message}
+              field={register('amount', { valueAsNumber: true })}
+              onPick={(value) => setValue('amount', value, { shouldValidate: true })}
+            />
+          )}
 
           <Controller
             name="frequency"
