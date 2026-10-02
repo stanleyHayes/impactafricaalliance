@@ -1,4 +1,4 @@
-# Render Blueprint — deploys the IAA API as a free web service.
+# Render Blueprint — deploys the IAA API as a web service on the Starter plan.
 # Docs: https://render.com/docs/blueprint-spec
 # Every variable the API reads is declared below (apps/api/src/config/env.ts,
 # plus LOG_LEVEL, read by the logger), except JWT_SECRET, a local-only fallback.
@@ -10,7 +10,7 @@ services:
   - type: web
     name: iaa-api
     runtime: node
-    plan: free
+    plan: starter
     region: oregon
     branch: main
     autoDeploy: true
@@ -62,8 +62,9 @@ services:
         generateValue: true
       # Lets the scheduled GitHub Action run the due automation (review
       # invitations, event reminders, thank-yous, and the hourly check that
-      # confirms Paystack gifts). The free plan sleeps, and a sleeping process
-      # runs no timers, so something awake has to knock.
+      # confirms Paystack gifts). It was set up when the API ran on the free
+      # plan, which sleeps and runs no timers; it is still what starts the
+      # hourly work, and the API's own timers are only a backstop.
       # Set the SAME value here and as the AUTOMATION_RUN_SECRET repository
       # secret in GitHub, or the run is refused: no email goes out, and a
       # Paystack gift whose donor never came back stays pending.
