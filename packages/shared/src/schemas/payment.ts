@@ -87,12 +87,17 @@ export interface Donation extends Timestamped {
   donorName?: string;
   donorEmail: string;
   marketingConsent?: boolean;
+  /** When the API last asked Paystack about the gift; absent until it first does. */
+  lastCheckedAt?: string;
 }
 
-/** What the site's return page learns after Paystack sends the donor back. */
+/**
+ * What the site's return page learns after Paystack sends the donor back. A reference
+ * that is not one of the site's gifts gets a 404 instead.
+ */
 export interface DonationConfirmation {
   status: DonationStatus;
-  /** Absent when the reference matches no donation. */
+  /** Left out by an older API, which answered a reference matching no gift this way. */
   amount?: number;
   currency?: DonationCurrency;
 }

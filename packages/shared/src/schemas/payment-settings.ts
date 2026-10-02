@@ -20,6 +20,12 @@ export interface PaymentProviderStatus {
   accepting: boolean;
   /** The currency the provider charges in. */
   currency: DonationCurrency;
+  /**
+   * Paystack only: where its checkout sends donors back, built from the API's
+   * PUBLIC_SITE_URL. Every payment carries it, so the Paystack dashboard's own
+   * Callback URL (shared with other apps) is never used.
+   */
+  returnUrl?: string;
 }
 
 export interface PaymentSettingsStatus {

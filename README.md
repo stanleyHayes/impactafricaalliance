@@ -166,10 +166,14 @@ authenticated delivery; check one upload and download against a non-production c
 
 ## Payment webhooks
 
-After deploying, register webhooks pointing at the API:
-- **Stripe** → `POST /api/payments/webhooks/stripe` (set `STRIPE_WEBHOOK_SECRET`).
-- **Paystack** → `POST /api/payments/webhooks/paystack`. Paystack signs with the secret key, so
-  `PAYSTACK_SECRET_KEY` is all it needs.
+- **Stripe**: after deploying, register a webhook pointing at
+  `POST /api/payments/webhooks/stripe` and set `STRIPE_WEBHOOK_SECRET`.
+- **Paystack**: none to register. The Paystack account, its keys and its one Webhook URL are
+  shared with the owner's other apps, so leave the dashboard's Callback URL and Webhook URL alone.
+  Each payment carries its own return and cancel addresses (from `PUBLIC_SITE_URL`), and payments
+  are confirmed when donors return and by the hourly `POST /api/automations/run`.
+  `POST /api/payments/webhooks/paystack` still accepts a signed event for one of this site's
+  payments and ignores everything else.
 
 Paystack charges in Ghana cedis (`PAYSTACK_CURRENCY`, default `GHS`) and Stripe in US dollars;
 each donation keeps its own currency and the admin never adds the two together. The owner's

@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 
 import type { DonationCurrency } from '@iaa/shared';
 import axios, { type AxiosInstance } from 'axios';
@@ -12,6 +12,45 @@ import {
 import type { AppConfig } from '../../config/env.js';
 import { TOKENS } from '../../tokens.js';
 
+/**
+ * The owner's Paystack account, keys and all, is shared with his other apps. This site's
+ * payments say whose they are: every reference starts with `iaa-`, and the metadata names
+ * this site as its `source`.
+ */
+export const PAYSTACK_SOURCE = 'impact-africa-alliance';
+
+/** What the owner sees next to each of this site's payments in Paystack's dashboard. */
+const WEBSITE_NAME = 'Impact Africa Alliance';
+
+/** Paystack takes letters, digits, '-', '.' and '=' in a reference. */
+const REFERENCE_PATTERN = /^[A-Za-z0-9.=-]{1,100}$/;
+
+/** A reference for a new payment: `iaa-` and a UUID, nothing Paystack would refuse. */
+export const newPaystackReference = (): string => `iaa-${randomUUID()}`;
+
+/**
+ * Whether a reference is one this site could have given Paystack. Anything else is never
+ * looked up, let alone sent on to Paystack. Every one this site makes has a letter or a digit;
+ * one of dots alone ('.', '..') would even make the verify address another endpoint's.
+ */
+export const isPaystackReference = (reference: string): boolean =>
+  REFERENCE_PATTERN.test(reference) && /[A-Za-z0-9]/.test(reference);
+
+/**
+ * The website's page Paystack sends a donor back to after checkout, on PUBLIC_SITE_URL's origin.
+ * Built from the parsed address, never the text as written: that is what production checked.
+ */
+export const paystackReturnUrl = (siteUrl: string): string =>
+  `${new URL(siteUrl).origin}/donate/complete`;
+
+/** Where Paystack's Cancel button takes the donor: the same page, told nothing was paid. */
+export const paystackCancelUrl = (siteUrl: string, reference: string): string => {
+  const url = new URL(paystackReturnUrl(siteUrl));
+  url.searchParams.set('reference', reference);
+  url.searchParams.set('cancelled', '1');
+  return url.toString();
+};
+
 export interface PaystackInit {
   reference: string;
   authorizationUrl: string;
@@ -22,16 +61,21 @@ export interface PaystackCharge {
   amountMinor: number;
   email: string;
   reference: string;
-  callbackUrl?: string;
+  /** The donation's id, shown with the payment in Paystack's dashboard. */
+  donationId: string;
 }
 
 export interface PaystackVerification {
   status: string;
+  /** The reference Paystack reports, which must be the one it was asked about. */
+  reference?: string;
   /** What the donor paid, in pesewas or cents: with Paystack's fee when the donor bears it. */
   amountMinor: number;
   /** What the transaction asked for, before any fee passed on to the donor. */
   requestedMinor?: number;
   currency: string;
+  /** Who started the payment, when its metadata says: this site's is `PAYSTACK_SOURCE`. */
+  source?: string;
 }
 
 interface PaystackInitResponse {
@@ -45,8 +89,30 @@ interface PaystackVerifyResponse {
     amount?: number;
     requested_amount?: number;
     currency?: string;
+    metadata?: unknown;
   };
 }
+
+/** Paystack's metadata: an object, or now and then the same object as a JSON string. */
+const metadataOf = (value: unknown): Record<string, unknown> | undefined => {
+  let metadata = value;
+  if (typeof value === 'string') {
+    try {
+      metadata = JSON.parse(value) as unknown;
+    } catch {
+      return undefined;
+    }
+  }
+  return typeof metadata === 'object' && metadata !== null && !Array.isArray(metadata)
+    ? (metadata as Record<string, unknown>)
+    : undefined;
+};
+
+/** The source a payment's metadata names, if it names one. */
+const sourceOf = (metadata: unknown): { source?: string } => {
+  const source = metadataOf(metadata)?.source;
+  return source === undefined || source === null ? {} : { source: String(source) };
+};
 
 /**
  * What Paystack said when a call failed: its HTTP status and message, nothing more. (Not
@@ -89,9 +155,13 @@ const failureOf = (error: unknown): PaystackFailure => {
   };
 };
 
-/** Paystack answers an unknown reference with a 400 ("Transaction reference not found"). */
+/**
+ * Paystack answers an unknown reference with a 400 saying "Transaction reference not found". Any
+ * other refusal (a bad request, a key it does not accept) says nothing about the payment.
+ */
 const isUnknownReference = (failure: PaystackFailure): boolean =>
-  failure.status === 400 || failure.status === 404;
+  (failure.status === 400 || failure.status === 404) &&
+  /reference not found/i.test(failure.reason ?? '');
 
 /** Wrapper over the Paystack REST API for donation transactions. */
 @injectable()
@@ -109,6 +179,11 @@ export class PaystackGateway {
     return this.config.paystack.currency;
   }
 
+  /** Where every checkout sends its donor back: PUBLIC_SITE_URL's return page. */
+  get returnUrl(): string {
+    return paystackReturnUrl(this.config.siteUrl);
+  }
+
   async initialize(charge: PaystackCharge): Promise<PaystackInit> {
     const client = this.client();
     let body: PaystackInitResponse;
@@ -118,9 +193,11 @@ export class PaystackGateway {
         amount: charge.amountMinor,
         currency: this.currency,
         reference: charge.reference,
-        // Donors land back on the marketing site after checkout instead of Paystack's
-        // default receipt page; the return page re-verifies the transaction server-side.
-        callback_url: charge.callbackUrl ?? `${this.config.siteUrl}/donate/complete`,
+        // The dashboard's Callback URL belongs to the other apps on the account, so every
+        // payment names its own way back, built from PUBLIC_SITE_URL and nothing else. The
+        // return page has the API verify the payment with Paystack.
+        callback_url: this.returnUrl,
+        metadata: this.metadataFor(charge),
       }));
     } catch (error) {
       throw new PaystackUnavailableError(failureOf(error));
@@ -134,6 +211,10 @@ export class PaystackGateway {
   }
 
   async verify(reference: string): Promise<PaystackVerification> {
+    // Not one this site could have made, so not one to ask Paystack about.
+    if (!isPaystackReference(reference)) {
+      throw new NotFoundError('Payment reference');
+    }
     const client = this.client();
     let body: PaystackVerifyResponse;
     try {
@@ -153,11 +234,13 @@ export class PaystackGateway {
     }
     return {
       status: data.status,
+      ...(typeof data.reference === 'string' ? { reference: data.reference } : {}),
       amountMinor: data.amount,
       ...(typeof data.requested_amount === 'number'
         ? { requestedMinor: data.requested_amount }
         : {}),
       currency: data.currency,
+      ...sourceOf(data.metadata),
     };
   }
 
@@ -179,6 +262,23 @@ export class PaystackGateway {
     if (a.length !== b.length || !timingSafeEqual(a, b)) {
       throw new WebhookSignatureError('Invalid Paystack signature');
     }
+  }
+
+  /**
+   * What travels with the payment. `source` and the donation's id come back whenever Paystack
+   * reports on it; the custom fields are what the owner sees on it in the shared dashboard;
+   * `cancel_action` is where Paystack's Cancel button goes instead of the dashboard's URL.
+   */
+  private metadataFor(charge: PaystackCharge): Record<string, unknown> {
+    return {
+      source: PAYSTACK_SOURCE,
+      donation_id: charge.donationId,
+      cancel_action: paystackCancelUrl(this.config.siteUrl, charge.reference),
+      custom_fields: [
+        { display_name: 'Website', variable_name: 'website', value: WEBSITE_NAME },
+        { display_name: 'Donation ID', variable_name: 'donation_id', value: charge.donationId },
+      ],
+    };
   }
 
   private client(): AxiosInstance {

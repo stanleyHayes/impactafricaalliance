@@ -50,6 +50,8 @@ const envSchema = z.object({
 
   MONGODB_URI: z.string().min(1, 'MONGODB_URI is required'),
   CORS_ORIGINS: z.string().default('http://localhost:5173,http://localhost:5174'),
+  // Paystack sends donors back here, so production refuses anything but the site's public https
+  // address.
   PUBLIC_SITE_URL: z.string().url().default('http://localhost:5173'),
   ADMIN_URL: z.string().url().default('http://localhost:5174'),
 
@@ -107,7 +109,8 @@ const envSchema = z.object({
       .pipe(z.enum(DONATION_CURRENCIES as [DonationCurrency, ...DonationCurrency[]]))
       .default(DonationCurrency.GHS),
   ),
-  // Only ever changed to point a local stand-in at the gateway; production keeps Paystack's.
+  // Only ever changed to point a local stand-in at the gateway; production refuses anything
+  // but Paystack's own, since the secret key goes with every call.
   PAYSTACK_API_URL: z.preprocess(blankAsUnset, z.string().url().default('https://api.paystack.co')),
 
   ANTHROPIC_API_KEY: z.string().optional(),
@@ -331,6 +334,49 @@ const buildConfig = (raw: RawEnv): AppConfig => ({
   social: deriveSocialConfig(raw),
 });
 
+/** Paystack's own API: the one address production sends the secret key to. */
+const PAYSTACK_API = 'https://api.paystack.co';
+
+/**
+ * A name the public reaches a site by: a domain, not this machine (localhost) and not a bare IP
+ * address. The URL parser writes every form of an address one way: `0x7f.1`, `2130706433` and
+ * `127.0.0.1.` all arrive as `127.0.0.1`, and an IPv6 address always in brackets.
+ */
+const isPublicHostname = (hostname: string): boolean =>
+  hostname.includes('.') &&
+  !hostname.endsWith('.') &&
+  !hostname.startsWith('[') &&
+  !/^[\d.]+$/.test(hostname) &&
+  !hostname.endsWith('.localhost');
+
+/** What a production API refuses to start with, one line each. */
+const productionProblems = (config: AppConfig): string[] => {
+  if (!config.isProduction) {
+    return [];
+  }
+  const problems: string[] = [];
+  if (config.corsOrigins.length === 0) {
+    problems.push('CORS_ORIGINS is required in production');
+  }
+  // Every Paystack payment sends its donor back to this address's origin (callback_url and
+  // cancel_action), so it must be the origin alone: no login, path, query or fragment.
+  const site = new URL(config.siteUrl);
+  if (
+    site.protocol !== 'https:' ||
+    !isPublicHostname(site.hostname) ||
+    site.href !== `${site.origin}/`
+  ) {
+    problems.push(
+      "PUBLIC_SITE_URL must be just the site's public https address (like https://impactafricaalliance.org) in production",
+    );
+  }
+  // The secret key travels in every request's Authorization header.
+  if (new URL(config.paystack.apiUrl).href !== `${PAYSTACK_API}/`) {
+    problems.push(`PAYSTACK_API_URL must be ${PAYSTACK_API} in production`);
+  }
+  return problems;
+};
+
 /** Parse `process.env` into a typed config, throwing a readable error on failure. */
 export const loadConfig = (source: NodeJS.ProcessEnv = process.env): AppConfig => {
   const parsed = envSchema.safeParse(source);
@@ -341,15 +387,10 @@ export const loadConfig = (source: NodeJS.ProcessEnv = process.env): AppConfig =
     throw new Error(`Invalid environment configuration:\n${issues}`);
   }
   const config = buildConfig(parsed.data);
-  if (config.isProduction && config.corsOrigins.length === 0) {
+  const problems = productionProblems(config);
+  if (problems.length > 0) {
     throw new Error(
-      'Invalid environment configuration:\n  - CORS_ORIGINS is required in production',
-    );
-  }
-  // The secret key travels in every request's Authorization header.
-  if (config.isProduction && !config.paystack.apiUrl.startsWith('https://')) {
-    throw new Error(
-      'Invalid environment configuration:\n  - PAYSTACK_API_URL must use https in production',
+      `Invalid environment configuration:\n${problems.map((problem) => `  - ${problem}`).join('\n')}`,
     );
   }
   return config;

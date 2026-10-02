@@ -1,5 +1,7 @@
 # Runs the API's due automation: review invitations, event reminders and
-# thank-you emails.
+# thank-you emails, and the check that confirms Paystack gifts whose donors
+# never came back to the site (the shared Paystack account's webhook belongs
+# to the owner's other apps, so nothing else tells the site about them).
 #
 # Why this exists rather than a timer inside the API: the API runs on a plan
 # where the instance sleeps after a quiet quarter of an hour, and a sleeping
@@ -73,7 +75,7 @@ jobs:
             "$API_BASE_URL/api/automations/run")
           cat response.json
           echo
-          # 207 means one half of the run failed; the body says which.
+          # 207 means one part of the run failed; the body says which.
           if [ "$status" != "200" ]; then
             echo "Automation run returned HTTP $status" >&2
             exit 1

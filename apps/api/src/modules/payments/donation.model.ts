@@ -26,6 +26,11 @@ export interface DonationDocument {
   donorName?: string;
   donorEmail: string;
   marketingConsent?: boolean;
+  /**
+   * When Paystack was last asked about the gift: on the donor's return, for a webhook or by
+   * the hourly check. Bookkeeping, not a change to the gift, so `updatedAt` does not move.
+   */
+  lastCheckedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -44,6 +49,7 @@ const donationSchema = new Schema<DonationDocument>(
     donorName: { type: String },
     donorEmail: { type: String, required: true, lowercase: true, trim: true },
     marketingConsent: { type: Boolean },
+    lastCheckedAt: { type: Date },
   },
   baseSchemaOptions,
 );

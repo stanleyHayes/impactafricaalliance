@@ -785,6 +785,47 @@ const providerHelperText = (
   return 'API key configured · webhook secret missing';
 };
 
+/** An address that wraps after a slash on a narrow screen rather than mid-word. */
+const breakableAddress = (address: string): ReactNode[] =>
+  address
+    .split('/')
+    .flatMap((part, index, parts) =>
+      index < parts.length - 1 ? [part, '/', <wbr key={index} />] : [part],
+    );
+
+/**
+ * Paystack's return address and how its payments are confirmed. The owner's
+ * Paystack account, webhook included, is shared with other apps, so the API
+ * names its own return address on every payment and confirms payments itself,
+ * when donors return and in the hourly run. Said only by an API that does so:
+ * an older one reports no return address. Two short lines, so the panel grows
+ * little beside its neighbour; the address drops its `https://` to fit one.
+ */
+const PaystackConfirmationNote = ({
+  status,
+}: {
+  status: PaymentProviderStatus;
+}): JSX.Element | null => {
+  if (!status.configured || !status.returnUrl) {
+    return null;
+  }
+  return (
+    <>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        title={status.returnUrl}
+        sx={{ display: 'block', overflowWrap: 'anywhere' }}
+      >
+        Returns donors to {breakableAddress(status.returnUrl.replace(/^https?:\/\//, ''))}
+      </Typography>
+      <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+        Confirmed on return and hourly, so no webhook is needed.
+      </Typography>
+    </>
+  );
+};
+
 /**
  * The box around one payment gateway. Classic draws a hairline box, washed
  * green while the gateway is taking donations. A skin sinks the box into the
@@ -847,6 +888,7 @@ const ProviderRow = ({
         <Typography variant="caption" color="text.secondary" noWrap>
           {providerHelperText(providerKey, status, meta.envHint)}
         </Typography>
+        {providerKey === 'paystack' && <PaystackConfirmationNote status={status} />}
       </Box>
       <Tooltip title={providerSwitchTooltip(status, isAdmin, meta.envHint)} placement="top" arrow>
         <span>

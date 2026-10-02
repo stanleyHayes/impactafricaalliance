@@ -139,6 +139,7 @@ describe('Paystack donations in Ghana cedis', () => {
       enabled: true,
       accepting: true,
       currency: 'GHS',
+      returnUrl: `${ctx.config.siteUrl}/donate/complete`,
     });
   });
 
@@ -146,16 +147,27 @@ describe('Paystack donations in Ghana cedis', () => {
     const res = await donate();
     expect(res.status).toBe(201);
     reference = res.body.reference as string;
+    expect(reference).toMatch(/^iaa-[0-9a-f-]{36}$/);
     expect(res.body.authorizationUrl).toBe(`${fake.url}/checkout/${reference}`);
 
     const sent = fake.requests.find((entry) => entry.path === '/transaction/initialize');
     expect(sent?.authorization).toBe(`Bearer ${SECRET_KEY}`);
+    const donationId = res.body.donationId as string;
     expect(sent?.body).toEqual({
       email: 'ama@example.org',
       amount: 10_000,
       currency: 'GHS',
       reference,
       callback_url: `${ctx.config.siteUrl}/donate/complete`,
+      metadata: {
+        source: 'impact-africa-alliance',
+        donation_id: donationId,
+        cancel_action: `${ctx.config.siteUrl}/donate/complete?reference=${reference}&cancelled=1`,
+        custom_fields: [
+          { display_name: 'Website', variable_name: 'website', value: 'Impact Africa Alliance' },
+          { display_name: 'Donation ID', variable_name: 'donation_id', value: donationId },
+        ],
+      },
     });
 
     const record = await stored(reference);
@@ -377,7 +389,7 @@ describe('when a gift is confirmed', () => {
     expect((await stored(short))?.status).toBe(DonationStatus.Pending);
   });
 
-  it('lifts a gift seen as abandoned on return once Paystack confirms it was paid', async () => {
+  it('keeps a gift seen as abandoned on return pending, and confirms it once paid', async () => {
     const reference = await pendingGift(20, 'momo.later@example.org');
     fake.setTransaction(reference, {
       status: 'abandoned',
@@ -385,8 +397,10 @@ describe('when a gift is confirmed', () => {
       requested_amount: 2_000,
       currency: 'GHS',
     });
+    // Mobile money can be approved after the donor is back, so 'abandoned' closes nothing.
     const back = await request(ctx.app).get(`/api/payments/paystack/verify/${reference}`);
-    expect(back.body).toEqual({ status: 'failed', amount: 20, currency: 'GHS' });
+    expect(back.body).toEqual({ status: 'pending', amount: 20, currency: 'GHS' });
+    expect((await stored(reference))?.status).toBe(DonationStatus.Pending);
 
     // The mobile-money approval lands after the donor was sent back.
     fake.setTransaction(reference, {
@@ -419,10 +433,12 @@ describe('when Paystack fails', () => {
   const failures = () =>
     logEntries().filter((entry) => entry.err?.type === 'PaystackUnavailableError');
 
-  it('answers an unknown reference on the return page with a 404', async () => {
+  it('answers an unknown reference on the return page with a 404, without asking Paystack', async () => {
+    const before = fake.requests.length;
     const res = await request(ctx.app).get('/api/payments/paystack/verify/not-a-real-reference');
     expect(res.status).toBe(404);
     expect(res.body.error.code).toBe('NOT_FOUND');
+    expect(fake.requests).toHaveLength(before);
     expect(logs).not.toContain(SECRET_KEY);
   });
 

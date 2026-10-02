@@ -8,6 +8,7 @@ import type { AppConfig } from '../../config/env.js';
 import type { AppLogger } from '../../config/logger.js';
 import { runEventAutomation } from '../event-messages/event-automation.worker.js';
 import { runDraftSweep } from '../forms/draft-files.js';
+import { paystackCheckFailed, runPaystackCheck } from '../payments/paystack-check.js';
 import { runReviewInvites } from '../reviews/review-invite.worker.js';
 
 /**
@@ -58,9 +59,9 @@ export const createAutomationRouter = (
       res.setTimeout(RUN_TIMEOUT_MS);
 
       const started = Date.now();
-      // One failing half must not cost the other: a mail provider that rejects
+      // One failing part must not cost the others: a mail provider that rejects
       // an invitation should not also stop that evening's reminders.
-      const [invites, events, drafts] = await Promise.all([
+      const [invites, events, drafts, paystack] = await Promise.all([
         runReviewInvites(container, logger).catch((error: unknown) => {
           logger.error({ err: error }, 'Review invitations failed during a scheduled run');
           return null;
@@ -76,6 +77,13 @@ export const createAutomationRouter = (
           logger.error({ err: error }, 'The expired-draft sweep failed during a scheduled run');
           return null;
         }),
+        // Paystack gifts whose donors never came back. The shared Paystack
+        // account's webhook belongs to the owner's other apps, so asking
+        // Paystack here is how such a gift is confirmed.
+        runPaystackCheck(container, logger).catch((error: unknown) => {
+          logger.error({ err: error }, 'The Paystack donation check failed during a scheduled run');
+          return null;
+        }),
       ]);
 
       const result = {
@@ -83,11 +91,15 @@ export const createAutomationRouter = (
         reviewInvites: invites,
         eventMessages: events,
         expiredDrafts: drafts,
+        paystackDonations: paystack,
       };
       logger.info(result, 'Scheduled automation run finished');
       // 207 when a part failed, so a red run is visible in the scheduler
-      // rather than only in a log nobody opens.
-      res.status(invites && events && drafts ? 200 : 207).json(result);
+      // rather than only in a log nobody opens. The Paystack check has also
+      // failed when it could ask Paystack about none of the gifts it tried:
+      // a refused key confirms nothing, however quietly it runs.
+      const failed = !invites || !events || !drafts || !paystack || paystackCheckFailed(paystack);
+      res.status(failed ? 207 : 200).json(result);
     }),
   );
 

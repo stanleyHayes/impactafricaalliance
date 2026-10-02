@@ -28,6 +28,14 @@ const isMalformedBodyError = (error: unknown): error is SyntaxError =>
   'body' in error &&
   typeof (error as { body?: unknown }).body === 'string';
 
+/**
+ * The router could not decode a %-escape in the address (`/verify/%E0%A4%A`). It says so with a
+ * URIError carrying status 400, thrown before any handler of the route runs. The caller's
+ * mistake, not an error of ours.
+ */
+export const isUndecodablePathError = (error: unknown): error is URIError =>
+  error instanceof URIError && (error as { status?: unknown }).status === 400;
+
 /** Map known third-party/database errors onto our typed AppError hierarchy. */
 const normalise = (error: unknown): AppError | null => {
   if (error instanceof AppError) {
@@ -35,6 +43,9 @@ const normalise = (error: unknown): AppError | null => {
   }
   if (isMalformedBodyError(error)) {
     return new ValidationError('Invalid JSON body');
+  }
+  if (isUndecodablePathError(error)) {
+    return new ValidationError('Invalid URL encoding');
   }
   if (error instanceof MongooseError.ValidationError) {
     return new ValidationError('Validation failed', Object.keys(error.errors));

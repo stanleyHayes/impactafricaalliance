@@ -30,6 +30,9 @@ services:
         value: info
 
       # ── Public URLs ───────────────────────────────────────────────────
+      # Paystack sends donors back here after checkout, so the API refuses to
+      # start unless it is the site's public https address and nothing more
+      # (no path).
       - key: PUBLIC_SITE_URL
         value: https://impactafricaalliance.org
       - key: ADMIN_URL
@@ -58,10 +61,12 @@ services:
       - key: ANALYTICS_INGEST_SECRET
         generateValue: true
       # Lets the scheduled GitHub Action run the due automation (review
-      # invitations, event reminders, thank-yous). The free plan sleeps, and a
-      # sleeping process runs no timers, so something awake has to knock.
+      # invitations, event reminders, thank-yous, and the hourly check that
+      # confirms Paystack gifts). The free plan sleeps, and a sleeping process
+      # runs no timers, so something awake has to knock.
       # Set the SAME value here and as the AUTOMATION_RUN_SECRET repository
-      # secret in GitHub, or the run is refused and no email goes out.
+      # secret in GitHub, or the run is refused: no email goes out, and a
+      # Paystack gift whose donor never came back stays pending.
       - key: AUTOMATION_RUN_SECRET
         sync: false
 
@@ -99,11 +104,14 @@ services:
         value: iaa
 
       # ── Payments: Paystack (Ghana cedis) ──────────────────────────────
+      # The Paystack account and its keys are shared with the owner's other
+      # apps. Leave the Paystack dashboard's Callback URL and Webhook URL as
+      # they are: they belong to those apps. Every payment carries its own
+      # return and cancel addresses, built from PUBLIC_SITE_URL, and payments
+      # are confirmed when donors come back and by the hourly automation run,
+      # so this site needs no webhook.
       # No public key is needed: the site sends donors to Paystack's hosted
       # checkout, and only this API talks to Paystack, with the secret key.
-      # Paystack also signs its webhooks with that same secret key, so there
-      # is no separate webhook secret. Webhook URL to paste in Paystack:
-      #   https://iaa-api.onrender.com/api/payments/webhooks/paystack
       # Checklist: docs/deploy/donations.md
       # Paystack Dashboard → Settings → API Keys & Webhooks.
       # sk_test_… while testing, sk_live_… when live.
@@ -113,7 +121,8 @@ services:
       # $2 a gift, if Paystack has enabled dollars on the account.)
       - key: PAYSTACK_CURRENCY
         value: GHS
-      # Leave as it is; only a local test points this at a stand-in.
+      # Leave as it is: the secret key is sent here, so production refuses
+      # anything else. Only a local test points this at a stand-in.
       - key: PAYSTACK_API_URL
         value: https://api.paystack.co
 

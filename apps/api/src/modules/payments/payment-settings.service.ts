@@ -11,6 +11,7 @@ import { inject, injectable } from 'tsyringe';
 
 import { ValidationError } from '../../common/errors.js';
 import type { AppConfig } from '../../config/env.js';
+import { paystackReturnUrl } from '../../providers/payment/paystack.gateway.js';
 import { TOKENS } from '../../tokens.js';
 
 import { PaymentSettingModel, type PaymentSettingDocument } from './payment-setting.model.js';
@@ -57,12 +58,15 @@ export class PaymentSettingsService {
         STRIPE_CURRENCY,
       ),
       // Paystack signs webhooks with the secret key itself, so having it covers both.
-      paystack: this.providerStatus(
-        paystackConfigured,
-        paystackConfigured,
-        settings.paystackEnabled && paystackConfigured,
-        this.config.paystack.currency,
-      ),
+      paystack: {
+        ...this.providerStatus(
+          paystackConfigured,
+          paystackConfigured,
+          settings.paystackEnabled && paystackConfigured,
+          this.config.paystack.currency,
+        ),
+        returnUrl: paystackReturnUrl(this.config.siteUrl),
+      },
     };
   }
 

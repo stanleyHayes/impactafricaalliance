@@ -1,8 +1,16 @@
 import { AdminResource, UserRole } from '@iaa/shared';
-import express, { Router, type NextFunction, type Request, type Response } from 'express';
+import express, {
+  Router,
+  type ErrorRequestHandler,
+  type NextFunction,
+  type Request,
+  type Response,
+} from 'express';
 import type { DependencyContainer } from 'tsyringe';
 
 import { asyncHandler } from '../../common/async-handler.js';
+import { isUndecodablePathError } from '../../common/error-middleware.js';
+import { NotFoundError } from '../../common/errors.js';
 import {
   requireAuth,
   requirePermissionFor,
@@ -27,6 +35,15 @@ const captureRawBody = (req: Request, _res: Response, next: NextFunction): void 
   next();
 };
 
+/**
+ * A reference whose %-escapes do not decode never reaches the controller: the router fails the
+ * request while reading it. It is no gift of this site's either, so it gets the same 404 as any
+ * other reference that is not.
+ */
+const unreadableReference: ErrorRequestHandler = (error, _req, _res, next) => {
+  next(isUndecodablePathError(error) ? new NotFoundError('Payment reference') : error);
+};
+
 export const createPaymentRouters = (container: DependencyContainer): PaymentRouters => {
   const controller = container.resolve(PaymentController);
   const tokens = container.resolve(TokenService);
@@ -43,11 +60,10 @@ export const createPaymentRouters = (container: DependencyContainer): PaymentRou
 
   const donateRouter = Router();
   donateRouter.get('/providers', asyncHandler(controller.providers));
-  donateRouter.get(
-    '/paystack/verify/:reference',
-    sensitiveRateLimit,
-    asyncHandler(controller.paystackReturn),
-  );
+  // Limited ahead of the route, so a reference the router cannot read counts too.
+  donateRouter.use('/paystack/verify', sensitiveRateLimit);
+  donateRouter.get('/paystack/verify/:reference', asyncHandler(controller.paystackReturn));
+  donateRouter.use('/paystack/verify', unreadableReference);
   donateRouter.post('/', sensitiveRateLimit, asyncHandler(controller.createDonation));
 
   const adminRouter = Router();

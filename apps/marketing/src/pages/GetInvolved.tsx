@@ -238,8 +238,9 @@ const CareersTab = (): JSX.Element => {
 
 const GetInvolved = (): JSX.Element => {
   const showcaseImage = useShowcaseImageMap();
-  const { hash } = useLocation();
+  const { hash, key: visit } = useLocation();
   const [tab, setTab] = useState<TabKey>('partner');
+  const arrivedToGive = useRef<string | null>(null);
 
   useEffect(() => {
     const key = hash.replace('#', '');
@@ -247,6 +248,19 @@ const GetInvolved = (): JSX.Element => {
       setTab(key);
     }
   }, [hash]);
+
+  // Whoever follows a link to #donate came to give ("Try again" or "Back to donate" after a
+  // Paystack checkout, an initiative's "Support This Initiative"): once the form is showing,
+  // take them to it, two to four screens below the top of the page. Once per visit, so moving
+  // between the tabs afterwards scrolls nothing.
+  useEffect(() => {
+    if (hash !== '#donate' || tab !== 'donate' || arrivedToGive.current === visit) return;
+    const frame = requestAnimationFrame(() => {
+      arrivedToGive.current = visit;
+      document.getElementById('donate-form')?.scrollIntoView?.({ block: 'start' });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [hash, visit, tab]);
 
   const copy = usePageCopy('get-involved', {
     seoTitle: 'Get Involved — Partner, Volunteer, or Donate',

@@ -1,4 +1,9 @@
-import { DonationStatus, type CreateDonationInput, type DonationCurrency } from '@iaa/shared';
+import {
+  DonationStatus,
+  PaymentProvider,
+  type CreateDonationInput,
+  type DonationCurrency,
+} from '@iaa/shared';
 import type { HydratedDocument } from 'mongoose';
 import { injectable } from 'tsyringe';
 
@@ -24,7 +29,46 @@ export class DonationRepository {
   }
 
   setReference(id: string, reference: string) {
-    return DonationModel.findByIdAndUpdate(id, { reference }, { new: true }).exec();
+    return DonationModel.findByIdAndUpdate(id, { reference }, { returnDocument: 'after' }).exec();
+  }
+
+  /**
+   * Note that Paystack was just asked about a gift. Only `lastCheckedAt` moves: the gift itself
+   * has not changed, and `updatedAt` is what the retention purge measures from.
+   */
+  recordCheck(id: string, at: Date) {
+    return DonationModel.updateOne(
+      { _id: id },
+      { $set: { lastCheckedAt: at } },
+      { timestamps: false },
+    ).exec();
+  }
+
+  /**
+   * The Paystack gifts due a look from the hourly check: those still pending, and those failed
+   * but started after `failedAfter`, since a declined first try can still be paid. A gift is due
+   * once nothing has looked at it since `lookedBefore`, its start counting as the first look. The
+   * longest unlooked-at come first, so a gift looked at before (a donor back from an unfinished
+   * checkout) takes its turn by age among new ones, not behind every one of them.
+   */
+  async dueForPaystackCheck(lookedBefore: Date, failedAfter: Date, limit: number) {
+    const due = await DonationModel.aggregate<DonationDocument>([
+      {
+        $match: {
+          provider: PaymentProvider.Paystack,
+          $or: [
+            { status: DonationStatus.Pending },
+            { status: DonationStatus.Failed, createdAt: { $gt: failedAfter } },
+          ],
+        },
+      },
+      { $addFields: { lastLook: { $ifNull: ['$lastCheckedAt', '$createdAt'] } } },
+      { $match: { lastLook: { $lte: lookedBefore } } },
+      { $sort: { lastLook: 1, _id: 1 } },
+      { $limit: limit },
+      { $project: { lastLook: 0 } },
+    ]).exec();
+    return due.map((gift) => DonationModel.hydrate(gift));
   }
 
   /**
@@ -38,7 +82,7 @@ export class DonationRepository {
     return DonationModel.findOneAndUpdate(
       { reference, status: DonationStatus.Pending },
       { status },
-      { new: true },
+      { returnDocument: 'after' },
     ).exec();
   }
 

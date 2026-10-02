@@ -13,6 +13,12 @@ const INTERVAL_MS = 24 * 60 * 60 * 1000;
  * - Deletes archived submissions older than the retention window.
  * - Deletes unsubscribed subscribers older than the retention window.
  * - Deletes failed/pending abandoned donations older than a short window.
+ *
+ * The donation window counts from the gift's last change (`updatedAt`). The hourly
+ * Paystack check closes a gift still unpaid a day after it was started as failed, so
+ * such a gift goes FAILED_DONATION_RETENTION_DAYS after that. Its hourly look at a
+ * gift is stamped in `lastCheckedAt`, which leaves `updatedAt` alone: a gift the check
+ * cannot settle (Paystack out of reach for weeks) still leaves on time, as before.
  */
 export const startRetentionJobs = (config: AppConfig, logger: AppLogger): (() => void) => {
   if (

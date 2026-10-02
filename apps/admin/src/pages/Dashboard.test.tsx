@@ -306,6 +306,65 @@ describe('donations in cedis and dollars', () => {
   });
 });
 
+describe('Paystack on an account shared with other apps', () => {
+  const paystackWith = (overrides: Partial<DashboardSummary['payments']['paystack']>): void => {
+    summary.payments = {
+      ...dollarsOnlyPayments,
+      paystack: {
+        configured: true,
+        webhookConfigured: true,
+        enabled: true,
+        accepting: true,
+        currency: 'GHS',
+        returnUrl: 'https://impactafricaalliance.org/donate/complete',
+        ...overrides,
+      },
+    };
+  };
+
+  it('shows where Paystack sends donors back, and that its webhook is not needed', () => {
+    paystackWith({});
+    visit('admin', ['donations:read']);
+    // The address without its scheme, to fit one line; the whole of it on hover.
+    expect(
+      screen.getByText('Returns donors to impactafricaalliance.org/donate/complete'),
+    ).toHaveAttribute('title', 'https://impactafricaalliance.org/donate/complete');
+    expect(
+      screen.getByText('Confirmed on return and hourly, so no webhook is needed.'),
+    ).toBeInTheDocument();
+    // The panel's own footer is as it was: the new lines are the Paystack row's alone.
+    expect(
+      screen.getByText(/Webhooks keep working for donations already in flight\./),
+    ).toBeInTheDocument();
+  });
+
+  it('says nothing of it until Paystack has its secret key', () => {
+    paystackWith({ configured: false, webhookConfigured: false, enabled: false, accepting: false });
+    visit('admin', ['donations:read']);
+    expect(screen.getByText('Add PAYSTACK_SECRET_KEY to the API environment')).toBeInTheDocument();
+    expect(screen.queryByText(/Returns donors to/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/no webhook is needed/)).not.toBeInTheDocument();
+  });
+
+  it('says nothing of it for an API that does not name its return address', () => {
+    paystackWith({ returnUrl: undefined });
+    visit('admin', ['donations:read']);
+    expect(screen.getByText('Secret key configured · charges in GHS')).toBeInTheDocument();
+    expect(screen.queryByText(/Returns donors to/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/no webhook is needed/)).not.toBeInTheDocument();
+  });
+
+  it('leaves the Stripe row as it was', () => {
+    paystackWith({});
+    visit('admin', ['donations:read']);
+    const stripeRow = screen
+      .getByLabelText('Enable Stripe')
+      .closest<HTMLElement>('.MuiStack-root')!;
+    expect(stripeRow).toHaveTextContent('API key and webhook secret configured');
+    expect(stripeRow).not.toHaveTextContent(/Returns donors to|no webhook is needed/);
+  });
+});
+
 describe('against an API from before currencies', () => {
   // What the API answered before this change: dollars, with no currencies anywhere.
   const dollarsOnlyApi = {

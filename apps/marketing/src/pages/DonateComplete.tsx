@@ -2,6 +2,7 @@ import { formatMoney, type DonationConfirmation, type DonationCurrency } from '@
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import HourglassTopRoundedIcon from '@mui/icons-material/HourglassTopRounded';
+import UndoRoundedIcon from '@mui/icons-material/UndoRounded';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
@@ -12,7 +13,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link as RouterLink, useSearchParams } from 'react-router-dom';
 
 import { Seo } from '../components/Seo';
-import { apiGet } from '../lib/api-client';
+import { ApiError, apiGet } from '../lib/api-client';
 
 const ReferenceLine = ({ reference }: { reference: string }): JSX.Element => (
   <Typography variant="body2" color="text.secondary">
@@ -71,24 +72,80 @@ const FailedView = ({
   </>
 );
 
-const PendingView = ({ reference }: { reference: string }): JSX.Element => (
+/**
+ * Not confirmed yet. The site hears nothing from Paystack on its own, so a payment that lands
+ * after the donor is back (mobile money approved later) is confirmed by the API's hourly check.
+ * That runs once an hour, and a run can come late, so the page says "usually".
+ */
+const PendingView = ({
+  reference,
+  checking,
+  onCheck,
+}: {
+  reference: string;
+  checking: boolean;
+  onCheck: () => void;
+}): JSX.Element => (
   <>
     <HourglassTopRoundedIcon sx={{ fontSize: 56, color: 'warning.main' }} />
-    <Typography variant="h5">Your donation is being processed</Typography>
+    <Typography variant="h5">Your payment is being confirmed</Typography>
     <Typography color="text.secondary" sx={{ lineHeight: 1.75 }}>
-      Paystack has not confirmed the payment yet. This usually takes a few seconds — you can refresh
-      this page. If the amount was deducted, it will reflect shortly.
+      Paystack has not confirmed it yet. If you paid, your donation will usually be confirmed within
+      an hour, so there is no need to pay again.
     </Typography>
     <ReferenceLine reference={reference} />
+    <Button
+      variant="contained"
+      disabled={checking}
+      onClick={onCheck}
+      sx={{ alignSelf: 'flex-start' }}
+    >
+      {checking ? 'Checking…' : 'Check again'}
+    </Button>
   </>
 );
 
-/** Landing page for the Paystack checkout redirect (`callback_url`). */
+/**
+ * Paystack's Cancel button brings the donor here. Nothing was paid, unless the quiet check the
+ * page still makes finds a payment Paystack confirms (mobile money approved as they cancelled).
+ */
+const CancelledView = (): JSX.Element => (
+  <>
+    <UndoRoundedIcon sx={{ fontSize: 56, color: 'text.secondary' }} />
+    <Typography variant="h5">You cancelled the payment</Typography>
+    <Typography color="text.secondary" sx={{ lineHeight: 1.75 }}>
+      Nothing was charged. If you would still like to give, you can start again whenever you are
+      ready.
+    </Typography>
+    <Button
+      component={RouterLink}
+      to="/get-involved#donate"
+      variant="contained"
+      sx={{ alignSelf: 'flex-start' }}
+    >
+      Back to donate
+    </Button>
+  </>
+);
+
+/**
+ * The API's 404: the reference is not one of the site's gifts. Any other failure (Paystack or
+ * the API out of reach for a moment) says nothing about the payment, which the hourly check
+ * will still confirm.
+ */
+const isUnknownGift = (error: unknown): boolean =>
+  error instanceof ApiError && error.status === 404;
+
+/**
+ * Landing page for the Paystack checkout: its `callback_url` after paying, and its
+ * `cancel_action` (`?cancelled=1`) when the donor presses Cancel. The API builds both.
+ */
 const DonateComplete = (): JSX.Element => {
   const [searchParams] = useSearchParams();
   const reference = searchParams.get('reference') ?? searchParams.get('trxref') ?? '';
+  const cancelled = searchParams.get('cancelled') === '1';
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, error, isFetching, refetch } = useQuery({
     queryKey: ['paystack-verify', reference],
     queryFn: () =>
       apiGet<DonationConfirmation>(`/payments/paystack/verify/${encodeURIComponent(reference)}`),
@@ -97,6 +154,10 @@ const DonateComplete = (): JSX.Element => {
   });
 
   const renderBody = (): JSX.Element => {
+    // Straight away, without waiting for the check: only a confirmed payment changes it.
+    if (cancelled && data?.status !== 'succeeded') {
+      return <CancelledView />;
+    }
     if (reference && (isLoading || !data) && !isError) {
       return (
         <Stack role="status" aria-label="Confirming your donation with Paystack" spacing={2}>
@@ -109,13 +170,15 @@ const DonateComplete = (): JSX.Element => {
     if (!reference) {
       return <FailedView reference="" missing />;
     }
-    if (isError || data?.status === 'failed') {
+    if (isUnknownGift(error) || data?.status === 'failed') {
       return <FailedView reference={reference} missing={false} />;
     }
     if (data?.status === 'succeeded') {
       return <SucceededView amount={data.amount} currency={data.currency} />;
     }
-    return <PendingView reference={reference} />;
+    return (
+      <PendingView reference={reference} checking={isFetching} onCheck={() => void refetch()} />
+    );
   };
 
   return (

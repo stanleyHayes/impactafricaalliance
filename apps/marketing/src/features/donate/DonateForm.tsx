@@ -251,11 +251,14 @@ export const DonateForm = (): JSX.Element => {
       <Grid size={{ xs: 12, md: 6 }}>
         <Stack
           component="form"
+          id="donate-form"
           aria-label="Make a donation"
           spacing={2.25}
           onSubmit={onSubmit}
           noValidate
           sx={{
+            // Clear of the sticky header when a link to #donate brings a donor here.
+            scrollMarginTop: 130,
             position: 'relative',
             overflow: 'hidden',
             border: 1,
