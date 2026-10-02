@@ -1605,7 +1605,9 @@ const SystemPanel = ({
   rows: SystemRowSpec[];
 }): JSX.Element => (
   <Panel title="Operations snapshot" subtitle="Across the whole console">
-    <Stack sx={{ p: 1 }}>
+    {/* Beside a taller panel, the rows spread out to fill the card instead of
+        leaving its bottom empty. */}
+    <Stack sx={{ p: 1, height: '100%', justifyContent: 'space-evenly' }}>
       {loading || !summary
         ? rows.map((row) => <SystemRowSkeleton key={row.label} />)
         : rows.map((row) => (
